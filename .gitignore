@@ -4,3 +4,13 @@
 *.jar
 *.war
 *.ear
+
+local_*.yml
+
+*.iml
+.idea
+
+target
+.project
+.classpath
+.settings

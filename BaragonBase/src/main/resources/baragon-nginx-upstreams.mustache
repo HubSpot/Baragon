@@ -1,0 +1,8 @@
+# This config is auto-managed by Baragon, your changes may be lost!
+# Deploy: {{deploy}}
+
+upstream {{deploy.project}}~{{deploy.build}} {
+{{#upstreams}}
+    server {{.}};
+{{/upstreams}}
+}

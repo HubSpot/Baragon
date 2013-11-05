@@ -1,0 +1,15 @@
+# This config is auto-managed by Baragon, your changes may be lost!
+# Deploy: {{deploy}}
+# Route: {{route}}
+
+location {{route}} {
+    proxy_pass_header Server;
+    proxy_set_header Host $http_host;
+    proxy_redirect off;
+    proxy_set_header X-HubSpot-Trace $x_hubspot_trace;
+    proxy_set_header X-RealIP $remote_addr;
+    proxy_set_header X-Scheme $scheme;
+    proxy_pass http://{{deploy.project}}~{{deploy.build}};
+    proxy_connect_timeout 55;
+    proxy_read_timeout 60;
+}
