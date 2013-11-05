@@ -7,6 +7,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Key;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
+import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import com.hubspot.baragon.healthchecks.HealthCheckClient;
 import com.hubspot.baragon.lbs.LbAdapter;
@@ -19,6 +20,7 @@ import org.reflections.Reflections;
 import org.reflections.scanners.ResourcesScanner;
 import org.reflections.util.ClasspathHelper;
 
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -61,4 +63,6 @@ public class BaragonBaseModule extends AbstractModule {
   public AsyncHttpClient providesHealthCheckClient() {
     return new AsyncHttpClient();
   }
+
+
 }

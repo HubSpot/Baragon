@@ -2,8 +2,10 @@ package com.hubspot.baragon.agent;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.concurrent.locks.ReentrantLock;
 
 import com.google.inject.*;
+import com.google.inject.name.Named;
 import com.hubspot.baragon.config.ZooKeeperConfiguration;
 import com.hubspot.baragon.config.LoadBalancerConfiguration;
 import io.dropwizard.Configuration;
@@ -25,6 +27,8 @@ import org.eclipse.jetty.server.ServerConnector;
 
 public class BaragonAgentServiceModule extends AbstractModule {
   private static final Log LOG = LogFactory.getLog(BaragonAgentServiceModule.class);
+
+  public static final String LB_CLUSTER_LOCK = "baragon.cluster.lock";
 
   @Override
   protected void configure() {
@@ -78,5 +82,12 @@ public class BaragonAgentServiceModule extends AbstractModule {
   @Singleton
   public LbAdapter provideLbAdapter(Injector injector, LoadBalancerConfiguration loadBalancerConfiguration) {
     return injector.getInstance(Key.get(LbAdapter.class, Names.named(loadBalancerConfiguration.getType())));
+  }
+
+  @Provides
+  @Singleton
+  @Named(LB_CLUSTER_LOCK)
+  public ReentrantLock providesLbClusterLock() {
+    return new ReentrantLock();
   }
 }

@@ -13,7 +13,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
 import com.google.common.base.Joiner;
-import com.hubspot.baragon.coordinators.BaragonAgentManager;
+import com.hubspot.baragon.agent.BaragonAgentManager;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
