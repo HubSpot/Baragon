@@ -54,7 +54,7 @@ public class BaragonServiceResource {
 
   @POST
   @Path("/{serviceName}/sync")
-  public void runHealthcheck(@PathParam("serviceName") String serviceName) {
+  public void syncUpstreams(@PathParam("serviceName") String serviceName) {
     baragonDeployManager.syncUpstreams(serviceName);
   }
 }
