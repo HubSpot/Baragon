@@ -1,7 +1,9 @@
 # This config is auto-managed by Baragon, your changes may be lost!
-# Deploy: {{deploy}}
+# Service: {{serviceInfo.name}}-{{serviceInfo.id}}
+# Route: {{serviceInfo.route}}
+# Contact: {{serviceInfo.contactEmail}}
 
-upstream {{deploy.project}}~{{deploy.build}} {
+upstream {{serviceInfo.name}}~{{serviceInfo.id}} {
 {{#upstreams}}
     server {{.}};
 {{/upstreams}}

@@ -25,7 +25,7 @@ public class BaragonServiceResource {
 
   @POST
   public void add(ServiceInfo serviceInfo) {
-    baragonDeployManager.addService(serviceInfo);
+    baragonDeployManager.addPendingService(serviceInfo);
   }
 
   @POST
@@ -38,6 +38,14 @@ public class BaragonServiceResource {
   @Path("/{serviceName}")
   public void teardown(@PathParam("serviceName") String serviceName) {
     // TODO: implement
+  }
+
+  @DELETE
+  @Path("/{serviceName}/pending")
+  public void removePendingService(@PathParam("serviceName") String serviceName) {
+    if (!baragonDeployManager.removePendingService(serviceName)) {
+      throw new WebApplicationException(404);
+    }
   }
 
   @GET

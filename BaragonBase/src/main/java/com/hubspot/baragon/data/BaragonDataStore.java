@@ -86,7 +86,7 @@ public class BaragonDataStore {
   }
 
   private String buildUnhealthyUpstreamPath(String name, String id, String upstream) {
-    return String.format("/upstreams/unhealthy/%s/%s/%s", name, upstream);
+    return String.format("/upstreams/unhealthy/%s/%s/%s", name, id, upstream);
   }
 
   // pending services
@@ -269,10 +269,12 @@ public class BaragonDataStore {
     }
   }
 
-  public String getLoadBalancerLeader(String name) {
+  public Optional<String> getLoadBalancerLeader(String name) {
     try {
       final LeaderLatch latch = new LeaderLatch(curatorFramework, String.format("/agent-leader/%s", name));
-      return latch.getLeader().getId();
+      return Optional.of(latch.getLeader().getId());
+    } catch (KeeperException.NoNodeException nne) {
+      return Optional.absent();
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }

@@ -2,8 +2,11 @@ package com.hubspot.baragon.agent;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.locks.ReentrantLock;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.*;
 import com.google.inject.name.Named;
 import com.hubspot.baragon.config.ZooKeeperConfiguration;
@@ -89,5 +92,11 @@ public class BaragonAgentServiceModule extends AbstractModule {
   @Named(LB_CLUSTER_LOCK)
   public ReentrantLock providesLbClusterLock() {
     return new ReentrantLock();
+  }
+
+  @Provides
+  @Singleton
+  public ScheduledExecutorService providesScheduledExecutorService() {
+    return Executors.newScheduledThreadPool(1, new ThreadFactoryBuilder().setNameFormat("BaragonUpstreamPoller-%d").build());
   }
 }

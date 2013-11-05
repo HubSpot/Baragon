@@ -1,10 +1,14 @@
 package com.hubspot.baragon.config;
 
+import org.apache.commons.exec.CommandLine;
+
 public class LoadBalancerConfiguration {
   private String domain;
   private String type;
   private String name;
   private String rootPath;
+  private String checkConfigCommand;
+  private String reloadConfigCommand;
 
   public String getDomain() {
     return domain;
@@ -36,5 +40,21 @@ public class LoadBalancerConfiguration {
 
   public void setRootPath(String rootPath) {
     this.rootPath = rootPath;
+  }
+
+  public void setCheckConfigCommand(String checkConfigCommand) {
+    this.checkConfigCommand = checkConfigCommand;
+  }
+
+  public String getCheckConfigCommand() {
+    return checkConfigCommand;
+  }
+
+  public void setReloadConfigCommand(String reloadConfigCommand) {
+    this.reloadConfigCommand = reloadConfigCommand;
+  }
+
+  public String getReloadConfigCommand() {
+    return reloadConfigCommand;
   }
 }

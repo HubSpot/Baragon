@@ -7,11 +7,10 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Key;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
-import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import com.hubspot.baragon.healthchecks.HealthCheckClient;
 import com.hubspot.baragon.lbs.LbAdapter;
-import com.hubspot.baragon.nginx.NginxAdapter;
+import com.hubspot.baragon.lbs.LocalLbAdapter;
 import com.ning.http.client.AsyncHttpClient;
 import com.ning.http.client.AsyncHttpClientConfig;
 import org.apache.curator.framework.CuratorFramework;
@@ -21,7 +20,6 @@ import org.reflections.Reflections;
 import org.reflections.scanners.ResourcesScanner;
 import org.reflections.util.ClasspathHelper;
 
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -31,7 +29,7 @@ public class BaragonBaseModule extends AbstractModule {
   @Override
   protected void configure() {
     // load balancer adapters
-    bind(Key.get(LbAdapter.class, Names.named("nginx"))).to(NginxAdapter.class);
+    bind(Key.get(LbAdapter.class, Names.named("nginx"))).to(LocalLbAdapter.class);
 
     // config generation
     final Pattern templatePattern = Pattern.compile("baragon-(.*)\\.mustache");

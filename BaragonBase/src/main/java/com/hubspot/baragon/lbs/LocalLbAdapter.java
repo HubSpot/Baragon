@@ -2,6 +2,8 @@ package com.hubspot.baragon.lbs;
 
 import java.io.ByteArrayOutputStream;
 
+import com.google.inject.Inject;
+import com.hubspot.baragon.config.LoadBalancerConfiguration;
 import org.apache.commons.exec.CommandLine;
 import org.apache.commons.exec.DefaultExecutor;
 import org.apache.commons.exec.ExecuteException;
@@ -10,11 +12,15 @@ import org.apache.commons.exec.PumpStreamHandler;
 
 import com.google.common.base.Throwables;
 
-public abstract class LocalLbAdapter implements LbAdapter {
+public class LocalLbAdapter implements LbAdapter {
   public static int COMMAND_TIMEOUT = 10000;
-  
-  protected abstract CommandLine getCheckConfigCommand();
-  protected abstract CommandLine getReloadConfigCommand();
+
+  private final LoadBalancerConfiguration loadBalancerConfiguration;
+
+  @Inject
+  public LocalLbAdapter(LoadBalancerConfiguration loadBalancerConfiguration) {
+    this.loadBalancerConfiguration = loadBalancerConfiguration;
+  }
   
   private void executeWithTimeout(CommandLine command, int timeout) {
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -34,11 +40,11 @@ public abstract class LocalLbAdapter implements LbAdapter {
   
   @Override
   public void checkConfigs() {
-    executeWithTimeout(getCheckConfigCommand(), COMMAND_TIMEOUT);
+    executeWithTimeout(CommandLine.parse(loadBalancerConfiguration.getCheckConfigCommand()), COMMAND_TIMEOUT);
   }
 
   @Override
   public void reloadConfigs() {
-    executeWithTimeout(getReloadConfigCommand(), COMMAND_TIMEOUT);
+    executeWithTimeout(CommandLine.parse(loadBalancerConfiguration.getReloadConfigCommand()), COMMAND_TIMEOUT);
   }
 }

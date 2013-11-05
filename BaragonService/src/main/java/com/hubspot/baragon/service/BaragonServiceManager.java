@@ -24,7 +24,7 @@ public class BaragonServiceManager {
     this.loadBalancerManager = loadBalancerManager;
   }
 
-  public void addService(ServiceInfo serviceInfo) {
+  public void addPendingService(ServiceInfo serviceInfo) {
     Optional<ServiceInfo> maybeServiceInfo = datastore.getPendingService(serviceInfo.getName());
 
     if (maybeServiceInfo.isPresent()) {
@@ -34,6 +34,10 @@ public class BaragonServiceManager {
     LOG.info(String.format("Adding service %s %s by %s", serviceInfo.getName(), serviceInfo.getId(), serviceInfo.getContactEmail()));
 
     datastore.addPendingService(serviceInfo);
+  }
+
+  public boolean removePendingService(String serviceName) {
+    return datastore.removePendingService(serviceName);
   }
 
   public void activateService(String name) {
@@ -92,6 +96,16 @@ public class BaragonServiceManager {
     }
 
     datastore.addUnhealthyUpstream(maybeServiceInfo.get().getName(), maybeServiceInfo.get().getId(), upstream);
+  }
+
+  public void markUpstreamHealthy(String name, String upstream) {
+    Optional<ServiceInfo> maybeServiceInfo = datastore.getActiveService(name);
+
+    if (!maybeServiceInfo.isPresent()) {
+      throw new RuntimeException("No such service");
+    }
+
+    datastore.makeUpstreamHealthy(maybeServiceInfo.get().getName(), maybeServiceInfo.get().getId(), upstream);
   }
 
   public void removeUpstream(String name, String id, String upstream) {

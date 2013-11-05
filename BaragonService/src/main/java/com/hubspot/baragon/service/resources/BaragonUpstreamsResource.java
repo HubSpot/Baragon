@@ -2,13 +2,7 @@ package com.hubspot.baragon.service.resources;
 
 import java.util.Collection;
 
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
+import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 
 import com.google.inject.Inject;
@@ -36,7 +30,7 @@ public class BaragonUpstreamsResource {
   public Collection<String> getUnhealthyUpstreams(@PathParam("serviceName") String serviceName) {
     return baragonDeployManager.getUnhealthyUpstreams(serviceName);
   }
-  
+
   @POST
   @Path("/{serviceName}/pending")
   public void addPendingUpstream(@PathParam("serviceName") String serviceName, @QueryParam("upstream") String upstream) {
@@ -45,7 +39,11 @@ public class BaragonUpstreamsResource {
 
   @POST
   @Path("/{serviceName}/active")
-  public void addActiveUpstream(@PathParam("serviceName") String serviceName, @QueryParam("upstream") String upstream) {
-    baragonDeployManager.addPendingUpstream(serviceName, upstream);
+  public void addActiveUpstream(@PathParam("serviceName") String serviceName, @QueryParam("upstream") String upstream, @QueryParam("healthy") @DefaultValue("false") Boolean healthy) {
+    baragonDeployManager.addActiveUpstream(serviceName, upstream);
+
+    if (healthy) {
+      baragonDeployManager.markUpstreamHealthy(serviceName, upstream);
+    }
   }
 }

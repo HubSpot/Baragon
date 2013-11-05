@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Optional;
 import com.google.common.base.Throwables;
 import com.hubspot.baragon.data.BaragonDataStore;
 import com.hubspot.baragon.models.ServiceInfo;
@@ -46,10 +47,13 @@ public class LoadBalancerManager {
     
     LOG.info("Deploying to LB " + loadBalancer);
     try {
-      String leader = datastore.getLoadBalancerLeader(loadBalancer);
-      LOG.info("   Leader: " + leader);
+      Optional<String> maybeLeader = datastore.getLoadBalancerLeader(loadBalancer);
+      if (!maybeLeader.isPresent()) {
+        throw new RuntimeException("No leader for LB " + loadBalancer);
+      }
+      LOG.info("   Leader: " + maybeLeader.get());
 
-      Response response = asyncHttpClient.preparePost(String.format("http://%s/baragon-agent/v1/external/configs", leader))
+      Response response = asyncHttpClient.preparePost(String.format("http://%s/baragon-agent/v1/external/configs", maybeLeader.get()))
           .addHeader("Content-Type", "application/json")
           .setBody(objectMapper.writeValueAsBytes(new ServiceInfoAndUpstreams(serviceInfo, upstreams)))
           .execute().get();
@@ -64,10 +68,14 @@ public class LoadBalancerManager {
 
   public Map<String, Boolean> checkConfigs(String loadBalancer) {
     try {
-      String leader = datastore.getLoadBalancerLeader(loadBalancer);
-      LOG.info("   Leader: " + leader);
+      Optional<String> maybeLeader = datastore.getLoadBalancerLeader(loadBalancer);
+      if (!maybeLeader.isPresent()) {
+        throw new RuntimeException("No leader for LB " + loadBalancer);
+      }
 
-      Response response = asyncHttpClient.prepareGet(String.format("http://%s/baragon-agent/v1/external/configs", leader))
+      LOG.info("   Leader: " + maybeLeader.get());
+
+      Response response = asyncHttpClient.prepareGet(String.format("http://%s/baragon-agent/v1/external/configs", maybeLeader.get()))
           .execute().get();
 
       if (isSuccess(response)) {

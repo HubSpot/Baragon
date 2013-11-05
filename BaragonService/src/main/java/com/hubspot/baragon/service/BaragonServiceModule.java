@@ -5,6 +5,7 @@ import com.google.inject.Provides;
 import com.hubspot.baragon.config.BaragonBaseModule;
 import com.hubspot.baragon.config.ZooKeeperConfiguration;
 
+
 public class BaragonServiceModule extends AbstractModule {
 
   @Override
@@ -16,5 +17,4 @@ public class BaragonServiceModule extends AbstractModule {
   public ZooKeeperConfiguration provideZooKeeperConfiguration(BaragonConfiguration configuration) {
     return configuration.getZooKeeperConfiguration();
   }
-
 }
