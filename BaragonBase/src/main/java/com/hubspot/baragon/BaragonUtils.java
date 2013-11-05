@@ -22,16 +22,6 @@ public class BaragonUtils {
   public BaragonUtils(CuratorFramework curator) {
     this.curatorFramework = curator;
   }
-
-  public List<String> getLoadBalancerNames() {
-    try {
-      return curatorFramework.getChildren().forPath("/agent-leader");
-    } catch (KeeperException.NoNodeException e) {
-      return Collections.emptyList();
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
-  }
   
   public LeaderLatch getAgentLeaderLatch(String loadBalancerName) {
     return new LeaderLatch(curatorFramework, String.format("/agent-leader/%s", loadBalancerName));

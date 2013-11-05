@@ -3,14 +3,18 @@ package com.hubspot.baragon.data;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Optional;
 import com.google.common.base.Throwables;
+import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.hubspot.baragon.models.ServiceInfo;
 import org.apache.curator.framework.CuratorFramework;
+import org.apache.curator.framework.recipes.leader.LeaderLatch;
+import org.apache.curator.framework.recipes.leader.Participant;
 import org.apache.zookeeper.KeeperException;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
 @Singleton
 public class BaragonDataStore {
@@ -237,6 +241,38 @@ public class BaragonDataStore {
       return true;
     } catch (KeeperException.NoNodeException e) {
       return false;
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  public List<String> getLoadBalancers() {
+    try {
+      return curatorFramework.getChildren().forPath("/agent-leader");
+    } catch (KeeperException.NoNodeException e) {
+      return Collections.emptyList();
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  public List<String> getLoadBalancerHosts(String name) {
+    try {
+      final LeaderLatch latch = new LeaderLatch(curatorFramework, String.format("/agent-leader/%s", name));
+      List<String> hosts = Lists.newArrayList();
+      for (Participant participant : latch.getParticipants()) {
+        hosts.add(participant.getId());
+      }
+      return hosts;
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  public String getLoadBalancerLeader(String name) {
+    try {
+      final LeaderLatch latch = new LeaderLatch(curatorFramework, String.format("/agent-leader/%s", name));
+      return latch.getLeader().getId();
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
