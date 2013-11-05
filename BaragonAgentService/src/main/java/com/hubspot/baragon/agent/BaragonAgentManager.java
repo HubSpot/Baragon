@@ -9,7 +9,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
 import com.google.inject.name.Named;
-import com.hubspot.baragon.config.BaragonBaseModule;
 import com.hubspot.baragon.lbs.models.ServiceInfoAndUpstreams;
 import com.hubspot.baragon.models.ServiceInfo;
 import com.ning.http.client.AsyncCompletionHandler;
@@ -47,6 +46,12 @@ public class BaragonAgentManager {
     this.objectMapper = objectMapper;
     this.asyncHttpClient = asyncHttpClient;
     this.leaderLatch = leaderLatch;
+  }
+
+  public void checkForLeader() {
+    if (!leaderLatch.hasLeadership()) {
+      throw new RuntimeException("Not leader!");
+    }
   }
   
   private Collection<String> getParticipantIds() throws Exception {
@@ -107,7 +112,7 @@ public class BaragonAgentManager {
       }
 
       for (Future<?> future : futures) {
-        future.get(10, TimeUnit.SECONDS);
+        future.get();
       }
       
       if (unsuccessfulNodes.size() > 0) {
@@ -128,7 +133,7 @@ public class BaragonAgentManager {
     tryLock(30, TimeUnit.SECONDS);
 
     final ConcurrentMap<String, Boolean> status = Maps.newConcurrentMap();
-    
+
     try {
       Collection<Future<?>> futures = Lists.newLinkedList();
       for (final String id : getParticipantIds()) {
@@ -143,7 +148,7 @@ public class BaragonAgentManager {
       }
 
       for (Future<?> future : futures) {
-        future.get(10, TimeUnit.SECONDS);
+        future.get();
       }
     } catch (Exception e) {
       throw Throwables.propagate(e);
@@ -153,5 +158,4 @@ public class BaragonAgentManager {
     
     return status;
   }
-
 }

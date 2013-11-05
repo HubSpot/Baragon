@@ -13,6 +13,7 @@ import com.hubspot.baragon.healthchecks.HealthCheckClient;
 import com.hubspot.baragon.lbs.LbAdapter;
 import com.hubspot.baragon.nginx.NginxAdapter;
 import com.ning.http.client.AsyncHttpClient;
+import com.ning.http.client.AsyncHttpClientConfig;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.retry.ExponentialBackoffRetry;
@@ -61,8 +62,22 @@ public class BaragonBaseModule extends AbstractModule {
   @Singleton
   @HealthCheckClient
   public AsyncHttpClient providesHealthCheckClient() {
-    return new AsyncHttpClient();
+    return new AsyncHttpClient(new AsyncHttpClientConfig.Builder()
+      .setConnectionTimeoutInMs(5000)
+      .setRequestTimeoutInMs(5000)
+      .setFollowRedirects(true)
+      .setMaxRequestRetry(0)
+      .setUserAgent(BARAGON_USER_AGENT)
+      .build());
   }
 
 
+  @Provides
+  @Singleton
+  public AsyncHttpClient providesAsyncHttpClient() {
+    return new AsyncHttpClient(new AsyncHttpClientConfig.Builder()
+        .setFollowRedirects(true)
+        .setRequestTimeoutInMs(10000)
+        .build());
+  }
 }

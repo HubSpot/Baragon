@@ -36,6 +36,8 @@ public class ExternalResources {
   @Path("/configs")
   @GET
   public Map<String, Boolean> checkConfigs() {
+    coordinator.checkForLeader();
+
     LOG.info("Asking coordinator to check configs");
     return coordinator.checkConfigs();
   }
@@ -43,6 +45,8 @@ public class ExternalResources {
   @Path("/configs")
   @POST
   public void applyConfig(ServiceInfoAndUpstreams serviceInfoAndUpstreams) throws Exception {
+    coordinator.checkForLeader();
+
     LOG.info("Asking coordinator to apply " + serviceInfoAndUpstreams.getServiceInfo().getName());
     LOG.info("   Upstreams: " + Joiner.on(", ").join(serviceInfoAndUpstreams.getUpstreams()));
     coordinator.apply(serviceInfoAndUpstreams.getServiceInfo(), serviceInfoAndUpstreams.getUpstreams());
@@ -51,6 +55,8 @@ public class ExternalResources {
   @Path("/configs/{serviceName}")
   @DELETE
   public void removeProject(@PathParam("serviceName") String serviceName) throws Exception {
+    coordinator.checkForLeader();
+
     LOG.info("Asking coordinator to remove " + serviceName);
     // TODO remove
   }
@@ -58,6 +64,8 @@ public class ExternalResources {
   @Path("/cluster")
   @GET
   public Collection<String> getCluster() {
+    coordinator.checkForLeader();
+
     LOG.info("Asking coordinator for cluster info");
     return coordinator.getCluster();
   }
