@@ -9,7 +9,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
 import com.google.inject.name.Named;
-import com.hubspot.baragon.lbs.models.ServiceInfoAndUpstreams;
+import com.hubspot.baragon.models.ServiceInfoAndUpstreams;
 import com.hubspot.baragon.models.ServiceInfo;
 import com.ning.http.client.AsyncCompletionHandler;
 import com.ning.http.client.AsyncHttpClient;

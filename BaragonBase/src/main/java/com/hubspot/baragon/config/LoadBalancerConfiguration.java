@@ -1,18 +1,29 @@
 package com.hubspot.baragon.config;
 
-import org.apache.commons.exec.CommandLine;
+import javax.validation.constraints.NotNull;
 
 public class LoadBalancerConfiguration {
-  private String domain;
+
+  @NotNull
   private String type;
+
+  @NotNull
   private String name;
+
+  @NotNull
   private String rootPath;
+
+  @NotNull
   private String checkConfigCommand;
+
+  @NotNull
   private String reloadConfigCommand;
 
-  public String getDomain() {
-    return domain;
-  }
+  @NotNull
+  private String proxyTemplate;
+
+  @NotNull
+  private String upstreamTemplate;
 
   public String getType() {
     return type;
@@ -24,10 +35,6 @@ public class LoadBalancerConfiguration {
 
   public String getRootPath() {
     return rootPath;
-  }
-
-  public void setDomain(String domain) {
-    this.domain = domain;
   }
 
   public void setType(String type) {
@@ -56,5 +63,21 @@ public class LoadBalancerConfiguration {
 
   public String getReloadConfigCommand() {
     return reloadConfigCommand;
+  }
+
+  public void setProxyTemplate(String proxyTemplate) {
+    this.proxyTemplate = proxyTemplate;
+  }
+
+  public String getProxyTemplate() {
+    return proxyTemplate;
+  }
+
+  public void setUpstreamTemplatePath(String upstreamTemplate) {
+    this.upstreamTemplate = upstreamTemplate;
+  }
+
+  public String getUpstreamTemplate() {
+    return upstreamTemplate;
   }
 }

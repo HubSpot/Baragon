@@ -1,28 +1,31 @@
 package com.hubspot.baragon.agent;
 
+import java.io.StringReader;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.locks.ReentrantLock;
 
+import com.github.mustachejava.DefaultMustacheFactory;
+import com.github.mustachejava.Mustache;
+import com.github.mustachejava.MustacheFactory;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.*;
 import com.google.inject.name.Named;
 import com.hubspot.baragon.config.ZooKeeperConfiguration;
 import com.hubspot.baragon.config.LoadBalancerConfiguration;
+import com.hubspot.baragon.lbs.LbConfigGenerator;
 import io.dropwizard.Configuration;
 import io.dropwizard.setup.Environment;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.google.inject.name.Names;
-import com.hubspot.baragon.config.BaragonBaseModule;
+import com.hubspot.baragon.BaragonBaseModule;
 import com.hubspot.baragon.lbs.LbAdapter;
-import com.hubspot.baragon.lbs.LbConfigGenerator;
 import com.hubspot.baragon.lbs.LbConfigHelper;
 import com.hubspot.baragon.lbs.FilesystemConfigHelper;
-import com.hubspot.baragon.nginx.NginxConfigGenerator;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.leader.LeaderLatch;
 import org.eclipse.jetty.server.Connector;
@@ -38,10 +41,30 @@ public class BaragonAgentServiceModule extends AbstractModule {
     install(new BaragonBaseModule());
 
     // load balancer config generators
-    bind(Key.get(LbConfigGenerator.class, Names.named("nginx"))).to(NginxConfigGenerator.class);
+    bind(Key.get(LbConfigGenerator.class, Names.named("nginx"))).to(LbConfigGenerator.class);
     
     // the baragon agent service works on the local filesystem (as opposed to, say, via ssh)
     bind(LbConfigHelper.class).to(FilesystemConfigHelper.class).in(Scopes.SINGLETON);
+  }
+
+  @Provides
+  @Singleton
+  public MustacheFactory providesMustacheFactory() {
+    return new DefaultMustacheFactory();
+  }
+
+  @Provides
+  @Singleton
+  @Named(BaragonBaseModule.LB_PROXY_TEMPLATE)
+  public Mustache providesProxyTemplate(MustacheFactory mustacheFactory, LoadBalancerConfiguration configuration) throws Exception {
+    return mustacheFactory.compile(new StringReader(configuration.getProxyTemplate()), "proxy-template");
+  }
+
+  @Provides
+  @Singleton
+  @Named(BaragonBaseModule.LB_UPSTREAM_TEMPLATE)
+  public Mustache providesUpstreamTemplate(MustacheFactory mustacheFactory, LoadBalancerConfiguration configuration) throws Exception {
+    return mustacheFactory.compile(new StringReader(configuration.getUpstreamTemplate()), "upstream-template");
   }
   
   @Provides

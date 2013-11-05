@@ -15,7 +15,7 @@ import com.google.common.base.Joiner;
 import com.google.inject.Inject;
 import com.hubspot.baragon.lbs.LbAdapter;
 import com.hubspot.baragon.lbs.LbConfigHelper;
-import com.hubspot.baragon.lbs.models.ServiceInfoAndUpstreams;
+import com.hubspot.baragon.models.ServiceInfoAndUpstreams;
 
 @Path("/internal")
 @Produces(MediaType.APPLICATION_JSON)

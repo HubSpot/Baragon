@@ -1,4 +1,4 @@
-package com.hubspot.baragon.lbs.models;
+package com.hubspot.baragon.models;
 
 import java.util.Collection;
 

@@ -1,6 +1,7 @@
 package com.hubspot.baragon.service;
 
 import com.google.inject.Stage;
+import com.hubspot.baragon.service.config.BaragonConfiguration;
 import com.hubspot.dropwizard.guice.GuiceBundle;
 import io.dropwizard.Application;
 import io.dropwizard.setup.Bootstrap;

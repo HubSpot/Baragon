@@ -1,4 +1,4 @@
-package com.hubspot.baragon.service;
+package com.hubspot.baragon.service.config;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.hubspot.baragon.config.ZooKeeperConfiguration;

@@ -10,7 +10,6 @@ import org.apache.commons.logging.LogFactory;
 
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
-import com.hubspot.baragon.lbs.LoadBalancerManager;
 
 public class BaragonServiceManager {
   private static final Log LOG = LogFactory.getLog(BaragonServiceManager.class);

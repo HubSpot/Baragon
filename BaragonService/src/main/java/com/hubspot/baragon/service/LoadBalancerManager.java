@@ -1,4 +1,4 @@
-package com.hubspot.baragon.lbs;
+package com.hubspot.baragon.service;
 
 import java.util.Collection;
 import java.util.List;
@@ -16,9 +16,7 @@ import org.apache.commons.logging.LogFactory;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.inject.Inject;
-import com.hubspot.baragon.BaragonUtils;
-import com.hubspot.baragon.lbs.models.ServiceInfoAndUpstreams;
-import org.apache.curator.framework.recipes.leader.LeaderLatch;
+import com.hubspot.baragon.models.ServiceInfoAndUpstreams;
 
 public class LoadBalancerManager {
   private static final Log LOG = LogFactory.getLog(LoadBalancerManager.class);

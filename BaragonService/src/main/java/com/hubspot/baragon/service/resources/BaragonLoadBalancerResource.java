@@ -7,7 +7,7 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 
 import com.google.inject.Inject;
-import com.hubspot.baragon.lbs.LoadBalancerManager;
+import com.hubspot.baragon.service.LoadBalancerManager;
 
 @Path("/load-balancer")
 @Produces(MediaType.APPLICATION_JSON)

@@ -18,7 +18,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.google.inject.Inject;
-import com.hubspot.baragon.lbs.models.ServiceInfoAndUpstreams;
+import com.hubspot.baragon.models.ServiceInfoAndUpstreams;
 
 @Path("/external")
 @Produces(MediaType.APPLICATION_JSON)
