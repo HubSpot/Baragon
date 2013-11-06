@@ -5,11 +5,15 @@ import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 import com.hubspot.baragon.data.BaragonDataStore;
 import com.hubspot.baragon.models.ServiceInfo;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 public class BaragonUpstreamPoller {
+  private static final Log LOG = LogFactory.getLog(BaragonUpstreamPoller.class);
+
   private final ScheduledExecutorService scheduledExecutorService;
   private final BaragonDataStore datastore;
 
@@ -31,7 +35,7 @@ public class BaragonUpstreamPoller {
             continue; // wtf
           }
 
-          // TODO: check upstreams
+          LOG.info("TODO: check upstreams");  // TODO: check upstreams
         }
       }
     }, 30000, 30000, TimeUnit.MILLISECONDS);
