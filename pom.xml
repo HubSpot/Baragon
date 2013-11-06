@@ -35,7 +35,7 @@
 </repositories>
 
 <scm>
-    <connection>scm:git:git@github.com:HubSpot/Singularity.git</connection>
+    <connection>scm:git:git@github.com:HubSpot/Baragon.git</connection>
     <developerConnection>scm:git:git@github.com:HubSpot/Baragon.git</developerConnection>
     <url>git@github.com:HubSpot/Baragon.git</url>
 </scm>
