@@ -5,6 +5,8 @@ import java.util.Collection;
 import com.hubspot.baragon.data.BaragonDataStore;
 
 import com.hubspot.baragon.models.ServiceInfo;
+import com.hubspot.baragon.webhooks.WebhookEvent;
+import com.hubspot.baragon.webhooks.WebhookNotifier;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -16,11 +18,14 @@ public class BaragonServiceManager {
 
   private final BaragonDataStore datastore;
   private final LoadBalancerManager loadBalancerManager;
+  private final WebhookNotifier webhookNotifier;
 
   @Inject
-  public BaragonServiceManager(BaragonDataStore datastore, LoadBalancerManager loadBalancerManager) {
+  public BaragonServiceManager(BaragonDataStore datastore, LoadBalancerManager loadBalancerManager,
+                               WebhookNotifier webhookNotifier) {
     this.datastore = datastore;
     this.loadBalancerManager = loadBalancerManager;
+    this.webhookNotifier = webhookNotifier;
   }
 
   public void addPendingService(ServiceInfo serviceInfo) {
@@ -33,10 +38,19 @@ public class BaragonServiceManager {
     LOG.info(String.format("Adding service %s %s by %s", serviceInfo.getName(), serviceInfo.getId(), serviceInfo.getContactEmail()));
 
     datastore.addPendingService(serviceInfo);
+    webhookNotifier.notify(new WebhookEvent(WebhookEvent.EventType.SERVICE_ADDED, null, serviceInfo, null));
   }
 
   public boolean removePendingService(String serviceName) {
-    return datastore.removePendingService(serviceName);
+    Optional<ServiceInfo> maybeServiceInfo = datastore.getPendingService(serviceName);
+
+    if (maybeServiceInfo.isPresent()) {
+      datastore.removePendingService(serviceName);
+      webhookNotifier.notify(new WebhookEvent(WebhookEvent.EventType.SERVICE_ADDED, null, maybeServiceInfo.get(), null));
+      return true;
+    }
+
+    return false;
   }
 
   public void activateService(String name) {
@@ -54,6 +68,7 @@ public class BaragonServiceManager {
     }
 
     datastore.makeServiceActive(name);
+    webhookNotifier.notify(new WebhookEvent(WebhookEvent.EventType.SERVICE_ACTIVE, null, maybeServiceInfo.get(), null));
   }
 
   public Optional<ServiceInfo> getActiveService(String name) {

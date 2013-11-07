@@ -5,16 +5,27 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.hubspot.baragon.models.ServiceInfo;
 
 public class WebhookEvent {
+  private final EventType eventType;
+  private final String loadBalancer;
   private final ServiceInfo serviceInfo;
   private final String upstream;
-  private final Boolean healthy;
 
   @JsonCreator
-  public WebhookEvent(@JsonProperty("serviceInfo") ServiceInfo serviceInfo, @JsonProperty("upstream") String upstream,
-                      @JsonProperty("healthy") Boolean healthy) {
+  public WebhookEvent(@JsonProperty("eventType") EventType eventType,
+                      @JsonProperty("loadBalancer") String loadBalancer,
+                      @JsonProperty("serviceInfo") ServiceInfo serviceInfo, @JsonProperty("upstream") String upstream) {
+    this.loadBalancer = loadBalancer;
     this.serviceInfo = serviceInfo;
     this.upstream = upstream;
-    this.healthy = healthy;
+    this.eventType = eventType;
+  }
+
+  public EventType getEventType() {
+    return eventType;
+  }
+
+  public String getLoadBalancer() {
+    return loadBalancer;
   }
 
   public ServiceInfo getServiceInfo() {
@@ -25,7 +36,13 @@ public class WebhookEvent {
     return upstream;
   }
 
-  public Boolean getHealthy() {
-    return healthy;
+  public static enum EventType {
+    SERVICE_ADDED,
+    SERVICE_ACTIVE,
+    SERVICE_REMOVED,
+    UPSTREAM_ADDED,
+    UPSTREAM_HEALTHY,
+    UPSTREAM_UNHEALTHY,
+    UPSTREAM_REMOVED,
   }
 }
