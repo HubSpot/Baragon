@@ -31,6 +31,7 @@ public class BaragonAgentServiceModule extends AbstractModule {
   private static final Log LOG = LogFactory.getLog(BaragonAgentServiceModule.class);
 
   public static final String LB_CLUSTER_LOCK = "baragon.cluster.lock";
+  public static final String UPSTREAM_POLL_INTERVAL_PROPERTY = "baragon.upstream.poll.interval";
 
   @Override
   protected void configure() {
@@ -39,6 +40,12 @@ public class BaragonAgentServiceModule extends AbstractModule {
     // the baragon agent service works on the local filesystem (as opposed to, say, via ssh)
     bind(LbConfigHelper.class).to(FilesystemConfigHelper.class).in(Scopes.SINGLETON);
     bind(LbAdapter.class).to(LocalLbAdapter.class).in(Scopes.SINGLETON);
+  }
+
+  @Provides
+  @Named(UPSTREAM_POLL_INTERVAL_PROPERTY)
+  public int providesUpstreamPollInterval(BaragonAgentConfiguration configuration) {
+    return configuration.getUpstreamPollIntervalMs();
   }
 
   @Provides

@@ -26,47 +26,47 @@ import com.hubspot.baragon.models.ServiceInfoAndUpstreams;
 public class ExternalResources {
   private static final Log LOG = LogFactory.getLog(ExternalResources.class);
   
-  private final BaragonAgentManager coordinator;
+  private final BaragonAgentManager agentManager;
   
   @Inject
-  public ExternalResources(BaragonAgentManager coordinator) {
-    this.coordinator = coordinator;
+  public ExternalResources(BaragonAgentManager agentManager) {
+    this.agentManager = agentManager;
   }
   
   @Path("/configs")
   @GET
   public Map<String, Boolean> checkConfigs() {
-    coordinator.checkForLeader();
+    agentManager.checkForLeader();
 
-    LOG.info("Asking coordinator to check configs");
-    return coordinator.checkConfigs();
+    LOG.info("Asking agentManager to check configs");
+    return agentManager.checkConfigs();
   }
   
   @Path("/configs")
   @POST
   public void applyConfig(ServiceInfoAndUpstreams serviceInfoAndUpstreams) throws Exception {
-    coordinator.checkForLeader();
+    agentManager.checkForLeader();
 
-    LOG.info("Asking coordinator to apply " + serviceInfoAndUpstreams.getServiceInfo().getName());
+    LOG.info("Asking agentManager to apply " + serviceInfoAndUpstreams.getServiceInfo().getName());
     LOG.info("   Upstreams: " + Joiner.on(", ").join(serviceInfoAndUpstreams.getUpstreams()));
-    coordinator.apply(serviceInfoAndUpstreams.getServiceInfo(), serviceInfoAndUpstreams.getUpstreams());
+    agentManager.apply(serviceInfoAndUpstreams.getServiceInfo(), serviceInfoAndUpstreams.getUpstreams());
   }
   
   @Path("/configs/{serviceName}")
   @DELETE
   public void removeProject(@PathParam("serviceName") String serviceName) throws Exception {
-    coordinator.checkForLeader();
+    agentManager.checkForLeader();
 
-    LOG.info("Asking coordinator to remove " + serviceName);
+    LOG.info("Asking agentManager to remove " + serviceName);
     // TODO remove
   }
   
   @Path("/cluster")
   @GET
   public Collection<String> getCluster() {
-    coordinator.checkForLeader();
+    agentManager.checkForLeader();
 
-    LOG.info("Asking coordinator for cluster info");
-    return coordinator.getCluster();
+    LOG.info("Asking agentManager for cluster info");
+    return agentManager.getCluster();
   }
 }

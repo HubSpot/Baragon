@@ -12,6 +12,9 @@ public class BaragonAgentConfiguration extends Configuration {
   @JsonProperty("loadBalancer")
   private LoadBalancerConfiguration loadBalancerConfiguration;
 
+  @JsonProperty("upstreamPollIntervalMs")
+  private int upstreamPollIntervalMs = 10000;
+
   public ZooKeeperConfiguration getZooKeeperConfiguration() {
     return zooKeeperConfiguration;
   }
@@ -26,5 +29,13 @@ public class BaragonAgentConfiguration extends Configuration {
 
   public void setLoadBalancerConfiguration(LoadBalancerConfiguration loadBalancerConfiguration) {
     this.loadBalancerConfiguration = loadBalancerConfiguration;
+  }
+
+  public int getUpstreamPollIntervalMs() {
+    return upstreamPollIntervalMs;
+  }
+
+  public void setUpstreamPollIntervalMs(int upstreamPollIntervalMs) {
+    this.upstreamPollIntervalMs = upstreamPollIntervalMs;
   }
 }
