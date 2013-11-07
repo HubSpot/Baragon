@@ -77,14 +77,8 @@ public class BaragonServiceManager {
     }
   }
 
-  public void addPendingUpstream(String name, String upstream) {
-    Optional<ServiceInfo> maybeServiceInfo = datastore.getPendingService(name);
-
-    if (!maybeServiceInfo.isPresent()) {
-      throw new RuntimeException("No such service");
-    }
-
-    datastore.addUnhealthyUpstream(maybeServiceInfo.get().getName(), maybeServiceInfo.get().getId(), upstream);
+  public void addUnhealthyUpstream(String name, String id, String upstream) {
+    datastore.addUnhealthyUpstream(name, id, upstream);
   }
 
   public void addActiveUpstream(String name, String upstream) {
@@ -97,37 +91,20 @@ public class BaragonServiceManager {
     datastore.addUnhealthyUpstream(maybeServiceInfo.get().getName(), maybeServiceInfo.get().getId(), upstream);
   }
 
-  public void markUpstreamHealthy(String name, String upstream) {
-    Optional<ServiceInfo> maybeServiceInfo = datastore.getActiveService(name);
-
-    if (!maybeServiceInfo.isPresent()) {
-      throw new RuntimeException("No such service");
-    }
-
-    datastore.makeUpstreamHealthy(maybeServiceInfo.get().getName(), maybeServiceInfo.get().getId(), upstream);
+  public void makeUpstreamHealthy(String name, String id, String upstream) {
+    datastore.makeUpstreamHealthy(name, id, upstream);
   }
 
   public void removeUpstream(String name, String id, String upstream) {
-    // TODO: implement
+    datastore.removeHealthyUpstream(name, id, upstream);
+    datastore.removeUnhealthyUpstream(name, id, upstream);
   }
 
-  public Collection<String> getHealthyUpstreams(String name) {
-    Optional<ServiceInfo> maybeServiceInfo = datastore.getActiveService(name);
-
-    if (!maybeServiceInfo.isPresent()) {
-      throw new RuntimeException("Service is not active");
-    }
-
-    return datastore.getHealthyUpstreams(name, maybeServiceInfo.get().getId());
+  public Collection<String> getHealthyUpstreams(String name, String id) {
+    return datastore.getHealthyUpstreams(name, id);
   }
 
-  public Collection<String> getUnhealthyUpstreams(String name) {
-    Optional<ServiceInfo> maybeServiceInfo = datastore.getActiveService(name);
-
-    if (!maybeServiceInfo.isPresent()) {
-      throw new RuntimeException("Service is not active");
-    }
-
-    return datastore.getUnhealthyUpstreams(name, maybeServiceInfo.get().getId());
+  public Collection<String> getUnhealthyUpstreams(String name, String id) {
+    return datastore.getUnhealthyUpstreams(name, id);
   }
 }

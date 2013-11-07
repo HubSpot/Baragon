@@ -24,7 +24,7 @@ public class BaragonServiceResource {
   }
 
   @POST
-  public void add(ServiceInfo serviceInfo) {
+  public void addPendingService(ServiceInfo serviceInfo) {
     baragonDeployManager.addPendingService(serviceInfo);
   }
 

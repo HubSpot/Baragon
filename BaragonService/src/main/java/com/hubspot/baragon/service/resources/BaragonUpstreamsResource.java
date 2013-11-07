@@ -20,30 +20,30 @@ public class BaragonUpstreamsResource {
   }
   
   @GET
-  @Path("/{serviceName}/healthy")
-  public Collection<String> getHealthyUpstreams(@PathParam("serviceName") String serviceName) {
-    return baragonDeployManager.getHealthyUpstreams(serviceName);
+  @Path("/{serviceName}/{serviceId}/healthy")
+  public Collection<String> getHealthyUpstreams(@PathParam("serviceName") String serviceName, @PathParam("serviceId") String serviceId) {
+    return baragonDeployManager.getHealthyUpstreams(serviceName, serviceId);
   }
 
   @GET
-  @Path("/{serviceName}/unhealthy")
-  public Collection<String> getUnhealthyUpstreams(@PathParam("serviceName") String serviceName) {
-    return baragonDeployManager.getUnhealthyUpstreams(serviceName);
+  @Path("/{serviceName}/{serviceId}/unhealthy")
+  public Collection<String> getUnhealthyUpstreams(@PathParam("serviceName") String serviceName, @PathParam("serviceId") String serviceId) {
+    return baragonDeployManager.getUnhealthyUpstreams(serviceName, serviceId);
   }
 
   @POST
-  @Path("/{serviceName}/pending")
-  public void addPendingUpstream(@PathParam("serviceName") String serviceName, @QueryParam("upstream") String upstream) {
-    baragonDeployManager.addPendingUpstream(serviceName, upstream);
-  }
-
-  @POST
-  @Path("/{serviceName}/active")
-  public void addActiveUpstream(@PathParam("serviceName") String serviceName, @QueryParam("upstream") String upstream, @QueryParam("healthy") @DefaultValue("false") Boolean healthy) {
-    baragonDeployManager.addActiveUpstream(serviceName, upstream);
+  @Path("/{serviceName}/{serviceId}")
+  public void addUpstream(@PathParam("serviceName") String serviceName, @PathParam("serviceId") String serviceId, @QueryParam("upstream") String upstream, @QueryParam("healthy") @DefaultValue("false") Boolean healthy) {
+    baragonDeployManager.addUnhealthyUpstream(serviceName, serviceId, upstream);
 
     if (healthy) {
-      baragonDeployManager.markUpstreamHealthy(serviceName, upstream);
+      baragonDeployManager.makeUpstreamHealthy(serviceName, serviceId, upstream);
     }
+  }
+
+  @DELETE
+  @Path("/{serviceName}/{serviceId}/{upstream}")
+  public void removeUpstream(@PathParam("serviceName") String serviceName, @PathParam("serviceId") String serviceId, @PathParam("upstream") String upstream) {
+    baragonDeployManager.removeUpstream(serviceName, serviceId, upstream);
   }
 }

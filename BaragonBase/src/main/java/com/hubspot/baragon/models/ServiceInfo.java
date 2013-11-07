@@ -1,7 +1,9 @@
 package com.hubspot.baragon.models;
 
 import com.fasterxml.jackson.annotation.*;
+import com.google.common.base.Objects;
 
+import java.util.Collections;
 import java.util.List;
 
 public class ServiceInfo {
@@ -22,7 +24,7 @@ public class ServiceInfo {
     this.id = id;
     this.contactEmail = contactEmail;
     this.route = route;
-    this.extraConfigs = extraConfigs;
+    this.extraConfigs = Objects.firstNonNull(extraConfigs, Collections.<String>emptyList());
     this.healthCheck = healthCheck;
     this.lbs = lbs;
   }

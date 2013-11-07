@@ -65,16 +65,12 @@ public class BaragonDataStore {
     return "/services/active";
   }
 
-  private String buildPendingUpstreamsPath(String name, String id) {
-    return String.format("/upstreams/pending/%s/%s", name, id);
-  }
-
-  private String buildPendingUpstreamPath(String name, String id, String upstream) {
-    return String.format("/upstreams/pending/%s/%s/%s", name, id, upstream);
+  private String buildPendingServicesPath() {
+    return "/services/pending";
   }
 
   private String buildHealthyUpstreamsPath(String name, String id) {
-    return String.format("/upstreams/healthy/%s", name, id);
+    return String.format("/upstreams/healthy/%s/%s", name, id);
   }
 
   private String buildHealthyUpstreamPath(String name, String id, String upstream) {
@@ -93,6 +89,16 @@ public class BaragonDataStore {
   public boolean hasPendingService(String name) {
     try {
       return curatorFramework.checkExists().forPath(buildPendingServicePath(name)) != null;
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  public Collection<String> getPendingServices() {
+    try {
+      return curatorFramework.getChildren().forPath(buildPendingServicesPath());
+    } catch (KeeperException.NoNodeException nne) {
+      return Collections.emptyList();
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
