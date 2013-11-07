@@ -1,12 +1,16 @@
 package com.hubspot.baragon.data;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import com.google.common.base.Throwables;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.hubspot.baragon.models.ServiceInfo;
+import com.ning.http.util.Base64;
+import com.sun.istack.internal.Nullable;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.leader.LeaderLatch;
 import org.apache.curator.framework.recipes.leader.Participant;
@@ -83,6 +87,14 @@ public class BaragonDataStore {
 
   private String buildUnhealthyUpstreamPath(String name, String id, String upstream) {
     return String.format("/upstreams/unhealthy/%s/%s/%s", name, id, upstream);
+  }
+
+  private String buildWebhooksPath() {
+    return "/webhooks";
+  }
+
+  private String buildWebhookPath(String url) {
+    return String.format("/webhooks/%s", Base64.encode(url.getBytes()));
   }
 
   // pending services
@@ -247,6 +259,42 @@ public class BaragonDataStore {
       return true;
     } catch (KeeperException.NoNodeException e) {
       return false;
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  // webhooks
+  public void addWebhook(String url) {
+    try {
+      curatorFramework.create().creatingParentsIfNeeded().forPath(buildWebhookPath(url));
+    } catch (KeeperException.NodeExistsException nee) {
+      // OK
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  public Iterable<String> getWebhooks() {
+    try {
+      return Iterables.transform(curatorFramework.getChildren().forPath(buildWebhooksPath()), new Function<String, String>() {
+        @Override
+        public String apply(@Nullable String input) {
+          return new String(Base64.decode(input));
+        }
+      });
+    } catch (KeeperException.NoNodeException nne) {
+      return Collections.emptyList();
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  public void removeWebhook(String url) {
+    try {
+      curatorFramework.delete().forPath(buildWebhookPath(url));
+    } catch (KeeperException.NoNodeException nne) {
+      // OK
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }

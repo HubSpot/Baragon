@@ -8,6 +8,8 @@ import com.google.inject.name.Named;
 import com.hubspot.baragon.data.BaragonDataStore;
 import com.hubspot.baragon.healthchecks.HealthCheckClient;
 import com.hubspot.baragon.models.ServiceInfo;
+import com.hubspot.baragon.webhooks.WebhookEvent;
+import com.hubspot.baragon.webhooks.WebhookNotifier;
 import com.ning.http.client.AsyncCompletionHandler;
 import com.ning.http.client.AsyncHttpClient;
 import com.ning.http.client.Response;
@@ -27,18 +29,20 @@ public class BaragonUpstreamPoller {
   private final BaragonDataStore datastore;
   private final BaragonAgentManager agentManager;
   private final AsyncHttpClient asyncHttpClient;
+  private final WebhookNotifier webhookNotifier;
   private final int pollInterval;
 
   @Inject
   public BaragonUpstreamPoller(@HealthCheckClient AsyncHttpClient asyncHttpClient,
                                ScheduledExecutorService scheduledExecutorService, BaragonDataStore datastore,
                                @Named(BaragonAgentServiceModule.UPSTREAM_POLL_INTERVAL_PROPERTY) int pollInterval,
-                               BaragonAgentManager agentManager) {
+                               BaragonAgentManager agentManager, WebhookNotifier webhookNotifier) {
     this.asyncHttpClient = asyncHttpClient;
     this.scheduledExecutorService = scheduledExecutorService;
     this.datastore = datastore;
     this.pollInterval = pollInterval;
     this.agentManager = agentManager;
+    this.webhookNotifier = webhookNotifier;
   }
 
   private boolean isSuccess(Response response) {
@@ -63,6 +67,7 @@ public class BaragonUpstreamPoller {
                     if (!isSuccess(response)) {
                       LOG.info(String.format("%s-%s %s is now UNHEALTHY (HTTP %d)", serviceInfo.getName(), serviceInfo.getId(), upstream, response.getStatusCode()));
                       datastore.makeUpstreamUnhealthy(serviceInfo.getName(), serviceInfo.getId(), upstream);
+                      webhookNotifier.notify(new WebhookEvent(serviceInfo, upstream, false));
                       return true;
                     }
                     return false;
@@ -72,6 +77,7 @@ public class BaragonUpstreamPoller {
                   public void onThrowable(Throwable t) {
                     LOG.info(String.format("%s-%s %s is now UNHEALTHY (%s)", serviceInfo.getName(), serviceInfo.getId(), upstream, t.getMessage()));
                     datastore.makeUpstreamUnhealthy(serviceInfo.getName(), serviceInfo.getId(), upstream);
+                    webhookNotifier.notify(new WebhookEvent(serviceInfo, upstream, false));
                   }
                 }));
           } catch (IOException e) {
@@ -88,6 +94,7 @@ public class BaragonUpstreamPoller {
                     if (isSuccess(response)) {
                       LOG.info(String.format("%s-%s %s is now HEALTHY", serviceInfo.getName(), serviceInfo.getId(), upstream));
                       datastore.makeUpstreamHealthy(serviceInfo.getName(), serviceInfo.getId(), upstream);
+                      webhookNotifier.notify(new WebhookEvent(serviceInfo, upstream, true));
                       return true;
                     }
                     return false;
