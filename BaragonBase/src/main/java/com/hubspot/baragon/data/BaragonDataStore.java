@@ -10,7 +10,6 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.hubspot.baragon.models.ServiceInfo;
 import com.ning.http.util.Base64;
-import com.sun.istack.internal.Nullable;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.leader.LeaderLatch;
 import org.apache.curator.framework.recipes.leader.Participant;
@@ -279,7 +278,7 @@ public class BaragonDataStore {
     try {
       return Iterables.transform(curatorFramework.getChildren().forPath(buildWebhooksPath()), new Function<String, String>() {
         @Override
-        public String apply(@Nullable String input) {
+        public String apply(String input) {
           return new String(Base64.decode(input));
         }
       });
