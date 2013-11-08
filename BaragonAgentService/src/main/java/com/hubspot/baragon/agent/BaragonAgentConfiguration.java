@@ -9,7 +9,7 @@ public class BaragonAgentConfiguration extends Configuration {
   @JsonProperty("zookeeper")
   private ZooKeeperConfiguration zooKeeperConfiguration;
 
-  @JsonProperty("loadBalancer")
+  @JsonProperty("loadBalancerConfig")
   private LoadBalancerConfiguration loadBalancerConfiguration;
 
   @JsonProperty("upstreamPollIntervalMs")
