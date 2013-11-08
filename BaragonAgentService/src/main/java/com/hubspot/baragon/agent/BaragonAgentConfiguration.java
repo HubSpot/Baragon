@@ -1,10 +1,12 @@
 package com.hubspot.baragon.agent;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.hubspot.baragon.config.ZooKeeperConfiguration;
 import com.hubspot.baragon.config.LoadBalancerConfiguration;
 import io.dropwizard.Configuration;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class BaragonAgentConfiguration extends Configuration {
   @JsonProperty("zookeeper")
   private ZooKeeperConfiguration zooKeeperConfiguration;
