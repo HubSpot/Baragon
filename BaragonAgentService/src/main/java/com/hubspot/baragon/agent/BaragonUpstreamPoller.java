@@ -129,7 +129,7 @@ public class BaragonUpstreamPoller {
         for (String serviceName: datastore.getPendingServices()) {
           Optional<ServiceInfo> maybeServiceInfo = datastore.getPendingService(serviceName);
 
-          if (maybeServiceInfo.isPresent()) {
+          if (maybeServiceInfo.isPresent() && maybeServiceInfo.get().getLbs().contains(loadBalancerConfiguration.getName())) {
             checkService(maybeServiceInfo.get(), false);
           }
         }
@@ -137,7 +137,7 @@ public class BaragonUpstreamPoller {
         for (String serviceName : datastore.getActiveServices()) {
           Optional<ServiceInfo> maybeServiceInfo = datastore.getActiveService(serviceName);
 
-          if (maybeServiceInfo.isPresent()) {
+          if (maybeServiceInfo.isPresent() && maybeServiceInfo.get().getLbs().contains(loadBalancerConfiguration.getName())) {
             checkService(maybeServiceInfo.get(), true);
           }
         }
