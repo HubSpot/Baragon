@@ -10,10 +10,13 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 
 import com.google.common.base.Joiner;
 import com.hubspot.baragon.agent.BaragonAgentManager;
+import com.hubspot.baragon.agent.LeaderRedirector;
+import org.apache.commons.lang.NotImplementedException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -27,16 +30,18 @@ public class ExternalResources {
   private static final Log LOG = LogFactory.getLog(ExternalResources.class);
   
   private final BaragonAgentManager agentManager;
+  private final LeaderRedirector leaderRedirector;
   
   @Inject
-  public ExternalResources(BaragonAgentManager agentManager) {
+  public ExternalResources(BaragonAgentManager agentManager, LeaderRedirector leaderRedirector) {
     this.agentManager = agentManager;
+    this.leaderRedirector = leaderRedirector;
   }
   
   @Path("/configs")
   @GET
   public Map<String, Boolean> checkConfigs() {
-    agentManager.checkForLeader();
+    leaderRedirector.redirectToLeader();
 
     LOG.info("Asking agentManager to check configs");
     return agentManager.checkConfigs();
@@ -45,7 +50,7 @@ public class ExternalResources {
   @Path("/configs")
   @POST
   public void applyConfig(ServiceInfoAndUpstreams serviceInfoAndUpstreams) throws Exception {
-    agentManager.checkForLeader();
+    leaderRedirector.redirectToLeader();
 
     LOG.info("Asking agentManager to apply " + serviceInfoAndUpstreams.getServiceInfo().getName());
     LOG.info("   Upstreams: " + Joiner.on(", ").join(serviceInfoAndUpstreams.getUpstreams()));
@@ -55,16 +60,16 @@ public class ExternalResources {
   @Path("/configs/{serviceName}")
   @DELETE
   public void removeProject(@PathParam("serviceName") String serviceName) throws Exception {
-    agentManager.checkForLeader();
+    leaderRedirector.redirectToLeader();
 
     LOG.info("Asking agentManager to remove " + serviceName);
-    // TODO remove
+    throw new NotImplementedException("TODO: agentManager.remove()");
   }
   
   @Path("/cluster")
   @GET
   public Collection<String> getCluster() {
-    agentManager.checkForLeader();
+    leaderRedirector.redirectToLeader();
 
     LOG.info("Asking agentManager for cluster info");
     return agentManager.getCluster();

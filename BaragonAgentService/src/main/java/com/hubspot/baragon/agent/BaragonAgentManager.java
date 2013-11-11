@@ -47,12 +47,6 @@ public class BaragonAgentManager {
     this.asyncHttpClient = asyncHttpClient;
     this.leaderLatch = leaderLatch;
   }
-
-  public void checkForLeader() {
-    if (!leaderLatch.hasLeadership()) {
-      throw new RuntimeException("Not leader!");
-    }
-  }
   
   private Collection<String> getParticipantIds() throws Exception {
     Collection<String> results = Lists.newArrayList();
