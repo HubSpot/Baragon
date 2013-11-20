@@ -1,17 +1,16 @@
 package com.hubspot.baragon.service;
 
-import java.util.Collection;
-
+import com.google.common.base.Optional;
+import com.google.inject.Inject;
 import com.hubspot.baragon.data.BaragonDataStore;
-
+import com.hubspot.baragon.exceptions.PendingServiceOccupiedException;
 import com.hubspot.baragon.models.ServiceInfo;
 import com.hubspot.baragon.webhooks.WebhookEvent;
 import com.hubspot.baragon.webhooks.WebhookNotifier;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.google.common.base.Optional;
-import com.google.inject.Inject;
+import java.util.Collection;
 
 public class BaragonServiceManager {
   private static final Log LOG = LogFactory.getLog(BaragonServiceManager.class);
@@ -32,7 +31,7 @@ public class BaragonServiceManager {
     Optional<ServiceInfo> maybeServiceInfo = datastore.getPendingService(serviceInfo.getName());
 
     if (maybeServiceInfo.isPresent()) {
-      throw new RuntimeException(String.format("Already a pending service by %s", maybeServiceInfo.get().getContactEmail()));
+      throw new PendingServiceOccupiedException(maybeServiceInfo.get());
     }
 
     LOG.info(String.format("Adding service %s %s by %s", serviceInfo.getName(), serviceInfo.getId(), serviceInfo.getContactEmail()));

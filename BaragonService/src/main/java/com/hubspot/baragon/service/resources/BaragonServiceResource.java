@@ -2,6 +2,7 @@ package com.hubspot.baragon.service.resources;
 
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
+import com.hubspot.baragon.exceptions.PendingServiceOccupiedException;
 import com.hubspot.baragon.service.BaragonServiceManager;
 import com.hubspot.baragon.models.ServiceInfo;
 import org.apache.commons.logging.Log;
@@ -9,6 +10,7 @@ import org.apache.commons.logging.LogFactory;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 
 @Path("/service")
 @Produces(MediaType.APPLICATION_JSON)
@@ -25,7 +27,13 @@ public class BaragonServiceResource {
 
   @POST
   public void addPendingService(ServiceInfo serviceInfo) {
-    baragonDeployManager.addPendingService(serviceInfo);
+    try {
+      baragonDeployManager.addPendingService(serviceInfo);
+    } catch (PendingServiceOccupiedException e) {
+      throw new WebApplicationException(Response.status(Response.Status.CONFLICT)
+          .entity(e.getPendingService())
+          .build());
+    }
   }
 
   @POST
