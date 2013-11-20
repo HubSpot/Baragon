@@ -1,5 +1,6 @@
 package com.hubspot.baragon.client;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Optional;
 import com.google.common.base.Throwables;
@@ -11,14 +12,20 @@ import com.ning.http.client.AsyncHttpClient;
 import com.ning.http.client.Response;
 
 import java.io.IOException;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.concurrent.ExecutionException;
 
 public class BaragonClient {
   private static final String SERVICE_FORMAT = "%s/service";
   private static final String SERVICE_PENDING_FORMAT = "%s/service/%s/pending";
+  private static final String SERVICE_ACTIVE_FORMAT = "%s/service/%s/active";
   private static final String UPSTREAMS_FORMAT = "%s/upstreams/%s/%s";
   private static final String UPSTREAM_FORMAT = "%s/upstreams/%s/%s/%s";
   private static final String SERVICE_ACTIVATE_FORMAT = "%s/service/%s/activate";
+  private static final String UPSTREAMS_UNHEALTHY_FORMAT = "%s/upstreams/%s/%s/unhealthy";
+  private static final String UPSTREAMS_HEALTHY_FORMAT = "%s/upstreams/%s/%s/unhealthy";
+  private static final String WEBHOOKS_FORMAT = "%s/webhooks";
 
 
   private final AsyncHttpClient asyncHttpClient;
@@ -34,6 +41,30 @@ public class BaragonClient {
 
   private boolean isSuccess(Response response) {
     return response.getStatusCode() >= 200 && response.getStatusCode() < 300;
+  }
+
+  private <T> Optional<T> tryDeserialize(Response response, Class<T> klass, String action) throws IOException {
+    if (response.getStatusCode() == 404) {
+      return Optional.absent();
+    }
+
+    if (!isSuccess(response)) {
+      throw new RuntimeException(String.format("Failed to %s -- HTTP %s: %s", action, response.getStatusCode(), response.getResponseBody()));
+    }
+
+    return Optional.of(objectMapper.readValue(response.getResponseBodyAsStream(), klass));
+  }
+
+  private <T> Collection<T> tryDeserializeCollection(Response response, Class<T> klass, String action) throws IOException {
+    if (response.getStatusCode() == 404) {
+      return Collections.emptyList();
+    }
+
+    if (!isSuccess(response)) {
+      throw new RuntimeException(String.format("Failed to %s -- HTTP %s: %s", action, response.getStatusCode(), response.getResponseBody()));
+    }
+
+    return objectMapper.readValue(response.getResponseBodyAsStream(), new TypeReference<Collection<T>>() { });
   }
 
   public void addPendingService(ServiceInfo serviceInfo) throws PendingServiceOccupiedException {
@@ -60,16 +91,18 @@ public class BaragonClient {
       Response response = asyncHttpClient.prepareDelete(String.format(SERVICE_PENDING_FORMAT, baseUrl, serviceName))
           .execute().get();
 
-      if (response.getStatusCode() == 404) {
-        return Optional.absent();
-      }
+      return tryDeserialize(response, ServiceInfo.class, "remove pending service");
+    } catch (IOException | InterruptedException | ExecutionException e) {
+      throw Throwables.propagate(e);
+    }
+  }
 
-      if (!isSuccess(response)) {
-        throw new RuntimeException(String.format("Failed to remove pending service -- HTTP %s: %s", response.getStatusCode(), response.getResponseBody()));
-      }
+  public Optional<ServiceInfo> getPendingService(String serviceName) {
+    try {
+      Response response = asyncHttpClient.prepareGet(String.format(SERVICE_PENDING_FORMAT, baseUrl, serviceName))
+          .execute().get();
 
-      return Optional.of(objectMapper.readValue(response.getResponseBodyAsStream(), ServiceInfo.class));
-
+      return tryDeserialize(response, ServiceInfo.class, "get pending service");
     } catch (IOException | InterruptedException | ExecutionException e) {
       throw Throwables.propagate(e);
     }
@@ -102,20 +135,84 @@ public class BaragonClient {
     }
   }
 
+  public Collection<String> getUnhealthyUpstreams(String serviceName, String serviceId) {
+    try {
+      Response response = asyncHttpClient.prepareGet(String.format(UPSTREAMS_UNHEALTHY_FORMAT, baseUrl, serviceName, serviceId))
+          .execute().get();
+
+      return tryDeserializeCollection(response, String.class, "get unhealthy upstreams");
+    } catch (IOException | InterruptedException | ExecutionException e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  public Collection<String> getHealthyUpstreams(String serviceName, String serviceId) {
+    try {
+      Response response = asyncHttpClient.prepareGet(String.format(UPSTREAMS_HEALTHY_FORMAT, baseUrl, serviceName, serviceId))
+          .execute().get();
+
+      return tryDeserializeCollection(response, String.class, "get healthy upstreams");
+    } catch (IOException | InterruptedException | ExecutionException e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  public Optional<ServiceInfo> getActiveService(String serviceName) {
+    try {
+      Response response = asyncHttpClient.prepareGet(String.format(SERVICE_ACTIVE_FORMAT, baseUrl, serviceName))
+          .execute().get();
+
+      return tryDeserialize(response, ServiceInfo.class, "get pending service");
+    } catch (IOException | InterruptedException | ExecutionException e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
   public Optional<ServiceInfo> activateService(String serviceName) {
     try {
       Response response = asyncHttpClient.preparePost(String.format(SERVICE_ACTIVATE_FORMAT, baseUrl, serviceName))
           .execute().get();
 
-      if (response.getStatusCode() == 404) {
-        return Optional.absent();
-      }
+      return tryDeserialize(response, ServiceInfo.class, "activate service");
+    } catch (IOException | InterruptedException | ExecutionException e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  public Collection<String> getWebhooks() {
+    try {
+      Response response = asyncHttpClient.prepareGet(String.format(WEBHOOKS_FORMAT, baseUrl))
+          .execute().get();
+
+      return tryDeserializeCollection(response, String.class, "get webhooks");
+    } catch (IOException | InterruptedException | ExecutionException e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  public void addWebhook(String webhook) {
+    try {
+      Response response = asyncHttpClient.preparePost(String.format(WEBHOOKS_FORMAT, baseUrl))
+          .addQueryParameter("webhook", webhook)
+          .execute().get();
 
       if (!isSuccess(response)) {
-        throw new RuntimeException(String.format("Failed to activate service -- HTTP %s: %s", response.getStatusCode(), response.getResponseBody()));
+        throw new RuntimeException(String.format("Failed to add webhook -- HTTP %s: %s", response.getStatusCode(), response.getResponseBody()));
       }
+    } catch (IOException | InterruptedException | ExecutionException e) {
+      throw Throwables.propagate(e);
+    }
+  }
 
-      return Optional.of(objectMapper.readValue(response.getResponseBodyAsStream(), ServiceInfo.class));
+  public void removeWebhook(String webhook) {
+    try {
+      Response response = asyncHttpClient.prepareDelete(String.format(WEBHOOKS_FORMAT, baseUrl))
+          .addQueryParameter("webhook", webhook)
+          .execute().get();
+
+      if (!isSuccess(response)) {
+        throw new RuntimeException(String.format("Failed to remove webhook -- HTTP %s: %s", response.getStatusCode(), response.getResponseBody()));
+      }
     } catch (IOException | InterruptedException | ExecutionException e) {
       throw Throwables.propagate(e);
     }
