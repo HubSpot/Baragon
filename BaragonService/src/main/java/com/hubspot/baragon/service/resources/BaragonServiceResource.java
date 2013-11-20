@@ -38,8 +38,8 @@ public class BaragonServiceResource {
 
   @POST
   @Path("/{serviceName}/activate")
-  public void activateDeploy(@PathParam("serviceName") String serviceName) {
-    baragonDeployManager.activateService(serviceName);
+  public Optional<ServiceInfo> activateService(@PathParam("serviceName") String serviceName) {
+    return baragonDeployManager.activateService(serviceName);
   }
 
   @DELETE
@@ -50,10 +50,14 @@ public class BaragonServiceResource {
 
   @DELETE
   @Path("/{serviceName}/pending")
-  public void removePendingService(@PathParam("serviceName") String serviceName) {
-    if (!baragonDeployManager.removePendingService(serviceName)) {
-      throw new WebApplicationException(404);
+  public Optional<ServiceInfo> removePendingService(@PathParam("serviceName") String serviceName) {
+    Optional<ServiceInfo> maybeServiceInfo = baragonDeployManager.getPendingService(serviceName);
+
+    if (maybeServiceInfo.isPresent()) {
+      baragonDeployManager.removePendingService(serviceName);
     }
+
+    return maybeServiceInfo;
   }
 
   @GET

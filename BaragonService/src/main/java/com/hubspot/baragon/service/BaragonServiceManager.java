@@ -52,22 +52,22 @@ public class BaragonServiceManager {
     return false;
   }
 
-  public void activateService(String name) {
+  public Optional<ServiceInfo> activateService(String name) {
     Optional<ServiceInfo> maybeServiceInfo = datastore.getPendingService(name);
 
-    if (!maybeServiceInfo.isPresent()) {
-      throw new RuntimeException(String.format("No such pending service: %s", name));
+    if (maybeServiceInfo.isPresent()) {
+      Collection<String> upstreams = datastore.getHealthyUpstreams(name, maybeServiceInfo.get().getId());
+
+      for (String lb : maybeServiceInfo.get().getLbs()) {
+        LOG.info("   Applying to " + lb);
+        loadBalancerManager.apply(lb, maybeServiceInfo.get(), upstreams);
+      }
+
+      datastore.makeServiceActive(name);
+      webhookNotifier.notify(new WebhookEvent(WebhookEvent.EventType.SERVICE_ACTIVE, null, maybeServiceInfo.get(), null));
     }
 
-    Collection<String> upstreams = datastore.getHealthyUpstreams(name, maybeServiceInfo.get().getId());
-
-    for (String lb : maybeServiceInfo.get().getLbs()) {
-      LOG.info("   Applying to " + lb);
-      loadBalancerManager.apply(lb, maybeServiceInfo.get(), upstreams);
-    }
-
-    datastore.makeServiceActive(name);
-    webhookNotifier.notify(new WebhookEvent(WebhookEvent.EventType.SERVICE_ACTIVE, null, maybeServiceInfo.get(), null));
+    return maybeServiceInfo;
   }
 
   public Optional<ServiceInfo> getActiveService(String name) {
