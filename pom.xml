@@ -51,6 +51,7 @@
     <module>BaragonBase</module>
     <module>BaragonService</module>
     <module>BaragonAgentService</module>
+    <module>BaragonClient</module>
 </modules>
 
 <build>
