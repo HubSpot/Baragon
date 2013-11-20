@@ -15,12 +15,11 @@
 
 <properties>
     <java.abi>1.7</java.abi>
-    <baragon.version>0.0.2</baragon.version>
 </properties>
 
 <groupId>com.hubspot</groupId>
 <artifactId>Baragon</artifactId>
-<version>${baragon.version}</version>
+<version>0.0.1</version>
 <packaging>pom</packaging>
 
 <repositories>
