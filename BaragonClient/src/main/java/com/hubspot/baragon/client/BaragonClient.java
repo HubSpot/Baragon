@@ -193,7 +193,7 @@ public class BaragonClient {
   public void addWebhook(String webhook) {
     try {
       Response response = asyncHttpClient.preparePost(String.format(WEBHOOKS_FORMAT, baseUrl))
-          .addQueryParameter("webhook", webhook)
+          .addQueryParameter("url", webhook)
           .execute().get();
 
       if (!isSuccess(response)) {
@@ -207,7 +207,7 @@ public class BaragonClient {
   public void removeWebhook(String webhook) {
     try {
       Response response = asyncHttpClient.prepareDelete(String.format(WEBHOOKS_FORMAT, baseUrl))
-          .addQueryParameter("webhook", webhook)
+          .addQueryParameter("url", webhook)
           .execute().get();
 
       if (!isSuccess(response)) {
