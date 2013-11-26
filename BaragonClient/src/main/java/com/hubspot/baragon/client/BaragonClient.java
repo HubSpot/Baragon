@@ -24,7 +24,7 @@ public class BaragonClient {
   private static final String UPSTREAM_FORMAT = "%s/upstreams/%s/%s/%s";
   private static final String SERVICE_ACTIVATE_FORMAT = "%s/service/%s/activate";
   private static final String UPSTREAMS_UNHEALTHY_FORMAT = "%s/upstreams/%s/%s/unhealthy";
-  private static final String UPSTREAMS_HEALTHY_FORMAT = "%s/upstreams/%s/%s/unhealthy";
+  private static final String UPSTREAMS_HEALTHY_FORMAT = "%s/upstreams/%s/%s/healthy";
   private static final String WEBHOOKS_FORMAT = "%s/webhooks";
 
 
