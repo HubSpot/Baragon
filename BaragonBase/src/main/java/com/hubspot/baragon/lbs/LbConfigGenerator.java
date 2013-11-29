@@ -1,8 +1,5 @@
 package com.hubspot.baragon.lbs;
 
-import java.io.StringWriter;
-import java.util.Collection;
-
 import com.github.mustachejava.Mustache;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
@@ -12,6 +9,9 @@ import com.hubspot.baragon.BaragonBaseModule;
 import com.hubspot.baragon.config.LoadBalancerConfiguration;
 import com.hubspot.baragon.models.ServiceInfo;
 import com.hubspot.baragon.models.ServiceInfoAndUpstreams;
+
+import java.io.StringWriter;
+import java.util.Collection;
 
 @Singleton
 public class LbConfigGenerator {

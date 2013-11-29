@@ -22,6 +22,8 @@ public class LoadBalancerConfiguration {
   @NotNull
   private String upstreamTemplate;
 
+  private Boolean rollbackConfigsIfInvalid = false;
+
   public String getName() {
     return name;
   }
@@ -68,5 +70,13 @@ public class LoadBalancerConfiguration {
 
   public String getUpstreamTemplate() {
     return upstreamTemplate;
+  }
+
+  public void setRollbackConfigsIfInvalid(Boolean rollbackConfigsIfInvalid) {
+    this.rollbackConfigsIfInvalid = rollbackConfigsIfInvalid;
+  }
+
+  public Boolean getRollbackConfigsIfInvalid() {
+    return rollbackConfigsIfInvalid;
   }
 }

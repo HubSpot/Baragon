@@ -1,24 +1,24 @@
 package com.hubspot.baragon.lbs;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.Collection;
-
+import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
 import com.google.common.io.Files;
+import com.google.inject.Inject;
+import com.hubspot.baragon.config.LoadBalancerConfiguration;
 import com.hubspot.baragon.models.ServiceInfo;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.google.common.base.Charsets;
-import com.google.inject.Inject;
+import java.io.File;
+import java.io.IOException;
+import java.util.Collection;
 
 public class FilesystemConfigHelper extends LbConfigHelper {
   private static final Log LOG = LogFactory.getLog(FilesystemConfigHelper.class);
 
   @Inject
-  public FilesystemConfigHelper(LbAdapter adapter, LbConfigGenerator configGenerator) {
-    super(adapter, configGenerator);
+  public FilesystemConfigHelper(LbAdapter adapter, LbConfigGenerator configGenerator, LoadBalancerConfiguration loadBalancerConfiguration) {
+    super(adapter, configGenerator, loadBalancerConfiguration);
   }
   
   @Override
