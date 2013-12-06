@@ -2,6 +2,7 @@ package com.hubspot.baragon.service.resources;
 
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
+import com.hubspot.baragon.exceptions.MissingLoadBalancersException;
 import com.hubspot.baragon.exceptions.PendingServiceOccupiedException;
 import com.hubspot.baragon.service.BaragonServiceManager;
 import com.hubspot.baragon.models.ServiceInfo;
@@ -32,6 +33,10 @@ public class BaragonServiceResource {
     } catch (PendingServiceOccupiedException e) {
       throw new WebApplicationException(Response.status(Response.Status.CONFLICT)
           .entity(e.getPendingService())
+          .build());
+    } catch (MissingLoadBalancersException e) {
+      throw new WebApplicationException(Response.status(Response.Status.BAD_REQUEST)
+          .entity(e)
           .build());
     }
   }

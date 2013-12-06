@@ -1,8 +1,10 @@
 package com.hubspot.baragon.service;
 
 import com.google.common.base.Optional;
+import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import com.hubspot.baragon.data.BaragonDataStore;
+import com.hubspot.baragon.exceptions.MissingLoadBalancersException;
 import com.hubspot.baragon.exceptions.PendingServiceOccupiedException;
 import com.hubspot.baragon.models.ServiceInfo;
 import com.hubspot.baragon.webhooks.WebhookEvent;
@@ -11,6 +13,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import java.util.Collection;
+import java.util.Set;
 
 public class BaragonServiceManager {
   private static final Log LOG = LogFactory.getLog(BaragonServiceManager.class);
@@ -32,6 +35,14 @@ public class BaragonServiceManager {
 
     if (maybeServiceInfo.isPresent()) {
       throw new PendingServiceOccupiedException(maybeServiceInfo.get());
+    }
+
+    final Set<String> desiredLoadBalancers = Sets.newHashSet(serviceInfo.getLbs());
+    final Set<String> actualLoadBalancers = Sets.newHashSet(loadBalancerManager.getLoadBalancers());
+    final Set<String> missingLoadBalancers = Sets.difference(desiredLoadBalancers, actualLoadBalancers);
+
+    if (!missingLoadBalancers.isEmpty()) {
+      throw new MissingLoadBalancersException(serviceInfo, missingLoadBalancers);
     }
 
     LOG.info(String.format("Adding service %s %s by %s", serviceInfo.getName(), serviceInfo.getId(), serviceInfo.getContactEmail()));
