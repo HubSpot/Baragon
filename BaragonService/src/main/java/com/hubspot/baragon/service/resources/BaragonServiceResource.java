@@ -36,7 +36,7 @@ public class BaragonServiceResource {
           .build());
     } catch (MissingLoadBalancersException e) {
       throw new WebApplicationException(Response.status(Response.Status.BAD_REQUEST)
-          .entity(e)
+          .entity(e.getEntity())
           .build());
     }
   }
