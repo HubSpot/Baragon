@@ -23,7 +23,11 @@
         <artifactId>BaragonBase</artifactId>
         <version>0.0.4</version>
     </dependency>
-
+    <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>jul-to-slf4j</artifactId>
+        <version>1.7.2</version>
+    </dependency>
     <dependency>
         <groupId>com.hubspot.dropwizard</groupId>
         <artifactId>dropwizard-guice</artifactId>
