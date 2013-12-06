@@ -6,6 +6,7 @@ import com.google.common.base.Optional;
 import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
+import com.hubspot.baragon.exceptions.MissingLoadBalancersException;
 import com.hubspot.baragon.exceptions.PendingServiceOccupiedException;
 import com.hubspot.baragon.models.ServiceInfo;
 import com.ning.http.client.AsyncHttpClient;
@@ -67,7 +68,7 @@ public class BaragonClient {
     return objectMapper.readValue(response.getResponseBodyAsStream(), new TypeReference<Collection<T>>() { });
   }
 
-  public void addPendingService(ServiceInfo serviceInfo) throws PendingServiceOccupiedException {
+  public void addPendingService(ServiceInfo serviceInfo) throws PendingServiceOccupiedException, MissingLoadBalancersException {
     try {
       Response response = asyncHttpClient.preparePost(String.format(SERVICE_FORMAT, baseUrl))
           .setBody(objectMapper.writeValueAsBytes(serviceInfo))
@@ -76,6 +77,9 @@ public class BaragonClient {
 
       if (response.getStatusCode() == 409) {
         throw new PendingServiceOccupiedException(objectMapper.readValue(response.getResponseBodyAsStream(), ServiceInfo.class));
+      } else if (response.getStatusCode() == 400) {
+        // TODO: once we overload HTTP 400 we should have some way to discriminate exceptions...
+        throw new MissingLoadBalancersException(objectMapper.readValue(response.getResponseBodyAsStream(), MissingLoadBalancersException.Entity.class));
       }
 
       if (!isSuccess(response)) {
