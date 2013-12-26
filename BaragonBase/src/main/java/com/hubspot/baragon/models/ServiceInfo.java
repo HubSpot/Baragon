@@ -34,10 +34,10 @@ public class ServiceInfo {
     this.healthCheck = healthCheck;
     this.lbs = lbs;
     if (rewriteAppRootTo != null) {
-      if (route.substring(route.length() - 1) == "/" && rewriteAppRootTo.substring(rewriteAppRootTo.length() - 1) != "/") {
+      if (isAbsoluteURI(route) && ! isAbsoluteURI(rewriteAppRootTo)) {
         LOG.error(String.format("Provided appRoot %s is absolute, and rewriteAppRootTo %s is not.  This will result in a rewrite of %sresource to %sresource",
                                     route, rewriteAppRootTo, route, rewriteAppRootTo));
-      } else if (route.substring(route.length() - 1) != "/" && rewriteAppRootTo.substring(rewriteAppRootTo.length() - 1) == "/") {
+      } else if (! isAbsoluteURI(route) && isAbsoluteURI(rewriteAppRootTo)) {
         LOG.error(String.format("Provided appRoot %s is not absolute, and rewriteAppRootTo %s is.  This will result in a rewrite of %sresource to %s resource",
                                     route, rewriteAppRootTo, route, rewriteAppRootTo));
       } else {
@@ -45,7 +45,14 @@ public class ServiceInfo {
       }
     }
   }
-  
+
+  private boolean isAbsoluteURI(String uri) {
+    if (uri.substring(uri.length() - 1).equals("/")) {
+      return true;
+    }
+    return false;
+  }
+
   public String getName() {
     return name;
   }
