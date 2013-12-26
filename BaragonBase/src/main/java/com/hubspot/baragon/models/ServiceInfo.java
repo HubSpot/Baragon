@@ -37,13 +37,17 @@ public class ServiceInfo {
       if (isAbsoluteURI(route) && ! isAbsoluteURI(rewriteAppRootTo)) {
         LOG.error(String.format("Provided appRoot %s is absolute, and rewriteAppRootTo %s is not.  This will result in a rewrite of %sresource to %sresource",
                                     route, rewriteAppRootTo, route, rewriteAppRootTo));
+        this.rewriteAppRootTo = null;
       } else if (! isAbsoluteURI(route) && isAbsoluteURI(rewriteAppRootTo)) {
         LOG.error(String.format("Provided appRoot %s is not absolute, and rewriteAppRootTo %s is.  This will result in a rewrite of %sresource to %s resource",
                                     route, rewriteAppRootTo, route, rewriteAppRootTo));
+        this.rewriteAppRootTo = null;
       } else {
         this.rewriteAppRootTo = rewriteAppRootTo;
       }
-    }
+    } else {
+      this.rewriteAppRootTo = null;
+    } 
   }
 
   private boolean isAbsoluteURI(String uri) {
