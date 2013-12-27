@@ -38,7 +38,12 @@ public class LbBootstrapManaged implements Managed {
       for (String serviceName : datastore.getActiveServices()) {
         Optional<ServiceInfo> maybeServiceInfo = datastore.getActiveService(serviceName);
 
-        if (!maybeServiceInfo.get().getLbs().contains(loadBalancerConfiguration.getName())) {
+        if (!maybeServiceInfo.isPresent()) {
+          LOG.warn(String.format("%s is listed as an active service, but no service info exists!", serviceName));
+          continue;
+        }
+
+        if (maybeServiceInfo.get().getLbs() == null || !maybeServiceInfo.get().getLbs().contains(loadBalancerConfiguration.getName())) {
           continue;
         }
 
@@ -51,7 +56,7 @@ public class LbBootstrapManaged implements Managed {
     }
     
     if (appliedConfigs) {
-      LOG.info("Checking & reloading configs...");
+      LOG.info("We've applied new configs. Checking & reloading...");
       adapter.checkConfigs();
       adapter.reloadConfigs();
     }

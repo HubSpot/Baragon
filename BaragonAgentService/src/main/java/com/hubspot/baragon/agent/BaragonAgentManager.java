@@ -1,26 +1,31 @@
 package com.hubspot.baragon.agent;
 
-import java.util.Collection;
-import java.util.Map;
-import java.util.concurrent.*;
-import java.util.concurrent.locks.ReentrantLock;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.inject.Inject;
 import com.google.inject.name.Named;
-import com.hubspot.baragon.models.ServiceInfoAndUpstreams;
 import com.hubspot.baragon.models.ServiceInfo;
+import com.hubspot.baragon.models.ServiceInfoAndUpstreams;
+import com.hubspot.baragon.utils.LeaderUtils;
+import com.hubspot.baragon.utils.LockUtils;
+import com.hubspot.baragon.utils.LogUtils;
+import com.hubspot.baragon.utils.ResponseUtils;
 import com.ning.http.client.AsyncCompletionHandler;
 import com.ning.http.client.AsyncHttpClient;
 import com.ning.http.client.Response;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
-import com.google.common.collect.Lists;
-import com.google.inject.Inject;
 import org.apache.curator.framework.recipes.leader.LeaderLatch;
-import org.apache.curator.framework.recipes.leader.Participant;
+
+import java.util.Collection;
+import java.util.Map;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class BaragonAgentManager {
   private static final Log LOG = LogFactory.getLog(BaragonAgentManager.class);
@@ -30,74 +35,43 @@ public class BaragonAgentManager {
   private final ObjectMapper objectMapper;
   private final ReentrantLock clusterLock;
 
-  private void tryLock(long timeout, TimeUnit timeUnit) {
-    try {
-      if (!clusterLock.tryLock(timeout, timeUnit)) {
-        throw new RuntimeException("Failed to acquire lock");
-      }
-    } catch (InterruptedException e) {
-      throw Throwables.propagate(e);
-    }
-  }
-  
   @Inject
-  public BaragonAgentManager(@Named(BaragonAgentServiceModule.LB_CLUSTER_LOCK) ReentrantLock clusterLock, ObjectMapper objectMapper, AsyncHttpClient asyncHttpClient, LeaderLatch leaderLatch) {
+  public BaragonAgentManager(@Named(BaragonAgentServiceModule.LB_CLUSTER_LOCK) ReentrantLock clusterLock,
+                             ObjectMapper objectMapper, AsyncHttpClient asyncHttpClient, LeaderLatch leaderLatch) {
     this.clusterLock = clusterLock;
     this.objectMapper = objectMapper;
     this.asyncHttpClient = asyncHttpClient;
     this.leaderLatch = leaderLatch;
   }
-  
-  private Collection<String> getParticipantIds() throws Exception {
-    Collection<String> results = Lists.newArrayList();
-    
-    for (Participant p : leaderLatch.getParticipants()) {
-      results.add(p.getId());
-    }
-    
-    return results;
-  }
+
+
 
   public Collection<String> getCluster() {
-    Collection<String> results = Lists.newLinkedList();
-    
-    try {
-      for (Participant p : leaderLatch.getParticipants()) {
-        results.add(p.getId());
-      }
-    } catch (Exception e) {
-      Throwables.propagate(e);
-    }
-    
-    return results;
-  }
-
-  private boolean isSuccess(Response response) {
-    return response.getStatusCode() >= 200 && response.getStatusCode() < 300;
+    return LeaderUtils.getParticipantIds(leaderLatch);
   }
 
   public void apply(final ServiceInfo serviceInfo, final Collection<String> upstreams) {
-    LOG.info("Going to apply deploy " + serviceInfo.getName());
+    LogUtils.serviceInfoMessage(LOG, serviceInfo, "Applying with %s", Joiner.on(", ").join(upstreams));
 
-    tryLock(30, TimeUnit.SECONDS);
+    LockUtils.tryLock(clusterLock, 30, TimeUnit.SECONDS);
 
     final Collection<String> successfulNodes = Lists.newLinkedList();
     final Collection<String> unsuccessfulNodes = Lists.newLinkedList();
     final Collection<Future<?>> futures = Lists.newLinkedList();
 
     try {
-      Collection<String> ids = getParticipantIds();
-
-      for (final String id : ids) {
+      for (final String id : getCluster()) {
         futures.add(asyncHttpClient.preparePost(String.format("http://%s/baragon-agent/v1/internal/configs", id))
             .setHeader("Content-Type", "application/json")
             .setBody(objectMapper.writeValueAsBytes(new ServiceInfoAndUpstreams(serviceInfo, upstreams)))
             .execute(new AsyncCompletionHandler<Object>() {
               @Override
               public Object onCompleted(Response response) throws Exception {
-                if (isSuccess(response)) {
+                if (ResponseUtils.isSuccess(response)) {
+                  LogUtils.serviceInfoMessage(LOG, serviceInfo, "    %s SUCCESS", id);
                   successfulNodes.add(id);
                 } else {
+                  LogUtils.serviceInfoMessage(LOG, serviceInfo, "    %s FAIL (HTTP %d)", id, response.getStatusCode());
                   unsuccessfulNodes.add(id);
                 }
                 return null;
@@ -110,10 +84,10 @@ public class BaragonAgentManager {
       }
       
       if (unsuccessfulNodes.size() > 0) {
-        LOG.info("Need to rollback!");
-        // TODO: rollback
+        LogUtils.serviceInfoMessage(LOG, serviceInfo, "Apply failed for: %s", LogUtils.COMMA_JOINER);
+      } else {
+        LogUtils.serviceInfoMessage(LOG, serviceInfo, "Apply succeeded!");
       }
-
     } catch (Exception e) {
       throw Throwables.propagate(e);
     } finally {
@@ -121,21 +95,23 @@ public class BaragonAgentManager {
     }
   }
 
+
+
   public Map<String, Boolean> checkConfigs() {
     LOG.info("Going to check configs");
 
-    tryLock(30, TimeUnit.SECONDS);
+    LockUtils.tryLock(clusterLock, 30, TimeUnit.SECONDS);
 
     final ConcurrentMap<String, Boolean> status = Maps.newConcurrentMap();
 
     try {
       Collection<Future<?>> futures = Lists.newLinkedList();
-      for (final String id : getParticipantIds()) {
+      for (final String id : LeaderUtils.getParticipantIds(leaderLatch)) {
         futures.add(asyncHttpClient.prepareGet(String.format("http://%s/baragon-agent/v1/internal/configs/check", id))
             .execute(new AsyncCompletionHandler<Object>() {
               @Override
               public Object onCompleted(Response response) throws Exception {
-                status.put(id, isSuccess(response));
+                status.put(id, ResponseUtils.isSuccess(response));
                 return null;
               }
             }));

@@ -1,27 +1,18 @@
 package com.hubspot.baragon.agent.resources;
 
-import java.util.Collection;
-import java.util.Map;
-
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-
-import com.google.common.base.Joiner;
+import com.google.inject.Inject;
 import com.hubspot.baragon.agent.BaragonAgentManager;
 import com.hubspot.baragon.agent.LeaderRedirector;
+import com.hubspot.baragon.models.ServiceInfoAndUpstreams;
+import com.hubspot.baragon.utils.LogUtils;
 import org.apache.commons.lang.NotImplementedException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.google.inject.Inject;
-import com.hubspot.baragon.models.ServiceInfoAndUpstreams;
+import javax.ws.rs.*;
+import javax.ws.rs.core.MediaType;
+import java.util.Collection;
+import java.util.Map;
 
 @Path("/external")
 @Produces(MediaType.APPLICATION_JSON)
@@ -52,8 +43,7 @@ public class ExternalResources {
   public void applyConfig(ServiceInfoAndUpstreams serviceInfoAndUpstreams) throws Exception {
     leaderRedirector.redirectToLeader();
 
-    LOG.info("Asking agentManager to apply " + serviceInfoAndUpstreams.getServiceInfo().getName());
-    LOG.info("   Upstreams: " + Joiner.on(", ").join(serviceInfoAndUpstreams.getUpstreams()));
+    LogUtils.serviceInfoMessage(LOG, serviceInfoAndUpstreams.getServiceInfo(), "Asking agentManager to apply upstreams: ", LogUtils.COMMA_JOINER.join(serviceInfoAndUpstreams.getUpstreams()));
     agentManager.apply(serviceInfoAndUpstreams.getServiceInfo(), serviceInfoAndUpstreams.getUpstreams());
   }
   
