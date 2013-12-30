@@ -1,6 +1,6 @@
 package com.hubspot.baragon.agent.managed;
 
-import com.hubspot.baragon.agent.BaragonUpstreamPoller;
+import com.hubspot.baragon.agent.BaragonAgentScheduler;
 import io.dropwizard.lifecycle.Managed;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -13,10 +13,10 @@ public class LeaderLatchManaged implements Managed {
   private static final Log LOG = LogFactory.getLog(LeaderLatchManaged.class);
   
   private final LeaderLatch leaderLatch;
-  private final BaragonUpstreamPoller upstreamPoller;
+  private final BaragonAgentScheduler upstreamPoller;
   
   @Inject
-  public LeaderLatchManaged(LeaderLatch leaderLatch, BaragonUpstreamPoller upstreamPoller) {
+  public LeaderLatchManaged(LeaderLatch leaderLatch, BaragonAgentScheduler upstreamPoller) {
     this.leaderLatch = leaderLatch;
     this.upstreamPoller = upstreamPoller;
   }
@@ -42,5 +42,6 @@ public class LeaderLatchManaged implements Managed {
   public void stop() throws Exception {
     LOG.info("Closing leader latch");
     leaderLatch.close();
+    upstreamPoller.stop();
   }
 }

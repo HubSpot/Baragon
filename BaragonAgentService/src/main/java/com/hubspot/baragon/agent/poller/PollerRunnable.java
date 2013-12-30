@@ -3,6 +3,7 @@ package com.hubspot.baragon.agent.poller;
 import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import com.hubspot.baragon.agent.BaragonAgentManager;
 import com.hubspot.baragon.config.LoadBalancerConfiguration;
 import com.hubspot.baragon.data.BaragonDataStore;
@@ -22,6 +23,7 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.concurrent.Future;
 
+@Singleton
 public class PollerRunnable implements Runnable {
   private static final Log LOG = LogFactory.getLog(PollerRunnable.class);
 

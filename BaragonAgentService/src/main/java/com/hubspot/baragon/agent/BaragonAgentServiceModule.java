@@ -110,6 +110,6 @@ public class BaragonAgentServiceModule extends AbstractModule {
   @Provides
   @Singleton
   public ScheduledExecutorService providesScheduledExecutorService() {
-    return Executors.newScheduledThreadPool(1, new ThreadFactoryBuilder().setNameFormat("BaragonUpstreamPoller-%d").build());
+    return Executors.newScheduledThreadPool(1, new ThreadFactoryBuilder().setNameFormat("BaragonAgentScheduler-%d").build());
   }
 }

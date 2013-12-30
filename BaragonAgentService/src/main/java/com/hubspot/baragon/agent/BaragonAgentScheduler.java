@@ -12,15 +12,15 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 @Singleton
-public class BaragonUpstreamPoller {
-  private static final Log LOG = LogFactory.getLog(BaragonUpstreamPoller.class);
+public class BaragonAgentScheduler {
+  private static final Log LOG = LogFactory.getLog(BaragonAgentScheduler.class);
 
   private final ScheduledExecutorService scheduledExecutorService;
   private final int pollInterval;
   private final PollerRunnable pollerRunnable;
 
   @Inject
-  public BaragonUpstreamPoller(ScheduledExecutorService scheduledExecutorService,
+  public BaragonAgentScheduler(ScheduledExecutorService scheduledExecutorService,
                                @Named(BaragonAgentServiceModule.UPSTREAM_POLL_INTERVAL_PROPERTY) int pollInterval,
                                PollerRunnable pollerRunnable) {
     this.scheduledExecutorService = scheduledExecutorService;
@@ -29,13 +29,13 @@ public class BaragonUpstreamPoller {
   }
 
   public void start() {
-    LOG.info(String.format("Elected leader! Polling upstreams every %sms.", pollInterval));
+    LOG.info(String.format("Starting upstream poller (%sms interval)...", pollInterval));
     scheduledExecutorService.scheduleAtFixedRate(pollerRunnable, pollInterval, pollInterval, TimeUnit.MILLISECONDS);
   }
 
   public void stop() {
     try {
-      LOG.info("Lost leadership. Stopping upstream poller...");
+      LOG.info("Stopping upstream poller...");
       scheduledExecutorService.shutdownNow();
       scheduledExecutorService.awaitTermination(1, TimeUnit.SECONDS);
     } catch (Exception e) {
