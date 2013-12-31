@@ -1,37 +1,44 @@
 package com.hubspot.baragon.agent;
 
+import com.github.mustachejava.DefaultMustacheFactory;
+import com.github.mustachejava.Mustache;
+import com.github.mustachejava.MustacheFactory;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import com.google.inject.AbstractModule;
+import com.google.inject.Provides;
+import com.google.inject.Scopes;
+import com.google.inject.Singleton;
+import com.google.inject.name.Named;
+import com.hubspot.baragon.BaragonBaseModule;
+import com.hubspot.baragon.config.LoadBalancerConfiguration;
+import com.hubspot.baragon.config.ZooKeeperConfiguration;
+import com.hubspot.baragon.lbs.FilesystemConfigHelper;
+import com.hubspot.baragon.lbs.LbAdapter;
+import com.hubspot.baragon.lbs.LbConfigHelper;
+import com.hubspot.baragon.lbs.LocalLbAdapter;
+import io.dropwizard.Configuration;
+import io.dropwizard.setup.Environment;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.apache.curator.framework.CuratorFramework;
+import org.apache.curator.framework.recipes.leader.LeaderLatch;
+import org.eclipse.jetty.server.Connector;
+import org.eclipse.jetty.server.ServerConnector;
+
 import java.io.StringReader;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
-
-import com.github.mustachejava.DefaultMustacheFactory;
-import com.github.mustachejava.Mustache;
-import com.github.mustachejava.MustacheFactory;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import com.google.inject.*;
-import com.google.inject.name.Named;
-import com.hubspot.baragon.config.ZooKeeperConfiguration;
-import com.hubspot.baragon.config.LoadBalancerConfiguration;
-import com.hubspot.baragon.lbs.*;
-import io.dropwizard.Configuration;
-import io.dropwizard.setup.Environment;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
-import com.hubspot.baragon.BaragonBaseModule;
-import org.apache.curator.framework.CuratorFramework;
-import org.apache.curator.framework.recipes.leader.LeaderLatch;
-import org.eclipse.jetty.server.Connector;
-import org.eclipse.jetty.server.ServerConnector;
 
 public class BaragonAgentServiceModule extends AbstractModule {
   private static final Log LOG = LogFactory.getLog(BaragonAgentServiceModule.class);
 
   public static final String LB_CLUSTER_LOCK = "baragon.cluster.lock";
   public static final String UPSTREAM_POLL_INTERVAL_PROPERTY = "baragon.upstream.poll.interval";
+  public static final String POLLER_LAST_RUN = "baragon.poller.lastRun";
 
   @Override
   protected void configure() {
@@ -111,5 +118,12 @@ public class BaragonAgentServiceModule extends AbstractModule {
   @Singleton
   public ScheduledExecutorService providesScheduledExecutorService() {
     return Executors.newScheduledThreadPool(1, new ThreadFactoryBuilder().setNameFormat("BaragonAgentScheduler-%d").build());
+  }
+
+  @Provides
+  @Singleton
+  @Named(POLLER_LAST_RUN)
+  public AtomicLong providesPollerLastRun() {
+    return new AtomicLong();
   }
 }

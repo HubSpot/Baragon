@@ -4,7 +4,9 @@ import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import com.google.inject.name.Named;
 import com.hubspot.baragon.agent.BaragonAgentManager;
+import com.hubspot.baragon.agent.BaragonAgentServiceModule;
 import com.hubspot.baragon.config.LoadBalancerConfiguration;
 import com.hubspot.baragon.data.BaragonDataStore;
 import com.hubspot.baragon.healthchecks.HealthCheckClient;
@@ -22,6 +24,7 @@ import org.apache.commons.logging.LogFactory;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicLong;
 
 @Singleton
 public class PollerRunnable implements Runnable {
@@ -32,16 +35,18 @@ public class PollerRunnable implements Runnable {
   private final AsyncHttpClient asyncHttpClient;
   private final WebhookNotifier webhookNotifier;
   private final BaragonAgentManager agentManager;
+  private final AtomicLong lastRun;
 
   @Inject
   public PollerRunnable(BaragonDataStore datastore, LoadBalancerConfiguration loadBalancerConfiguration,
                         @HealthCheckClient AsyncHttpClient asyncHttpClient, WebhookNotifier webhookNotifier,
-                        BaragonAgentManager agentManager) {
+                        BaragonAgentManager agentManager, @Named(BaragonAgentServiceModule.POLLER_LAST_RUN) AtomicLong lastRun) {
     this.datastore = datastore;
     this.loadBalancerConfiguration = loadBalancerConfiguration;
     this.asyncHttpClient = asyncHttpClient;
     this.webhookNotifier = webhookNotifier;
     this.agentManager = agentManager;
+    this.lastRun = lastRun;
   }
 
   private void checkService(final ServiceInfo serviceInfo, boolean applyConfigs) {
@@ -113,6 +118,8 @@ public class PollerRunnable implements Runnable {
 
   @Override
   public void run() {
+    lastRun.set(System.currentTimeMillis());
+
     for (String serviceName : datastore.getPendingServices()) {
       Optional<ServiceInfo> maybeServiceInfo = datastore.getPendingService(serviceName);
 

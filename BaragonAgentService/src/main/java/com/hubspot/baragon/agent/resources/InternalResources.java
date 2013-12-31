@@ -1,21 +1,25 @@
 package com.hubspot.baragon.agent.resources;
 
-import java.util.Collection;
+import com.google.common.base.Joiner;
+import com.google.common.base.Optional;
+import com.google.inject.Inject;
+import com.google.inject.name.Named;
+import com.hubspot.baragon.agent.BaragonAgentServiceModule;
+import com.hubspot.baragon.config.LoadBalancerConfiguration;
+import com.hubspot.baragon.data.BaragonDataStore;
+import com.hubspot.baragon.lbs.LbAdapter;
+import com.hubspot.baragon.lbs.LbConfigHelper;
+import com.hubspot.baragon.models.AgentStatus;
+import com.hubspot.baragon.models.ServiceInfo;
+import com.hubspot.baragon.models.ServiceInfoAndUpstreams;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.apache.curator.framework.recipes.leader.LeaderLatch;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
-
-import com.google.common.base.Optional;
-import com.hubspot.baragon.data.BaragonDataStore;
-import com.hubspot.baragon.models.ServiceInfo;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
-import com.google.common.base.Joiner;
-import com.google.inject.Inject;
-import com.hubspot.baragon.lbs.LbAdapter;
-import com.hubspot.baragon.lbs.LbConfigHelper;
-import com.hubspot.baragon.models.ServiceInfoAndUpstreams;
+import java.util.Collection;
+import java.util.concurrent.atomic.AtomicLong;
 
 @Path("/internal")
 @Produces(MediaType.APPLICATION_JSON)
@@ -26,12 +30,20 @@ public class InternalResources {
   private final LbConfigHelper configHelper;
   private final LbAdapter adapter;
   private final BaragonDataStore datastore;
+  private final LeaderLatch leaderLatch;
+  private final AtomicLong lastRun;
+  private final LoadBalancerConfiguration loadBalancerConfiguration;
   
   @Inject
-  public InternalResources(BaragonDataStore datastore, LbConfigHelper configHelper, LbAdapter adapter) {
+  public InternalResources(BaragonDataStore datastore, LbConfigHelper configHelper, LbAdapter adapter,
+                           LeaderLatch leaderLatch, @Named(BaragonAgentServiceModule.POLLER_LAST_RUN) AtomicLong lastRun,
+                           LoadBalancerConfiguration loadBalancerConfiguration) {
     this.configHelper = configHelper;
     this.adapter = adapter;
     this.datastore = datastore;
+    this.leaderLatch = leaderLatch;
+    this.lastRun = lastRun;
+    this.loadBalancerConfiguration = loadBalancerConfiguration;
   }
   
   @Path("/configs/{serviceName}")
@@ -85,5 +97,20 @@ public class InternalResources {
     adapter.checkConfigs();
     
     LOG.info("Finished checking configs");
+  }
+
+  @Path("/status")
+  @GET
+  public AgentStatus getAgentStatus() {
+    boolean validConfigs = true;
+
+    try {
+      adapter.checkConfigs();
+    } catch (Exception e) {
+      validConfigs = false;
+    }
+
+    return new AgentStatus(loadBalancerConfiguration.getName(), leaderLatch.hasLeadership(),
+        System.currentTimeMillis() - lastRun.get(), validConfigs);
   }
 }
