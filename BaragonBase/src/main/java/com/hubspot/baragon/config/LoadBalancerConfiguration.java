@@ -22,7 +22,11 @@ public class LoadBalancerConfiguration {
   @NotNull
   private String upstreamTemplate;
 
+  @NotNull
   private Boolean rollbackConfigsIfInvalid = false;
+
+  @NotNull
+  private Boolean alwaysApplyConfigs = false;
 
   public String getName() {
     return name;
@@ -78,5 +82,13 @@ public class LoadBalancerConfiguration {
 
   public Boolean getRollbackConfigsIfInvalid() {
     return rollbackConfigsIfInvalid;
+  }
+
+  public Boolean getAlwaysApplyConfigs() {
+    return alwaysApplyConfigs;
+  }
+
+  public void setAlwaysApplyConfigs(Boolean alwaysApplyConfigs) {
+    this.alwaysApplyConfigs = alwaysApplyConfigs;
   }
 }

@@ -34,25 +34,28 @@ public class LbBootstrapManaged implements Managed {
     
     boolean appliedConfigs = false;
 
-    try {
-      for (String serviceName : datastore.getActiveServices()) {
-        Optional<ServiceInfo> maybeServiceInfo = datastore.getActiveService(serviceName);
+    for (String serviceName : datastore.getActiveServices()) {
+      Optional<ServiceInfo> maybeServiceInfo = datastore.getActiveService(serviceName);
 
-        if (!maybeServiceInfo.isPresent()) {
-          LOG.warn(String.format("%s is listed as an active service, but no service info exists!", serviceName));
-          continue;
-        }
+      if (!maybeServiceInfo.isPresent()) {
+        LOG.warn(String.format("%s is listed as an active service, but no service info exists!", serviceName));
+        continue;
+      }
 
-        if (maybeServiceInfo.get().getLbs() == null || !maybeServiceInfo.get().getLbs().contains(loadBalancerConfiguration.getName())) {
-          continue;
-        }
+      if (maybeServiceInfo.get().getLbs() == null || !maybeServiceInfo.get().getLbs().contains(loadBalancerConfiguration.getName())) {
+        continue;
+      }
 
+      try {
         configHelper.apply(maybeServiceInfo.get(), datastore.getHealthyUpstreams(maybeServiceInfo.get().getName(), maybeServiceInfo.get().getId()));
         appliedConfigs = true;
+      } catch (Exception e) {
+        LOG.error("Exception while trying to load active deploys:", e);
+        if (!loadBalancerConfiguration.getAlwaysApplyConfigs()) {
+          appliedConfigs = false;
+          break;
+        }
       }
-    } catch (Exception e) {  // handle errors quietly
-      LOG.error("Exception while trying to load active deploys:", e);
-      appliedConfigs = false;
     }
     
     if (appliedConfigs) {
