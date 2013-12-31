@@ -19,7 +19,7 @@
 
 <groupId>com.hubspot</groupId>
 <artifactId>Baragon</artifactId>
-<version>0.0.6</version>
+<version>0.0.7</version>
 <packaging>pom</packaging>
 
 <repositories>
