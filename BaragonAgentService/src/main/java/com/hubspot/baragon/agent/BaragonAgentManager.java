@@ -7,8 +7,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
-import com.hubspot.baragon.models.ServiceInfo;
-import com.hubspot.baragon.models.ServiceInfoAndUpstreams;
+import com.hubspot.baragon.models.ServiceSnapshot;
 import com.hubspot.baragon.utils.LeaderUtils;
 import com.hubspot.baragon.utils.LockUtils;
 import com.hubspot.baragon.utils.LogUtils;
@@ -50,8 +49,8 @@ public class BaragonAgentManager {
     return LeaderUtils.getParticipantIds(leaderLatch);
   }
 
-  public void apply(final ServiceInfo serviceInfo, final Collection<String> upstreams) {
-    LogUtils.serviceInfoMessage(LOG, serviceInfo, "Applying with %s", Joiner.on(", ").join(upstreams));
+  public void apply(final ServiceSnapshot snapshot) {
+    LogUtils.serviceInfoMessage(LOG, snapshot.getServiceInfo(), "Applying with %s", Joiner.on(", ").join(snapshot.getHealthyUpstreams()));
 
     LockUtils.tryLock(clusterLock, 30, TimeUnit.SECONDS);
 
@@ -63,15 +62,15 @@ public class BaragonAgentManager {
       for (final String id : getCluster()) {
         futures.add(asyncHttpClient.preparePost(String.format("http://%s/baragon-agent/v1/internal/configs", id))
             .setHeader("Content-Type", "application/json")
-            .setBody(objectMapper.writeValueAsBytes(new ServiceInfoAndUpstreams(serviceInfo, upstreams)))
+            .setBody(objectMapper.writeValueAsBytes(snapshot))
             .execute(new AsyncCompletionHandler<Object>() {
               @Override
               public Object onCompleted(Response response) throws Exception {
                 if (ResponseUtils.isSuccess(response)) {
-                  LogUtils.serviceInfoMessage(LOG, serviceInfo, "    %s SUCCESS", id);
+                  LogUtils.serviceInfoMessage(LOG, snapshot.getServiceInfo(), "    %s SUCCESS", id);
                   successfulNodes.add(id);
                 } else {
-                  LogUtils.serviceInfoMessage(LOG, serviceInfo, "    %s FAIL (HTTP %d)", id, response.getStatusCode());
+                  LogUtils.serviceInfoMessage(LOG, snapshot.getServiceInfo(), "    %s FAIL (HTTP %d)", id, response.getStatusCode());
                   unsuccessfulNodes.add(id);
                 }
                 return null;
@@ -84,9 +83,9 @@ public class BaragonAgentManager {
       }
       
       if (unsuccessfulNodes.size() > 0) {
-        LogUtils.serviceInfoMessage(LOG, serviceInfo, "Apply failed for: %s", LogUtils.COMMA_JOINER);
+        LogUtils.serviceInfoMessage(LOG, snapshot.getServiceInfo(), "Apply failed for: %s", LogUtils.COMMA_JOINER.join(unsuccessfulNodes));
       } else {
-        LogUtils.serviceInfoMessage(LOG, serviceInfo, "Apply succeeded!");
+        LogUtils.serviceInfoMessage(LOG, snapshot.getServiceInfo(), "Apply succeeded!");
       }
     } catch (Exception e) {
       throw Throwables.propagate(e);

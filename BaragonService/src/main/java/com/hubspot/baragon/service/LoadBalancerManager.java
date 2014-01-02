@@ -1,22 +1,19 @@
 package com.hubspot.baragon.service;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Optional;
 import com.google.common.base.Throwables;
+import com.google.inject.Inject;
 import com.hubspot.baragon.data.BaragonDataStore;
-import com.hubspot.baragon.models.ServiceInfo;
+import com.hubspot.baragon.models.ServiceSnapshot;
 import com.ning.http.client.AsyncHttpClient;
 import com.ning.http.client.Response;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.google.inject.Inject;
-import com.hubspot.baragon.models.ServiceInfoAndUpstreams;
+import java.util.List;
+import java.util.Map;
 
 public class LoadBalancerManager {
   private static final Log LOG = LogFactory.getLog(LoadBalancerManager.class);
@@ -40,7 +37,7 @@ public class LoadBalancerManager {
     return datastore.getLoadBalancerHosts(loadBalancer);
   }
 
-  public void apply(String loadBalancer, ServiceInfo serviceInfo, Collection<String> upstreams) {
+  public void apply(String loadBalancer, ServiceSnapshot snapshot) {
     boolean success = true;
     
     LOG.info("Deploying to LB " + loadBalancer);
@@ -53,7 +50,7 @@ public class LoadBalancerManager {
 
       Response response = asyncHttpClient.preparePost(String.format("http://%s/baragon-agent/v1/external/configs", maybeLeader.get()))
           .addHeader("Content-Type", "application/json")
-          .setBody(objectMapper.writeValueAsBytes(new ServiceInfoAndUpstreams(serviceInfo, upstreams)))
+          .setBody(objectMapper.writeValueAsBytes(snapshot))
           .execute().get();
 
       LOG.info("    Response: " + response.getStatusCode() + ", " + response.getResponseBody());

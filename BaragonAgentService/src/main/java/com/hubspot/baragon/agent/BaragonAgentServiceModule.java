@@ -1,8 +1,8 @@
 package com.hubspot.baragon.agent;
 
 import com.github.mustachejava.DefaultMustacheFactory;
-import com.github.mustachejava.Mustache;
 import com.github.mustachejava.MustacheFactory;
+import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
@@ -11,11 +11,13 @@ import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import com.hubspot.baragon.BaragonBaseModule;
 import com.hubspot.baragon.config.LoadBalancerConfiguration;
+import com.hubspot.baragon.config.TemplateConfiguration;
 import com.hubspot.baragon.config.ZooKeeperConfiguration;
 import com.hubspot.baragon.lbs.FilesystemConfigHelper;
 import com.hubspot.baragon.lbs.LbAdapter;
 import com.hubspot.baragon.lbs.LbConfigHelper;
 import com.hubspot.baragon.lbs.LocalLbAdapter;
+import com.hubspot.baragon.models.Template;
 import io.dropwizard.Configuration;
 import io.dropwizard.setup.Environment;
 import org.apache.commons.logging.Log;
@@ -25,9 +27,9 @@ import org.apache.curator.framework.recipes.leader.LeaderLatch;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.ServerConnector;
 
-import java.io.StringReader;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.Collection;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicLong;
@@ -63,16 +65,16 @@ public class BaragonAgentServiceModule extends AbstractModule {
 
   @Provides
   @Singleton
-  @Named(BaragonBaseModule.LB_PROXY_TEMPLATE)
-  public Mustache providesProxyTemplate(MustacheFactory mustacheFactory, LoadBalancerConfiguration configuration) throws Exception {
-    return mustacheFactory.compile(new StringReader(configuration.getProxyTemplate()), "proxy-template");
-  }
+  @Named(BaragonBaseModule.AGENT_TEMPLATES)
+  public Collection<Template> providesTemplates(MustacheFactory mustacheFactory,
+                                                BaragonAgentConfiguration configuration) throws Exception {
+    Collection<Template> templates = Lists.newArrayListWithCapacity(configuration.getTemplates().size());
 
-  @Provides
-  @Singleton
-  @Named(BaragonBaseModule.LB_UPSTREAM_TEMPLATE)
-  public Mustache providesUpstreamTemplate(MustacheFactory mustacheFactory, LoadBalancerConfiguration configuration) throws Exception {
-    return mustacheFactory.compile(new StringReader(configuration.getUpstreamTemplate()), "upstream-template");
+    for (TemplateConfiguration templateConfiguration : configuration.getTemplates()) {
+      templates.add(new Template(templateConfiguration.getFilename(), mustacheFactory.compile(templateConfiguration.getTemplate())));
+    }
+
+    return templates;
   }
   
   @Provides

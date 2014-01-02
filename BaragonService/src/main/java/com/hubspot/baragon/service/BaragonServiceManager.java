@@ -7,6 +7,8 @@ import com.hubspot.baragon.data.BaragonDataStore;
 import com.hubspot.baragon.exceptions.MissingLoadBalancersException;
 import com.hubspot.baragon.exceptions.PendingServiceOccupiedException;
 import com.hubspot.baragon.models.ServiceInfo;
+import com.hubspot.baragon.models.ServiceSnapshot;
+import com.hubspot.baragon.utils.SnapshotUtils;
 import com.hubspot.baragon.webhooks.WebhookEvent;
 import com.hubspot.baragon.webhooks.WebhookNotifier;
 import org.apache.commons.logging.Log;
@@ -21,13 +23,15 @@ public class BaragonServiceManager {
   private final BaragonDataStore datastore;
   private final LoadBalancerManager loadBalancerManager;
   private final WebhookNotifier webhookNotifier;
+  private final SnapshotUtils snapshotUtils;
 
   @Inject
   public BaragonServiceManager(BaragonDataStore datastore, LoadBalancerManager loadBalancerManager,
-                               WebhookNotifier webhookNotifier) {
+                               WebhookNotifier webhookNotifier, SnapshotUtils snapshotUtils) {
     this.datastore = datastore;
     this.loadBalancerManager = loadBalancerManager;
     this.webhookNotifier = webhookNotifier;
+    this.snapshotUtils = snapshotUtils;
   }
 
   public void addPendingService(ServiceInfo serviceInfo) {
@@ -67,11 +71,11 @@ public class BaragonServiceManager {
     Optional<ServiceInfo> maybeServiceInfo = datastore.getPendingService(name);
 
     if (maybeServiceInfo.isPresent()) {
-      Collection<String> upstreams = datastore.getHealthyUpstreams(name, maybeServiceInfo.get().getId());
+      final ServiceSnapshot snapshot = snapshotUtils.buildSnapshot(maybeServiceInfo.get());
 
       for (String lb : maybeServiceInfo.get().getLbs()) {
         LOG.info("   Applying to " + lb);
-        loadBalancerManager.apply(lb, maybeServiceInfo.get(), upstreams);
+        loadBalancerManager.apply(lb, snapshot);
       }
 
       datastore.makeServiceActive(name);
@@ -93,11 +97,11 @@ public class BaragonServiceManager {
     Optional<ServiceInfo> maybeServiceInfo = datastore.getActiveService(name);
 
     if (maybeServiceInfo.isPresent()) {
-      Collection<String> upstreams = datastore.getHealthyUpstreams(maybeServiceInfo.get().getName(), maybeServiceInfo.get().getId());
+      final ServiceSnapshot snapshot = snapshotUtils.buildSnapshot(maybeServiceInfo.get());
 
       for (String lb : maybeServiceInfo.get().getLbs()) {
         LOG.info("   Applying to " + lb);
-        loadBalancerManager.apply(lb, maybeServiceInfo.get(), upstreams);
+        loadBalancerManager.apply(lb, snapshot);
       }
     }
   }

@@ -11,7 +11,7 @@ import com.hubspot.baragon.lbs.LbAdapter;
 import com.hubspot.baragon.lbs.LbConfigHelper;
 import com.hubspot.baragon.models.AgentStatus;
 import com.hubspot.baragon.models.ServiceInfo;
-import com.hubspot.baragon.models.ServiceInfoAndUpstreams;
+import com.hubspot.baragon.models.ServiceSnapshot;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.curator.framework.recipes.leader.LeaderLatch;
@@ -78,15 +78,15 @@ public class InternalResources {
   
   @Path("/configs")
   @POST
-  public void applyConfig(ServiceInfoAndUpstreams serviceInfoAndUpstreams) throws Exception {
-    LOG.info("Going to apply config " + serviceInfoAndUpstreams.getServiceInfo().getName());
+  public void applyConfig(ServiceSnapshot snapshot) throws Exception {
+    LOG.info("Going to apply config " + snapshot.getServiceInfo().getName());
 
-    Collection<String> upstreams = serviceInfoAndUpstreams.getUpstreams();
-    LOG.info("   Upstreams for " + serviceInfoAndUpstreams.getServiceInfo().getName() + ": " + Joiner.on(", ").join(upstreams));
+    final Collection<String> healthyUpstreams = snapshot.getHealthyUpstreams();
+    LOG.info("   Upstreams for " + snapshot.getServiceInfo().getName() + ": " + Joiner.on(", ").join(healthyUpstreams));
     
-    configHelper.apply(serviceInfoAndUpstreams.getServiceInfo(), upstreams);
+    configHelper.apply(snapshot);
     
-    LOG.info("Finished applying " + serviceInfoAndUpstreams.getServiceInfo().getName());
+    LOG.info("Finished applying " + snapshot.getServiceInfo().getName());
   }
   
   @Path("/configs/check")

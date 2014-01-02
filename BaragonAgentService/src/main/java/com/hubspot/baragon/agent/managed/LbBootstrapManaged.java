@@ -4,6 +4,7 @@ import com.google.common.base.Optional;
 import com.hubspot.baragon.data.BaragonDataStore;
 import com.hubspot.baragon.config.LoadBalancerConfiguration;
 import com.hubspot.baragon.models.ServiceInfo;
+import com.hubspot.baragon.utils.SnapshotUtils;
 import io.dropwizard.lifecycle.Managed;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -19,13 +20,16 @@ public class LbBootstrapManaged implements Managed {
   private final LbConfigHelper configHelper;
   private final LbAdapter adapter;
   private final BaragonDataStore datastore;
+  private final SnapshotUtils snapshotUtils;
   
   @Inject
-  public LbBootstrapManaged(BaragonDataStore datastore, LoadBalancerConfiguration loadBalancerConfiguration, LbConfigHelper configHelper, LbAdapter adapter) {
+  public LbBootstrapManaged(BaragonDataStore datastore, LoadBalancerConfiguration loadBalancerConfiguration,
+                            LbConfigHelper configHelper, LbAdapter adapter, SnapshotUtils snapshotUtils) {
     this.loadBalancerConfiguration = loadBalancerConfiguration;
     this.configHelper = configHelper;
     this.adapter = adapter;
     this.datastore = datastore;
+    this.snapshotUtils = snapshotUtils;
   }
 
   @Override
@@ -47,7 +51,7 @@ public class LbBootstrapManaged implements Managed {
       }
 
       try {
-        configHelper.apply(maybeServiceInfo.get(), datastore.getHealthyUpstreams(maybeServiceInfo.get().getName(), maybeServiceInfo.get().getId()));
+        configHelper.apply(snapshotUtils.buildSnapshot(maybeServiceInfo.get()));
         appliedConfigs = true;
       } catch (Exception e) {
         LOG.error("Exception while trying to load active deploys:", e);

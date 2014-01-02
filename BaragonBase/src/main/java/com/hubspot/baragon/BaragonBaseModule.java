@@ -17,8 +17,7 @@ import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.retry.ExponentialBackoffRetry;
 
 public class BaragonBaseModule extends AbstractModule {
-  public static final String LB_PROXY_TEMPLATE = "baragon.proxy.template";
-  public static final String LB_UPSTREAM_TEMPLATE = "baragon.upstream.template";
+  public static final String AGENT_TEMPLATES = "baragon.agent.templates";
 
   public static final String BARAGON_USER_AGENT = "Baragon/0.1 (+https://git.hubteam.com/HubSpot/Baragon)";
 

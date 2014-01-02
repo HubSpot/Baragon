@@ -13,6 +13,7 @@ import com.hubspot.baragon.healthchecks.HealthCheckClient;
 import com.hubspot.baragon.models.ServiceInfo;
 import com.hubspot.baragon.utils.LogUtils;
 import com.hubspot.baragon.utils.ResponseUtils;
+import com.hubspot.baragon.utils.SnapshotUtils;
 import com.hubspot.baragon.webhooks.WebhookEvent;
 import com.hubspot.baragon.webhooks.WebhookNotifier;
 import com.ning.http.client.AsyncCompletionHandler;
@@ -36,17 +37,20 @@ public class PollerRunnable implements Runnable {
   private final WebhookNotifier webhookNotifier;
   private final BaragonAgentManager agentManager;
   private final AtomicLong lastRun;
+  private final SnapshotUtils snapshotUtils;
 
   @Inject
   public PollerRunnable(BaragonDataStore datastore, LoadBalancerConfiguration loadBalancerConfiguration,
                         @HealthCheckClient AsyncHttpClient asyncHttpClient, WebhookNotifier webhookNotifier,
-                        BaragonAgentManager agentManager, @Named(BaragonAgentServiceModule.POLLER_LAST_RUN) AtomicLong lastRun) {
+                        BaragonAgentManager agentManager, @Named(BaragonAgentServiceModule.POLLER_LAST_RUN) AtomicLong lastRun,
+                        SnapshotUtils snapshotUtils) {
     this.datastore = datastore;
     this.loadBalancerConfiguration = loadBalancerConfiguration;
     this.asyncHttpClient = asyncHttpClient;
     this.webhookNotifier = webhookNotifier;
     this.agentManager = agentManager;
     this.lastRun = lastRun;
+    this.snapshotUtils = snapshotUtils;
   }
 
   private void checkService(final ServiceInfo serviceInfo, boolean applyConfigs) {
@@ -112,7 +116,7 @@ public class PollerRunnable implements Runnable {
     }
 
     if (applyConfigs && shouldUpdateProject) {
-      agentManager.apply(serviceInfo, datastore.getHealthyUpstreams(serviceInfo.getName(), serviceInfo.getId()));
+      agentManager.apply(snapshotUtils.buildSnapshot(serviceInfo));
     }
   }
 

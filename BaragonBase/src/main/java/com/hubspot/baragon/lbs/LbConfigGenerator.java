@@ -1,55 +1,57 @@
 package com.hubspot.baragon.lbs;
 
-import com.github.mustachejava.Mustache;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import com.hubspot.baragon.BaragonBaseModule;
 import com.hubspot.baragon.config.LoadBalancerConfiguration;
 import com.hubspot.baragon.models.ServiceInfo;
-import com.hubspot.baragon.models.ServiceInfoAndUpstreams;
+import com.hubspot.baragon.models.ServiceSnapshot;
+import com.hubspot.baragon.models.Template;
 
 import java.io.StringWriter;
 import java.util.Collection;
 
 @Singleton
 public class LbConfigGenerator {
-
-  private final Mustache proxyTemplate;
-  private final Mustache upstreamTemplate;
   private final LoadBalancerConfiguration loadBalancerConfiguration;
+  private final Collection<Template> templates;
   
   @Inject
-  public LbConfigGenerator(LoadBalancerConfiguration loadBalancerConfiguration, @Named(BaragonBaseModule.LB_PROXY_TEMPLATE) Mustache proxyTemplate, @Named(BaragonBaseModule.LB_UPSTREAM_TEMPLATE) Mustache upstreamTemplate) {
-    this.proxyTemplate = proxyTemplate;
-    this.upstreamTemplate = upstreamTemplate;
+  public LbConfigGenerator(LoadBalancerConfiguration loadBalancerConfiguration,
+                           @Named(BaragonBaseModule.AGENT_TEMPLATES) Collection<Template> templates) {
     this.loadBalancerConfiguration = loadBalancerConfiguration;
+    this.templates = templates;
   }
 
-  public Collection<LbConfigFile> generateConfigsForProject(ServiceInfo serviceInfo, Collection<String> upstreams) {
-    if (upstreams.size() == 0) {
+  public Collection<LbConfigFile> generateConfigsForProject(ServiceSnapshot snapshot) {
+    if (snapshot.getHealthyUpstreams().isEmpty()) {
       return ImmutableList.of();  // nginx doesnt take kindly to zero upstreams.
     }
 
-    final ServiceInfoAndUpstreams serviceInfoAndUpstreams = new ServiceInfoAndUpstreams(serviceInfo, upstreams);
+    final Collection<LbConfigFile> files = Lists.newArrayListWithCapacity(templates.size());
 
-    final StringWriter proxyContent = new StringWriter();
-    final StringWriter upstreamContent = new StringWriter();
+    for (Template template : templates) {
+      final String filename = String.format(template.getFilename(), snapshot.getServiceInfo().getName());
+      final StringWriter content = new StringWriter();
+      template.getTemplate().execute(content, snapshot);
+      files.add(new LbConfigFile(String.format("%s/%s", loadBalancerConfiguration.getRootPath(), filename), content.toString()));
+    }
 
-    proxyTemplate.execute(proxyContent, serviceInfoAndUpstreams);
-    upstreamTemplate.execute(upstreamContent, serviceInfoAndUpstreams);
-
-    return ImmutableList.of(
-          new LbConfigFile(String.format("%s/proxy/%s.conf", loadBalancerConfiguration.getRootPath(), serviceInfo.getName()), proxyContent.toString()),
-          new LbConfigFile(String.format("%s/upstreams/%s.conf", loadBalancerConfiguration.getRootPath(), serviceInfo.getName()), upstreamContent.toString()));
+    return files;
   }
 
   public Collection<String> getConfigPathsForProject(ServiceInfo serviceInfo) {
-    return ImmutableList.of(
-        String.format("%s/proxy/%s.conf", loadBalancerConfiguration.getRootPath(), serviceInfo.getName()),
-        String.format("%s/upstreams/%s.conf", loadBalancerConfiguration.getRootPath(), serviceInfo.getName())
-    );
+    final Collection<String> paths = Lists.newArrayListWithCapacity(templates.size());
+
+    for (Template template : templates) {
+      final String filename = String.format(template.getFilename(), serviceInfo.getName());
+      paths.add(String.format("%s/%s", loadBalancerConfiguration.getRootPath(), filename));
+    }
+
+    return paths;
   }
 
 }

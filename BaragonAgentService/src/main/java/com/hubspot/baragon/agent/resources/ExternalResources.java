@@ -3,7 +3,7 @@ package com.hubspot.baragon.agent.resources;
 import com.google.inject.Inject;
 import com.hubspot.baragon.agent.BaragonAgentManager;
 import com.hubspot.baragon.agent.LeaderRedirector;
-import com.hubspot.baragon.models.ServiceInfoAndUpstreams;
+import com.hubspot.baragon.models.ServiceSnapshot;
 import com.hubspot.baragon.utils.LogUtils;
 import org.apache.commons.lang.NotImplementedException;
 import org.apache.commons.logging.Log;
@@ -40,11 +40,11 @@ public class ExternalResources {
   
   @Path("/configs")
   @POST
-  public void applyConfig(ServiceInfoAndUpstreams serviceInfoAndUpstreams) throws Exception {
+  public void applyConfig(ServiceSnapshot snapshot) throws Exception {
     leaderRedirector.redirectToLeader();
 
-    LogUtils.serviceInfoMessage(LOG, serviceInfoAndUpstreams.getServiceInfo(), "Asking agentManager to apply upstreams: ", LogUtils.COMMA_JOINER.join(serviceInfoAndUpstreams.getUpstreams()));
-    agentManager.apply(serviceInfoAndUpstreams.getServiceInfo(), serviceInfoAndUpstreams.getUpstreams());
+    LogUtils.serviceInfoMessage(LOG, snapshot.getServiceInfo(), "Asking agentManager to apply upstreams: ", LogUtils.COMMA_JOINER.join(snapshot.getHealthyUpstreams()));
+    agentManager.apply(snapshot);
   }
   
   @Path("/configs/{serviceName}")
