@@ -2,6 +2,7 @@ package com.hubspot.baragon.models;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Objects;
 
@@ -9,8 +10,9 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Collection;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class ServiceSnapshot {
-  private static final SimpleDateFormat DATE_FORMATTER = new SimpleDateFormat("MM/dd/yyyy");
+  private static final SimpleDateFormat DATE_FORMATTER = new SimpleDateFormat("yyyy-MM-dd hh:mm a");
   private final ServiceInfo serviceInfo;
   private final Collection<String> healthyUpstreams;
   private final Collection<String> unhealthyUpstreams;
