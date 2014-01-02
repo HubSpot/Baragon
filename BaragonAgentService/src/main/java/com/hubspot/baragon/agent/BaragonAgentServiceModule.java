@@ -27,6 +27,7 @@ import org.apache.curator.framework.recipes.leader.LeaderLatch;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.ServerConnector;
 
+import java.io.StringReader;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Collection;
@@ -71,7 +72,8 @@ public class BaragonAgentServiceModule extends AbstractModule {
     Collection<Template> templates = Lists.newArrayListWithCapacity(configuration.getTemplates().size());
 
     for (TemplateConfiguration templateConfiguration : configuration.getTemplates()) {
-      templates.add(new Template(templateConfiguration.getFilename(), mustacheFactory.compile(templateConfiguration.getTemplate())));
+      final StringReader reader = new StringReader(templateConfiguration.getTemplate());
+      templates.add(new Template(templateConfiguration.getFilename(), mustacheFactory.compile(reader, templateConfiguration.getFilename())));
     }
 
     return templates;
