@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Optional;
 import com.google.common.base.Throwables;
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import com.hubspot.baragon.data.BaragonDataStore;
 import com.hubspot.baragon.models.ServiceSnapshot;
 import com.ning.http.client.AsyncHttpClient;
@@ -23,7 +24,8 @@ public class LoadBalancerManager {
   private final ObjectMapper objectMapper;
   
   @Inject
-  public LoadBalancerManager(BaragonDataStore datastore, AsyncHttpClient asyncHttpClient, ObjectMapper objectMapper) {
+  public LoadBalancerManager(BaragonDataStore datastore, ObjectMapper objectMapper,
+                             @Named(BaragonServiceModule.BARAGON_SERVICE_HTTP_CLIENT) AsyncHttpClient asyncHttpClient) {
     this.asyncHttpClient = asyncHttpClient;
     this.datastore = datastore;
     this.objectMapper = objectMapper;
