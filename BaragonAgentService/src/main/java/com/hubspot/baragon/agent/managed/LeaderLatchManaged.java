@@ -27,11 +27,13 @@ public class LeaderLatchManaged implements Managed {
     leaderLatch.addListener(new LeaderLatchListener() {
       @Override
       public void isLeader() {
+        LOG.info("Elected leader!");
         upstreamPoller.start();
       }
 
       @Override
       public void notLeader() {
+        LOG.info("Not leader.");
         upstreamPoller.stop();
       }
     });
@@ -42,6 +44,6 @@ public class LeaderLatchManaged implements Managed {
   public void stop() throws Exception {
     LOG.info("Closing leader latch");
     leaderLatch.close();
-    upstreamPoller.stop();
+    upstreamPoller.close();
   }
 }

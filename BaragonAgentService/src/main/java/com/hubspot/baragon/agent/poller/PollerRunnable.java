@@ -124,30 +124,38 @@ public class PollerRunnable implements Runnable {
   public void run() {
     lastRun.set(System.currentTimeMillis());
 
-    for (String serviceName : datastore.getPendingServices()) {
-      Optional<ServiceInfo> maybeServiceInfo = datastore.getPendingService(serviceName);
+    try {
+      for (String serviceName : datastore.getPendingServices()) {
+        Optional<ServiceInfo> maybeServiceInfo = datastore.getPendingService(serviceName);
 
-      if (!maybeServiceInfo.isPresent()) {
-        LOG.warn(String.format("%s is listed as a pending service, but no service info exists!", serviceName));
-        continue;
-      }
+        if (!maybeServiceInfo.isPresent()) {
+          LOG.warn(String.format("%s is listed as a pending service, but no service info exists!", serviceName));
+          continue;
+        }
 
-      if (maybeServiceInfo.get().getLbs().contains(loadBalancerConfiguration.getName())) {
-        checkService(maybeServiceInfo.get(), false);
+        if (maybeServiceInfo.get().getLbs().contains(loadBalancerConfiguration.getName())) {
+          checkService(maybeServiceInfo.get(), false);
+        }
       }
+    } catch (Exception e) {
+      LOG.error("Caught exception while checking pending services", e);
     }
 
-    for (String serviceName : datastore.getActiveServices()) {
-      Optional<ServiceInfo> maybeServiceInfo = datastore.getActiveService(serviceName);
+    try {
+      for (String serviceName : datastore.getActiveServices()) {
+        Optional<ServiceInfo> maybeServiceInfo = datastore.getActiveService(serviceName);
 
-      if (!maybeServiceInfo.isPresent()) {
-        LOG.warn(String.format("%s is listed as an active service, but no service info exists!", serviceName));
-        continue;
-      }
+        if (!maybeServiceInfo.isPresent()) {
+          LOG.warn(String.format("%s is listed as an active service, but no service info exists!", serviceName));
+          continue;
+        }
 
-      if (maybeServiceInfo.get().getLbs().contains(loadBalancerConfiguration.getName())) {
-        checkService(maybeServiceInfo.get(), true);
+        if (maybeServiceInfo.get().getLbs().contains(loadBalancerConfiguration.getName())) {
+          checkService(maybeServiceInfo.get(), true);
+        }
       }
+    } catch (Exception e) {
+      LOG.error("Caught exception while checking active services", e);
     }
   }
 }
