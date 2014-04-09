@@ -1,0 +1,40 @@
+package com.hubspot.baragon.service.resources;
+
+import com.google.common.base.Optional;
+import com.google.inject.Inject;
+import com.hubspot.baragon.data.BaragonStateDatastore;
+import com.hubspot.baragon.models.Service;
+import com.hubspot.baragon.models.ServiceState;
+
+import javax.ws.rs.*;
+import javax.ws.rs.core.MediaType;
+import java.util.Collection;
+
+@Path("/state")
+@Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
+public class BaragonStateResource {
+  private final BaragonStateDatastore datastore;
+
+  @Inject
+  public BaragonStateResource(BaragonStateDatastore datastore) {
+    this.datastore = datastore;
+  }
+
+  @GET
+  public Collection<String> getServices() {
+    return datastore.getServices();
+  }
+
+  @GET
+  @Path("/{serviceId}")
+  public Optional<ServiceState> getService(@PathParam("serviceId") String serviceId) {
+    final Optional<Service> maybeServiceInfo = datastore.getService(serviceId);
+
+    if (!maybeServiceInfo.isPresent()) {
+      return Optional.absent();
+    }
+
+    return Optional.of(new ServiceState(maybeServiceInfo.get(), datastore.getUpstreams(serviceId)));
+  }
+}

@@ -1,77 +1,83 @@
 package com.hubspot.baragon.agent.managed;
 
+import com.google.common.base.Joiner;
 import com.google.common.base.Optional;
-import com.hubspot.baragon.data.BaragonDataStore;
+import com.google.common.base.Stopwatch;
+import com.google.inject.Inject;
+import com.google.inject.name.Named;
+import com.hubspot.baragon.agent.BaragonAgentServiceModule;
 import com.hubspot.baragon.config.LoadBalancerConfiguration;
-import com.hubspot.baragon.models.ServiceInfo;
-import com.hubspot.baragon.utils.SnapshotUtils;
+import com.hubspot.baragon.data.BaragonStateDatastore;
+import com.hubspot.baragon.lbs.LbConfigHelper;
+import com.hubspot.baragon.models.Service;
+import com.hubspot.baragon.models.ServiceContext;
 import io.dropwizard.lifecycle.Managed;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.curator.framework.recipes.leader.LeaderLatch;
 
-import com.google.inject.Inject;
-import com.hubspot.baragon.lbs.LbAdapter;
-import com.hubspot.baragon.lbs.LbConfigHelper;
+import java.util.Collection;
+import java.util.concurrent.TimeUnit;
 
 public class LbBootstrapManaged implements Managed {
   private static final Log LOG = LogFactory.getLog(LbBootstrapManaged.class);
   
   private final LoadBalancerConfiguration loadBalancerConfiguration;
   private final LbConfigHelper configHelper;
-  private final LbAdapter adapter;
-  private final BaragonDataStore datastore;
-  private final SnapshotUtils snapshotUtils;
+  private final BaragonStateDatastore stateDatastore;
+  private final LeaderLatch leaderLatch;
   
   @Inject
-  public LbBootstrapManaged(BaragonDataStore datastore, LoadBalancerConfiguration loadBalancerConfiguration,
-                            LbConfigHelper configHelper, LbAdapter adapter, SnapshotUtils snapshotUtils) {
+  public LbBootstrapManaged(BaragonStateDatastore stateDatastore, LoadBalancerConfiguration loadBalancerConfiguration,
+                            LbConfigHelper configHelper, @Named(BaragonAgentServiceModule.AGENT_LEADER_LATCH) LeaderLatch leaderLatch) {
     this.loadBalancerConfiguration = loadBalancerConfiguration;
     this.configHelper = configHelper;
-    this.adapter = adapter;
-    this.datastore = datastore;
-    this.snapshotUtils = snapshotUtils;
+    this.stateDatastore = stateDatastore;
+    this.leaderLatch = leaderLatch;
+  }
+
+  private void applyCurrentConfigs() {
+    final long now = System.currentTimeMillis();
+    LOG.info("Loading current state of the world from zookeeper...");
+
+    final Stopwatch stopwatch = new Stopwatch();
+
+    stopwatch.start();
+    final Collection<String> services = stateDatastore.getServices();
+
+    for (String serviceId : services) {
+      final Optional<Service> maybeServiceInfo = stateDatastore.getService(serviceId);
+      if (!maybeServiceInfo.isPresent()) {
+        continue;  // doubt this will ever happen
+      }
+
+      final Service service = maybeServiceInfo.get();
+      final Collection<String> upstreams = stateDatastore.getUpstreams(serviceId);
+
+      if (service.getLbs() == null || !service.getLbs().contains(loadBalancerConfiguration.getName())) {
+        LOG.info(String.format("   Skipping %s, not applicable to this LB cluster", serviceId));
+        continue;
+      }
+
+      LOG.info(String.format("    Applying %s: [%s]", serviceId, Joiner.on(", ").join(upstreams)));
+
+      configHelper.apply(new ServiceContext(service, upstreams, now));
+    }
+
+    LOG.info(String.format("Applied %d services in %sms", services.size(), stopwatch.elapsed(TimeUnit.MILLISECONDS)));
   }
 
   @Override
   public void start() throws Exception {
-    LOG.info("Loading initial LB state from datastore...");
-    
-    boolean appliedConfigs = false;
+    applyCurrentConfigs();
 
-    for (String serviceName : datastore.getActiveServices()) {
-      Optional<ServiceInfo> maybeServiceInfo = datastore.getActiveService(serviceName);
-
-      if (!maybeServiceInfo.isPresent()) {
-        LOG.warn(String.format("%s is listed as an active service, but no service info exists!", serviceName));
-        continue;
-      }
-
-      if (maybeServiceInfo.get().getLbs() == null || !maybeServiceInfo.get().getLbs().contains(loadBalancerConfiguration.getName())) {
-        continue;
-      }
-
-      try {
-        configHelper.apply(snapshotUtils.buildSnapshot(maybeServiceInfo.get()));
-        appliedConfigs = true;
-      } catch (Exception e) {
-        LOG.error("Exception while trying to load active deploys:", e);
-        if (!loadBalancerConfiguration.getAlwaysApplyConfigs()) {
-          appliedConfigs = false;
-          break;
-        }
-      }
-    }
-    
-    if (appliedConfigs) {
-      LOG.info("We've applied new configs. Checking & reloading...");
-      adapter.checkConfigs();
-      adapter.reloadConfigs();
-    }
+    LOG.info("Starting leader latch...");
+    leaderLatch.start();
   }
 
   @Override
   public void stop() throws Exception {
-    // nothing to see here, folks.
+    leaderLatch.close();
   }
 
 }

@@ -1,10 +1,10 @@
 package com.hubspot.baragon.lbs;
 
+import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
 import com.hubspot.baragon.config.LoadBalancerConfiguration;
-import com.hubspot.baragon.models.ServiceInfo;
-import com.hubspot.baragon.models.ServiceSnapshot;
-import com.hubspot.baragon.utils.LogUtils;
+import com.hubspot.baragon.models.Service;
+import com.hubspot.baragon.models.ServiceContext;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -25,30 +25,30 @@ public abstract class LbConfigHelper {
   
   private static final Log LOG = LogFactory.getLog(LbConfigHelper.class);
   
-  protected abstract Collection<LbConfigFile> readConfigs(ServiceInfo serviceInfo);
+  protected abstract Collection<LbConfigFile> readConfigs(Service service);
   protected abstract void writeConfigs(Collection<LbConfigFile> files);
-  public abstract void backupConfigs(ServiceInfo serviceInfo);
-  public abstract void restoreConfigs(ServiceInfo serviceInfo);
+  public abstract void backupConfigs(Service service);
+  public abstract void restoreConfigs(Service service);
   
-  public void remove(ServiceInfo serviceInfo) {
-    for (String filename : configGenerator.getConfigPathsForProject(serviceInfo)) {
+  public void remove(Service service) {
+    for (String filename : configGenerator.getConfigPathsForProject(service)) {
       File file = new File(filename);
       if (!file.exists()) {
         continue;
       }
 
       if (!file.delete()) {
-        throw new RuntimeException("Failed to remove " + filename + " for " + serviceInfo.getName());
+        throw new RuntimeException("Failed to remove " + filename + " for " + service.getId());
       }
     }
   }
   
-  public void apply(ServiceSnapshot snapshot) {
+  public void apply(ServiceContext snapshot) {
 
-    LogUtils.serviceInfoMessage(LOG, snapshot.getServiceInfo(), "Going to apply %s", LogUtils.COMMA_JOINER.join(snapshot.getHealthyUpstreams()));
+    LOG.info(String.format("Going to apply %s: %s", snapshot.getService().getId(), Joiner.on(", ").join(snapshot.getUpstreams())));
     
     // backup old configs
-    backupConfigs(snapshot.getServiceInfo());
+    backupConfigs(snapshot.getService());
     
     // write & check the configs
     try {
@@ -56,9 +56,9 @@ public abstract class LbConfigHelper {
       adapter.checkConfigs();
     } catch (Exception e) {
       if (loadBalancerConfiguration.getRollbackConfigsIfInvalid()) {
-        LOG.error("Caught exception while writing configs for " + snapshot.getServiceInfo().getName() + ", reverting to backups!", e);
+        LOG.error("Caught exception while writing configs for " + snapshot.getService().getId() + ", reverting to backups!", e);
 
-        restoreConfigs(snapshot.getServiceInfo());
+        restoreConfigs(snapshot.getService());
       }
       
       throw Throwables.propagate(e);

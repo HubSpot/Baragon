@@ -5,7 +5,7 @@ import com.google.common.collect.Lists;
 import com.google.common.io.Files;
 import com.google.inject.Inject;
 import com.hubspot.baragon.config.LoadBalancerConfiguration;
-import com.hubspot.baragon.models.ServiceInfo;
+import com.hubspot.baragon.models.Service;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -22,14 +22,15 @@ public class FilesystemConfigHelper extends LbConfigHelper {
   }
   
   @Override
-  protected Collection<LbConfigFile> readConfigs(ServiceInfo serviceInfo) {
+  protected Collection<LbConfigFile> readConfigs(Service service) {
     Collection<LbConfigFile> files = Lists.newLinkedList();
     
-    for (String filename : configGenerator.getConfigPathsForProject(serviceInfo)) {
+    for (String filename : configGenerator.getConfigPathsForProject(service)) {
       try {
         File file = new File(filename);
+        final String content = Files.toString(file, Charsets.UTF_8);
         if (file.exists()) {
-          files.add(new LbConfigFile(filename, Files.toString(file, Charsets.UTF_8)));
+          files.add(new LbConfigFile(filename, content));
         }
       } catch (Exception e) {
         LOG.error("Failed to back up " + filename, e);
@@ -53,8 +54,8 @@ public class FilesystemConfigHelper extends LbConfigHelper {
   }
 
   @Override
-  public void backupConfigs(ServiceInfo serviceInfo) {
-    for (String filename : configGenerator.getConfigPathsForProject(serviceInfo)) {
+  public void backupConfigs(Service service) {
+    for (String filename : configGenerator.getConfigPathsForProject(service)) {
       try {
         File src = new File(filename);
         if (!src.exists()) {
@@ -70,8 +71,8 @@ public class FilesystemConfigHelper extends LbConfigHelper {
   }
 
   @Override
-  public void restoreConfigs(ServiceInfo serviceInfo) {
-    for (String filename : configGenerator.getConfigPathsForProject(serviceInfo)) {
+  public void restoreConfigs(Service service) {
+    for (String filename : configGenerator.getConfigPathsForProject(service)) {
       try {
         File src = new File(filename + ".old");
         if (!src.exists()) {

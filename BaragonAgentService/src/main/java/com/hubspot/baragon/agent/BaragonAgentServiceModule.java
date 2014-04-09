@@ -2,14 +2,15 @@ package com.hubspot.baragon.agent;
 
 import com.github.mustachejava.DefaultMustacheFactory;
 import com.github.mustachejava.MustacheFactory;
+import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import com.hubspot.baragon.BaragonBaseModule;
+import com.hubspot.baragon.agent.config.BaragonAgentConfiguration;
 import com.hubspot.baragon.config.LoadBalancerConfiguration;
 import com.hubspot.baragon.config.TemplateConfiguration;
 import com.hubspot.baragon.config.ZooKeeperConfiguration;
@@ -18,30 +19,22 @@ import com.hubspot.baragon.lbs.LbAdapter;
 import com.hubspot.baragon.lbs.LbConfigHelper;
 import com.hubspot.baragon.lbs.LocalLbAdapter;
 import com.hubspot.baragon.models.Template;
-import io.dropwizard.Configuration;
-import io.dropwizard.setup.Environment;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import com.hubspot.baragon.utils.JavaUtils;
+import io.dropwizard.jetty.HttpConnectorFactory;
+import io.dropwizard.server.SimpleServerFactory;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.leader.LeaderLatch;
-import org.eclipse.jetty.server.Connector;
-import org.eclipse.jetty.server.ServerConnector;
 
 import java.io.StringReader;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.Collection;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class BaragonAgentServiceModule extends AbstractModule {
-  private static final Log LOG = LogFactory.getLog(BaragonAgentServiceModule.class);
-
-  public static final String LB_CLUSTER_LOCK = "baragon.cluster.lock";
-  public static final String UPSTREAM_POLL_INTERVAL_PROPERTY = "baragon.upstream.poll.interval";
-  public static final String POLLER_LAST_RUN = "baragon.poller.lastRun";
+  public static final String HTTP_PORT_PROPERTY = "baragon.agent.http.port";
+  public static final String HOSTNAME_PROPERTY = "baragon.agent.hostname";
+  public static final String AGENT_LEADER_LATCH = "baragon.agent.leaderLatch";
+  public static final String AGENT_LOCK = "baragon.agent.lock";
 
   @Override
   protected void configure() {
@@ -50,12 +43,6 @@ public class BaragonAgentServiceModule extends AbstractModule {
     // the baragon agent service works on the local filesystem (as opposed to, say, via ssh)
     bind(LbConfigHelper.class).to(FilesystemConfigHelper.class).in(Scopes.SINGLETON);
     bind(LbAdapter.class).to(LocalLbAdapter.class).in(Scopes.SINGLETON);
-  }
-
-  @Provides
-  @Named(UPSTREAM_POLL_INTERVAL_PROPERTY)
-  public int providesUpstreamPollInterval(BaragonAgentConfiguration configuration) {
-    return configuration.getUpstreamPollIntervalMs();
   }
 
   @Provides
@@ -92,42 +79,34 @@ public class BaragonAgentServiceModule extends AbstractModule {
 
   @Provides
   @Singleton
-  public LeaderLatch provideLeaderLatch(CuratorFramework curator, LoadBalancerConfiguration loadBalancerConfiguration, Configuration config, Environment environment) throws UnknownHostException {
-    String path = String.format("/agent-leader/%s", loadBalancerConfiguration.getName());
+  @Named(HTTP_PORT_PROPERTY)
+  public int providesHttpPortProperty(BaragonAgentConfiguration config) {
+    SimpleServerFactory simpleServerFactory = (SimpleServerFactory) config.getServerFactory();
+    HttpConnectorFactory httpFactory = (HttpConnectorFactory) simpleServerFactory.getConnector();
 
-    int port = -1;
-    for (Connector connector : config.getServerFactory().build(environment).getConnectors()) {
-      if (connector instanceof ServerConnector) {
-        port = ((ServerConnector) connector).getPort();
-      }
-    }
+    return httpFactory.getPort();
+  }
 
-    if (port == -1) {
-      throw new RuntimeException("Couldn't deduce HTTP port!");
-    }
-
-    String participantId = String.format("%s:%d", InetAddress.getLocalHost().getHostName(), port);
-    LOG.info("Creating LeaderLatch at " + path + " as " + participantId);
-    return new LeaderLatch(curator, path, participantId);
+  @Provides
+  @Named(HOSTNAME_PROPERTY)
+  public String providesHostnameProperty(BaragonAgentConfiguration config) throws Exception {
+    return !Strings.isNullOrEmpty(config.getHostname()) ? config.getHostname() : JavaUtils.getHostAddress();
   }
 
   @Provides
   @Singleton
-  @Named(LB_CLUSTER_LOCK)
-  public ReentrantLock providesLbClusterLock() {
+  @Named(AGENT_LEADER_LATCH)
+  public LeaderLatch providesAgentLeaderLatch(CuratorFramework curatorFramework, BaragonAgentConfiguration config,
+                                              @Named(HTTP_PORT_PROPERTY) int httpPort, @Named(HOSTNAME_PROPERTY) String hostname) {
+    final String appRoot = ((SimpleServerFactory)config.getServerFactory()).getApplicationContextPath();
+
+    return new LeaderLatch(curatorFramework, String.format("/load-balancer/%s", config.getLoadBalancerConfiguration().getName()), String.format("http://%s:%s%s", hostname, httpPort, appRoot));
+  }
+
+  @Provides
+  @Singleton
+  @Named(AGENT_LOCK)
+  public Lock providesAgentLock() {
     return new ReentrantLock();
-  }
-
-  @Provides
-  @Singleton
-  public ScheduledExecutorService providesScheduledExecutorService() {
-    return Executors.newScheduledThreadPool(1, new ThreadFactoryBuilder().setNameFormat("BaragonAgentScheduler-%d").build());
-  }
-
-  @Provides
-  @Singleton
-  @Named(POLLER_LAST_RUN)
-  public AtomicLong providesPollerLastRun() {
-    return new AtomicLong();
   }
 }

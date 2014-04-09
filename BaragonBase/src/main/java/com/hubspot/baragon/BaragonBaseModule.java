@@ -6,10 +6,8 @@ import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.google.inject.name.Names;
 import com.hubspot.baragon.config.ZooKeeperConfiguration;
-import com.hubspot.baragon.healthchecks.HealthCheckClient;
 import com.hubspot.baragon.lbs.LbAdapter;
 import com.hubspot.baragon.lbs.LocalLbAdapter;
-import com.hubspot.baragon.webhooks.WebhookClient;
 import com.ning.http.client.AsyncHttpClient;
 import com.ning.http.client.AsyncHttpClientConfig;
 import org.apache.curator.framework.CuratorFramework;
@@ -40,33 +38,6 @@ public class BaragonBaseModule extends AbstractModule {
 
     return client.usingNamespace(config.getZkNamespace());
   }
-  
-  @Provides
-  @Singleton
-  @HealthCheckClient
-  public AsyncHttpClient providesHealthCheckClient() {
-    return new AsyncHttpClient(new AsyncHttpClientConfig.Builder()
-      .setConnectionTimeoutInMs(5000)
-      .setRequestTimeoutInMs(5000)
-      .setFollowRedirects(true)
-      .setMaxRequestRetry(0)
-      .setUserAgent(BARAGON_USER_AGENT)
-      .build());
-  }
-
-  @Provides
-  @Singleton
-  @WebhookClient
-  public AsyncHttpClient providesWebhookClient() {
-    return new AsyncHttpClient(new AsyncHttpClientConfig.Builder()
-        .setConnectionTimeoutInMs(5000)
-        .setRequestTimeoutInMs(5000)
-        .setFollowRedirects(true)
-        .setMaxRequestRetry(3)
-        .setUserAgent(BARAGON_USER_AGENT)
-        .build());
-  }
-
 
   @Provides
   @Singleton

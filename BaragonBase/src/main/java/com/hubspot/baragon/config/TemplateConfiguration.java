@@ -4,9 +4,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import javax.validation.constraints.NotNull;
 
-/**
- * Created by tpetr on 1/2/14.
- */
 public class TemplateConfiguration {
   @NotNull
   @JsonProperty("filename")

@@ -2,26 +2,26 @@ package com.hubspot.baragon.exceptions;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.hubspot.baragon.models.ServiceInfo;
+import com.hubspot.baragon.models.Service;
 
 import java.util.Collection;
 
 public class MissingLoadBalancersException extends RuntimeException {
-  private final ServiceInfo serviceInfo;
+  private final Service service;
   private final Collection<String> missingLoadBalancers;
 
-  public MissingLoadBalancersException(ServiceInfo serviceInfo, Collection<String> missingLoadBalancers) {
-    this.serviceInfo = serviceInfo;
+  public MissingLoadBalancersException(Service service, Collection<String> missingLoadBalancers) {
+    this.service = service;
     this.missingLoadBalancers = missingLoadBalancers;
   }
 
   public MissingLoadBalancersException(Entity e) {
-    this.serviceInfo = e.getServiceInfo();
+    this.service = e.getService();
     this.missingLoadBalancers = e.getMissingLoadBalancers();
   }
 
-  public ServiceInfo getServiceInfo() {
-    return serviceInfo;
+  public Service getService() {
+    return service;
   }
 
   public Collection<String> getMissingLoadBalancers() {
@@ -29,21 +29,21 @@ public class MissingLoadBalancersException extends RuntimeException {
   }
 
   public Entity getEntity() {
-    return new Entity(serviceInfo, missingLoadBalancers);
+    return new Entity(service, missingLoadBalancers);
   }
 
   public static class Entity {
-    private final ServiceInfo serviceInfo;
+    private final Service service;
     private final Collection<String> missingLoadBalancers;
 
     @JsonCreator
-    public Entity(@JsonProperty("serviceInfo") ServiceInfo serviceInfo, @JsonProperty("missingLoadBalancers") Collection<String> missingLoadBalancers) {
-      this.serviceInfo = serviceInfo;
+    public Entity(@JsonProperty("service") Service service, @JsonProperty("missingLoadBalancers") Collection<String> missingLoadBalancers) {
+      this.service = service;
       this.missingLoadBalancers = missingLoadBalancers;
     }
 
-    public ServiceInfo getServiceInfo() {
-      return serviceInfo;
+    public Service getService() {
+      return service;
     }
 
     public Collection<String> getMissingLoadBalancers() {

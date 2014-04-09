@@ -1,11 +1,8 @@
 package com.hubspot.baragon.lbs;
 
-/**
- * A LbAdapter provides an interface for manipulating a load balancer.
- * @author tpetr
- *
- */
+import com.hubspot.baragon.exceptions.InvalidConfigException;
+
 public interface LbAdapter {
-  public void checkConfigs();
+  public void checkConfigs() throws InvalidConfigException;
   public void reloadConfigs();
 }

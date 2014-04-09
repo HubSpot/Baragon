@@ -1,16 +1,12 @@
 package com.hubspot.baragon.lbs;
 
-import java.io.ByteArrayOutputStream;
-
+import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 import com.hubspot.baragon.config.LoadBalancerConfiguration;
-import org.apache.commons.exec.CommandLine;
-import org.apache.commons.exec.DefaultExecutor;
-import org.apache.commons.exec.ExecuteException;
-import org.apache.commons.exec.ExecuteWatchdog;
-import org.apache.commons.exec.PumpStreamHandler;
+import com.hubspot.baragon.exceptions.InvalidConfigException;
+import org.apache.commons.exec.*;
 
-import com.google.common.base.Throwables;
+import java.io.ByteArrayOutputStream;
 
 public class LocalLbAdapter implements LbAdapter {
   public static int COMMAND_TIMEOUT = 10000;
@@ -39,8 +35,12 @@ public class LocalLbAdapter implements LbAdapter {
   }
   
   @Override
-  public void checkConfigs() {
-    executeWithTimeout(CommandLine.parse(loadBalancerConfiguration.getCheckConfigCommand()), COMMAND_TIMEOUT);
+  public void checkConfigs() throws InvalidConfigException {
+    try {
+      executeWithTimeout(CommandLine.parse(loadBalancerConfiguration.getCheckConfigCommand()), COMMAND_TIMEOUT);
+    } catch (RuntimeException e) {
+      throw new InvalidConfigException(e.getMessage());
+    }
   }
 
   @Override

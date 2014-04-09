@@ -1,39 +1,31 @@
 package com.hubspot.baragon.service.resources;
 
-import java.util.List;
-import java.util.Map;
+import com.google.inject.Inject;
+import com.hubspot.baragon.data.BaragonLoadBalancerDatastore;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
-
-import com.google.inject.Inject;
-import com.hubspot.baragon.service.LoadBalancerManager;
+import java.util.Collection;
 
 @Path("/load-balancer")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class BaragonLoadBalancerResource {
-  private final LoadBalancerManager manager;
-  
+  private final BaragonLoadBalancerDatastore datastore;
+
   @Inject
-  public BaragonLoadBalancerResource(LoadBalancerManager manager) {
-    this.manager = manager;
+  public BaragonLoadBalancerResource(BaragonLoadBalancerDatastore datastore) {
+    this.datastore = datastore;
   }
 
   @GET
-  public List<String> getLoadBalancers() {
-    return manager.getLoadBalancers();
+  public Collection<String> getClusters() {
+    return datastore.getClusters();
   }
   
   @GET
-  @Path("/{loadBalancer}/hosts")
-  public List<String> getCluster(@PathParam("loadBalancer") String loadBalancer) {
-    return manager.getLoadBalancerHosts(loadBalancer);
-  }
-  
-  @GET
-  @Path("/{loadBalancer}/status")
-  public Map<String, Boolean> getClusterStatus(@PathParam("loadBalancer") String loadBalancer) {
-    return manager.checkConfigs(loadBalancer);
+  @Path("/{clusterName}/hosts")
+  public Collection<String> getHosts(@PathParam("clusterName") String clusterName) {
+    return datastore.getHosts(clusterName);
   }
 }
