@@ -6,18 +6,13 @@ import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
-import com.google.inject.Scopes;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import com.hubspot.baragon.BaragonBaseModule;
 import com.hubspot.baragon.agent.config.BaragonAgentConfiguration;
-import com.hubspot.baragon.config.LoadBalancerConfiguration;
-import com.hubspot.baragon.config.TemplateConfiguration;
+import com.hubspot.baragon.agent.config.LoadBalancerConfiguration;
+import com.hubspot.baragon.agent.config.TemplateConfiguration;
 import com.hubspot.baragon.config.ZooKeeperConfiguration;
-import com.hubspot.baragon.lbs.FilesystemConfigHelper;
-import com.hubspot.baragon.lbs.LbAdapter;
-import com.hubspot.baragon.lbs.LbConfigHelper;
-import com.hubspot.baragon.lbs.LocalLbAdapter;
 import com.hubspot.baragon.models.Template;
 import com.hubspot.baragon.utils.JavaUtils;
 import io.dropwizard.jetty.HttpConnectorFactory;
@@ -35,14 +30,11 @@ public class BaragonAgentServiceModule extends AbstractModule {
   public static final String HOSTNAME_PROPERTY = "baragon.agent.hostname";
   public static final String AGENT_LEADER_LATCH = "baragon.agent.leaderLatch";
   public static final String AGENT_LOCK = "baragon.agent.lock";
+  public static final String AGENT_TEMPLATES = "baragon.agent.templates";
 
   @Override
   protected void configure() {
     install(new BaragonBaseModule());
-    
-    // the baragon agent service works on the local filesystem (as opposed to, say, via ssh)
-    bind(LbConfigHelper.class).to(FilesystemConfigHelper.class).in(Scopes.SINGLETON);
-    bind(LbAdapter.class).to(LocalLbAdapter.class).in(Scopes.SINGLETON);
   }
 
   @Provides
@@ -53,7 +45,7 @@ public class BaragonAgentServiceModule extends AbstractModule {
 
   @Provides
   @Singleton
-  @Named(BaragonBaseModule.AGENT_TEMPLATES)
+  @Named(AGENT_TEMPLATES)
   public Collection<Template> providesTemplates(MustacheFactory mustacheFactory,
                                                 BaragonAgentConfiguration configuration) throws Exception {
     Collection<Template> templates = Lists.newArrayListWithCapacity(configuration.getTemplates().size());

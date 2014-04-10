@@ -6,10 +6,12 @@ import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import com.hubspot.baragon.BaragonBaseModule;
+import com.hubspot.baragon.service.config.HttpClientConfiguration;
 import com.hubspot.baragon.config.ZooKeeperConfiguration;
 import com.hubspot.baragon.service.config.BaragonConfiguration;
 import com.hubspot.baragon.models.BaragonRequest;
 import com.ning.http.client.AsyncHttpClient;
+import com.ning.http.client.AsyncHttpClientConfig;
 
 import java.util.Queue;
 import java.util.concurrent.Executors;
@@ -29,13 +31,26 @@ public class BaragonServiceModule extends AbstractModule {
   @Provides
   @Singleton
   @Named(BARAGON_SERVICE_HTTP_CLIENT)
-  public AsyncHttpClient providesHttpClient() {
-    AsyncHttpClient.BoundRequestBuilder
+  public AsyncHttpClient providesHttpClient(HttpClientConfiguration config) {
+    AsyncHttpClientConfig.Builder builder = new AsyncHttpClientConfig.Builder();
+
+    builder.setMaxRequestRetry(config.getMaxRequestRetry());
+    builder.setRequestTimeoutInMs(config.getRequestTimeoutInMs());
+    builder.setFollowRedirects(true);
+    builder.setConnectionTimeoutInMs(config.getConnectionTimeoutInMs());
+    builder.setUserAgent(config.getUserAgent());
+
+    return new AsyncHttpClient(builder.build());
   }
 
   @Provides
   public ZooKeeperConfiguration provideZooKeeperConfiguration(BaragonConfiguration configuration) {
     return configuration.getZooKeeperConfiguration();
+  }
+
+  @Provides
+  public HttpClientConfiguration provideHttpClientConfiguration(BaragonConfiguration configuration) {
+    return configuration.getHttpClientConfiguration();
   }
 
   @Provides

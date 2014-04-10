@@ -6,12 +6,12 @@ import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import com.hubspot.baragon.agent.BaragonAgentServiceModule;
+import com.hubspot.baragon.agent.lbs.FilesystemConfigHelper;
 import com.hubspot.baragon.data.BaragonRequestDatastore;
 import com.hubspot.baragon.data.BaragonStateDatastore;
-import com.hubspot.baragon.lbs.LbConfigHelper;
+import com.hubspot.baragon.models.BaragonRequest;
 import com.hubspot.baragon.models.Service;
 import com.hubspot.baragon.models.ServiceContext;
-import com.hubspot.baragon.models.BaragonRequest;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
@@ -24,14 +24,14 @@ import java.util.concurrent.locks.Lock;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class RequestResource {
-  private final LbConfigHelper configHelper;
+  private final FilesystemConfigHelper configHelper;
   private final BaragonStateDatastore stateDatastore;
   private final BaragonRequestDatastore requestDatastore;
   private final Lock agentLock;
   
   @Inject
   public RequestResource(BaragonStateDatastore stateDatastore, BaragonRequestDatastore requestDatastore,
-                         LbConfigHelper configHelper, @Named(BaragonAgentServiceModule.AGENT_LOCK) Lock agentLock) {
+                         FilesystemConfigHelper configHelper, @Named(BaragonAgentServiceModule.AGENT_LOCK) Lock agentLock) {
     this.configHelper = configHelper;
     this.stateDatastore = stateDatastore;
     this.requestDatastore = requestDatastore;

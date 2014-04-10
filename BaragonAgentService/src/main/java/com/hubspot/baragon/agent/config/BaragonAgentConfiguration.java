@@ -2,8 +2,6 @@ package com.hubspot.baragon.agent.config;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.hubspot.baragon.config.LoadBalancerConfiguration;
-import com.hubspot.baragon.config.TemplateConfiguration;
 import com.hubspot.baragon.config.ZooKeeperConfiguration;
 import io.dropwizard.Configuration;
 

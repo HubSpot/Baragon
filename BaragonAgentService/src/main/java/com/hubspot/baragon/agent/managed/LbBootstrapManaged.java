@@ -6,9 +6,9 @@ import com.google.common.base.Stopwatch;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import com.hubspot.baragon.agent.BaragonAgentServiceModule;
-import com.hubspot.baragon.config.LoadBalancerConfiguration;
+import com.hubspot.baragon.agent.config.LoadBalancerConfiguration;
+import com.hubspot.baragon.agent.lbs.FilesystemConfigHelper;
 import com.hubspot.baragon.data.BaragonStateDatastore;
-import com.hubspot.baragon.lbs.LbConfigHelper;
 import com.hubspot.baragon.models.Service;
 import com.hubspot.baragon.models.ServiceContext;
 import io.dropwizard.lifecycle.Managed;
@@ -23,13 +23,13 @@ public class LbBootstrapManaged implements Managed {
   private static final Log LOG = LogFactory.getLog(LbBootstrapManaged.class);
   
   private final LoadBalancerConfiguration loadBalancerConfiguration;
-  private final LbConfigHelper configHelper;
+  private final FilesystemConfigHelper configHelper;
   private final BaragonStateDatastore stateDatastore;
   private final LeaderLatch leaderLatch;
   
   @Inject
   public LbBootstrapManaged(BaragonStateDatastore stateDatastore, LoadBalancerConfiguration loadBalancerConfiguration,
-                            LbConfigHelper configHelper, @Named(BaragonAgentServiceModule.AGENT_LEADER_LATCH) LeaderLatch leaderLatch) {
+                            FilesystemConfigHelper configHelper, @Named(BaragonAgentServiceModule.AGENT_LEADER_LATCH) LeaderLatch leaderLatch) {
     this.loadBalancerConfiguration = loadBalancerConfiguration;
     this.configHelper = configHelper;
     this.stateDatastore = stateDatastore;
