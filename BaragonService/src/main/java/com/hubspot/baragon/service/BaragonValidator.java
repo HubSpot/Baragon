@@ -34,7 +34,7 @@ public class BaragonValidator {
         errors.add("service.lbs cannot be null or empty");
       }
 
-      if (service.getOwners() == null || service.getOptions().isEmpty()) {
+      if (service.getOwners() == null || service.getOwners().isEmpty()) {
         errors.add("service.owners cannot be null or empty");
       }
 
