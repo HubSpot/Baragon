@@ -47,6 +47,10 @@ public class BaragonStateDatastore extends AbstractDataStore {
     return getChildren(String.format(SERVICE_FORMAT, serviceId));
   }
 
+  public Optional<UpstreamInfo> getUpstream(String serviceId, String upstream) {
+    return readFromZk(String.format(UPSTREAM_FORMAT, serviceId, upstream), UpstreamInfo.class);
+  }
+
   public void applyRequest(BaragonRequest request) {
     try {
       setService(request.getService());

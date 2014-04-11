@@ -5,6 +5,7 @@ import com.google.inject.Inject;
 import com.hubspot.baragon.data.BaragonStateDatastore;
 import com.hubspot.baragon.models.Service;
 import com.hubspot.baragon.models.ServiceState;
+import com.hubspot.baragon.models.UpstreamInfo;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
@@ -12,7 +13,6 @@ import java.util.Collection;
 
 @Path("/state")
 @Produces(MediaType.APPLICATION_JSON)
-@Consumes(MediaType.APPLICATION_JSON)
 public class BaragonStateResource {
   private final BaragonStateDatastore datastore;
 
@@ -36,5 +36,11 @@ public class BaragonStateResource {
     }
 
     return Optional.of(new ServiceState(maybeServiceInfo.get(), datastore.getUpstreams(serviceId)));
+  }
+
+  @GET
+  @Path("/{serviceId}/{upstream}")
+  public Optional<UpstreamInfo> getUpstream(@PathParam("serviceId") String serviceId, @PathParam("upstream") String upstream) {
+    return datastore.getUpstream(serviceId, upstream);
   }
 }
