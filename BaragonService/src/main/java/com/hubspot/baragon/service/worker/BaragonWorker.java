@@ -9,9 +9,9 @@ import com.google.inject.name.Named;
 import com.hubspot.baragon.data.BaragonLoadBalancerDatastore;
 import com.hubspot.baragon.data.BaragonRequestDatastore;
 import com.hubspot.baragon.data.BaragonStateDatastore;
-import com.hubspot.baragon.service.BaragonServiceModule;
 import com.hubspot.baragon.models.BaragonRequest;
 import com.hubspot.baragon.models.RequestState;
+import com.hubspot.baragon.service.BaragonServiceModule;
 import com.hubspot.baragon.utils.ResponseUtils;
 import com.ning.http.client.AsyncCompletionHandler;
 import com.ning.http.client.AsyncHttpClient;
@@ -59,11 +59,19 @@ public class BaragonWorker implements Runnable {
 
       LOG.info(String.format("Handling %s", request));
 
-      applyRequest(request, loadBalancerDatastore.getAllHosts(request.getService().getLbs()));
+      final Collection<String> baseUrls = loadBalancerDatastore.getAllHosts(request.getService().getLbs());
+
+      if (baseUrls.isEmpty()) {
+        LOG.info(String.format("    No hosts defined for LB(s), directly applying %s...", request.getRequestId()));
+        stateDatastore.applyRequest(request);
+      } else {
+        LOG.info(String.format("    Applying %s to %d host(s)...", request.getRequestId(), baseUrls.size()));
+        applyRequest(request, baseUrls);
+      }
     }
   }
 
-  private void applyRequest(final BaragonRequest request, Collection<String> baseUrls) {
+  private void applyRequest(BaragonRequest request, Collection<String> baseUrls) {
     final Collection<Future<Boolean>> futures = Lists.newArrayListWithCapacity(baseUrls.size());
 
     final Stopwatch stopwatch = new Stopwatch();
