@@ -38,6 +38,20 @@ public class BaragonStateResource {
     return Optional.of(new ServiceState(maybeServiceInfo.get(), datastore.getUpstreams(serviceId)));
   }
 
+  @DELETE
+  @Path("/{serviceId}")
+  public Optional<ServiceState> deleteService(@PathParam("serviceId") String serviceId) {
+    final Optional<Service> maybeServiceInfo = datastore.getService(serviceId);
+
+    if (!maybeServiceInfo.isPresent()) {
+      return Optional.absent();
+    }
+
+    datastore.removeService(serviceId);
+
+    return Optional.of(new ServiceState(maybeServiceInfo.get(), datastore.getUpstreams(serviceId)));
+  }
+
   @GET
   @Path("/{serviceId}/{upstream}")
   public Optional<UpstreamInfo> getUpstream(@PathParam("serviceId") String serviceId, @PathParam("upstream") String upstream) {
