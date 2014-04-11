@@ -9,6 +9,7 @@ import com.google.common.base.Objects;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Collection;
+import java.util.Collections;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ServiceContext {
@@ -23,8 +24,14 @@ public class ServiceContext {
                         @JsonProperty("upstreams") Collection<String> upstreams,
                         @JsonProperty("timestamp") Long timestamp) {
     this.service = service;
-    this.upstreams = upstreams;
     this.timestamp = timestamp;
+
+    // protect against NPEs
+    if (upstreams != null) {
+      this.upstreams = upstreams;
+    } else {
+      this.upstreams = Collections.emptyList();
+    }
 
     // generate human readable timestamp
     Calendar cal = Calendar.getInstance();
@@ -48,6 +55,9 @@ public class ServiceContext {
   public String getTimestampHuman() {
     return timestampHuman;
   }
+
+  @JsonIgnore
+  public boolean getHasUpstreams() { return !upstreams.isEmpty(); }
 
   @Override
   public int hashCode() {
