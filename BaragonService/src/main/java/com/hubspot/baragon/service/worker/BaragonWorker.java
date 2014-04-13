@@ -59,13 +59,13 @@ public class BaragonWorker implements Runnable {
 
       LOG.info(String.format("Handling %s", request));
 
-      final Collection<String> baseUrls = loadBalancerDatastore.getAllHosts(request.getService().getLbs());
+      final Collection<String> baseUrls = loadBalancerDatastore.getAllHosts(request.getLoadBalancerService().getLbs());
 
       if (baseUrls.isEmpty()) {
-        LOG.info(String.format("    No hosts defined for LB(s), directly applying %s...", request.getRequestId()));
+        LOG.info(String.format("    No hosts defined for LB(s), directly applying %s...", request.getLoadBalancerRequestId()));
         stateDatastore.applyRequest(request);
       } else {
-        LOG.info(String.format("    Applying %s to %d host(s)...", request.getRequestId(), baseUrls.size()));
+        LOG.info(String.format("    Applying %s to %d host(s)...", request.getLoadBalancerRequestId(), baseUrls.size()));
         applyRequest(request, baseUrls);
       }
     }
@@ -79,7 +79,7 @@ public class BaragonWorker implements Runnable {
     stopwatch.start();
     for (final String baseUrl : baseUrls) {
       try {
-        futures.add(asyncHttpClient.preparePost(String.format("%s/request/%s", baseUrl, request.getRequestId())).execute(SUCCESSFUL_RESPONSE));
+        futures.add(asyncHttpClient.preparePost(String.format("%s/request/%s", baseUrl, request.getLoadBalancerRequestId())).execute(SUCCESSFUL_RESPONSE));
       } catch (Exception e) {
         futures.add(Futures.immediateFuture(false));
       }
@@ -98,20 +98,20 @@ public class BaragonWorker implements Runnable {
     stopwatch.stop();
 
     // re-check state, since it could have been cancelled mid-apply
-    final Optional<RequestState> maybeNewState = requestDatastore.getRequestState(request.getRequestId());
+    final Optional<RequestState> maybeNewState = requestDatastore.getRequestState(request.getLoadBalancerRequestId());
 
     if (maybeNewState.isPresent() && maybeNewState.get() == RequestState.CANCELING) {
       LOG.info("Request %s: MARKED FOR CANCELLATION");
       revertRequest(request, baseUrls);
-      requestDatastore.setRequestState(request.getRequestId(), RequestState.CANCELED);
+      requestDatastore.setRequestState(request.getLoadBalancerRequestId(), RequestState.CANCELED);
     } else if (success) {
-      LOG.info(String.format("Request %s: SUCCESS (%sms)", request.getRequestId(), stopwatch.elapsed(TimeUnit.MILLISECONDS)));
-      requestDatastore.setRequestState(request.getRequestId(), RequestState.SUCCESS);
+      LOG.info(String.format("Request %s: SUCCESS (%sms)", request.getLoadBalancerRequestId(), stopwatch.elapsed(TimeUnit.MILLISECONDS)));
+      requestDatastore.setRequestState(request.getLoadBalancerRequestId(), RequestState.SUCCESS);
 
       stateDatastore.applyRequest(request);
     } else {
-      LOG.info(String.format("Request %s: FAILED (%sms)", request.getRequestId(), stopwatch.elapsed(TimeUnit.MILLISECONDS)));
-      requestDatastore.setRequestState(request.getRequestId(), RequestState.FAILED);
+      LOG.info(String.format("Request %s: FAILED (%sms)", request.getLoadBalancerRequestId(), stopwatch.elapsed(TimeUnit.MILLISECONDS)));
+      requestDatastore.setRequestState(request.getLoadBalancerRequestId(), RequestState.FAILED);
       revertRequest(request, baseUrls);
     }
   }
@@ -121,7 +121,7 @@ public class BaragonWorker implements Runnable {
 
     for (final String baseUrl : baseUrls) {
       try {
-        futures.add(asyncHttpClient.prepareDelete(String.format("%s/request/%s", baseUrl, request.getRequestId())).execute(SUCCESSFUL_RESPONSE));
+        futures.add(asyncHttpClient.prepareDelete(String.format("%s/request/%s", baseUrl, request.getLoadBalancerRequestId())).execute(SUCCESSFUL_RESPONSE));
       } catch (IOException e) {
         futures.add(Futures.immediateFuture(false));
       }

@@ -17,14 +17,14 @@ public class BaragonValidator {
   public static void validateRequest(BaragonRequest request) {
     final Collection<String> errors = Lists.newArrayList();
 
-    if (Strings.isNullOrEmpty(request.getRequestId())) {
+    if (Strings.isNullOrEmpty(request.getLoadBalancerRequestId())) {
       errors.add("requestId cannot be null or empty");
     }
 
-    if (request.getService() == null) {
+    if (request.getLoadBalancerService() == null) {
       errors.add("service cannot be null");
     } else {
-      final Service service = request.getService();
+      final Service service = request.getLoadBalancerService();
 
       if (Strings.isNullOrEmpty(service.getId())) {
         errors.add("service.id cannot be null or empty");
@@ -34,20 +34,16 @@ public class BaragonValidator {
         errors.add("service.lbs cannot be null or empty");
       }
 
-      if (service.getOwners() == null || service.getOwners().isEmpty()) {
-        errors.add("service.owners cannot be null or empty");
-      }
-
       if (Strings.isNullOrEmpty(service.getRoute())) {
         errors.add("service.route cannot be null or empty");
       }
     }
 
-    if (request.getAdd() == null) {
+    if (request.getAddUpstreams() == null) {
       errors.add("add cannot be null");
     }
 
-    if (request.getRemove() == null) {
+    if (request.getRemoveUpstreams() == null) {
       errors.add("remove cannot be null");
     }
 

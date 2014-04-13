@@ -28,14 +28,14 @@ public class BaragonRequestDatastore extends AbstractDataStore {
   }
 
   public BaragonResponse addRequest(BaragonRequest request) {
-    if (!nodeExists(String.format(REQUEST_FORMAT, request.getRequestId()))) {
-      writeToZk(String.format(REQUEST_FORMAT, request.getRequestId()), request);
-      writeToZk(String.format(REQUEST_STATE_FORMAT, request.getRequestId()), RequestState.WAITING);
+    if (!nodeExists(String.format(REQUEST_FORMAT, request.getLoadBalancerRequestId()))) {
+      writeToZk(String.format(REQUEST_FORMAT, request.getLoadBalancerRequestId()), request);
+      writeToZk(String.format(REQUEST_STATE_FORMAT, request.getLoadBalancerRequestId()), RequestState.WAITING);
     }
 
-    final Optional<RequestState> maybeState = getRequestState(request.getRequestId());
+    final Optional<RequestState> maybeState = getRequestState(request.getLoadBalancerRequestId());
 
-    return new BaragonResponse(request.getRequestId(), maybeState.get());  // very rare and worth throwing if maybeState is empty
+    return new BaragonResponse(request.getLoadBalancerRequestId(), maybeState.get());  // very rare and worth throwing if maybeState is empty
   }
 
   public void setRequestState(String requestId, RequestState state) {

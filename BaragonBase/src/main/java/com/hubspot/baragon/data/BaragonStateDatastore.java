@@ -53,14 +53,14 @@ public class BaragonStateDatastore extends AbstractDataStore {
 
   public void applyRequest(BaragonRequest request) {
     try {
-      setService(request.getService());
+      setService(request.getLoadBalancerService());
 
-      for (String remove : request.getRemove()) {
-        deleteNode(String.format(UPSTREAM_FORMAT, request.getService().getId(), remove));
+      for (String remove : request.getRemoveUpstreams()) {
+        deleteNode(String.format(UPSTREAM_FORMAT, request.getLoadBalancerService().getId(), remove));
       }
 
-      for (String add : request.getAdd()) {
-        writeToZk(String.format(UPSTREAM_FORMAT, request.getService().getId(), add), new UpstreamInfo(add, request.getRequestId()));
+      for (String add : request.getAddUpstreams()) {
+        writeToZk(String.format(UPSTREAM_FORMAT, request.getLoadBalancerService().getId(), add), new UpstreamInfo(add, request.getLoadBalancerRequestId()));
       }
     } catch (Exception e) {
       throw Throwables.propagate(e);

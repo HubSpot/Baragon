@@ -4,51 +4,52 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Objects;
-import com.hubspot.baragon.models.Service;
 
 import java.util.List;
 
 @JsonIgnoreProperties( ignoreUnknown = true )
 public class BaragonRequest {
-  private final String requestId;
+  private final String loadBalancerRequestId;
 
-  private final Service service;
+  private final Service loadBalancerService;
 
-  private final List<String> add;
-  private final List<String> remove;
+  private final List<String> addUpstreams;
+  private final List<String> removeUpstreams;
 
   @JsonCreator
-  public BaragonRequest(@JsonProperty("requestId") String requestId, @JsonProperty("service") Service service,
-                        @JsonProperty("add") List<String> add, @JsonProperty("remove") List<String> remove) {
-    this.requestId = requestId;
-    this.service = service;
-    this.add = add;
-    this.remove = remove;
+  public BaragonRequest(@JsonProperty("loadBalancerRequestId") String loadBalancerRequestId,
+                        @JsonProperty("loadBalancerService") Service loadBalancerService,
+                        @JsonProperty("addUpstreams") List<String> addUpstreams,
+                        @JsonProperty("removeUpstreams") List<String> removeUpstreams) {
+    this.loadBalancerRequestId = loadBalancerRequestId;
+    this.loadBalancerService = loadBalancerService;
+    this.addUpstreams = addUpstreams;
+    this.removeUpstreams = removeUpstreams;
   }
 
-  public String getRequestId() {
-    return requestId;
+  public String getLoadBalancerRequestId() {
+    return loadBalancerRequestId;
   }
 
-  public Service getService() {
-    return service;
+  public Service getLoadBalancerService() {
+    return loadBalancerService;
   }
 
-  public List<String> getAdd() {
-    return add;
+  public List<String> getAddUpstreams() {
+    return addUpstreams;
   }
 
-  public List<String> getRemove() {
-    return remove;
+  public List<String> getRemoveUpstreams() {
+    return removeUpstreams;
   }
 
   @Override
   public String toString() {
     return Objects.toStringHelper(this)
-        .add("requestId", requestId)
-        .add("service", service)
-        .add("add", add)
-        .add("remove", remove)
+        .add("loadBalancerRequestId", loadBalancerRequestId)
+        .add("loadBalancerService", loadBalancerService)
+        .add("addUpstreams", addUpstreams)
+        .add("removeUpstreams", removeUpstreams)
         .toString();
   }
 }

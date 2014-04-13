@@ -44,10 +44,10 @@ public class BaragonRequestResource {
   public BaragonResponse addRequest(BaragonRequest request) {
     BaragonValidator.validateRequest(request);
 
-    final Optional<RequestState> maybeState = datastore.getRequestState(request.getRequestId());
+    final Optional<RequestState> maybeState = datastore.getRequestState(request.getLoadBalancerRequestId());
 
     if (maybeState.isPresent()) {
-      return new BaragonResponse(request.getRequestId(), maybeState.get());
+      return new BaragonResponse(request.getLoadBalancerRequestId(), maybeState.get());
     }
 
     final BaragonResponse response = datastore.addRequest(request);
