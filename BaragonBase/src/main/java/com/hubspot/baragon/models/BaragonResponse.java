@@ -7,28 +7,28 @@ import com.google.common.base.Objects;
 
 @JsonIgnoreProperties( ignoreUnknown = true )
 public class BaragonResponse {
-  private final String requestId;
-  private final RequestState state;
+  private final String loadBalancerRequestId;
+  private final RequestState loadBalancerState;
 
   @JsonCreator
-  public BaragonResponse(@JsonProperty("requestId") String requestId, @JsonProperty("state") RequestState state) {
-    this.requestId = requestId;
-    this.state = state;
+  public BaragonResponse(@JsonProperty("loadBalancerRequestId") String loadBalancerRequestId, @JsonProperty("loadBalancerState") RequestState loadBalancerState) {
+    this.loadBalancerRequestId = loadBalancerRequestId;
+    this.loadBalancerState = loadBalancerState;
   }
 
-  public String getRequestId() {
-    return requestId;
+  public String getLoadBalancerRequestId() {
+    return loadBalancerRequestId;
   }
 
-  public RequestState getState() {
-    return state;
+  public RequestState getLoadBalancerState() {
+    return loadBalancerState;
   }
 
   @Override
   public String toString() {
     return Objects.toStringHelper(this)
-        .add("requestId", requestId)
-        .add("state", state)
+        .add("loadBalancerRequestId", loadBalancerRequestId)
+        .add("loadBalancerState", loadBalancerState)
         .toString();
   }
 }
