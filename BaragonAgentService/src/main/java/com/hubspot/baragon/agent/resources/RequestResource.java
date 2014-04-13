@@ -52,7 +52,7 @@ public class RequestResource {
       if (agentLock.tryLock(5, TimeUnit.SECONDS)) {
         try {
 
-          final Set<String> upstreams = Sets.newHashSet(stateDatastore.getUpstreams(request.getLoadBalancerService().getId()));
+          final Set<String> upstreams = Sets.newHashSet(stateDatastore.getUpstreams(request.getLoadBalancerService().getServiceId()));
 
           upstreams.removeAll(request.getRemoveUpstreams());
           upstreams.addAll(request.getAddUpstreams());
@@ -86,7 +86,7 @@ public class RequestResource {
 
           final BaragonRequest request = maybeRequest.get();
 
-          final Optional<Service> maybeServiceInfo = stateDatastore.getService(request.getLoadBalancerService().getId());
+          final Optional<Service> maybeServiceInfo = stateDatastore.getService(request.getLoadBalancerService().getServiceId());
 
           if (!maybeServiceInfo.isPresent()) {
             return Optional.absent();
@@ -94,7 +94,7 @@ public class RequestResource {
 
           final Service service = maybeServiceInfo.get();
 
-          final ServiceContext snapshot = new ServiceContext(service, stateDatastore.getUpstreams(service.getId()), System.currentTimeMillis());
+          final ServiceContext snapshot = new ServiceContext(service, stateDatastore.getUpstreams(service.getServiceId()), System.currentTimeMillis());
 
           configHelper.apply(snapshot);
 

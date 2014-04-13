@@ -41,14 +41,14 @@ public class FilesystemConfigHelper {
       }
 
       if (!file.delete()) {
-        throw new RuntimeException("Failed to remove " + filename + " for " + service.getId());
+        throw new RuntimeException("Failed to remove " + filename + " for " + service.getServiceId());
       }
     }
   }
 
   public void apply(ServiceContext context) {
 
-    LOG.info(String.format("Going to apply %s: %s", context.getService().getId(), Joiner.on(", ").join(context.getUpstreams())));
+    LOG.info(String.format("Going to apply %s: %s", context.getService().getServiceId(), Joiner.on(", ").join(context.getUpstreams())));
 
     // backup old configs
     backupConfigs(context.getService());
@@ -59,7 +59,7 @@ public class FilesystemConfigHelper {
       adapter.checkConfigs();
     } catch (Exception e) {
       if (loadBalancerConfiguration.getRollbackConfigsIfInvalid()) {
-        LOG.error("Caught exception while writing configs for " + context.getService().getId() + ", reverting to backups!", e);
+        LOG.error("Caught exception while writing configs for " + context.getService().getServiceId() + ", reverting to backups!", e);
 
         restoreConfigs(context.getService());
       }

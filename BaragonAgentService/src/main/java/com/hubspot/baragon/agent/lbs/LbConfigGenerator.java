@@ -30,7 +30,7 @@ public class LbConfigGenerator {
     final Collection<LbConfigFile> files = Lists.newArrayListWithCapacity(templates.size());
 
     for (Template template : templates) {
-      final String filename = String.format(template.getFilename(), snapshot.getService().getId());
+      final String filename = String.format(template.getFilename(), snapshot.getService().getServiceId());
       final StringWriter sw = new StringWriter();
       template.getTemplate().execute(sw, snapshot);
       final String content = sw.toString();
@@ -44,7 +44,7 @@ public class LbConfigGenerator {
     final Collection<String> paths = Lists.newArrayListWithCapacity(templates.size());
 
     for (Template template : templates) {
-      final String filename = String.format(template.getFilename(), service.getId());
+      final String filename = String.format(template.getFilename(), service.getServiceId());
       paths.add(String.format("%s/%s", loadBalancerConfiguration.getRootPath(), filename));
     }
 

@@ -18,33 +18,33 @@ public class BaragonValidator {
     final Collection<String> errors = Lists.newArrayList();
 
     if (Strings.isNullOrEmpty(request.getLoadBalancerRequestId())) {
-      errors.add("requestId cannot be null or empty");
+      errors.add("loadBalancerRequestId cannot be null or empty");
     }
 
     if (request.getLoadBalancerService() == null) {
-      errors.add("service cannot be null");
+      errors.add("loadBalancerService cannot be null");
     } else {
       final Service service = request.getLoadBalancerService();
 
-      if (Strings.isNullOrEmpty(service.getId())) {
-        errors.add("service.id cannot be null or empty");
+      if (Strings.isNullOrEmpty(service.getServiceId())) {
+        errors.add("loadBalancerService.serviceId cannot be null or empty");
       }
 
-      if (service.getLbs() == null || service.getLbs().isEmpty()) {
-        errors.add("service.lbs cannot be null or empty");
+      if (service.getLoadBalancerGroups() == null || service.getLoadBalancerGroups().isEmpty()) {
+        errors.add("loadBalancerService.loadBalancerGroups cannot be null or empty");
       }
 
-      if (Strings.isNullOrEmpty(service.getRoute())) {
-        errors.add("service.route cannot be null or empty");
+      if (Strings.isNullOrEmpty(service.getLoadBalancerBaseUri())) {
+        errors.add("loadBalancerService.loadBalancerBaseUri cannot be null or empty");
       }
     }
 
     if (request.getAddUpstreams() == null) {
-      errors.add("add cannot be null");
+      errors.add("addUpstreams cannot be null");
     }
 
     if (request.getRemoveUpstreams() == null) {
-      errors.add("remove cannot be null");
+      errors.add("removeUpstreams cannot be null");
     }
 
     if (!errors.isEmpty()) {

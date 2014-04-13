@@ -28,7 +28,7 @@ public class BaragonStateDatastore extends AbstractDataStore {
   }
 
   public void setService(Service service) {
-    writeToZk(String.format(SERVICE_FORMAT, service.getId()), service);
+    writeToZk(String.format(SERVICE_FORMAT, service.getServiceId()), service);
   }
 
   public Optional<Service> getService(String serviceId) {
@@ -56,11 +56,11 @@ public class BaragonStateDatastore extends AbstractDataStore {
       setService(request.getLoadBalancerService());
 
       for (String remove : request.getRemoveUpstreams()) {
-        deleteNode(String.format(UPSTREAM_FORMAT, request.getLoadBalancerService().getId(), remove));
+        deleteNode(String.format(UPSTREAM_FORMAT, request.getLoadBalancerService().getServiceId(), remove));
       }
 
       for (String add : request.getAddUpstreams()) {
-        writeToZk(String.format(UPSTREAM_FORMAT, request.getLoadBalancerService().getId(), add), new UpstreamInfo(add, request.getLoadBalancerRequestId()));
+        writeToZk(String.format(UPSTREAM_FORMAT, request.getLoadBalancerService().getServiceId(), add), new UpstreamInfo(add, request.getLoadBalancerRequestId()));
       }
     } catch (Exception e) {
       throw Throwables.propagate(e);

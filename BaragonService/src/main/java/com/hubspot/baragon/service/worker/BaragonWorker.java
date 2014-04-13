@@ -59,7 +59,7 @@ public class BaragonWorker implements Runnable {
 
       LOG.info(String.format("Handling %s", request));
 
-      final Collection<String> baseUrls = loadBalancerDatastore.getAllHosts(request.getLoadBalancerService().getLbs());
+      final Collection<String> baseUrls = loadBalancerDatastore.getAllHosts(request.getLoadBalancerService().getLoadBalancerGroups());
 
       if (baseUrls.isEmpty()) {
         LOG.info(String.format("    No hosts defined for LB(s), directly applying %s...", request.getLoadBalancerRequestId()));

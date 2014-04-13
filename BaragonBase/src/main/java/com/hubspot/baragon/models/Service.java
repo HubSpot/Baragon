@@ -13,39 +13,40 @@ import java.util.Map;
 public class Service {
   private static final Map<String, Object> BLANK_OPTIONS = Collections.emptyMap();
 
-  private final String id;
+  private final String serviceId;
   private final Collection<String> owners;
-  private final String route;
-  private final List<String> lbs;
+  private final String loadBalancerBaseUri;
+  private final List<String> loadBalancerGroups;
   private final Map<String, Object> options;
   
-  public Service(@JsonProperty("id") String id,
-                 @JsonProperty("owners") Collection<String> owners, @JsonProperty("route") String route,
-                 @JsonProperty("lbs") List<String> lbs,
+  public Service(@JsonProperty("serviceId") String serviceId,
+                 @JsonProperty("owners") Collection<String> owners,
+                 @JsonProperty("loadBalancerBaseUri") String loadBalancerBaseUri,
+                 @JsonProperty("loadBalancerGroups") List<String> loadBalancerGroups,
                  @JsonProperty("options") Map<String, Object> options) {
-    this.id = id;
+    this.serviceId = serviceId;
     this.owners = owners;
-    this.route = route;
-    this.lbs = lbs;
+    this.loadBalancerBaseUri = loadBalancerBaseUri;
+    this.loadBalancerGroups = loadBalancerGroups;
     this.options = Objects.firstNonNull(options, BLANK_OPTIONS);
 
     // TODO: bring back rewriteAppRootToo (sorry Ian)
   }
 
-  public String getId() {
-    return id;
+  public String getServiceId() {
+    return serviceId;
   }
 
   public Collection<String> getOwners() {
     return owners;
   }
 
-  public String getRoute() {
-    return route;
+  public String getLoadBalancerBaseUri() {
+    return loadBalancerBaseUri;
   }
 
-  public List<String> getLbs() {
-    return lbs;
+  public List<String> getLoadBalancerGroups() {
+    return loadBalancerGroups;
   }
 
   public Map<String, Object> getOptions() {
@@ -55,17 +56,17 @@ public class Service {
   @Override
   public String toString() {
     return Objects.toStringHelper(Service.class)
-        .add("id", id)
+        .add("serviceId", serviceId)
         .add("owners", owners)
-        .add("route", route)
-        .add("lbs", lbs)
+        .add("loadBalancerBaseUri", loadBalancerBaseUri)
+        .add("loadBalancerGroups", loadBalancerGroups)
         .add("options", options)
         .toString();
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(id, owners, route, lbs, options);
+    return Objects.hashCode(serviceId, owners, loadBalancerBaseUri, loadBalancerGroups, options);
   }
 
   @Override
@@ -79,10 +80,10 @@ public class Service {
     }
 
     if (that instanceof Service) {
-      return Objects.equal(id, ((Service)that).getId())
+      return Objects.equal(serviceId, ((Service)that).getServiceId())
           && Objects.equal(owners, ((Service)that).getOwners())
-          && Objects.equal(route, ((Service)that).getRoute())
-          && Objects.equal(lbs, ((Service)that).getLbs())
+          && Objects.equal(loadBalancerBaseUri, ((Service)that).getLoadBalancerBaseUri())
+          && Objects.equal(loadBalancerGroups, ((Service)that).getLoadBalancerGroups())
           && Objects.equal(options, ((Service)that).getOptions());
     }
 

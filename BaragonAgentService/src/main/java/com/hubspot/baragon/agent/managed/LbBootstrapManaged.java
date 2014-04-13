@@ -54,7 +54,7 @@ public class LbBootstrapManaged implements Managed {
       final Service service = maybeServiceInfo.get();
       final Collection<String> upstreams = stateDatastore.getUpstreams(serviceId);
 
-      if (service.getLbs() == null || !service.getLbs().contains(loadBalancerConfiguration.getName())) {
+      if (service.getLoadBalancerGroups() == null || !service.getLoadBalancerGroups().contains(loadBalancerConfiguration.getName())) {
         LOG.info(String.format("   Skipping %s, not applicable to this LB cluster", serviceId));
         continue;
       }
