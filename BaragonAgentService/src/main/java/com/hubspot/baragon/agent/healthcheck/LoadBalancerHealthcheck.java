@@ -1,12 +1,14 @@
 package com.hubspot.baragon.agent.healthcheck;
 
-import com.codahale.metrics.health.HealthCheck;
 import com.google.inject.Inject;
 import com.hubspot.baragon.agent.lbs.LocalLbAdapter;
+import com.hubspot.dropwizard.guice.InjectableHealthCheck;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-public class LoadBalancerHealthcheck extends HealthCheck {
+public class LoadBalancerHealthcheck extends InjectableHealthCheck {
+  public static final String NAME = "loadBalancerConfigs";
+
   private static final Log LOG = LogFactory.getLog(LoadBalancerHealthcheck.class);
 
   private final LocalLbAdapter adapter;
@@ -23,8 +25,12 @@ public class LoadBalancerHealthcheck extends HealthCheck {
       return Result.healthy();
     } catch (Exception e) {
       LOG.warn("Healthcheck failed: " + e.getMessage());
-      return Result.unhealthy(e.getMessage());
+      return Result.unhealthy(e);
     }
   }
 
+  @Override
+  public String getName() {
+    return NAME;
+  }
 }
