@@ -5,6 +5,7 @@ import com.google.common.base.Optional;
 import com.google.common.base.Throwables;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.api.PathAndBytesable;
+import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 
 import java.util.Collections;
@@ -62,6 +63,14 @@ public abstract class AbstractDataStore {
       return true;
     } catch (KeeperException.NodeExistsException e) {
       return false;
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  protected String createPersistentSequentialNode(String path) {
+    try {
+      return curatorFramework.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT_SEQUENTIAL).forPath(path);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }

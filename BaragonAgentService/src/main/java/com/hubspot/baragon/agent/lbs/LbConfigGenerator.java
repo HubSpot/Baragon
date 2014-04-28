@@ -6,10 +6,9 @@ import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import com.hubspot.baragon.agent.BaragonAgentServiceModule;
 import com.hubspot.baragon.agent.config.LoadBalancerConfiguration;
-import com.hubspot.baragon.models.LbConfigFile;
-import com.hubspot.baragon.models.Service;
-import com.hubspot.baragon.models.ServiceContext;
-import com.hubspot.baragon.models.Template;
+import com.hubspot.baragon.agent.models.LbConfigFile;
+import com.hubspot.baragon.agent.models.ServiceContext;
+import com.hubspot.baragon.agent.models.Template;
 
 import java.io.StringWriter;
 import java.util.Collection;
@@ -40,11 +39,11 @@ public class LbConfigGenerator {
     return files;
   }
 
-  public Collection<String> getConfigPathsForProject(Service service) {
+  public Collection<String> getConfigPathsForProject(String serviceId) {
     final Collection<String> paths = Lists.newArrayListWithCapacity(templates.size());
 
     for (Template template : templates) {
-      final String filename = String.format(template.getFilename(), service.getServiceId());
+      final String filename = String.format(template.getFilename(), serviceId);
       paths.add(String.format("%s/%s", loadBalancerConfiguration.getRootPath(), filename));
     }
 

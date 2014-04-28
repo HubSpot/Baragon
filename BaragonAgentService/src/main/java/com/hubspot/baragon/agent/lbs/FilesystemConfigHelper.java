@@ -1,16 +1,12 @@
 package com.hubspot.baragon.agent.lbs;
 
-import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
-import com.google.common.collect.Lists;
 import com.google.common.io.Files;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import com.hubspot.baragon.agent.config.LoadBalancerConfiguration;
-import com.hubspot.baragon.models.LbConfigFile;
-import com.hubspot.baragon.models.Service;
-import com.hubspot.baragon.models.ServiceContext;
+import com.hubspot.baragon.agent.models.LbConfigFile;
+import com.hubspot.baragon.agent.models.ServiceContext;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -24,24 +20,22 @@ public class FilesystemConfigHelper {
 
   private final LbConfigGenerator configGenerator;
   private final LocalLbAdapter adapter;
-  private final LoadBalancerConfiguration loadBalancerConfiguration;
 
   @Inject
-  public FilesystemConfigHelper(LbConfigGenerator configGenerator, LocalLbAdapter adapter, LoadBalancerConfiguration loadBalancerConfiguration) {
+  public FilesystemConfigHelper(LbConfigGenerator configGenerator, LocalLbAdapter adapter) {
     this.configGenerator = configGenerator;
     this.adapter = adapter;
-    this.loadBalancerConfiguration = loadBalancerConfiguration;
   }
 
-  public void remove(Service service) {
-    for (String filename : configGenerator.getConfigPathsForProject(service)) {
+  public void remove(String serviceId) {
+    for (String filename : configGenerator.getConfigPathsForProject(serviceId)) {
       File file = new File(filename);
       if (!file.exists()) {
         continue;
       }
 
       if (!file.delete()) {
-        throw new RuntimeException("Failed to remove " + filename + " for " + service.getServiceId());
+        throw new RuntimeException("Failed to remove " + filename + " for " + serviceId);
       }
     }
   }
@@ -49,45 +43,33 @@ public class FilesystemConfigHelper {
   public void apply(ServiceContext context) {
 
     LOG.info(String.format("Going to apply %s: %s", context.getService().getServiceId(), Joiner.on(", ").join(context.getUpstreams())));
+    final boolean newServiceExists = configsExist(context.getService().getServiceId());
 
-    // backup old configs
-    backupConfigs(context.getService());
+    // Backup configs
+    if (newServiceExists) {
+      backupConfigs(context.getService().getServiceId());
+    }
 
-    // write & check the configs
+    // Write & check the configs
     try {
       writeConfigs(configGenerator.generateConfigsForProject(context));
+
       adapter.checkConfigs();
     } catch (Exception e) {
-      if (loadBalancerConfiguration.getRollbackConfigsIfInvalid()) {
-        LOG.error("Caught exception while writing configs for " + context.getService().getServiceId() + ", reverting to backups!", e);
+      LOG.error("Caught exception while writing configs for " + context.getService().getServiceId() + ", reverting to backups!", e);
 
-        restoreConfigs(context.getService());
+      // Restore configs
+      if (newServiceExists) {
+        restoreConfigs(context.getService().getServiceId());
+      } else {
+        remove(context.getService().getServiceId());
       }
 
       throw Throwables.propagate(e);
     }
 
-    // load the new configs
+    // Load the new configs
     adapter.reloadConfigs();
-  }
-
-  private Collection<LbConfigFile> readConfigs(Service service) {
-    Collection<LbConfigFile> files = Lists.newLinkedList();
-    
-    for (String filename : configGenerator.getConfigPathsForProject(service)) {
-      try {
-        File file = new File(filename);
-        final String content = Files.toString(file, Charsets.UTF_8);
-        if (file.exists()) {
-          files.add(new LbConfigFile(filename, content));
-        }
-      } catch (Exception e) {
-        LOG.error("Failed to back up " + filename, e);
-        throw new RuntimeException("Failed backing up " + filename, e);
-      }
-    }
-    
-    return files;
   }
 
   private void writeConfigs(Collection<LbConfigFile> files) {
@@ -101,8 +83,8 @@ public class FilesystemConfigHelper {
     }
   }
 
-  public void backupConfigs(Service service) {
-    for (String filename : configGenerator.getConfigPathsForProject(service)) {
+  public void backupConfigs(String serviceId) {
+    for (String filename : configGenerator.getConfigPathsForProject(serviceId)) {
       try {
         File src = new File(filename);
         if (!src.exists()) {
@@ -117,8 +99,18 @@ public class FilesystemConfigHelper {
     }
   }
 
-  public void restoreConfigs(Service service) {
-    for (String filename : configGenerator.getConfigPathsForProject(service)) {
+  public boolean configsExist(String serviceId) {
+    for (String filename : configGenerator.getConfigPathsForProject(serviceId)) {
+      if (!new File(filename).exists()) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  public void restoreConfigs(String serviceId) {
+    for (String filename : configGenerator.getConfigPathsForProject(serviceId)) {
       try {
         File src = new File(filename + ".old");
         if (!src.exists()) {

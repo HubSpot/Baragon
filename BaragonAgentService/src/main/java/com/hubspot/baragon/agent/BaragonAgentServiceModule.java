@@ -13,11 +13,11 @@ import com.hubspot.baragon.agent.config.BaragonAgentConfiguration;
 import com.hubspot.baragon.agent.config.LoadBalancerConfiguration;
 import com.hubspot.baragon.agent.config.TemplateConfiguration;
 import com.hubspot.baragon.config.ZooKeeperConfiguration;
-import com.hubspot.baragon.models.Template;
+import com.hubspot.baragon.data.BaragonLoadBalancerDatastore;
+import com.hubspot.baragon.agent.models.Template;
 import com.hubspot.baragon.utils.JavaUtils;
 import io.dropwizard.jetty.HttpConnectorFactory;
 import io.dropwizard.server.SimpleServerFactory;
-import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.leader.LeaderLatch;
 
 import java.io.StringReader;
@@ -59,7 +59,6 @@ public class BaragonAgentServiceModule extends AbstractModule {
   }
   
   @Provides
-  @Singleton
   public LoadBalancerConfiguration provideLoadBalancerInfo(BaragonAgentConfiguration configuration) {
     return configuration.getLoadBalancerConfiguration();
   }
@@ -88,11 +87,14 @@ public class BaragonAgentServiceModule extends AbstractModule {
   @Provides
   @Singleton
   @Named(AGENT_LEADER_LATCH)
-  public LeaderLatch providesAgentLeaderLatch(CuratorFramework curatorFramework, BaragonAgentConfiguration config,
-                                              @Named(HTTP_PORT_PROPERTY) int httpPort, @Named(HOSTNAME_PROPERTY) String hostname) {
+  public LeaderLatch providesAgentLeaderLatch(BaragonLoadBalancerDatastore loadBalancerDatastore,
+                                              BaragonAgentConfiguration config,
+                                              @Named(HTTP_PORT_PROPERTY) int httpPort,
+                                              @Named(HOSTNAME_PROPERTY) String hostname) {
     final String appRoot = ((SimpleServerFactory)config.getServerFactory()).getApplicationContextPath();
+    final String baseUri = String.format("http://%s:%s%s", hostname, httpPort, appRoot);
 
-    return new LeaderLatch(curatorFramework, String.format("/load-balancer/%s", config.getLoadBalancerConfiguration().getName()), String.format("http://%s:%s%s", hostname, httpPort, appRoot));
+    return loadBalancerDatastore.createLeaderLatch(config.getLoadBalancerConfiguration().getName(), baseUri);
   }
 
   @Provides

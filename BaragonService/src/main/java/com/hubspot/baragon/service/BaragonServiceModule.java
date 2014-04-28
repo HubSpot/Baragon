@@ -1,19 +1,18 @@
 package com.hubspot.baragon.service;
 
-import com.google.common.collect.Queues;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import com.hubspot.baragon.BaragonBaseModule;
-import com.hubspot.baragon.service.config.HttpClientConfiguration;
 import com.hubspot.baragon.config.ZooKeeperConfiguration;
 import com.hubspot.baragon.service.config.BaragonConfiguration;
-import com.hubspot.baragon.models.BaragonRequest;
+import com.hubspot.baragon.service.config.HttpClientConfiguration;
 import com.ning.http.client.AsyncHttpClient;
 import com.ning.http.client.AsyncHttpClientConfig;
+import org.apache.curator.framework.CuratorFramework;
+import org.apache.curator.framework.recipes.leader.LeaderLatch;
 
-import java.util.Queue;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
@@ -21,7 +20,8 @@ import java.util.concurrent.ScheduledExecutorService;
 public class BaragonServiceModule extends AbstractModule {
   public static final String BARAGON_SERVICE_HTTP_CLIENT = "baragon.service.http.client";
   public static final String BARAGON_SERVICE_SCHEDULED_EXECUTOR = "baragon.service.scheduledExecutor";
-  public static final String BARAGON_SERVICE_QUEUE = "baragon.service.queue";
+  public static final String BARAGON_SERVICE_LEADER_LATCH = "baragon.service.leaderLatch";
+  public static final String BARAGON_AGENT_REQUEST_URI_FORMAT = "baragon.agent.request.uri.format";
 
   @Override
   protected void configure() {
@@ -54,10 +54,16 @@ public class BaragonServiceModule extends AbstractModule {
   }
 
   @Provides
+  @Named(BARAGON_AGENT_REQUEST_URI_FORMAT)
+  public String provideAgentUriFormat(BaragonConfiguration configuration) {
+    return configuration.getAgentRequestUriFormat();
+  }
+
+  @Provides
   @Singleton
-  @Named(BARAGON_SERVICE_QUEUE)
-  public Queue<BaragonRequest> providesQueue() {
-    return Queues.newConcurrentLinkedQueue();
+  @Named(BARAGON_SERVICE_LEADER_LATCH)
+  public LeaderLatch providesWorkerLeaderLatch(CuratorFramework curatorFramework) {
+    return new LeaderLatch(curatorFramework, "/singularity/workers");
   }
 
   @Provides

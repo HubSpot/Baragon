@@ -3,20 +3,28 @@ package com.hubspot.baragon.models;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Objects;
+import org.hibernate.validator.constraints.NotEmpty;
 
+import javax.validation.constraints.NotNull;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Service {
-  private static final Map<String, Object> BLANK_OPTIONS = Collections.emptyMap();
-
+  @NotEmpty
   private final String serviceId;
+
+  @NotNull
   private final Collection<String> owners;
+
+  @NotEmpty
   private final String loadBalancerBaseUri;
+
+  @NotEmpty
   private final List<String> loadBalancerGroups;
+
+  @NotNull
   private final Map<String, Object> options;
   
   public Service(@JsonProperty("serviceId") String serviceId,
@@ -28,7 +36,7 @@ public class Service {
     this.owners = owners;
     this.loadBalancerBaseUri = loadBalancerBaseUri;
     this.loadBalancerGroups = loadBalancerGroups;
-    this.options = Objects.firstNonNull(options, BLANK_OPTIONS);
+    this.options = options;
 
     // TODO: bring back rewriteAppRootToo (sorry Ian)
   }

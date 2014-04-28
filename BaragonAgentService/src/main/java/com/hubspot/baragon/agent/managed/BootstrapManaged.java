@@ -10,7 +10,7 @@ import com.hubspot.baragon.agent.config.LoadBalancerConfiguration;
 import com.hubspot.baragon.agent.lbs.FilesystemConfigHelper;
 import com.hubspot.baragon.data.BaragonStateDatastore;
 import com.hubspot.baragon.models.Service;
-import com.hubspot.baragon.models.ServiceContext;
+import com.hubspot.baragon.agent.models.ServiceContext;
 import io.dropwizard.lifecycle.Managed;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -19,8 +19,8 @@ import org.apache.curator.framework.recipes.leader.LeaderLatch;
 import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 
-public class LbBootstrapManaged implements Managed {
-  private static final Log LOG = LogFactory.getLog(LbBootstrapManaged.class);
+public class BootstrapManaged implements Managed {
+  private static final Log LOG = LogFactory.getLog(BootstrapManaged.class);
   
   private final LoadBalancerConfiguration loadBalancerConfiguration;
   private final FilesystemConfigHelper configHelper;
@@ -28,8 +28,10 @@ public class LbBootstrapManaged implements Managed {
   private final LeaderLatch leaderLatch;
   
   @Inject
-  public LbBootstrapManaged(BaragonStateDatastore stateDatastore, LoadBalancerConfiguration loadBalancerConfiguration,
-                            FilesystemConfigHelper configHelper, @Named(BaragonAgentServiceModule.AGENT_LEADER_LATCH) LeaderLatch leaderLatch) {
+  public BootstrapManaged(BaragonStateDatastore stateDatastore,
+                          LoadBalancerConfiguration loadBalancerConfiguration,
+                          FilesystemConfigHelper configHelper,
+                          @Named(BaragonAgentServiceModule.AGENT_LEADER_LATCH) LeaderLatch leaderLatch) {
     this.loadBalancerConfiguration = loadBalancerConfiguration;
     this.configHelper = configHelper;
     this.stateDatastore = stateDatastore;

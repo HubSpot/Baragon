@@ -1,4 +1,4 @@
-package com.hubspot.baragon.models;
+package com.hubspot.baragon.agent.models;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -28,10 +28,5 @@ public class AgentStatus {
         .add("name", name)
         .add("validConfigs", validConfigs)
         .toString();
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hashCode(name, validConfigs);
   }
 }

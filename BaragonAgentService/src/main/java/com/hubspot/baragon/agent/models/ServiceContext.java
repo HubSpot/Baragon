@@ -1,10 +1,11 @@
-package com.hubspot.baragon.models;
+package com.hubspot.baragon.agent.models;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Objects;
+import com.hubspot.baragon.models.Service;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -14,6 +15,7 @@ import java.util.Collections;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ServiceContext {
   private static final SimpleDateFormat DATE_FORMATTER = new SimpleDateFormat("yyyy-MM-dd hh:mm a");
+
   private final Service service;
   private final Collection<String> upstreams;
   private final Long timestamp;

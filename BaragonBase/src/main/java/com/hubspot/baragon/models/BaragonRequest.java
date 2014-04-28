@@ -4,16 +4,25 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Objects;
+import org.hibernate.validator.constraints.NotEmpty;
 
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import java.util.List;
 
 @JsonIgnoreProperties( ignoreUnknown = true )
 public class BaragonRequest {
+  @NotEmpty
   private final String loadBalancerRequestId;
 
+  @NotNull
+  @Valid
   private final Service loadBalancerService;
 
+  @NotNull
   private final List<String> addUpstreams;
+
+  @NotNull
   private final List<String> removeUpstreams;
 
   @JsonCreator

@@ -4,7 +4,7 @@ import com.google.inject.Inject;
 import com.hubspot.baragon.agent.config.LoadBalancerConfiguration;
 import com.hubspot.baragon.agent.lbs.LocalLbAdapter;
 import com.hubspot.baragon.exceptions.InvalidConfigException;
-import com.hubspot.baragon.models.AgentStatus;
+import com.hubspot.baragon.agent.models.AgentStatus;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 

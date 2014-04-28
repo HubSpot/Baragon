@@ -9,51 +9,72 @@ import com.hubspot.baragon.models.BaragonResponse;
 import com.hubspot.baragon.models.RequestState;
 import org.apache.curator.framework.CuratorFramework;
 
+import java.util.List;
+import java.util.regex.Pattern;
+
 @Singleton
 public class BaragonRequestDatastore extends AbstractDataStore {
   public static final String REQUEST_FORMAT = "/singularity/request/%s";
-  public static final String REQUEST_STATE_FORMAT = "/singularity/request/%s/state";
+  public static final String PENDING_REQUESTS_FORMAT = "/singularity/pending";
+  public static final String CREATE_PENDING_REQUEST_FORMAT = "/singularity/pending/%s_";
+  public static final String PENDING_REQUEST_FORMAT = "/singularity/pending/%s";
+  public static final String RESPONSE_FORMAT = "/singularity/request/%s/response";
+
+  public static final Pattern PENDING_REQUEST_ID_REGEX = Pattern.compile("^(.*?)_(\\d+)$");
+
+  public static Optional<String> parsePendingRequestId(String pendingRequestId) {
+    return Optional.fromNullable(PENDING_REQUEST_ID_REGEX.matcher(pendingRequestId).group(1));
+  }
 
   @Inject
   public BaragonRequestDatastore(CuratorFramework curatorFramework, ObjectMapper objectMapper) {
     super(curatorFramework, objectMapper);
   }
 
-  public Optional<RequestState> getRequestState(String requestId) {
-    return readFromZk(String.format(REQUEST_STATE_FORMAT, requestId), RequestState.class);
+  public Optional<BaragonResponse> getResponse(String requestId) {
+    return readFromZk(String.format(RESPONSE_FORMAT, requestId), BaragonResponse.class);
   }
 
   public Optional<BaragonRequest> getRequest(String requestId) {
     return readFromZk(String.format(REQUEST_FORMAT, requestId), BaragonRequest.class);
   }
 
-  public BaragonResponse addRequest(BaragonRequest request) {
-    if (!nodeExists(String.format(REQUEST_FORMAT, request.getLoadBalancerRequestId()))) {
-      writeToZk(String.format(REQUEST_FORMAT, request.getLoadBalancerRequestId()), request);
-      writeToZk(String.format(REQUEST_STATE_FORMAT, request.getLoadBalancerRequestId()), RequestState.WAITING);
-    }
-
-    final Optional<RequestState> maybeState = getRequestState(request.getLoadBalancerRequestId());
-
-    return new BaragonResponse(request.getLoadBalancerRequestId(), maybeState.get());  // very rare and worth throwing if maybeState is empty
-  }
-
-  public void setRequestState(String requestId, RequestState state) {
-    writeToZk(String.format(REQUEST_STATE_FORMAT, requestId), state);
+  public BaragonResponse updateResponse(String requestId, RequestState state, Optional<String> message) {
+    writeToZk(String.format(RESPONSE_FORMAT, requestId), new BaragonResponse(requestId, state, message));
+    return new BaragonResponse(requestId, state, message);
   }
 
   public Optional<BaragonResponse> cancelRequest(String requestId) {
-    final Optional<RequestState> maybeRequestState = getRequestState(requestId);
+    final Optional<BaragonResponse> maybeResponse = getResponse(requestId);
 
-    if (!maybeRequestState.isPresent()) {
-      return Optional.absent();
+    if (maybeResponse.isPresent() && maybeResponse.get().getLoadBalancerState() == RequestState.WAITING) {
+      return Optional.of(updateResponse(requestId, RequestState.CANCELING, Optional.<String>absent()));
     }
 
-    if (maybeRequestState.get() == RequestState.WAITING) {
-      writeToZk(String.format(REQUEST_STATE_FORMAT, requestId), RequestState.CANCELING);
-      return Optional.of(new BaragonResponse(requestId, RequestState.CANCELING));
-    } else {
-      return Optional.of(new BaragonResponse(requestId, maybeRequestState.get()));
+    return Optional.absent();
+  }
+
+  //
+  // PENDING REQUESTS
+  //
+
+  public BaragonResponse addPendingRequest(BaragonRequest request) {
+    final String requestId = request.getLoadBalancerRequestId();
+
+    if (!nodeExists(String.format(REQUEST_FORMAT, requestId))) {
+      writeToZk(String.format(REQUEST_FORMAT, requestId), request);
+      writeToZk(String.format(RESPONSE_FORMAT, requestId), new BaragonResponse(requestId, RequestState.WAITING, Optional.<String>absent()));
+      createPersistentSequentialNode(String.format(CREATE_PENDING_REQUEST_FORMAT, requestId));
     }
+
+    return getResponse(request.getLoadBalancerRequestId()).get();  // very rare and worth throwing if absent
+  }
+
+  public List<String> getPendingRequestIds() {
+    return getChildren(PENDING_REQUESTS_FORMAT);
+  }
+
+  public void clearPendingRequest(String pendingRequestId) {
+    deleteNode(String.format(PENDING_REQUEST_FORMAT, pendingRequestId));
   }
 }

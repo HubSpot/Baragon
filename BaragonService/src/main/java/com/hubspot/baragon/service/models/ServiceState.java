@@ -1,8 +1,9 @@
-package com.hubspot.baragon.models;
+package com.hubspot.baragon.service.models;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Objects;
+import com.hubspot.baragon.models.Service;
 
 import java.util.Collection;
 
