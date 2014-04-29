@@ -101,7 +101,7 @@ public class PendingRequestWorker implements Runnable {
     final Service service = request.getLoadBalancerService();
 
     for (String loadBalancerGroup : service.getLoadBalancerGroups()) {
-      final Optional<String> maybeServiceId = loadBalancerDatastore.getBaseUriServiceId(loadBalancerGroup, service.getLoadBalancerBaseUri());
+      final Optional<String> maybeServiceId = loadBalancerDatastore.getBasePathServiceId(loadBalancerGroup, service.getServiceBasePath());
       if (maybeServiceId.isPresent() && !maybeServiceId.equals(service.getServiceId())) {
         return false;
       }
@@ -165,7 +165,7 @@ public class PendingRequestWorker implements Runnable {
 
       stateDatastore.applyRequest(request);
       for (String loadBalancerGroup : request.getLoadBalancerService().getLoadBalancerGroups()) {
-        loadBalancerDatastore.setBaseUriServiceId(loadBalancerGroup, request.getLoadBalancerService().getLoadBalancerBaseUri(), request.getLoadBalancerService().getServiceId());
+        loadBalancerDatastore.setBasePathServiceId(loadBalancerGroup, request.getLoadBalancerService().getServiceBasePath(), request.getLoadBalancerService().getServiceId());
       }
     } else {
       LOG.info(String.format("Request %s: FAILED (%sms)", request.getLoadBalancerRequestId(), stopwatch.elapsed(TimeUnit.MILLISECONDS)));

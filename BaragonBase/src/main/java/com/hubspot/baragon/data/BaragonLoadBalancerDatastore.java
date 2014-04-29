@@ -68,19 +68,19 @@ public class BaragonLoadBalancerDatastore extends AbstractDataStore {
     return hosts;
   }
 
-  private String sanitizeBaseUri(String baseUri) {
-    return BaseEncoding.base64Url().encode(baseUri.trim().toLowerCase().getBytes());
+  private String sanitizeBasePath(String basePath) {
+    return BaseEncoding.base64Url().encode(basePath.trim().toLowerCase().getBytes());
   }
 
-  public Optional<String> getBaseUriServiceId(String loadBalancerGroup, String baseUri) {
-    return readFromZk(String.format(BASE_URI_FORMAT, loadBalancerGroup, sanitizeBaseUri(baseUri)), String.class);
+  public Optional<String> getBasePathServiceId(String loadBalancerGroup, String basePath) {
+    return readFromZk(String.format(BASE_URI_FORMAT, loadBalancerGroup, sanitizeBasePath(basePath)), String.class);
   }
 
-  public void clearBaseUri(String loadBalancerGroup, String baseUri) {
-    deleteNode(String.format(BASE_URI_FORMAT, loadBalancerGroup, sanitizeBaseUri(baseUri)));
+  public void clearBasePath(String loadBalancerGroup, String basePath) {
+    deleteNode(String.format(BASE_URI_FORMAT, loadBalancerGroup, sanitizeBasePath(basePath)));
   }
 
-  public void setBaseUriServiceId(String loadBalancerGroup, String baseUri, String serviceId) {
-    writeToZk(String.format(BASE_URI_FORMAT, loadBalancerGroup, sanitizeBaseUri(baseUri)), serviceId);
+  public void setBasePathServiceId(String loadBalancerGroup, String basePath, String serviceId) {
+    writeToZk(String.format(BASE_URI_FORMAT, loadBalancerGroup, sanitizeBasePath(basePath)), serviceId);
   }
 }

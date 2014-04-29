@@ -1,8 +1,11 @@
 package com.hubspot.baragon.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Objects;
+import com.google.common.base.Strings;
+import io.dropwizard.validation.ValidationMethod;
 import org.hibernate.validator.constraints.NotEmpty;
 
 import javax.validation.constraints.NotNull;
@@ -19,7 +22,7 @@ public class Service {
   private final Collection<String> owners;
 
   @NotEmpty
-  private final String loadBalancerBaseUri;
+  private final String serviceBasePath;
 
   @NotEmpty
   private final List<String> loadBalancerGroups;
@@ -29,16 +32,17 @@ public class Service {
   
   public Service(@JsonProperty("serviceId") String serviceId,
                  @JsonProperty("owners") Collection<String> owners,
-                 @JsonProperty("loadBalancerBaseUri") String loadBalancerBaseUri,
+                 @JsonProperty("serviceBasePath") String serviceBasePath,
+                 @JsonProperty("loadBalancerBaseUri") String loadBalancerBaseUri,  // <-- this is going away soon
                  @JsonProperty("loadBalancerGroups") List<String> loadBalancerGroups,
                  @JsonProperty("options") Map<String, Object> options) {
     this.serviceId = serviceId;
     this.owners = owners;
-    this.loadBalancerBaseUri = loadBalancerBaseUri;
+    this.serviceBasePath = !Strings.isNullOrEmpty(serviceBasePath) ? serviceBasePath : loadBalancerBaseUri;
     this.loadBalancerGroups = loadBalancerGroups;
     this.options = options;
 
-    // TODO: bring back rewriteAppRootToo (sorry Ian)
+    // TODO: bring back rewriteAppRootTo (sorry Ian)
   }
 
   public String getServiceId() {
@@ -49,8 +53,14 @@ public class Service {
     return owners;
   }
 
+  public String getServiceBasePath() {
+    return serviceBasePath;
+  }
+
+  @JsonIgnore
+  @Deprecated
   public String getLoadBalancerBaseUri() {
-    return loadBalancerBaseUri;
+    return serviceBasePath;
   }
 
   public List<String> getLoadBalancerGroups() {
@@ -61,12 +71,18 @@ public class Service {
     return options;
   }
 
+  @ValidationMethod(message = "serviceBasePath must be a valid absolute path")
+  @JsonIgnore
+  public boolean validServiceBasePath() {
+    return !Strings.isNullOrEmpty(serviceBasePath) && serviceBasePath.startsWith("/");  // TODO: make this more rigorous
+  }
+
   @Override
   public String toString() {
     return Objects.toStringHelper(Service.class)
         .add("serviceId", serviceId)
         .add("owners", owners)
-        .add("loadBalancerBaseUri", loadBalancerBaseUri)
+        .add("serviceBasePath", serviceBasePath)
         .add("loadBalancerGroups", loadBalancerGroups)
         .add("options", options)
         .toString();
@@ -74,7 +90,7 @@ public class Service {
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(serviceId, owners, loadBalancerBaseUri, loadBalancerGroups, options);
+    return Objects.hashCode(serviceId, owners, serviceBasePath, loadBalancerGroups, options);
   }
 
   @Override
@@ -90,7 +106,7 @@ public class Service {
     if (that instanceof Service) {
       return Objects.equal(serviceId, ((Service)that).getServiceId())
           && Objects.equal(owners, ((Service)that).getOwners())
-          && Objects.equal(loadBalancerBaseUri, ((Service)that).getLoadBalancerBaseUri())
+          && Objects.equal(serviceBasePath, ((Service)that).getServiceBasePath())
           && Objects.equal(loadBalancerGroups, ((Service)that).getLoadBalancerGroups())
           && Objects.equal(options, ((Service)that).getOptions());
     }

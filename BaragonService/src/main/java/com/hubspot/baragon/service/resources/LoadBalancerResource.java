@@ -31,14 +31,14 @@ public class LoadBalancerResource {
   }
 
   @GET
-  @Path("/{clusterName}/base-uri")
-  public Optional<String> getBaseUri(@PathParam("clusterName") String clusterName, @QueryParam("baseUri") String baseUri) {
-    return datastore.getBaseUriServiceId(clusterName, baseUri);
+  @Path("/{clusterName}/base-path")
+  public Optional<String> getBasePathServiceId(@PathParam("clusterName") String clusterName, @QueryParam("basePath") String basePath) {
+    return datastore.getBasePathServiceId(clusterName, basePath);
   }
 
   @DELETE
-  @Path("/{clusterName}/base-uri")
-  public void clearBaseUri(@PathParam("clusterName") String clusterName, @QueryParam("baseUri") String baseUri) {
-    datastore.clearBaseUri(clusterName, baseUri);
+  @Path("/{clusterName}/base-path")
+  public void clearBasePath(@PathParam("clusterName") String clusterName, @QueryParam("basePath") String basePath) {
+    datastore.clearBasePath(clusterName, basePath);
   }
 }

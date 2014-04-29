@@ -55,17 +55,6 @@
             <version>2.3.1</version>
         </dependency>
 
-        <dependency>
-            <groupId>javax.validation</groupId>
-            <artifactId>validation-api</artifactId>
-            <version>1.1.0.Final</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.hibernate</groupId>
-            <artifactId>hibernate-validator</artifactId>
-            <version>5.0.1.Final</version>
-        </dependency>
 
         <dependency>
             <groupId>com.ning</groupId>
@@ -77,6 +66,12 @@
             <groupId>com.github.spullara.mustache.java</groupId>
             <artifactId>compiler</artifactId>
             <version>0.7.10-SNAPSHOT</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.dropwizard</groupId>
+            <artifactId>dropwizard-validation</artifactId>
+            <version>0.7.0-SNAPSHOT</version>
         </dependency>
     </dependencies>
 
