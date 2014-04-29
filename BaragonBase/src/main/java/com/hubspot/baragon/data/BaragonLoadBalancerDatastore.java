@@ -21,6 +21,7 @@ import java.util.Set;
 public class BaragonLoadBalancerDatastore extends AbstractDataStore {
   public static final String CLUSTERS_FORMAT = "/singularity/load-balancer";
   public static final String CLUSTER_HOSTS_FORMAT = "/singularity/load-balancer/%s/hosts";
+  public static final String CLUSTER_HOST_FORMAT = "/singularity/load-balancer/%s/hosts/%s";
   public static final String BASE_URI_FORMAT = "/singularity/load-balancer/%s/base-uris/%s";
 
   @Inject
@@ -47,7 +48,7 @@ public class BaragonLoadBalancerDatastore extends AbstractDataStore {
 
     for (String node : nodes) {
       try {
-        hosts.add(new String(curatorFramework.getData().forPath(node), Charsets.UTF_8));
+        hosts.add(new String(curatorFramework.getData().forPath(String.format(CLUSTER_HOST_FORMAT, clusterName, node)), Charsets.UTF_8));
       } catch (KeeperException.NoNodeException nne) {
         // uhh, didnt see that...
       } catch (Exception e) {
