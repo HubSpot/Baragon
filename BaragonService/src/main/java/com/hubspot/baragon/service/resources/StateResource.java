@@ -52,7 +52,7 @@ public class StateResource {
 
     stateDatastore.removeService(serviceId);
     for (String loadBalancerGroup : maybeServiceInfo.get().getLoadBalancerGroups()) {
-      loadBalancerDatastore.clearBaseUri(loadBalancerGroup, maybeServiceInfo.get().getLoadBalancerBaseUri());
+      loadBalancerDatastore.clearBasePath(loadBalancerGroup, maybeServiceInfo.get().getServiceBasePath());
     }
 
     return Optional.of(new ServiceState(maybeServiceInfo.get(), stateDatastore.getUpstreams(serviceId)));
