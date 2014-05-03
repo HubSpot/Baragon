@@ -9,6 +9,7 @@ import com.hubspot.baragon.agent.BaragonAgentServiceModule;
 import com.hubspot.baragon.agent.config.LoadBalancerConfiguration;
 import com.hubspot.baragon.agent.lbs.FilesystemConfigHelper;
 import com.hubspot.baragon.data.BaragonStateDatastore;
+import com.hubspot.baragon.exceptions.InvalidConfigException;
 import com.hubspot.baragon.models.Service;
 import com.hubspot.baragon.agent.models.ServiceContext;
 import io.dropwizard.lifecycle.Managed;
@@ -63,7 +64,11 @@ public class BootstrapManaged implements Managed {
 
       LOG.info(String.format("    Applying %s: [%s]", serviceId, Joiner.on(", ").join(upstreams)));
 
-      configHelper.apply(new ServiceContext(service, upstreams, now));
+      try {
+        configHelper.apply(new ServiceContext(service, upstreams, now), false);
+      } catch (Exception e) {
+        LOG.error(String.format("Caught exception while applying %s", serviceId), e);
+      }
     }
 
     LOG.info(String.format("Applied %d services in %sms", services.size(), stopwatch.elapsed(TimeUnit.MILLISECONDS)));

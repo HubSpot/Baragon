@@ -30,10 +30,11 @@ public class LbConfigGenerator {
 
     for (Template template : templates) {
       final String filename = String.format(template.getFilename(), snapshot.getService().getServiceId());
+
       final StringWriter sw = new StringWriter();
       template.getTemplate().execute(sw, snapshot);
-      final String content = sw.toString();
-      files.add(new LbConfigFile(String.format("%s/%s", loadBalancerConfiguration.getRootPath(), filename), content));
+
+      files.add(new LbConfigFile(String.format("%s/%s", loadBalancerConfiguration.getRootPath(), filename), sw.toString()));
     }
 
     return files;

@@ -22,6 +22,7 @@ import org.apache.curator.framework.recipes.leader.LeaderLatch;
 
 import java.io.StringReader;
 import java.util.Collection;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -31,6 +32,8 @@ public class BaragonAgentServiceModule extends AbstractModule {
   public static final String AGENT_LEADER_LATCH = "baragon.agent.leaderLatch";
   public static final String AGENT_LOCK = "baragon.agent.lock";
   public static final String AGENT_TEMPLATES = "baragon.agent.templates";
+  public static final String AGENT_MOST_RECENT_REQUEST_ID = "baragon.agent.mostRecentRequestId";
+  public static final String AGENT_LOCK_TIMEOUT_MS = "baragon.agent.lock.timeoutMs";
 
   @Override
   protected void configure() {
@@ -69,6 +72,12 @@ public class BaragonAgentServiceModule extends AbstractModule {
   }
 
   @Provides
+  @Named(AGENT_LOCK_TIMEOUT_MS)
+  public long provideAgentLockTimeoutMs(BaragonAgentConfiguration configuration) {
+    return configuration.getAgentLockTimeoutMs();
+  }
+
+  @Provides
   @Singleton
   @Named(HTTP_PORT_PROPERTY)
   public int providesHttpPortProperty(BaragonAgentConfiguration config) {
@@ -102,5 +111,12 @@ public class BaragonAgentServiceModule extends AbstractModule {
   @Named(AGENT_LOCK)
   public Lock providesAgentLock() {
     return new ReentrantLock();
+  }
+
+  @Provides
+  @Singleton
+  @Named(AGENT_MOST_RECENT_REQUEST_ID)
+  public AtomicReference<String> providesMostRecentRequestId() {
+    return new AtomicReference<String>();
   }
 }

@@ -7,6 +7,8 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.hubspot.baragon.agent.models.LbConfigFile;
 import com.hubspot.baragon.agent.models.ServiceContext;
+import com.hubspot.baragon.exceptions.InvalidConfigException;
+import com.hubspot.baragon.exceptions.LbAdapterExecuteException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -27,7 +29,7 @@ public class FilesystemConfigHelper {
     this.adapter = adapter;
   }
 
-  public void remove(String serviceId) {
+  public void remove(String serviceId, boolean reloadConfigs) throws LbAdapterExecuteException, IOException {
     for (String filename : configGenerator.getConfigPathsForProject(serviceId)) {
       File file = new File(filename);
       if (!file.exists()) {
@@ -38,15 +40,19 @@ public class FilesystemConfigHelper {
         throw new RuntimeException("Failed to remove " + filename + " for " + serviceId);
       }
     }
+
+    if (reloadConfigs) {
+      adapter.reloadConfigs();
+    }
   }
 
-  public void apply(ServiceContext context) {
+  public void apply(ServiceContext context, boolean revertOnFailure) throws InvalidConfigException, LbAdapterExecuteException, IOException {
 
     LOG.info(String.format("Going to apply %s: %s", context.getService().getServiceId(), Joiner.on(", ").join(context.getUpstreams())));
     final boolean newServiceExists = configsExist(context.getService().getServiceId());
 
     // Backup configs
-    if (newServiceExists) {
+    if (newServiceExists && revertOnFailure) {
       backupConfigs(context.getService().getServiceId());
     }
 
@@ -59,10 +65,12 @@ public class FilesystemConfigHelper {
       LOG.error("Caught exception while writing configs for " + context.getService().getServiceId() + ", reverting to backups!", e);
 
       // Restore configs
-      if (newServiceExists) {
-        restoreConfigs(context.getService().getServiceId());
-      } else {
-        remove(context.getService().getServiceId());
+      if (revertOnFailure) {
+        if (newServiceExists) {
+          restoreConfigs(context.getService().getServiceId());
+        } else {
+          remove(context.getService().getServiceId(), false);
+        }
       }
 
       throw Throwables.propagate(e);

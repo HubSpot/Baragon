@@ -5,12 +5,15 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.hubspot.baragon.config.ZooKeeperConfiguration;
 import io.dropwizard.Configuration;
 
+import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 import java.util.Collections;
 import java.util.List;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class BaragonAgentConfiguration extends Configuration {
+  public static final long DEFAULT_AGENT_LOCK_TIMEOUT_MS = 5000;
+
   @JsonProperty("zookeeper")
   @NotNull
   private ZooKeeperConfiguration zooKeeperConfiguration;
@@ -25,6 +28,10 @@ public class BaragonAgentConfiguration extends Configuration {
 
   @JsonProperty("hostname")
   private String hostname;
+
+  @JsonProperty("agentLockTimeoutMs")
+  @Min(0)
+  private long agentLockTimeoutMs = DEFAULT_AGENT_LOCK_TIMEOUT_MS;
 
   public ZooKeeperConfiguration getZooKeeperConfiguration() {
     return zooKeeperConfiguration;
@@ -56,5 +63,13 @@ public class BaragonAgentConfiguration extends Configuration {
 
   public void setHostname(String hostname) {
     this.hostname = hostname;
+  }
+
+  public long getAgentLockTimeoutMs() {
+    return agentLockTimeoutMs;
+  }
+
+  public void setAgentLockTimeoutMs(long agentLockTimeoutMs) {
+    this.agentLockTimeoutMs = agentLockTimeoutMs;
   }
 }

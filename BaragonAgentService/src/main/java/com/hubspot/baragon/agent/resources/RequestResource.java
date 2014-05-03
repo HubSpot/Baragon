@@ -10,8 +10,6 @@ import com.hubspot.baragon.agent.models.ServiceContext;
 import com.hubspot.baragon.data.BaragonRequestDatastore;
 import com.hubspot.baragon.data.BaragonStateDatastore;
 import com.hubspot.baragon.models.BaragonRequest;
-import com.hubspot.baragon.models.BaragonResponse;
-import com.hubspot.baragon.models.RequestState;
 import com.hubspot.baragon.models.Service;
 
 import javax.ws.rs.*;
@@ -19,6 +17,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 
 @Path("/request/{requestId}")
@@ -29,24 +28,38 @@ public class RequestResource {
   private final BaragonStateDatastore stateDatastore;
   private final BaragonRequestDatastore requestDatastore;
   private final Lock agentLock;
+  private final AtomicReference<String> mostRecentRequestId;
+  private final long agentLockTimeoutMs;
   
   @Inject
   public RequestResource(BaragonStateDatastore stateDatastore,
                          BaragonRequestDatastore requestDatastore,
                          FilesystemConfigHelper configHelper,
-                         @Named(BaragonAgentServiceModule.AGENT_LOCK) Lock agentLock) {
+                         @Named(BaragonAgentServiceModule.AGENT_LOCK) Lock agentLock,
+                         @Named(BaragonAgentServiceModule.AGENT_MOST_RECENT_REQUEST_ID) AtomicReference<String> mostRecentRequestId,
+                         @Named(BaragonAgentServiceModule.AGENT_LOCK_TIMEOUT_MS) long agentLockTimeoutMs) {
     this.configHelper = configHelper;
     this.stateDatastore = stateDatastore;
     this.requestDatastore = requestDatastore;
     this.agentLock = agentLock;
+    this.mostRecentRequestId = mostRecentRequestId;
+    this.agentLockTimeoutMs = agentLockTimeoutMs;
+  }
+
+  private void acquireAgentLock() {
+    // Acquire agent lock
+    try {
+      if (!agentLock.tryLock(agentLockTimeoutMs, TimeUnit.MILLISECONDS)) {
+        throw new WebApplicationException(Response.Status.CONFLICT);
+      }
+    } catch (InterruptedException e) {
+      throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+    }
   }
 
   @POST
-  public Optional<ServiceContext> apply(@PathParam("requestId") String requestId) throws InterruptedException {
-    // Acquire agent lock
-    if (!agentLock.tryLock(5, TimeUnit.SECONDS)) {
-      throw new WebApplicationException(Response.Status.CONFLICT);
-    }
+  public Optional<ServiceContext> apply(@PathParam("requestId") String requestId) {
+    acquireAgentLock();
 
     try {
       final Optional<BaragonRequest> maybeRequest = requestDatastore.getRequest(requestId);
@@ -65,7 +78,13 @@ public class RequestResource {
 
       final ServiceContext update = new ServiceContext(request.getLoadBalancerService(), upstreams, System.currentTimeMillis());
 
-      configHelper.apply(update);
+      try {
+        configHelper.apply(update, true);
+      } catch (Exception e) {
+        throw new WebApplicationException(Response.status(Response.Status.BAD_REQUEST).entity(e).build());
+      }
+
+      mostRecentRequestId.set(requestId);
 
       return Optional.of(update);
     } finally {
@@ -74,10 +93,8 @@ public class RequestResource {
   }
 
   @DELETE
-  public Optional<ServiceContext> revert(@PathParam("requestId") String requestId) throws InterruptedException {
-    if (!agentLock.tryLock(5, TimeUnit.SECONDS)) {
-      throw new WebApplicationException(Response.Status.CONFLICT);
-    }
+  public Optional<ServiceContext> revert(@PathParam("requestId") String requestId) {
+    acquireAgentLock();
 
     try {
       final Optional<BaragonRequest> maybeRequest = requestDatastore.getRequest(requestId);
@@ -86,24 +103,25 @@ public class RequestResource {
         return Optional.absent();  // can't revert what's not there, idiot.
       }
 
-      final Optional<BaragonResponse> maybeResponse = requestDatastore.getResponse(requestId);
-
-      // can only revert when in WAITING state
-      if (maybeResponse.isPresent() && maybeResponse.get().getLoadBalancerState() != RequestState.WAITING) {
-        throw new WebApplicationException(Response.status(Response.Status.BAD_REQUEST).entity(String.format("Can't revert request in %s state", maybeResponse.get().getLoadBalancerState())).build());
-      }
-
       final BaragonRequest request = maybeRequest.get();
       final Optional<Service> maybeService = stateDatastore.getService(request.getLoadBalancerService().getServiceId());
 
       if (!maybeService.isPresent()) {
-        configHelper.remove(request.getLoadBalancerService().getServiceId());  // TODO: reload configs?
+        try {
+          configHelper.remove(request.getLoadBalancerService().getServiceId(), true);
+        } catch (Exception e) {
+          throw new WebApplicationException(Response.status(Response.Status.BAD_REQUEST).entity(e).build());
+        }
         return Optional.absent();
       }
 
       final ServiceContext context = new ServiceContext(maybeService.get(), stateDatastore.getUpstreams(maybeService.get().getServiceId()), System.currentTimeMillis());
 
-      configHelper.apply(context);
+      try {
+        configHelper.apply(context, false);
+      } catch (Exception e) {
+        throw new WebApplicationException(Response.status(Response.Status.BAD_REQUEST).entity(e).build());
+      }
 
       return Optional.of(context);
     } finally {
