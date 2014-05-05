@@ -27,7 +27,6 @@ public class Service {
   @NotEmpty
   private final List<String> loadBalancerGroups;
 
-  @NotNull
   private final Map<String, Object> options;
   
   public Service(@JsonProperty("serviceId") String serviceId,
