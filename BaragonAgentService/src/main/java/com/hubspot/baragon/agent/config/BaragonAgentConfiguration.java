@@ -33,6 +33,9 @@ public class BaragonAgentConfiguration extends Configuration {
   @Min(0)
   private long agentLockTimeoutMs = DEFAULT_AGENT_LOCK_TIMEOUT_MS;
 
+  @JsonProperty("testing")
+  private TestingConfiguration testingConfiguration;
+
   public ZooKeeperConfiguration getZooKeeperConfiguration() {
     return zooKeeperConfiguration;
   }
@@ -71,5 +74,13 @@ public class BaragonAgentConfiguration extends Configuration {
 
   public void setAgentLockTimeoutMs(long agentLockTimeoutMs) {
     this.agentLockTimeoutMs = agentLockTimeoutMs;
+  }
+
+  public TestingConfiguration getTestingConfiguration() {
+    return testingConfiguration;
+  }
+
+  public void setTestingConfiguration(TestingConfiguration testingConfiguration) {
+    this.testingConfiguration = testingConfiguration;
   }
 }

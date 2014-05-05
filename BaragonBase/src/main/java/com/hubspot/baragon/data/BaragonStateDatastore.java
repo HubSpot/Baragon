@@ -2,10 +2,8 @@ package com.hubspot.baragon.data;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Optional;
-import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import com.hubspot.baragon.models.BaragonRequest;
 import com.hubspot.baragon.models.Service;
 import com.hubspot.baragon.models.UpstreamInfo;
 import org.apache.curator.framework.CuratorFramework;
@@ -14,9 +12,9 @@ import java.util.Collection;
 
 @Singleton
 public class BaragonStateDatastore extends AbstractDataStore {
-  public static final String SERVICES_FORMAT = "/singularity/state";
-  public static final String SERVICE_FORMAT = "/singularity/state/%s";
-  public static final String UPSTREAM_FORMAT = "/singularity/state/%s/%s";
+  public static final String SERVICES_FORMAT = "/state";
+  public static final String SERVICE_FORMAT = SERVICES_FORMAT + "/%s";
+  public static final String UPSTREAM_FORMAT = SERVICE_FORMAT + "/%s";
 
   @Inject
   public BaragonStateDatastore(CuratorFramework curatorFramework, ObjectMapper objectMapper) {
@@ -51,20 +49,15 @@ public class BaragonStateDatastore extends AbstractDataStore {
     return readFromZk(String.format(UPSTREAM_FORMAT, serviceId, upstream), UpstreamInfo.class);
   }
 
-  public void applyRequest(BaragonRequest request) {
-    try {
-      addService(request.getLoadBalancerService());
-      final String serviceId = request.getLoadBalancerService().getServiceId();
+  public void removeUpstreams(String serviceId, Collection<String> upstreams) {
+    for (String remove : upstreams) {
+      deleteNode(String.format(UPSTREAM_FORMAT, serviceId, remove));
+    }
+  }
 
-      for (String remove : request.getRemoveUpstreams()) {
-        deleteNode(String.format(UPSTREAM_FORMAT, serviceId, remove));
-      }
-
-      for (String add : request.getAddUpstreams()) {
-        writeToZk(String.format(UPSTREAM_FORMAT, serviceId, add), new UpstreamInfo(add, request.getLoadBalancerRequestId()));
-      }
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
+  public void addUpstreams(String requestId, String serviceId, Collection<String> upstreams) {
+    for (String add : upstreams) {
+      writeToZk(String.format(UPSTREAM_FORMAT, serviceId, add), new UpstreamInfo(add, requestId));
     }
   }
 }

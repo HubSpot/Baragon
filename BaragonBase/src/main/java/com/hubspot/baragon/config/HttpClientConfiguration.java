@@ -1,4 +1,4 @@
-package com.hubspot.baragon.service.config;
+package com.hubspot.baragon.config;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.hibernate.validator.constraints.NotEmpty;

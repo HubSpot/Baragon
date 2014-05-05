@@ -6,7 +6,6 @@ import com.google.common.base.Optional;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import com.google.common.io.BaseEncoding;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.apache.curator.framework.CuratorFramework;
@@ -19,10 +18,11 @@ import java.util.Set;
 
 @Singleton
 public class BaragonLoadBalancerDatastore extends AbstractDataStore {
-  public static final String CLUSTERS_FORMAT = "/singularity/load-balancer";
-  public static final String CLUSTER_HOSTS_FORMAT = "/singularity/load-balancer/%s/hosts";
-  public static final String CLUSTER_HOST_FORMAT = "/singularity/load-balancer/%s/hosts/%s";
-  public static final String BASE_URI_FORMAT = "/singularity/load-balancer/%s/base-uris/%s";
+  public static final String LOAD_BALANCER_GROUPS_FORMAT = "/load-balancer";
+  public static final String LOAD_BALANCER_GROUP_HOSTS_FORMAT = LOAD_BALANCER_GROUPS_FORMAT + "/%s/hosts";
+  public static final String LOAD_BALANCER_GROUP_HOST_FORMAT = LOAD_BALANCER_GROUP_HOSTS_FORMAT + "/%s";
+
+  public static final String LOAD_BALANCER_BASE_PATH_FORMAT = LOAD_BALANCER_GROUPS_FORMAT + "/%s/base-uris/%s";
 
   @Inject
   public BaragonLoadBalancerDatastore(CuratorFramework curatorFramework, ObjectMapper objectMapper) {
@@ -30,25 +30,25 @@ public class BaragonLoadBalancerDatastore extends AbstractDataStore {
   }
 
   public LeaderLatch createLeaderLatch(String clusterName, String hostname) {
-    return new LeaderLatch(curatorFramework, String.format(CLUSTER_HOSTS_FORMAT, clusterName), hostname);
+    return new LeaderLatch(curatorFramework, String.format(LOAD_BALANCER_GROUP_HOSTS_FORMAT, clusterName), hostname);
   }
 
   public Collection<String> getClusters() {
-    return getChildren(CLUSTERS_FORMAT);
+    return getChildren(LOAD_BALANCER_GROUPS_FORMAT);
   }
 
-  public Collection<String> getHosts(String clusterName) {
-    final Collection<String> nodes = getChildren(String.format(CLUSTER_HOSTS_FORMAT, clusterName));
+  public Collection<String> getBaseUrls(String clusterName) {
+    final Collection<String> nodes = getChildren(String.format(LOAD_BALANCER_GROUP_HOSTS_FORMAT, clusterName));
 
     if (nodes.isEmpty()) {
       return Collections.emptyList();
     }
 
-    final Collection<String> hosts = Lists.newArrayListWithCapacity(nodes.size());
+    final Collection<String> baseUrls = Lists.newArrayListWithCapacity(nodes.size());
 
     for (String node : nodes) {
       try {
-        hosts.add(new String(curatorFramework.getData().forPath(String.format(CLUSTER_HOST_FORMAT, clusterName, node)), Charsets.UTF_8));
+        baseUrls.add(new String(curatorFramework.getData().forPath(String.format(LOAD_BALANCER_GROUP_HOST_FORMAT, clusterName, node)), Charsets.UTF_8));
       } catch (KeeperException.NoNodeException nne) {
         // uhh, didnt see that...
       } catch (Exception e) {
@@ -56,32 +56,28 @@ public class BaragonLoadBalancerDatastore extends AbstractDataStore {
       }
     }
 
-    return hosts;
+    return baseUrls;
   }
 
-  public Collection<String> getAllHosts(Collection<String> clusterNames) {
-    final Set<String> hosts = Sets.newHashSet();
+  public Collection<String> getAllBaseUrls(Collection<String> clusterNames) {
+    final Set<String> baseUrls = Sets.newHashSet();
 
     for (String clusterName : clusterNames) {
-      hosts.addAll(getHosts(clusterName));
+      baseUrls.addAll(getBaseUrls(clusterName));
     }
 
-    return hosts;
-  }
-
-  private String sanitizeBasePath(String basePath) {
-    return BaseEncoding.base64Url().encode(basePath.trim().toLowerCase().getBytes());
+    return baseUrls;
   }
 
   public Optional<String> getBasePathServiceId(String loadBalancerGroup, String basePath) {
-    return readFromZk(String.format(BASE_URI_FORMAT, loadBalancerGroup, sanitizeBasePath(basePath)), String.class);
+    return readFromZk(String.format(LOAD_BALANCER_BASE_PATH_FORMAT, loadBalancerGroup, encodeUrl(basePath)), String.class);
   }
 
   public void clearBasePath(String loadBalancerGroup, String basePath) {
-    deleteNode(String.format(BASE_URI_FORMAT, loadBalancerGroup, sanitizeBasePath(basePath)));
+    deleteNode(String.format(LOAD_BALANCER_BASE_PATH_FORMAT, loadBalancerGroup, encodeUrl(basePath)));
   }
 
   public void setBasePathServiceId(String loadBalancerGroup, String basePath, String serviceId) {
-    writeToZk(String.format(BASE_URI_FORMAT, loadBalancerGroup, sanitizeBasePath(basePath)), serviceId);
+    writeToZk(String.format(LOAD_BALANCER_BASE_PATH_FORMAT, loadBalancerGroup, encodeUrl(basePath)), serviceId);
   }
 }

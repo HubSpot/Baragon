@@ -27,7 +27,7 @@ public class LoadBalancerResource {
   @GET
   @Path("/{clusterName}/hosts")
   public Collection<String> getHosts(@PathParam("clusterName") String clusterName) {
-    return datastore.getHosts(clusterName);
+    return datastore.getBaseUrls(clusterName);
   }
 
   @GET

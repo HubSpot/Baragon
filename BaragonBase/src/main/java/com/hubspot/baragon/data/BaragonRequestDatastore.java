@@ -2,79 +2,103 @@ package com.hubspot.baragon.data;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Optional;
+import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.hubspot.baragon.models.BaragonRequest;
-import com.hubspot.baragon.models.BaragonResponse;
-import com.hubspot.baragon.models.RequestState;
+import com.hubspot.baragon.models.InternalRequestStates;
+import com.hubspot.baragon.models.QueuedRequestId;
 import org.apache.curator.framework.CuratorFramework;
+import org.apache.curator.utils.ZKPaths;
 
+import java.util.Collections;
 import java.util.List;
-import java.util.regex.Pattern;
 
 @Singleton
 public class BaragonRequestDatastore extends AbstractDataStore {
-  public static final String REQUEST_FORMAT = "/singularity/request/%s";
-  public static final String PENDING_REQUESTS_FORMAT = "/singularity/pending";
-  public static final String CREATE_PENDING_REQUEST_FORMAT = "/singularity/pending/%s_";
-  public static final String PENDING_REQUEST_FORMAT = "/singularity/pending/%s";
-  public static final String RESPONSE_FORMAT = "/singularity/request/%s/response";
+  public static final String REQUESTS_FORMAT = "/request";
+  public static final String REQUEST_FORMAT = REQUESTS_FORMAT + "/%s";
+  public static final String REQUEST_STATE_FORMAT = REQUEST_FORMAT + "/status";
+  public static final String REQUEST_MESSAGE_FORMAT = REQUEST_FORMAT + "/message";
 
-  public static final Pattern PENDING_REQUEST_ID_REGEX = Pattern.compile("^(.*?)_(\\d+)$");
-
-  public static Optional<String> parsePendingRequestId(String pendingRequestId) {
-    return Optional.fromNullable(PENDING_REQUEST_ID_REGEX.matcher(pendingRequestId).group(1));
-  }
+  public static final String REQUEST_QUEUE_FORMAT = "/queue";
+  public static final String REQUEST_ENQUEUE_FORMAT = REQUEST_QUEUE_FORMAT + "/%s_%s_";
+  public static final String REQUEST_QUEUE_ITEM_FORMAT = REQUEST_QUEUE_FORMAT + "/%s";
 
   @Inject
   public BaragonRequestDatastore(CuratorFramework curatorFramework, ObjectMapper objectMapper) {
     super(curatorFramework, objectMapper);
   }
 
-  public Optional<BaragonResponse> getResponse(String requestId) {
-    return readFromZk(String.format(RESPONSE_FORMAT, requestId), BaragonResponse.class);
+  //
+  // REQUEST DATA
+  //
+  public void addRequest(BaragonRequest request) {
+    writeToZk(String.format(REQUEST_FORMAT, request.getLoadBalancerRequestId()), request);
   }
 
   public Optional<BaragonRequest> getRequest(String requestId) {
     return readFromZk(String.format(REQUEST_FORMAT, requestId), BaragonRequest.class);
   }
 
-  public BaragonResponse updateResponse(String requestId, RequestState state, Optional<String> message) {
-    writeToZk(String.format(RESPONSE_FORMAT, requestId), new BaragonResponse(requestId, state, message));
-    return new BaragonResponse(requestId, state, message);
-  }
+  public Optional<BaragonRequest> deleteRequest(String requestId) {
+    final Optional<BaragonRequest> maybeRequest = getRequest(requestId);
 
-  public Optional<BaragonResponse> cancelRequest(String requestId) {
-    final Optional<BaragonResponse> maybeResponse = getResponse(requestId);
-
-    if (maybeResponse.isPresent() && maybeResponse.get().getLoadBalancerState() == RequestState.WAITING) {
-      return Optional.of(updateResponse(requestId, RequestState.CANCELING, Optional.<String>absent()));
+    if (maybeRequest.isPresent()) {
+      deleteNode(String.format(REQUEST_FORMAT, requestId));
     }
 
-    return Optional.absent();
+    return maybeRequest;
   }
 
   //
-  // PENDING REQUESTS
+  // REQUEST STATE
   //
+  public Optional<InternalRequestStates> getRequestState(String requestId) {
+    return readFromZk(String.format(REQUEST_STATE_FORMAT, requestId), InternalRequestStates.class);
+  }
 
-  public BaragonResponse addPendingRequest(BaragonRequest request) {
-    final String requestId = request.getLoadBalancerRequestId();
+  public void setRequestState(String requestId, InternalRequestStates state) {
+    writeToZk(String.format(REQUEST_STATE_FORMAT, requestId), state);
+  }
 
-    if (!nodeExists(String.format(REQUEST_FORMAT, requestId))) {
-      writeToZk(String.format(REQUEST_FORMAT, requestId), request);
-      writeToZk(String.format(RESPONSE_FORMAT, requestId), new BaragonResponse(requestId, RequestState.WAITING, Optional.<String>absent()));
-      createPersistentSequentialNode(String.format(CREATE_PENDING_REQUEST_FORMAT, requestId));
+  // REQUEST MESSAGE
+  public Optional<String> getRequestMessage(String requestId) {
+    return readFromZk(String.format(REQUEST_MESSAGE_FORMAT, requestId), String.class);
+  }
+
+  public void setRequestMessage(String requestId, String message) {
+    writeToZk(String.format(REQUEST_MESSAGE_FORMAT, requestId), message);
+  }
+
+  //
+  // REQUEST QUEUING
+  //
+  public QueuedRequestId enqueueRequest(BaragonRequest request) {
+    final String path = createPersistentSequentialNode(String.format(REQUEST_ENQUEUE_FORMAT, request.getLoadBalancerService().getServiceId(), request.getLoadBalancerRequestId()));
+
+    return QueuedRequestId.fromString(ZKPaths.getNodeFromPath(path));
+  }
+
+  public List<QueuedRequestId> getQueuedRequestIds() {
+    final List<String> nodes = getChildren(REQUEST_QUEUE_FORMAT);
+
+    Collections.sort(nodes, SEQUENCE_NODE_COMPARATOR_LOW_TO_HIGH);
+
+    final List<QueuedRequestId> queuedRequestIds = Lists.newArrayListWithCapacity(nodes.size());
+
+    for (String node : nodes) {
+      queuedRequestIds.add(QueuedRequestId.fromString(node));
     }
 
-    return getResponse(request.getLoadBalancerRequestId()).get();  // very rare and worth throwing if absent
+    return queuedRequestIds;
   }
 
-  public List<String> getPendingRequestIds() {
-    return getChildren(PENDING_REQUESTS_FORMAT);
+  public int getQueuedRequestCount() {
+    return getChildren(REQUEST_QUEUE_FORMAT).size();
   }
 
-  public void clearPendingRequest(String pendingRequestId) {
-    deleteNode(String.format(PENDING_REQUEST_FORMAT, pendingRequestId));
+  public void removeQueuedRequest(QueuedRequestId queuedRequestId) {
+    deleteNode(String.format(REQUEST_QUEUE_ITEM_FORMAT, queuedRequestId.toString()));
   }
 }

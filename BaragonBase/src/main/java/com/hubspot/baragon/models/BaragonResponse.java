@@ -12,6 +12,10 @@ public class BaragonResponse {
   private final RequestState loadBalancerState;
   private final Optional<String> message;
 
+  public static BaragonResponse failure(String requestId, String message) {
+    return new BaragonResponse(requestId, RequestState.FAILED, Optional.of(message));
+  }
+
   @JsonCreator
   public BaragonResponse(@JsonProperty("loadBalancerRequestId") String loadBalancerRequestId,
                          @JsonProperty("loadBalancerState") RequestState loadBalancerState,

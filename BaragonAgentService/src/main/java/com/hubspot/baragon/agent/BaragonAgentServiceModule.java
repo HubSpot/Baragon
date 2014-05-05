@@ -2,6 +2,7 @@ package com.hubspot.baragon.agent;
 
 import com.github.mustachejava.DefaultMustacheFactory;
 import com.github.mustachejava.MustacheFactory;
+import com.google.common.base.Optional;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.google.inject.AbstractModule;
@@ -12,9 +13,10 @@ import com.hubspot.baragon.BaragonBaseModule;
 import com.hubspot.baragon.agent.config.BaragonAgentConfiguration;
 import com.hubspot.baragon.agent.config.LoadBalancerConfiguration;
 import com.hubspot.baragon.agent.config.TemplateConfiguration;
+import com.hubspot.baragon.agent.config.TestingConfiguration;
+import com.hubspot.baragon.agent.models.Template;
 import com.hubspot.baragon.config.ZooKeeperConfiguration;
 import com.hubspot.baragon.data.BaragonLoadBalancerDatastore;
-import com.hubspot.baragon.agent.models.Template;
 import com.hubspot.baragon.utils.JavaUtils;
 import io.dropwizard.jetty.HttpConnectorFactory;
 import io.dropwizard.server.SimpleServerFactory;
@@ -104,6 +106,12 @@ public class BaragonAgentServiceModule extends AbstractModule {
     final String baseUri = String.format("http://%s:%s%s", hostname, httpPort, appRoot);
 
     return loadBalancerDatastore.createLeaderLatch(config.getLoadBalancerConfiguration().getName(), baseUri);
+  }
+
+  @Provides
+  @Singleton
+  public Optional<TestingConfiguration> providesTestingConfiguration(BaragonAgentConfiguration configuration) {
+    return Optional.fromNullable(configuration.getTestingConfiguration());
   }
 
   @Provides
