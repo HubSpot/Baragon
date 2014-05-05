@@ -41,7 +41,7 @@ public class RequestResource {
       LOG.info(String.format("Received request: %s", request));
       return manager.enqueueRequest(request);
     } catch (BasePathConflictException e) {
-      LOG.warn(String.format("Base path conflict for request %s", request.getLoadBalancerRequestId()), e);
+      LOG.warn(String.format("Base path conflict for request %s (original service id: %s)", request.getLoadBalancerRequestId(), e.getOriginalServiceId()), e);
       throw new WebApplicationException(Response.status(Response.Status.CONFLICT)
           .entity(BaragonResponse.failure(request.getLoadBalancerRequestId(), "Another service already exists with this path."))
           .build());

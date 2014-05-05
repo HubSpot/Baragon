@@ -67,7 +67,7 @@ public class RequestManager {
     for (String loadBalancerGroup : service.getLoadBalancerGroups()) {
       final Optional<String> maybeServiceId = loadBalancerDatastore.getBasePathServiceId(loadBalancerGroup, service.getServiceBasePath());
       if (maybeServiceId.isPresent() && !maybeServiceId.equals(service.getServiceId())) {
-        throw new BasePathConflictException(request);
+        throw new BasePathConflictException(request, maybeServiceId.get());
       }
     }
   }
