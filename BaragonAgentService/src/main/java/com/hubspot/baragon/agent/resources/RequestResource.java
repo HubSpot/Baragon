@@ -12,6 +12,8 @@ import com.hubspot.baragon.data.BaragonRequestDatastore;
 import com.hubspot.baragon.data.BaragonStateDatastore;
 import com.hubspot.baragon.models.BaragonRequest;
 import com.hubspot.baragon.models.Service;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
@@ -26,6 +28,8 @@ import java.util.concurrent.locks.Lock;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class RequestResource {
+  private static final Log LOG = LogFactory.getLog(RequestResource.class);
+
   private final FilesystemConfigHelper configHelper;
   private final BaragonStateDatastore stateDatastore;
   private final BaragonRequestDatastore requestDatastore;
@@ -68,6 +72,8 @@ public class RequestResource {
       }
 
       final BaragonRequest request = maybeRequest.get();
+
+      LOG.info(String.format("Received request to apply %s", request));
 
       // Apply request
       final Set<String> upstreams = Sets.newHashSet(stateDatastore.getUpstreams(request.getLoadBalancerService().getServiceId()));
