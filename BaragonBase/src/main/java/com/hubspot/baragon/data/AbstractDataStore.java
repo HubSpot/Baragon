@@ -95,6 +95,17 @@ public abstract class AbstractDataStore {
     }
   }
 
+  protected <T> String createPersistentSequentialNode(String path, T value) {
+    try {
+      final byte[] serializedValue = objectMapper.writeValueAsBytes(value);
+
+      return curatorFramework.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT_SEQUENTIAL).forPath(path, serializedValue);
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
+
+  }
+
   protected boolean deleteNode(String path) {
     try {
       curatorFramework.delete().forPath(path);

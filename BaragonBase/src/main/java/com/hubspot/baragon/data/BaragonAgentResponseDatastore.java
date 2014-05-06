@@ -7,8 +7,6 @@ import com.google.inject.Singleton;
 import com.hubspot.baragon.models.AgentRequestType;
 import com.hubspot.baragon.models.AgentResponse;
 import com.hubspot.baragon.models.AgentResponseId;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.curator.framework.CuratorFramework;
 
 import java.util.Collections;
@@ -16,8 +14,6 @@ import java.util.List;
 
 @Singleton
 public class BaragonAgentResponseDatastore extends AbstractDataStore {
-  private static final Log LOG = LogFactory.getLog(BaragonAgentResponseDatastore.class);
-
   public static final String PENDING_REQUEST_FORMAT = "/request/%s/pendingRequests/%s";
 
   public static final String AGENT_RESPONSES_FORMAT = "/request/%s/agent/%s-%s";
@@ -30,9 +26,7 @@ public class BaragonAgentResponseDatastore extends AbstractDataStore {
   }
 
   public void addAgentResponse(String requestId, AgentRequestType requestType, String baseUrl, AgentResponse agentResponse) {
-    final String node = createPersistentSequentialNode(String.format(CREATE_AGENT_RESPONSE_FORMAT, requestId, requestType, encodeUrl(baseUrl), agentResponse.getStatusCode().or(0), agentResponse.getException().isPresent()));
-
-    writeToZk(node, new AgentResponse(agentResponse.getStatusCode(), agentResponse.getContent(), agentResponse.getException()));
+    createPersistentSequentialNode(String.format(CREATE_AGENT_RESPONSE_FORMAT, requestId, requestType, encodeUrl(baseUrl), agentResponse.getStatusCode().or(0), agentResponse.getException().isPresent()), new AgentResponse(agentResponse.getStatusCode(), agentResponse.getContent(), agentResponse.getException()));
   }
 
   public List<String> getAgentResponseIds(String requestId, AgentRequestType requestType, String baseUrl) {

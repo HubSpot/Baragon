@@ -1,22 +1,17 @@
 package com.hubspot.baragon.models;
 
 import com.google.common.base.Objects;
-import com.google.common.base.Splitter;
-import com.google.common.collect.Lists;
-
-import java.util.List;
 
 public class AgentResponseId {
-  private static final Splitter DASH_SPLITTER = Splitter.on('-');
   private final String id;
   private final int statusCode;
   private final boolean exception;
   private final int attempt;
 
   public static AgentResponseId fromString(String value) {
-    List<String> splits = Lists.newArrayList(DASH_SPLITTER.split(value));
+    final String[] splits = value.split("\\-", 3);
 
-    return new AgentResponseId(value, Integer.parseInt(splits.get(0)), Boolean.parseBoolean(splits.get(1)), Integer.parseInt(splits.get(2)));
+    return new AgentResponseId(value, Integer.parseInt(splits[0]), Boolean.parseBoolean(splits[1]), Integer.parseInt(splits[2]));
   }
 
   private AgentResponseId(String id, int statusCode, boolean exception, int attempt) {

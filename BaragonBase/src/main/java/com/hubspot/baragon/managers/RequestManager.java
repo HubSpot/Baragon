@@ -1,6 +1,7 @@
 package com.hubspot.baragon.managers;
 
 import com.google.common.base.Optional;
+import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.hubspot.baragon.data.BaragonLoadBalancerDatastore;
@@ -76,10 +77,16 @@ public class RequestManager {
     final Service service = request.getLoadBalancerService();
     final Collection<String> loadBalancerGroups = loadBalancerDatastore.getClusters();
 
+    final Collection<String> missingGroups = Lists.newArrayListWithCapacity(service.getLoadBalancerGroups().size());
+
     for (String loadBalancerGroup : service.getLoadBalancerGroups()) {
       if (!loadBalancerGroups.contains(loadBalancerGroup)) {
-        throw new MissingLoadBalancerGroupException(request);
+        missingGroups.add(loadBalancerGroup);
       }
+    }
+
+    if (!missingGroups.isEmpty()) {
+      throw new MissingLoadBalancerGroupException(request, missingGroups);
     }
   }
 
@@ -117,6 +124,15 @@ public class RequestManager {
   }
 
   public void commitRequest(BaragonRequest request) {
+    final Optional<Service> maybeOriginalService = stateDatastore.getService(request.getLoadBalancerService().getServiceId());
+
+    // if we've changed the base path, clear out the old ones
+    if (maybeOriginalService.isPresent() && !maybeOriginalService.get().getServiceBasePath().equals(request.getLoadBalancerService().getServiceBasePath())) {
+      for (String loadBalancerGroup : maybeOriginalService.get().getLoadBalancerGroups()) {
+        loadBalancerDatastore.clearBasePath(loadBalancerGroup, maybeOriginalService.get().getServiceBasePath());
+      }
+    }
+
     stateDatastore.addService(request.getLoadBalancerService());
     stateDatastore.removeUpstreams(request.getLoadBalancerService().getServiceId(), request.getRemoveUpstreams());
     stateDatastore.addUpstreams(request.getLoadBalancerRequestId(), request.getLoadBalancerService().getServiceId(), request.getAddUpstreams());

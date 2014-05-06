@@ -59,7 +59,7 @@ public class BaragonServiceModule extends AbstractModule {
   @Singleton
   @Named(BARAGON_SERVICE_LEADER_LATCH)
   public LeaderLatch providesWorkerLeaderLatch(CuratorFramework curatorFramework) {
-    return new LeaderLatch(curatorFramework, "/singularity/workers");
+    return new LeaderLatch(curatorFramework, "/workers");
   }
 
   @Provides

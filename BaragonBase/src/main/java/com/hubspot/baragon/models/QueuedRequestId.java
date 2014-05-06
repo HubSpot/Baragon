@@ -1,24 +1,25 @@
 package com.hubspot.baragon.models;
 
-import com.google.common.base.Splitter;
-import com.google.common.collect.Lists;
-
-import java.util.List;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.base.Objects;
 
 public class QueuedRequestId {
-  private static final Splitter DASH_SPLITTER = Splitter.on('_');
-
   private final String serviceId;
   private final String requestId;
   private final int index;
 
-  public static QueuedRequestId fromString(String str) {
-    final List<String> splits = Lists.newArrayList(DASH_SPLITTER.split(str));
+  public static QueuedRequestId fromString(String value) {
+    final String[] splits = value.split("\\|", 3);
 
-    return new QueuedRequestId(splits.get(0), splits.get(1), Integer.parseInt(splits.get(2)));
+    return new QueuedRequestId(splits[0], splits[1], Integer.parseInt(splits[2]));
   }
 
-  private QueuedRequestId(String serviceId, String requestId, int index) {
+  @JsonCreator
+  public QueuedRequestId(@JsonProperty("serviceId") String serviceId,
+                         @JsonProperty("requestId") String requestId,
+                         @JsonProperty("index") int index) {
     this.serviceId = serviceId;
     this.requestId = requestId;
     this.index = index;
@@ -36,8 +37,17 @@ public class QueuedRequestId {
     return index;
   }
 
+  @JsonIgnore
+  public String buildZkPath() {
+    return String.format("%s|%s|%010d", serviceId, requestId, index);
+  }
+
   @Override
   public String toString() {
-    return String.format("%s_%s_%010d", serviceId, requestId, index);
+    return Objects.toStringHelper(this)
+        .add("serviceId", serviceId)
+        .add("requestId", requestId)
+        .add("index", index)
+        .toString();
   }
 }

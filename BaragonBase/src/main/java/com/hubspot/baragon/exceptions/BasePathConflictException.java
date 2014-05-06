@@ -7,6 +7,7 @@ public class BasePathConflictException extends Exception {
   private final String originalServiceId;
 
   public BasePathConflictException(BaragonRequest request, String originalServiceId) {
+    super(String.format("Base path %s is already occupied by service %s", request.getLoadBalancerService().getServiceBasePath(), originalServiceId));
     this.request = request;
     this.originalServiceId = originalServiceId;
   }

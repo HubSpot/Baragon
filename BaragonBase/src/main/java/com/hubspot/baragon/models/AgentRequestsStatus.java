@@ -1,6 +1,6 @@
 package com.hubspot.baragon.models;
 
-public enum AgentRequestStatus {
+public enum AgentRequestsStatus {
   WAITING,
   SUCCESS,
   FAILURE,

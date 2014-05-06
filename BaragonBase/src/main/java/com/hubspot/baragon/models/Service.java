@@ -9,6 +9,7 @@ import io.dropwizard.validation.ValidationMethod;
 import org.hibernate.validator.constraints.NotEmpty;
 
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Pattern;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -16,12 +17,14 @@ import java.util.Map;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Service {
   @NotEmpty
+  @Pattern(regexp = "[^\\s/|]+", message = "cannot contain whitespace, '/', or '|'", flags = Pattern.Flag.MULTILINE)
   private final String serviceId;
 
   @NotNull
   private final Collection<String> owners;
 
   @NotEmpty
+  @Pattern(regexp = "/(?:[A-Za-z0-9\\-._~!$&'()*+,;=:@/?]|%[0-9A-Fa-f]{2})*", message = "must be an absolute URL path")
   private final String serviceBasePath;
 
   @NotEmpty
@@ -70,10 +73,17 @@ public class Service {
     return options;
   }
 
-  @ValidationMethod(message = "serviceBasePath must be a valid absolute path")
-  @JsonIgnore
-  public boolean validServiceBasePath() {
-    return !Strings.isNullOrEmpty(serviceBasePath) && serviceBasePath.startsWith("/");  // TODO: make this more rigorous
+  @ValidationMethod(message = "loadBalancerGroups cannot contain '/'")
+  public boolean validLoadBalancerGroups() {
+    if (loadBalancerGroups != null) {
+      for (String loadBalancerGroup : loadBalancerGroups) {
+        if (loadBalancerGroup.contains("/")) {
+          return false;
+        }
+      }
+    }
+
+    return true;
   }
 
   @Override

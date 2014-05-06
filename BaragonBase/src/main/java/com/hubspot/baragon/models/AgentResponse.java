@@ -33,16 +33,16 @@ public class AgentResponse {
   }
 
   @JsonIgnore
-  public AgentRequestStatus toRequestStatus() {
+  public AgentRequestsStatus toRequestStatus() {
     if (!statusCode.isPresent() && !exception.isPresent()) {
-      return AgentRequestStatus.WAITING;
+      return AgentRequestsStatus.WAITING;
     }
 
     if (statusCode.isPresent() && statusCode.get() >= 200 && statusCode.get() < 300) {
-      return AgentRequestStatus.SUCCESS;
+      return AgentRequestsStatus.SUCCESS;
     }
 
-    return AgentRequestStatus.FAILURE;
+    return AgentRequestsStatus.FAILURE;
   }
 
   @JsonIgnore

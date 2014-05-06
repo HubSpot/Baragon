@@ -65,19 +65,24 @@ public class BaragonRequestWorker implements Runnable {
   public void run() {
     workerLastStartAt.set(System.currentTimeMillis());
 
-    final List<QueuedRequestId> queuedRequestIds = requestManager.getQueuedRequestIds();
+    try {
 
-    if (!queuedRequestIds.isEmpty()) {
-      final Set<String> handledServices = Sets.newHashSet();  // only handle one request per service at a time
+      final List<QueuedRequestId> queuedRequestIds = requestManager.getQueuedRequestIds();
 
-      for (QueuedRequestId queuedRequestId : queuedRequestIds) {
-        if (!handledServices.contains(queuedRequestId.getServiceId())) {
-          synchronized (BaragonRequestWorker.class) {
-            handleRequest(queuedRequestId);
+      if (!queuedRequestIds.isEmpty()) {
+        final Set<String> handledServices = Sets.newHashSet();  // only handle one request per service at a time
+
+        for (QueuedRequestId queuedRequestId : queuedRequestIds) {
+          if (!handledServices.contains(queuedRequestId.getServiceId())) {
+            synchronized (BaragonRequestWorker.class) {
+              handleRequest(queuedRequestId);
+            }
+            handledServices.add(queuedRequestId.getServiceId());
           }
-          handledServices.add(queuedRequestId.getServiceId());
         }
       }
+    } catch (Exception e) {
+      LOG.warn("Caught exception", e);
     }
   }
 }

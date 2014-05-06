@@ -22,7 +22,7 @@ public class BaragonRequestDatastore extends AbstractDataStore {
   public static final String REQUEST_MESSAGE_FORMAT = REQUEST_FORMAT + "/message";
 
   public static final String REQUEST_QUEUE_FORMAT = "/queue";
-  public static final String REQUEST_ENQUEUE_FORMAT = REQUEST_QUEUE_FORMAT + "/%s_%s_";
+  public static final String REQUEST_ENQUEUE_FORMAT = REQUEST_QUEUE_FORMAT + "/%s|%s|";
   public static final String REQUEST_QUEUE_ITEM_FORMAT = REQUEST_QUEUE_FORMAT + "/%s";
 
   @Inject
@@ -99,6 +99,6 @@ public class BaragonRequestDatastore extends AbstractDataStore {
   }
 
   public void removeQueuedRequest(QueuedRequestId queuedRequestId) {
-    deleteNode(String.format(REQUEST_QUEUE_ITEM_FORMAT, queuedRequestId.toString()));
+    deleteNode(String.format(REQUEST_QUEUE_ITEM_FORMAT, queuedRequestId.buildZkPath()));
   }
 }

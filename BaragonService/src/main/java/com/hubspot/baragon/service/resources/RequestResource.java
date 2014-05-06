@@ -43,12 +43,12 @@ public class RequestResource {
     } catch (BasePathConflictException e) {
       LOG.warn(String.format("Base path conflict for request %s (original service id: %s)", request.getLoadBalancerRequestId(), e.getOriginalServiceId()), e);
       throw new WebApplicationException(Response.status(Response.Status.CONFLICT)
-          .entity(BaragonResponse.failure(request.getLoadBalancerRequestId(), "Another service already exists with this path."))
+          .entity(BaragonResponse.failure(request.getLoadBalancerRequestId(), e.getMessage()))
           .build());
     } catch (MissingLoadBalancerGroupException e) {
       LOG.warn(String.format("Missing load balancer(s) for request %s", request.getLoadBalancerRequestId()), e);
       throw new WebApplicationException(Response.status(Response.Status.BAD_REQUEST)
-          .entity(BaragonResponse.failure(request.getLoadBalancerRequestId(), "One or more load balancer groups do not exist"))
+          .entity(BaragonResponse.failure(request.getLoadBalancerRequestId(), e.getMessage()))
           .build());
     }
   }

@@ -95,7 +95,7 @@ public class AgentManager {
     }
   }
 
-  public AgentRequestStatus getRequestsStatus(BaragonRequest request, AgentRequestType requestType) {
+  public AgentRequestsStatus getRequestsStatus(BaragonRequest request, AgentRequestType requestType) {
     final Collection<String> baseUrls = loadBalancerDatastore.getAllBaseUrls(request.getLoadBalancerService().getLoadBalancerGroups());
 
     boolean success = true;
@@ -104,18 +104,18 @@ public class AgentManager {
       final Optional<AgentResponseId> maybeAgentResponseId = agentResponseDatastore.getLastAgentResponseId(request.getLoadBalancerRequestId(), requestType, baseUrl);
 
       if (!maybeAgentResponseId.isPresent() || agentResponseDatastore.hasPendingRequest(request.getLoadBalancerRequestId(), baseUrl)) {
-        return AgentRequestStatus.WAITING;
+        return AgentRequestsStatus.WAITING;
       }
 
       final AgentResponseId agentResponseId = maybeAgentResponseId.get();
 
       if ((agentResponseId.getAttempt() < baragonAgentMaxAttempts - 1) && !agentResponseId.isSuccess()) {
-        return AgentRequestStatus.RETRY;
+        return AgentRequestsStatus.RETRY;
       } else {
         success = success && agentResponseId.isSuccess();
       }
     }
 
-    return success ? AgentRequestStatus.SUCCESS : AgentRequestStatus.FAILURE;
+    return success ? AgentRequestsStatus.SUCCESS : AgentRequestsStatus.FAILURE;
   }
 }
