@@ -83,6 +83,13 @@ public class BaragonLoadBalancerDatastore extends AbstractDataStore {
   }
 
   public Collection<String> getBasePaths(String loadBalancerGroup) {
-    return getChildren(String.format(LOAD_BALANCER_BASE_PATHS_FORMAT, loadBalancerGroup));
+    final Collection<String> encodedPaths = getChildren(String.format(LOAD_BALANCER_BASE_PATHS_FORMAT, loadBalancerGroup));
+    final Collection<String> decodedPaths = Lists.newArrayListWithCapacity(encodedPaths.size());
+
+    for (String encodedPath : encodedPaths) {
+      decodedPaths.add(decodeUrl(encodedPath));
+    }
+
+    return decodedPaths;
   }
 }

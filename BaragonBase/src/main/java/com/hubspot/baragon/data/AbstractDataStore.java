@@ -1,6 +1,7 @@
 package com.hubspot.baragon.data;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Charsets;
 import com.google.common.base.Optional;
 import com.google.common.base.Throwables;
 import com.google.common.io.BaseEncoding;
@@ -38,7 +39,10 @@ public abstract class AbstractDataStore {
   }
 
   protected String encodeUrl(String url) {
-    return BaseEncoding.base64Url().encode(url.getBytes());
+    return BaseEncoding.base64Url().encode(url.getBytes(Charsets.UTF_8));
+  }
+  protected String decodeUrl(String encodedUrl) {
+    return new String(BaseEncoding.base64Url().decode(encodedUrl), Charsets.UTF_8);
   }
 
   protected boolean nodeExists(String path) {
