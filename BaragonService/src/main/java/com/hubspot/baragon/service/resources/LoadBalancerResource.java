@@ -31,6 +31,12 @@ public class LoadBalancerResource {
   }
 
   @GET
+  @Path("/{clusterName}/base-path/all")
+  public Collection<String> getBasePaths(@PathParam("clusterNAme") String clusterName) {
+    return datastore.getBasePaths(clusterName);
+  }
+
+  @GET
   @Path("/{clusterName}/base-path")
   public Optional<String> getBasePathServiceId(@PathParam("clusterName") String clusterName, @QueryParam("basePath") String basePath) {
     return datastore.getBasePathServiceId(clusterName, basePath);

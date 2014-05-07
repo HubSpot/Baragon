@@ -22,7 +22,8 @@ public class BaragonLoadBalancerDatastore extends AbstractDataStore {
   public static final String LOAD_BALANCER_GROUP_HOSTS_FORMAT = LOAD_BALANCER_GROUPS_FORMAT + "/%s/hosts";
   public static final String LOAD_BALANCER_GROUP_HOST_FORMAT = LOAD_BALANCER_GROUP_HOSTS_FORMAT + "/%s";
 
-  public static final String LOAD_BALANCER_BASE_PATH_FORMAT = LOAD_BALANCER_GROUPS_FORMAT + "/%s/base-uris/%s";
+  public static final String LOAD_BALANCER_BASE_PATHS_FORMAT = LOAD_BALANCER_GROUPS_FORMAT + "/%s/base-uris";
+  public static final String LOAD_BALANCER_BASE_PATH_FORMAT = LOAD_BALANCER_BASE_PATHS_FORMAT + "/%s";
 
   @Inject
   public BaragonLoadBalancerDatastore(CuratorFramework curatorFramework, ObjectMapper objectMapper) {
@@ -79,5 +80,9 @@ public class BaragonLoadBalancerDatastore extends AbstractDataStore {
 
   public void setBasePathServiceId(String loadBalancerGroup, String basePath, String serviceId) {
     writeToZk(String.format(LOAD_BALANCER_BASE_PATH_FORMAT, loadBalancerGroup, encodeUrl(basePath)), serviceId);
+  }
+
+  public Collection<String> getBasePaths(String loadBalancerGroup) {
+    return getChildren(String.format(LOAD_BALANCER_BASE_PATHS_FORMAT, loadBalancerGroup));
   }
 }
