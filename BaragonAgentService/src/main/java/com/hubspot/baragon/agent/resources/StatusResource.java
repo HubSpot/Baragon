@@ -6,7 +6,7 @@ import com.google.inject.name.Named;
 import com.hubspot.baragon.agent.BaragonAgentServiceModule;
 import com.hubspot.baragon.agent.config.LoadBalancerConfiguration;
 import com.hubspot.baragon.agent.lbs.LocalLbAdapter;
-import com.hubspot.baragon.models.AgentStatus;
+import com.hubspot.baragon.agent.models.AgentStatus;
 import com.hubspot.baragon.exceptions.InvalidConfigException;
 import org.apache.curator.framework.recipes.leader.LeaderLatch;
 

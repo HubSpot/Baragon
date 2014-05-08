@@ -6,15 +6,15 @@ import com.google.common.base.Objects;
 
 public class ServiceStatus {
   private final boolean leader;
-  private final int pendingRequests;
+  private final int pendingRequestCount;
   private final long workerLagMs;
 
   @JsonCreator
   public ServiceStatus(@JsonProperty("leader") boolean leader,
-                       @JsonProperty("pendingRequests") int pendingRequests,
+                       @JsonProperty("pendingRequestCount") int pendingRequestCount,
                        @JsonProperty("workerLagMs") long workerLagMs) {
     this.leader = leader;
-    this.pendingRequests = pendingRequests;
+    this.pendingRequestCount = pendingRequestCount;
     this.workerLagMs = workerLagMs;
   }
 
@@ -22,8 +22,8 @@ public class ServiceStatus {
     return leader;
   }
 
-  public int getPendingRequests() {
-    return pendingRequests;
+  public int getPendingRequestCount() {
+    return pendingRequestCount;
   }
 
   public long getWorkerLagMs() {
@@ -34,7 +34,7 @@ public class ServiceStatus {
   public String toString() {
     return Objects.toStringHelper(this)
         .add("leader", leader)
-        .add("pendingRequests", pendingRequests)
+        .add("pendingRequestCount", pendingRequestCount)
         .add("workerLagMs", workerLagMs)
         .toString();
   }

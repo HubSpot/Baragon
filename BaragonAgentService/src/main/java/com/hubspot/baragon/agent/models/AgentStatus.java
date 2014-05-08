@@ -1,4 +1,4 @@
-package com.hubspot.baragon.models;
+package com.hubspot.baragon.agent.models;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
