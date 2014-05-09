@@ -1,13 +1,17 @@
 package com.hubspot.baragon.managers;
 
 import com.google.common.base.Optional;
+import com.google.common.base.Strings;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import com.hubspot.baragon.BaragonBaseModule;
 import com.hubspot.baragon.data.BaragonAgentResponseDatastore;
 import com.hubspot.baragon.data.BaragonLoadBalancerDatastore;
-import com.hubspot.baragon.models.*;
+import com.hubspot.baragon.models.AgentRequestType;
+import com.hubspot.baragon.models.AgentRequestsStatus;
+import com.hubspot.baragon.models.AgentResponseId;
+import com.hubspot.baragon.models.BaragonRequest;
 import com.ning.http.client.AsyncCompletionHandler;
 import com.ning.http.client.AsyncHttpClient;
 import com.ning.http.client.Response;
@@ -39,12 +43,13 @@ public class AgentManager {
     this.baragonAgentMaxAttempts = baragonAgentMaxAttempts;
   }
 
-  private AsyncHttpClient.BoundRequestBuilder buildAgentRequest(BaragonRequest request, String baseUrl, AgentRequestType requestType) {
+  private AsyncHttpClient.BoundRequestBuilder buildAgentRequest(String url, AgentRequestType requestType) {
     switch (requestType) {
       case APPLY:
-        return asyncHttpClient.preparePost(String.format(baragonAgentRequestUriFormat, baseUrl, request.getLoadBalancerRequestId()));
+        return asyncHttpClient.preparePost(url);
       case REVERT:
-        return asyncHttpClient.prepareDelete(String.format(baragonAgentRequestUriFormat, baseUrl, request.getLoadBalancerRequestId()));
+      case CANCEL:
+        return asyncHttpClient.prepareDelete(url);
       default:
         throw new RuntimeException("Don't know how to send requests for " + requestType);
     }
@@ -67,13 +72,15 @@ public class AgentManager {
 
       agentResponseDatastore.setPendingRequestStatus(request.getLoadBalancerRequestId(), baseUrl, true);
 
+      final String url = String.format(baragonAgentRequestUriFormat, baseUrl, request.getLoadBalancerRequestId());
+
       try {
-        buildAgentRequest(request, baseUrl, requestType).execute(new AsyncCompletionHandler<Void>() {
+        buildAgentRequest(url, requestType).execute(new AsyncCompletionHandler<Void>() {
           @Override
           public Void onCompleted(Response response) throws Exception {
             LOG.info(String.format("Got HTTP %d from %s for %s", response.getStatusCode(), baseUrl, request.getLoadBalancerRequestId()));
-            final AgentResponse agentResponse = new AgentResponse(Optional.of(response.getStatusCode()), Optional.of(response.getResponseBody()), Optional.<String>absent());
-            agentResponseDatastore.addAgentResponse(request.getLoadBalancerRequestId(), requestType, baseUrl, agentResponse);
+            final Optional<String> content = Strings.isNullOrEmpty(response.getResponseBody()) ? Optional.<String>absent() : Optional.of(response.getResponseBody());
+            agentResponseDatastore.addAgentResponse(request.getLoadBalancerRequestId(), requestType, baseUrl, url, Optional.of(response.getStatusCode()), content, Optional.<String>absent());
             agentResponseDatastore.setPendingRequestStatus(request.getLoadBalancerRequestId(), baseUrl, false);
             return null;
           }
@@ -81,15 +88,13 @@ public class AgentManager {
           @Override
           public void onThrowable(Throwable t) {
             LOG.info(String.format("Got exception %s when hitting %s for %s", t, baseUrl, request.getLoadBalancerRequestId()));
-            final AgentResponse agentResponse = new AgentResponse(Optional.<Integer>absent(), Optional.<String>absent(), Optional.of(t.getMessage()));
-            agentResponseDatastore.addAgentResponse(request.getLoadBalancerRequestId(), requestType, baseUrl, agentResponse);
+            agentResponseDatastore.addAgentResponse(request.getLoadBalancerRequestId(), requestType, baseUrl, url, Optional.<Integer>absent(), Optional.<String>absent(), Optional.of(t.getMessage()));
             agentResponseDatastore.setPendingRequestStatus(request.getLoadBalancerRequestId(), baseUrl, false);
           }
         });
       } catch (Exception e) {
         LOG.info(String.format("Got exception %s when hitting %s for %s", e, baseUrl, request.getLoadBalancerRequestId()));
-        final AgentResponse agentResponse = new AgentResponse(Optional.<Integer>absent(), Optional.<String>absent(), Optional.of(e.getMessage()));
-        agentResponseDatastore.addAgentResponse(request.getLoadBalancerRequestId(), requestType, baseUrl, agentResponse);
+        agentResponseDatastore.addAgentResponse(request.getLoadBalancerRequestId(), requestType, baseUrl, url, Optional.<Integer>absent(), Optional.<String>absent(), Optional.of(e.getMessage()));
         agentResponseDatastore.setPendingRequestStatus(request.getLoadBalancerRequestId(), baseUrl, false);
       }
     }

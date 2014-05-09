@@ -4,6 +4,7 @@ import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import com.hubspot.baragon.data.BaragonAgentResponseDatastore;
 import com.hubspot.baragon.data.BaragonLoadBalancerDatastore;
 import com.hubspot.baragon.data.BaragonRequestDatastore;
 import com.hubspot.baragon.data.BaragonStateDatastore;
@@ -13,19 +14,22 @@ import com.hubspot.baragon.models.*;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 @Singleton
 public class RequestManager {
   private final BaragonRequestDatastore requestDatastore;
   private final BaragonLoadBalancerDatastore loadBalancerDatastore;
   private final BaragonStateDatastore stateDatastore;
+  private final BaragonAgentResponseDatastore agentResponseDatastore;
 
   @Inject
   public RequestManager(BaragonRequestDatastore requestDatastore, BaragonLoadBalancerDatastore loadBalancerDatastore,
-                        BaragonStateDatastore stateDatastore) {
+                        BaragonStateDatastore stateDatastore, BaragonAgentResponseDatastore agentResponseDatastore) {
     this.requestDatastore = requestDatastore;
     this.loadBalancerDatastore = loadBalancerDatastore;
     this.stateDatastore = stateDatastore;
+    this.agentResponseDatastore = agentResponseDatastore;
   }
 
   public Optional<BaragonRequest> getRequest(String requestId) {
@@ -59,7 +63,7 @@ public class RequestManager {
       return Optional.absent();
     }
 
-    return Optional.of(new BaragonResponse(requestId, maybeStatus.get().toRequestState(), requestDatastore.getRequestMessage(requestId)));
+    return Optional.of(new BaragonResponse(requestId, maybeStatus.get().toRequestState(), requestDatastore.getRequestMessage(requestId), Optional.of(agentResponseDatastore.getLastResponses(requestId))));
   }
 
   private void ensureBasePathAvailable(BaragonRequest request) throws BasePathConflictException {
@@ -108,7 +112,7 @@ public class RequestManager {
       loadBalancerDatastore.setBasePathServiceId(loadBalancerGroup, request.getLoadBalancerService().getServiceBasePath(), request.getLoadBalancerService().getServiceId());
     }
 
-    return new BaragonResponse(request.getLoadBalancerRequestId(), InternalRequestStates.SEND_APPLY_REQUESTS.toRequestState(), Optional.<String>absent());
+    return new BaragonResponse(request.getLoadBalancerRequestId(), InternalRequestStates.SEND_APPLY_REQUESTS.toRequestState(), Optional.<String>absent(), Optional.<Map<AgentRequestType, Collection<AgentResponse>>>absent());
   }
 
   public Optional<InternalRequestStates> cancelRequest(String requestId) {

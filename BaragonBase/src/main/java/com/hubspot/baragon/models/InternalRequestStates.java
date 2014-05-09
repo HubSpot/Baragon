@@ -47,10 +47,10 @@ public enum InternalRequestStates {
     public Optional<InternalRequestStates> handle(BaragonRequest request, AgentManager agentManager, RequestManager requestManager) {
       switch (agentManager.getRequestsStatus(request, AgentRequestType.REVERT)) {
         case FAILURE:
-          requestManager.setRequestMessage(request.getLoadBalancerRequestId(), "Operation failed, revert failed!");
+          requestManager.setRequestMessage(request.getLoadBalancerRequestId(), "Apply failed, revert failed!");
           return Optional.of(FAILED_REVERT_FAILED);
         case SUCCESS:
-          requestManager.setRequestMessage(request.getLoadBalancerRequestId(), "Operation failed, revert succeeded!");
+          requestManager.setRequestMessage(request.getLoadBalancerRequestId(), "Apply failed, revert succeeded!");
           return Optional.of(FAILED_REVERTED);
         case RETRY:
           return Optional.of(FAILED_SEND_REVERT_REQUESTS);
@@ -66,7 +66,7 @@ public enum InternalRequestStates {
   CANCELLED_SEND_REVERT_REQUESTS(RequestState.CANCELING, false, false) {
     @Override
     public Optional<InternalRequestStates> handle(BaragonRequest request, AgentManager agentManager, RequestManager requestManager) {
-      agentManager.sendRequests(request, AgentRequestType.REVERT);
+      agentManager.sendRequests(request, AgentRequestType.CANCEL);
 
       return Optional.of(CANCELLED_CHECK_REVERT_RESPONSES);
     }
@@ -75,9 +75,9 @@ public enum InternalRequestStates {
   CANCELLED_CHECK_REVERT_RESPONSES(RequestState.CANCELING, false, false) {
     @Override
     public Optional<InternalRequestStates> handle(BaragonRequest request, AgentManager agentManager, RequestManager requestManager) {
-      switch (agentManager.getRequestsStatus(request, AgentRequestType.REVERT)) {
+      switch (agentManager.getRequestsStatus(request, AgentRequestType.CANCEL)) {
         case FAILURE:
-          requestManager.setRequestMessage(request.getLoadBalancerRequestId(), "Cancel operation failed");
+          requestManager.setRequestMessage(request.getLoadBalancerRequestId(), "Cancel failed!");
           return Optional.of(FAILED_CANCEL_FAILED);
         case SUCCESS:
           return Optional.of(CANCELLED);

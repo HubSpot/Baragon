@@ -7,17 +7,31 @@ import com.google.common.base.Objects;
 import com.google.common.base.Optional;
 
 public class AgentResponse {
+  private final String url;
+  private final int attempt;
   private final Optional<Integer> statusCode;
   private final Optional<String> content;
   private final Optional<String> exception;
 
   @JsonCreator
-  public AgentResponse(@JsonProperty("statusCode") Optional<Integer> statusCode,
+  public AgentResponse(@JsonProperty("url") String url,
+                       @JsonProperty("attempt") int attempt,
+                       @JsonProperty("statusCode") Optional<Integer> statusCode,
                        @JsonProperty("content") Optional<String> content,
                        @JsonProperty("exception") Optional<String> exception) {
+    this.url = url;
+    this.attempt = attempt;
     this.statusCode = statusCode;
     this.content = content;
     this.exception = exception;
+  }
+
+  public int getAttempt() {
+    return attempt;
+  }
+
+  public String getUrl() {
+    return url;
   }
 
   public Optional<Integer> getStatusCode() {
@@ -53,6 +67,8 @@ public class AgentResponse {
   @Override
   public String toString() {
     return Objects.toStringHelper(this)
+        .add("url", url)
+        .add("attempt", attempt)
         .add("statusCode", statusCode)
         .add("content", content)
         .add("exception", exception)
