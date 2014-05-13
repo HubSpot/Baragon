@@ -32,6 +32,9 @@ public class BaragonConfiguration extends Configuration {
   @Min(1)
   private int agentMaxAttempts = 5;
 
+  @JsonProperty("hostname")
+  private String hostname;
+
   public ZooKeeperConfiguration getZooKeeperConfiguration() {
     return zooKeeperConfiguration;
   }
@@ -70,5 +73,13 @@ public class BaragonConfiguration extends Configuration {
 
   public void setAgentMaxAttempts(int agentMaxAttempts) {
     this.agentMaxAttempts = agentMaxAttempts;
+  }
+
+  public String getHostname() {
+    return hostname;
+  }
+
+  public void setHostname(String hostname) {
+    this.hostname = hostname;
   }
 }

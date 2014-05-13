@@ -1,5 +1,6 @@
 package com.hubspot.baragon.service;
 
+import com.google.common.base.Strings;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
@@ -7,8 +8,11 @@ import com.google.inject.name.Named;
 import com.hubspot.baragon.BaragonBaseModule;
 import com.hubspot.baragon.config.HttpClientConfiguration;
 import com.hubspot.baragon.config.ZooKeeperConfiguration;
+import com.hubspot.baragon.data.BaragonWorkerDatastore;
 import com.hubspot.baragon.service.config.BaragonConfiguration;
-import org.apache.curator.framework.CuratorFramework;
+import com.hubspot.baragon.utils.JavaUtils;
+import io.dropwizard.jetty.HttpConnectorFactory;
+import io.dropwizard.server.SimpleServerFactory;
 import org.apache.curator.framework.recipes.leader.LeaderLatch;
 
 import java.util.concurrent.Executors;
@@ -21,6 +25,9 @@ public class BaragonServiceModule extends AbstractModule {
   public static final String BARAGON_SERVICE_LEADER_LATCH = "baragon.service.leaderLatch";
   public static final String BARAGON_SERVICE_WORKER_INTERVAL_MS = "baragon.service.worker.intervalMs";
   public static final String BARAGON_SERVICE_WORKER_LAST_START = "baragon.service.worker.lastStartedAt";
+
+  public static final String BARAGON_SERVICE_HTTP_PORT = "baragon.service.http.port";
+  public static final String BARAGON_SERVICE_HOSTNAME = "baragon.service.hostname";
 
   @Override
   protected void configure() {
@@ -57,13 +64,6 @@ public class BaragonServiceModule extends AbstractModule {
 
   @Provides
   @Singleton
-  @Named(BARAGON_SERVICE_LEADER_LATCH)
-  public LeaderLatch providesWorkerLeaderLatch(CuratorFramework curatorFramework) {
-    return new LeaderLatch(curatorFramework, "/workers");
-  }
-
-  @Provides
-  @Singleton
   @Named(BARAGON_SERVICE_SCHEDULED_EXECUTOR)
   public ScheduledExecutorService providesScheduledExecutor() {
     return Executors.newScheduledThreadPool(1);
@@ -74,5 +74,34 @@ public class BaragonServiceModule extends AbstractModule {
   @Named(BARAGON_SERVICE_WORKER_LAST_START)
   public AtomicLong providesWorkerLastStartAt() {
     return new AtomicLong();
+  }
+
+  @Provides
+  @Singleton
+  @Named(BARAGON_SERVICE_HTTP_PORT)
+  public int providesHttpPortProperty(BaragonConfiguration config) {
+    SimpleServerFactory simpleServerFactory = (SimpleServerFactory) config.getServerFactory();
+    HttpConnectorFactory httpFactory = (HttpConnectorFactory) simpleServerFactory.getConnector();
+
+    return httpFactory.getPort();
+  }
+
+  @Provides
+  @Named(BARAGON_SERVICE_HOSTNAME)
+  public String providesHostnameProperty(BaragonConfiguration config) throws Exception {
+    return Strings.isNullOrEmpty(config.getHostname()) ? JavaUtils.getHostAddress() : config.getHostname();
+  }
+
+  @Provides
+  @Singleton
+  @Named(BARAGON_SERVICE_LEADER_LATCH)
+  public LeaderLatch providesServiceLeaderLatch(BaragonConfiguration config,
+                                                BaragonWorkerDatastore datastore,
+                                                @Named(BARAGON_SERVICE_HTTP_PORT) int httpPort,
+                                                @Named(BARAGON_SERVICE_HOSTNAME) String hostname) {
+    final String appRoot = ((SimpleServerFactory)config.getServerFactory()).getApplicationContextPath();
+    final String baseUri = String.format("http://%s:%s%s", hostname, httpPort, appRoot);
+
+    return datastore.createLeaderLatch(baseUri);
   }
 }
