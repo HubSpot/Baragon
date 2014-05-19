@@ -1,7 +1,6 @@
 package com.hubspot.baragon.agent;
 
-import com.github.mustachejava.DefaultMustacheFactory;
-import com.github.mustachejava.MustacheFactory;
+import com.github.jknack.handlebars.Handlebars;
 import com.google.common.base.Optional;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
@@ -14,7 +13,7 @@ import com.hubspot.baragon.agent.config.BaragonAgentConfiguration;
 import com.hubspot.baragon.agent.config.LoadBalancerConfiguration;
 import com.hubspot.baragon.agent.config.TemplateConfiguration;
 import com.hubspot.baragon.agent.config.TestingConfiguration;
-import com.hubspot.baragon.agent.models.Template;
+import com.hubspot.baragon.agent.models.LbConfigTemplate;
 import com.hubspot.baragon.config.ZooKeeperConfiguration;
 import com.hubspot.baragon.data.BaragonLoadBalancerDatastore;
 import com.hubspot.baragon.utils.JavaUtils;
@@ -22,15 +21,14 @@ import io.dropwizard.jetty.HttpConnectorFactory;
 import io.dropwizard.server.SimpleServerFactory;
 import org.apache.curator.framework.recipes.leader.LeaderLatch;
 
-import java.io.StringReader;
 import java.util.Collection;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class BaragonAgentServiceModule extends AbstractModule {
-  public static final String HTTP_PORT_PROPERTY = "baragon.agent.http.port";
-  public static final String HOSTNAME_PROPERTY = "baragon.agent.hostname";
+  public static final String BARAGON_AGENT_HTTP_PORT = "baragon.agent.http.port";
+  public static final String BARAGON_AGENT_HOSTNAME = "baragon.agent.hostname";
   public static final String AGENT_LEADER_LATCH = "baragon.agent.leaderLatch";
   public static final String AGENT_LOCK = "baragon.agent.lock";
   public static final String AGENT_TEMPLATES = "baragon.agent.templates";
@@ -44,20 +42,19 @@ public class BaragonAgentServiceModule extends AbstractModule {
 
   @Provides
   @Singleton
-  public MustacheFactory providesMustacheFactory() {
-    return new DefaultMustacheFactory();
+  public Handlebars providesHandlebars() {
+    return new Handlebars();
   }
 
   @Provides
   @Singleton
   @Named(AGENT_TEMPLATES)
-  public Collection<Template> providesTemplates(MustacheFactory mustacheFactory,
+  public Collection<LbConfigTemplate> providesTemplates(Handlebars handlebars,
                                                 BaragonAgentConfiguration configuration) throws Exception {
-    Collection<Template> templates = Lists.newArrayListWithCapacity(configuration.getTemplates().size());
+    Collection<LbConfigTemplate> templates = Lists.newArrayListWithCapacity(configuration.getTemplates().size());
 
     for (TemplateConfiguration templateConfiguration : configuration.getTemplates()) {
-      final StringReader reader = new StringReader(templateConfiguration.getTemplate());
-      templates.add(new Template(templateConfiguration.getFilename(), mustacheFactory.compile(reader, templateConfiguration.getFilename())));
+      templates.add(new LbConfigTemplate(templateConfiguration.getFilename(), handlebars.compileInline(templateConfiguration.getTemplate())));
     }
 
     return templates;
@@ -81,7 +78,7 @@ public class BaragonAgentServiceModule extends AbstractModule {
 
   @Provides
   @Singleton
-  @Named(HTTP_PORT_PROPERTY)
+  @Named(BARAGON_AGENT_HTTP_PORT)
   public int providesHttpPortProperty(BaragonAgentConfiguration config) {
     SimpleServerFactory simpleServerFactory = (SimpleServerFactory) config.getServerFactory();
     HttpConnectorFactory httpFactory = (HttpConnectorFactory) simpleServerFactory.getConnector();
@@ -90,7 +87,7 @@ public class BaragonAgentServiceModule extends AbstractModule {
   }
 
   @Provides
-  @Named(HOSTNAME_PROPERTY)
+  @Named(BARAGON_AGENT_HOSTNAME)
   public String providesHostnameProperty(BaragonAgentConfiguration config) throws Exception {
     return !Strings.isNullOrEmpty(config.getHostname()) ? config.getHostname() : JavaUtils.getHostAddress();
   }
@@ -100,8 +97,8 @@ public class BaragonAgentServiceModule extends AbstractModule {
   @Named(AGENT_LEADER_LATCH)
   public LeaderLatch providesAgentLeaderLatch(BaragonLoadBalancerDatastore loadBalancerDatastore,
                                               BaragonAgentConfiguration config,
-                                              @Named(HTTP_PORT_PROPERTY) int httpPort,
-                                              @Named(HOSTNAME_PROPERTY) String hostname) {
+                                              @Named(BARAGON_AGENT_HTTP_PORT) int httpPort,
+                                              @Named(BARAGON_AGENT_HOSTNAME) String hostname) {
     final String appRoot = ((SimpleServerFactory)config.getServerFactory()).getApplicationContextPath();
     final String baseUri = String.format("http://%s:%s%s", hostname, httpPort, appRoot);
 

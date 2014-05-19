@@ -1,13 +1,13 @@
 package com.hubspot.baragon.agent.models;
 
-import com.github.mustachejava.Mustache;
+import com.github.jknack.handlebars.Template;
 import com.google.common.base.Objects;
 
-public class Template {
+public class LbConfigTemplate {
   private final String filename;
-  private final Mustache template;
+  private final Template template;
 
-  public Template(String filename, Mustache template) {
+  public LbConfigTemplate(String filename, Template template) {
     this.filename = filename;
     this.template = template;
   }
@@ -16,13 +16,13 @@ public class Template {
     return filename;
   }
 
-  public Mustache getTemplate() {
+  public Template getTemplate() {
     return template;
   }
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(Template.class)
+    return Objects.toStringHelper(LbConfigTemplate.class)
         .add("filename", filename)
         .add("template", template)
         .toString();
@@ -43,9 +43,9 @@ public class Template {
       return false;
     }
 
-    if (that instanceof Template) {
-      return Objects.equal(filename, ((Template)that).getFilename())
-          && Objects.equal(template, ((Template)that).getTemplate());
+    if (that instanceof LbConfigTemplate) {
+      return Objects.equal(filename, ((LbConfigTemplate)that).getFilename())
+          && Objects.equal(template, ((LbConfigTemplate)that).getTemplate());
     }
 
     return false;
