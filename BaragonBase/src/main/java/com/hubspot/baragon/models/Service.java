@@ -103,23 +103,18 @@ public class Service {
   }
 
   @Override
-  public boolean equals(Object that) {
-    if (this == that) {
-      return true;
-    }
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
-    if (that == null) {
-      return false;
-    }
+    Service service = (Service) o;
 
-    if (that instanceof Service) {
-      return Objects.equal(serviceId, ((Service)that).getServiceId())
-          && Objects.equal(owners, ((Service)that).getOwners())
-          && Objects.equal(serviceBasePath, ((Service)that).getServiceBasePath())
-          && Objects.equal(loadBalancerGroups, ((Service)that).getLoadBalancerGroups())
-          && Objects.equal(options, ((Service)that).getOptions());
-    }
+    if (!loadBalancerGroups.equals(service.loadBalancerGroups)) return false;
+    if (options != null ? !options.equals(service.options) : service.options != null) return false;
+    if (!owners.equals(service.owners)) return false;
+    if (!serviceBasePath.equals(service.serviceBasePath)) return false;
+    if (!serviceId.equals(service.serviceId)) return false;
 
-    return false;
+    return true;
   }
 }
