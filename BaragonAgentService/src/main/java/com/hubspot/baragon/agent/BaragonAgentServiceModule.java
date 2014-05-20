@@ -13,6 +13,7 @@ import com.hubspot.baragon.agent.config.BaragonAgentConfiguration;
 import com.hubspot.baragon.agent.config.LoadBalancerConfiguration;
 import com.hubspot.baragon.agent.config.TemplateConfiguration;
 import com.hubspot.baragon.agent.config.TestingConfiguration;
+import com.hubspot.baragon.agent.handlebars.FormatTimestampHelper;
 import com.hubspot.baragon.agent.models.LbConfigTemplate;
 import com.hubspot.baragon.config.ZooKeeperConfiguration;
 import com.hubspot.baragon.data.BaragonLoadBalancerDatastore;
@@ -27,6 +28,8 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class BaragonAgentServiceModule extends AbstractModule {
+  private static final String DEFAULT_DATE_FORAMT = "yyyy-MM-dd hh:mm a";
+
   public static final String BARAGON_AGENT_HTTP_PORT = "baragon.agent.http.port";
   public static final String BARAGON_AGENT_HOSTNAME = "baragon.agent.hostname";
   public static final String AGENT_LEADER_LATCH = "baragon.agent.leaderLatch";
@@ -43,7 +46,11 @@ public class BaragonAgentServiceModule extends AbstractModule {
   @Provides
   @Singleton
   public Handlebars providesHandlebars() {
-    return new Handlebars();
+    final Handlebars handlebars = new Handlebars();
+
+    handlebars.registerHelper("formatTimestamp", new FormatTimestampHelper(DEFAULT_DATE_FORAMT));
+
+    return handlebars;
   }
 
   @Provides
