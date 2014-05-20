@@ -13,6 +13,7 @@ import com.hubspot.baragon.agent.config.BaragonAgentConfiguration;
 import com.hubspot.baragon.agent.config.LoadBalancerConfiguration;
 import com.hubspot.baragon.agent.config.TemplateConfiguration;
 import com.hubspot.baragon.agent.config.TestingConfiguration;
+import com.hubspot.baragon.agent.handlebars.FirstOfHelper;
 import com.hubspot.baragon.agent.handlebars.FormatTimestampHelper;
 import com.hubspot.baragon.agent.models.LbConfigTemplate;
 import com.hubspot.baragon.config.ZooKeeperConfiguration;
@@ -49,6 +50,7 @@ public class BaragonAgentServiceModule extends AbstractModule {
     final Handlebars handlebars = new Handlebars();
 
     handlebars.registerHelper("formatTimestamp", new FormatTimestampHelper(DEFAULT_DATE_FORAMT));
+    handlebars.registerHelper("firstOf", new FirstOfHelper(""));
 
     return handlebars;
   }
