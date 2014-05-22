@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import com.hubspot.baragon.models.Service;
+import com.hubspot.baragon.models.BaragonService;
 import com.hubspot.baragon.models.UpstreamInfo;
 import org.apache.curator.framework.CuratorFramework;
 
@@ -25,12 +25,12 @@ public class BaragonStateDatastore extends AbstractDataStore {
     return getChildren(SERVICES_FORMAT);
   }
 
-  public void addService(Service service) {
+  public void addService(BaragonService service) {
     writeToZk(String.format(SERVICE_FORMAT, service.getServiceId()), service);
   }
 
-  public Optional<Service> getService(String serviceId) {
-    return readFromZk(String.format(SERVICE_FORMAT, serviceId), Service.class);
+  public Optional<BaragonService> getService(String serviceId) {
+    return readFromZk(String.format(SERVICE_FORMAT, serviceId), BaragonService.class);
   }
 
   public void removeService(String serviceId) {

@@ -3,8 +3,6 @@ package com.hubspot.baragon.models;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.common.base.Objects;
-import org.hibernate.validator.constraints.NotEmpty;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -13,13 +11,13 @@ import java.util.List;
 
 @JsonIgnoreProperties( ignoreUnknown = true )
 public class BaragonRequest {
-  @NotEmpty
+  @NotNull
   @Pattern(regexp = "[^\\s/|]+", message = "cannot contain whitespace, '/', or '|'", flags = Pattern.Flag.MULTILINE)
   private final String loadBalancerRequestId;
 
   @NotNull
   @Valid
-  private final Service loadBalancerService;
+  private final BaragonService loadBalancerService;
 
   @NotNull
   private final List<String> addUpstreams;
@@ -29,7 +27,7 @@ public class BaragonRequest {
 
   @JsonCreator
   public BaragonRequest(@JsonProperty("loadBalancerRequestId") String loadBalancerRequestId,
-                        @JsonProperty("loadBalancerService") Service loadBalancerService,
+                        @JsonProperty("loadBalancerService") BaragonService loadBalancerService,
                         @JsonProperty("addUpstreams") List<String> addUpstreams,
                         @JsonProperty("removeUpstreams") List<String> removeUpstreams) {
     this.loadBalancerRequestId = loadBalancerRequestId;
@@ -42,7 +40,7 @@ public class BaragonRequest {
     return loadBalancerRequestId;
   }
 
-  public Service getLoadBalancerService() {
+  public BaragonService getLoadBalancerService() {
     return loadBalancerService;
   }
 
@@ -56,11 +54,35 @@ public class BaragonRequest {
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
-        .add("loadBalancerRequestId", loadBalancerRequestId)
-        .add("loadBalancerService", loadBalancerService)
-        .add("addUpstreams", addUpstreams)
-        .add("removeUpstreams", removeUpstreams)
-        .toString();
+    return "BaragonRequest [" +
+        "loadBalancerRequestId='" + loadBalancerRequestId + '\'' +
+        ", loadBalancerService=" + loadBalancerService +
+        ", addUpstreams=" + addUpstreams +
+        ", removeUpstreams=" + removeUpstreams +
+        ']';
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    BaragonRequest request = (BaragonRequest) o;
+
+    if (!addUpstreams.equals(request.addUpstreams)) return false;
+    if (!loadBalancerRequestId.equals(request.loadBalancerRequestId)) return false;
+    if (!loadBalancerService.equals(request.loadBalancerService)) return false;
+    if (!removeUpstreams.equals(request.removeUpstreams)) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = loadBalancerRequestId.hashCode();
+    result = 31 * result + loadBalancerService.hashCode();
+    result = 31 * result + addUpstreams.hashCode();
+    result = 31 * result + removeUpstreams.hashCode();
+    return result;
   }
 }

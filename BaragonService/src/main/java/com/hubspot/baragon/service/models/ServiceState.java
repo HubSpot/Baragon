@@ -3,21 +3,21 @@ package com.hubspot.baragon.service.models;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Objects;
-import com.hubspot.baragon.models.Service;
+import com.hubspot.baragon.models.BaragonService;
 
 import java.util.Collection;
 
 public class ServiceState {
-  private final Service service;
+  private final BaragonService service;
   private final Collection<String> upstreams;
 
   @JsonCreator
-  public ServiceState(@JsonProperty("service") Service service, @JsonProperty("upstreams") Collection<String> upstreams) {
+  public ServiceState(@JsonProperty("service") BaragonService service, @JsonProperty("upstreams") Collection<String> upstreams) {
     this.service = service;
     this.upstreams = upstreams;
   }
 
-  public Service getService() {
+  public BaragonService getService() {
     return service;
   }
 

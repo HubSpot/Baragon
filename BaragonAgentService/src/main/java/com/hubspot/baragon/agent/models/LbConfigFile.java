@@ -33,20 +33,15 @@ public class LbConfigFile {
   }
 
   @Override
-  public boolean equals(Object that) {
-    if (this == that) {
-      return true;
-    }
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
-    if (that == null) {
-      return false;
-    }
+    LbConfigFile that = (LbConfigFile) o;
 
-    if (that instanceof LbConfigFile) {
-      return Objects.equal(fullPath, ((LbConfigFile)that).getFullPath())
-          && Objects.equal(content, ((LbConfigFile)that).getContent());
-    }
+    if (!content.equals(that.content)) return false;
+    if (!fullPath.equals(that.fullPath)) return false;
 
-    return false;
+    return true;
   }
 }

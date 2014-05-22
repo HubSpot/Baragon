@@ -67,7 +67,7 @@ public class RequestManager {
   }
 
   private void ensureBasePathAvailable(BaragonRequest request) throws BasePathConflictException {
-    final Service service = request.getLoadBalancerService();
+    final BaragonService service = request.getLoadBalancerService();
 
     for (String loadBalancerGroup : service.getLoadBalancerGroups()) {
       final Optional<String> maybeServiceId = loadBalancerDatastore.getBasePathServiceId(loadBalancerGroup, service.getServiceBasePath());
@@ -78,7 +78,7 @@ public class RequestManager {
   }
 
   private void ensureRequestedLoadBalancersExist(BaragonRequest request) throws MissingLoadBalancerGroupException {
-    final Service service = request.getLoadBalancerService();
+    final BaragonService service = request.getLoadBalancerService();
     final Collection<String> loadBalancerGroups = loadBalancerDatastore.getClusters();
 
     final Collection<String> missingGroups = Lists.newArrayListWithCapacity(service.getLoadBalancerGroups().size());
@@ -128,7 +128,7 @@ public class RequestManager {
   }
 
   public void commitRequest(BaragonRequest request) {
-    final Optional<Service> maybeOriginalService = stateDatastore.getService(request.getLoadBalancerService().getServiceId());
+    final Optional<BaragonService> maybeOriginalService = stateDatastore.getService(request.getLoadBalancerService().getServiceId());
 
     // if we've changed the base path, clear out the old ones
     if (maybeOriginalService.isPresent() && !maybeOriginalService.get().getServiceBasePath().equals(request.getLoadBalancerService().getServiceBasePath())) {

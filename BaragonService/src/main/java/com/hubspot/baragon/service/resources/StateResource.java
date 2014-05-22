@@ -4,7 +4,7 @@ import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import com.hubspot.baragon.data.BaragonLoadBalancerDatastore;
 import com.hubspot.baragon.data.BaragonStateDatastore;
-import com.hubspot.baragon.models.Service;
+import com.hubspot.baragon.models.BaragonService;
 import com.hubspot.baragon.service.models.ServiceState;
 import com.hubspot.baragon.models.UpstreamInfo;
 
@@ -32,7 +32,7 @@ public class StateResource {
   @GET
   @Path("/{serviceId}")
   public Optional<ServiceState> getService(@PathParam("serviceId") String serviceId) {
-    final Optional<Service> maybeServiceInfo = stateDatastore.getService(serviceId);
+    final Optional<BaragonService> maybeServiceInfo = stateDatastore.getService(serviceId);
 
     if (!maybeServiceInfo.isPresent()) {
       return Optional.absent();
@@ -44,7 +44,7 @@ public class StateResource {
   @DELETE
   @Path("/{serviceId}")
   public Optional<ServiceState> deleteService(@PathParam("serviceId") String serviceId) {
-    final Optional<Service> maybeServiceInfo = stateDatastore.getService(serviceId);
+    final Optional<BaragonService> maybeServiceInfo = stateDatastore.getService(serviceId);
 
     if (!maybeServiceInfo.isPresent()) {
       return Optional.absent();

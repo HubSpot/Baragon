@@ -9,8 +9,7 @@ import com.hubspot.baragon.agent.BaragonAgentServiceModule;
 import com.hubspot.baragon.agent.config.LoadBalancerConfiguration;
 import com.hubspot.baragon.agent.lbs.FilesystemConfigHelper;
 import com.hubspot.baragon.data.BaragonStateDatastore;
-import com.hubspot.baragon.exceptions.InvalidConfigException;
-import com.hubspot.baragon.models.Service;
+import com.hubspot.baragon.models.BaragonService;
 import com.hubspot.baragon.agent.models.ServiceContext;
 import io.dropwizard.lifecycle.Managed;
 import org.apache.commons.logging.Log;
@@ -49,12 +48,12 @@ public class BootstrapManaged implements Managed {
     final Collection<String> services = stateDatastore.getServices();
 
     for (String serviceId : services) {
-      final Optional<Service> maybeServiceInfo = stateDatastore.getService(serviceId);
+      final Optional<BaragonService> maybeServiceInfo = stateDatastore.getService(serviceId);
       if (!maybeServiceInfo.isPresent()) {
         continue;  // doubt this will ever happen
       }
 
-      final Service service = maybeServiceInfo.get();
+      final BaragonService service = maybeServiceInfo.get();
       final Collection<String> upstreams = stateDatastore.getUpstreams(serviceId);
 
       if (service.getLoadBalancerGroups() == null || !service.getLoadBalancerGroups().contains(loadBalancerConfiguration.getName())) {

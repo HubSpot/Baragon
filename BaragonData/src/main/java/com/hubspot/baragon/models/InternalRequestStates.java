@@ -5,7 +5,7 @@ import com.hubspot.baragon.managers.AgentManager;
 import com.hubspot.baragon.managers.RequestManager;
 
 public enum InternalRequestStates {
-  SEND_APPLY_REQUESTS(RequestState.WAITING, true, false) {
+  SEND_APPLY_REQUESTS(BaragonRequestState.WAITING, true, false) {
     @Override
     public Optional<InternalRequestStates> handle(BaragonRequest request, AgentManager agentManager, RequestManager requestManager) {
       agentManager.sendRequests(request, AgentRequestType.APPLY);
@@ -14,7 +14,7 @@ public enum InternalRequestStates {
     }
   },
 
-  CHECK_APPLY_RESPONSES(RequestState.WAITING, true, false) {
+  CHECK_APPLY_RESPONSES(BaragonRequestState.WAITING, true, false) {
     @Override
     public Optional<InternalRequestStates> handle(BaragonRequest request, AgentManager agentManager, RequestManager requestManager) {
       switch (agentManager.getRequestsStatus(request, AgentRequestType.APPLY)) {
@@ -31,9 +31,9 @@ public enum InternalRequestStates {
     }
   },
 
-  COMPLETED(RequestState.SUCCESS, false, true),
+  COMPLETED(BaragonRequestState.SUCCESS, false, true),
 
-  FAILED_SEND_REVERT_REQUESTS(RequestState.FAILED, true, false) {
+  FAILED_SEND_REVERT_REQUESTS(BaragonRequestState.FAILED, true, false) {
     @Override
     public Optional<InternalRequestStates> handle(BaragonRequest request, AgentManager agentManager, RequestManager requestManager) {
       agentManager.sendRequests(request, AgentRequestType.REVERT);
@@ -42,7 +42,7 @@ public enum InternalRequestStates {
     }
   },
 
-  FAILED_CHECK_REVERT_RESPONSES(RequestState.FAILED, true, false) {
+  FAILED_CHECK_REVERT_RESPONSES(BaragonRequestState.FAILED, true, false) {
     @Override
     public Optional<InternalRequestStates> handle(BaragonRequest request, AgentManager agentManager, RequestManager requestManager) {
       switch (agentManager.getRequestsStatus(request, AgentRequestType.REVERT)) {
@@ -60,10 +60,10 @@ public enum InternalRequestStates {
     }
   },
 
-  FAILED_REVERTED(RequestState.FAILED, false, true),
-  FAILED_REVERT_FAILED(RequestState.FAILED, false, true),
+  FAILED_REVERTED(BaragonRequestState.FAILED, false, true),
+  FAILED_REVERT_FAILED(BaragonRequestState.FAILED, false, true),
 
-  CANCELLED_SEND_REVERT_REQUESTS(RequestState.CANCELING, false, false) {
+  CANCELLED_SEND_REVERT_REQUESTS(BaragonRequestState.CANCELING, false, false) {
     @Override
     public Optional<InternalRequestStates> handle(BaragonRequest request, AgentManager agentManager, RequestManager requestManager) {
       agentManager.sendRequests(request, AgentRequestType.CANCEL);
@@ -72,7 +72,7 @@ public enum InternalRequestStates {
     }
   },
 
-  CANCELLED_CHECK_REVERT_RESPONSES(RequestState.CANCELING, false, false) {
+  CANCELLED_CHECK_REVERT_RESPONSES(BaragonRequestState.CANCELING, false, false) {
     @Override
     public Optional<InternalRequestStates> handle(BaragonRequest request, AgentManager agentManager, RequestManager requestManager) {
       switch (agentManager.getRequestsStatus(request, AgentRequestType.CANCEL)) {
@@ -89,20 +89,20 @@ public enum InternalRequestStates {
     }
   },
 
-  FAILED_CANCEL_FAILED(RequestState.FAILED, false, true),
-  CANCELLED(RequestState.CANCELED, false, true);
+  FAILED_CANCEL_FAILED(BaragonRequestState.FAILED, false, true),
+  CANCELLED(BaragonRequestState.CANCELED, false, true);
 
   private final boolean cancelable;
   private final boolean removable;
-  private final RequestState requestState;
+  private final BaragonRequestState requestState;
 
-  private InternalRequestStates(RequestState requestState, boolean cancelable, boolean removable) {
+  private InternalRequestStates(BaragonRequestState requestState, boolean cancelable, boolean removable) {
     this.requestState = requestState;
     this.cancelable = cancelable;
     this.removable = removable;
   }
 
-  public RequestState toRequestState() {
+  public BaragonRequestState toRequestState() {
     return requestState;
   }
 

@@ -11,7 +11,7 @@ import com.hubspot.baragon.agent.models.ServiceContext;
 import com.hubspot.baragon.data.BaragonRequestDatastore;
 import com.hubspot.baragon.data.BaragonStateDatastore;
 import com.hubspot.baragon.models.BaragonRequest;
-import com.hubspot.baragon.models.Service;
+import com.hubspot.baragon.models.BaragonService;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -125,7 +125,7 @@ public class RequestResource {
       }
 
       final BaragonRequest request = maybeRequest.get();
-      final Optional<Service> maybeService = stateDatastore.getService(request.getLoadBalancerService().getServiceId());
+      final Optional<BaragonService> maybeService = stateDatastore.getService(request.getLoadBalancerService().getServiceId());
 
       if (!maybeService.isPresent()) {
         try {

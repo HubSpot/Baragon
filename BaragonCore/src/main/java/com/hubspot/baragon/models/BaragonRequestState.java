@@ -1,5 +1,5 @@
 package com.hubspot.baragon.models;
 
-public enum RequestState {
+public enum BaragonRequestState {
   FAILED, WAITING, SUCCESS, CANCELING, CANCELED;
 }
