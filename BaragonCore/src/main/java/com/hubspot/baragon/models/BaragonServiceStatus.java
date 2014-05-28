@@ -1,18 +1,18 @@
-package com.hubspot.baragon.service.models;
+package com.hubspot.baragon.models;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Objects;
 
-public class ServiceStatus {
+public class BaragonServiceStatus {
   private final boolean leader;
   private final int pendingRequestCount;
   private final long workerLagMs;
 
   @JsonCreator
-  public ServiceStatus(@JsonProperty("leader") boolean leader,
-                       @JsonProperty("pendingRequestCount") int pendingRequestCount,
-                       @JsonProperty("workerLagMs") long workerLagMs) {
+  public BaragonServiceStatus(@JsonProperty("leader") boolean leader,
+                              @JsonProperty("pendingRequestCount") int pendingRequestCount,
+                              @JsonProperty("workerLagMs") long workerLagMs) {
     this.leader = leader;
     this.pendingRequestCount = pendingRequestCount;
     this.workerLagMs = workerLagMs;

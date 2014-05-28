@@ -6,8 +6,9 @@ import com.google.inject.name.Named;
 import com.hubspot.baragon.agent.BaragonAgentServiceModule;
 import com.hubspot.baragon.agent.config.LoadBalancerConfiguration;
 import com.hubspot.baragon.agent.lbs.LocalLbAdapter;
-import com.hubspot.baragon.agent.models.AgentStatus;
+import com.hubspot.baragon.models.BaragonAgentStatus;
 import com.hubspot.baragon.exceptions.InvalidConfigException;
+
 import org.apache.curator.framework.recipes.leader.LeaderLatch;
 
 import javax.ws.rs.GET;
@@ -35,7 +36,7 @@ public class StatusResource {
   }
 
   @GET
-  public AgentStatus getStatus() {
+  public BaragonAgentStatus getStatus() {
     boolean validConfigs = true;
     Optional<String> errorMessage = Optional.absent();
 
@@ -46,6 +47,6 @@ public class StatusResource {
       errorMessage = Optional.of(e.getMessage());
     }
 
-    return new AgentStatus(loadBalancerConfiguration.getName(), validConfigs, errorMessage, leaderLatch.hasLeadership(), mostRecentRequestId.get());
+    return new BaragonAgentStatus(loadBalancerConfiguration.getName(), validConfigs, errorMessage, leaderLatch.hasLeadership(), mostRecentRequestId.get());
   }
 }

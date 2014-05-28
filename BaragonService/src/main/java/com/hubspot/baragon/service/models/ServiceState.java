@@ -1,11 +1,11 @@
 package com.hubspot.baragon.service.models;
 
+import java.util.Collection;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Objects;
 import com.hubspot.baragon.models.BaragonService;
-
-import java.util.Collection;
 
 public class ServiceState {
   private final BaragonService service;
