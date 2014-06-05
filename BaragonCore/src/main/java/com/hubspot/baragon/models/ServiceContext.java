@@ -1,34 +1,34 @@
-package com.hubspot.baragon.agent.models;
+package com.hubspot.baragon.models;
+
+import java.util.Collection;
+import java.util.Collections;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Objects;
-import com.hubspot.baragon.models.BaragonService;
-
-import java.util.Collection;
-import java.util.Collections;
+import com.hubspot.baragon.models.UpstreamInfo;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ServiceContext {
   private final BaragonService service;
-  private final Collection<String> upstreams;
+  private final Collection<UpstreamInfo> upstreams;
   private final Long timestamp;
 
   @JsonCreator
   public ServiceContext(@JsonProperty("service") BaragonService service,
-                        @JsonProperty("upstreams") Collection<String> upstreams,
+                        @JsonProperty("upstreams") Collection<UpstreamInfo> upstreams,
                         @JsonProperty("timestamp") Long timestamp) {
     this.service = service;
     this.timestamp = timestamp;
-    this.upstreams = Objects.firstNonNull(upstreams, Collections.<String>emptyList());
+    this.upstreams = Objects.firstNonNull(upstreams, Collections.<UpstreamInfo>emptyList());
   }
 
   public BaragonService getService() {
     return service;
   }
 
-  public Collection<String> getUpstreams() {
+  public Collection<UpstreamInfo> getUpstreams() {
     return upstreams;
   }
 

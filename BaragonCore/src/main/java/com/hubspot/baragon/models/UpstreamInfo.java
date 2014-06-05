@@ -2,7 +2,6 @@ package com.hubspot.baragon.models;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.common.base.Objects;
 
 public class UpstreamInfo {
   private final String upstream;
@@ -24,9 +23,6 @@ public class UpstreamInfo {
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
-        .add("upstream", upstream)
-        .add("requestId", requestId)
-        .toString();
+    return upstream;
   }
 }

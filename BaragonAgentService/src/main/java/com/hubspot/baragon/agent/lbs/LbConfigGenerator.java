@@ -9,7 +9,7 @@ import com.hubspot.baragon.agent.BaragonAgentServiceModule;
 import com.hubspot.baragon.agent.config.LoadBalancerConfiguration;
 import com.hubspot.baragon.agent.models.LbConfigTemplate;
 import com.hubspot.baragon.agent.models.LbConfigFile;
-import com.hubspot.baragon.agent.models.ServiceContext;
+import com.hubspot.baragon.models.ServiceContext;
 
 import java.io.StringWriter;
 import java.util.Collection;

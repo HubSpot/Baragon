@@ -1,28 +1,35 @@
 package com.hubspot.baragon.agent.resources;
 
+import java.util.Map;
+import java.util.Random;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.Lock;
+
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import com.google.common.base.Optional;
-import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import com.hubspot.baragon.agent.BaragonAgentServiceModule;
 import com.hubspot.baragon.agent.config.TestingConfiguration;
 import com.hubspot.baragon.agent.lbs.FilesystemConfigHelper;
-import com.hubspot.baragon.agent.models.ServiceContext;
 import com.hubspot.baragon.data.BaragonRequestDatastore;
 import com.hubspot.baragon.data.BaragonStateDatastore;
 import com.hubspot.baragon.models.BaragonRequest;
 import com.hubspot.baragon.models.BaragonService;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
-import javax.ws.rs.*;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import java.util.Random;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.locks.Lock;
+import com.hubspot.baragon.models.ServiceContext;
+import com.hubspot.baragon.models.UpstreamInfo;
 
 @Path("/request/{requestId}")
 @Produces(MediaType.APPLICATION_JSON)
@@ -76,12 +83,17 @@ public class RequestResource {
       LOG.info(String.format("Received request to apply %s", request));
 
       // Apply request
-      final Set<String> upstreams = Sets.newHashSet(stateDatastore.getUpstreams(request.getLoadBalancerService().getServiceId()));
+      final Map<String, UpstreamInfo> upstreamsMap = stateDatastore.getUpstreamsMap(request.getLoadBalancerService().getServiceId());
 
-      upstreams.removeAll(request.getRemoveUpstreams());
-      upstreams.addAll(request.getAddUpstreams());
+      for (String removeUpstream : request.getRemoveUpstreams()) {
+        upstreamsMap.remove(removeUpstream);
+      }
 
-      final ServiceContext update = new ServiceContext(request.getLoadBalancerService(), upstreams, System.currentTimeMillis());
+      for (String addUpstream : request.getAddUpstreams()) {
+        upstreamsMap.put(addUpstream, new UpstreamInfo(addUpstream, request.getLoadBalancerRequestId()));
+      }
+
+      final ServiceContext update = new ServiceContext(request.getLoadBalancerService(), upstreamsMap.values(), System.currentTimeMillis());
 
       if (maybeTestingConfiguration.isPresent() && maybeTestingConfiguration.get().isEnabled() && maybeTestingConfiguration.get().getApplyDelayMs() > 0) {
         try {
@@ -137,7 +149,7 @@ public class RequestResource {
         return Response.ok().build();
       }
 
-      final ServiceContext context = new ServiceContext(maybeService.get(), stateDatastore.getUpstreams(maybeService.get().getServiceId()), System.currentTimeMillis());
+      final ServiceContext context = new ServiceContext(maybeService.get(), stateDatastore.getUpstreamsMap(maybeService.get().getServiceId()).values(), System.currentTimeMillis());
 
       if (maybeTestingConfiguration.isPresent() && maybeTestingConfiguration.get().isEnabled() && maybeTestingConfiguration.get().getRevertDelayMs() > 0) {
         try {

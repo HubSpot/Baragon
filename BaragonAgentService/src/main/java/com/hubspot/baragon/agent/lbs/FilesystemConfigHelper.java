@@ -1,20 +1,21 @@
 package com.hubspot.baragon.agent.lbs;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.Collection;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
 import com.google.common.io.Files;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.hubspot.baragon.agent.models.LbConfigFile;
-import com.hubspot.baragon.agent.models.ServiceContext;
 import com.hubspot.baragon.exceptions.InvalidConfigException;
 import com.hubspot.baragon.exceptions.LbAdapterExecuteException;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.Collection;
+import com.hubspot.baragon.models.ServiceContext;
 
 @Singleton
 public class FilesystemConfigHelper {

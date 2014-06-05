@@ -1,14 +1,17 @@
 package com.hubspot.baragon.data;
 
+import java.util.Collection;
+import java.util.Map;
+
+import org.apache.curator.framework.CuratorFramework;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Optional;
+import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.hubspot.baragon.models.BaragonService;
 import com.hubspot.baragon.models.UpstreamInfo;
-import org.apache.curator.framework.CuratorFramework;
-
-import java.util.Collection;
 
 @Singleton
 public class BaragonStateDatastore extends AbstractDataStore {
@@ -43,6 +46,21 @@ public class BaragonStateDatastore extends AbstractDataStore {
 
   public Collection<String> getUpstreams(String serviceId) {
     return getChildren(String.format(SERVICE_FORMAT, serviceId));
+  }
+
+  public Map<String, UpstreamInfo> getUpstreamsMap(String serviceId) {
+    final Collection<String> upstreams = getUpstreams(serviceId);
+
+    final Map<String, UpstreamInfo> upstreamsMap = Maps.newHashMap();
+
+    for (String upstream : upstreams) {
+      final Optional<UpstreamInfo> maybeUpstreamInfo = getUpstream(serviceId, upstream);
+      if (maybeUpstreamInfo.isPresent()) {
+        upstreamsMap.put(upstream, maybeUpstreamInfo.get());
+      }
+    }
+
+    return upstreamsMap;
   }
 
   public Optional<UpstreamInfo> getUpstream(String serviceId, String upstream) {

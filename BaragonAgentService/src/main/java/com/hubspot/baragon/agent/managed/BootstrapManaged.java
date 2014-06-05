@@ -1,5 +1,13 @@
 package com.hubspot.baragon.agent.managed;
 
+import java.util.Collection;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.apache.curator.framework.recipes.leader.LeaderLatch;
+
 import com.google.common.base.Joiner;
 import com.google.common.base.Optional;
 import com.google.common.base.Stopwatch;
@@ -10,14 +18,9 @@ import com.hubspot.baragon.agent.config.LoadBalancerConfiguration;
 import com.hubspot.baragon.agent.lbs.FilesystemConfigHelper;
 import com.hubspot.baragon.data.BaragonStateDatastore;
 import com.hubspot.baragon.models.BaragonService;
-import com.hubspot.baragon.agent.models.ServiceContext;
+import com.hubspot.baragon.models.ServiceContext;
+import com.hubspot.baragon.models.UpstreamInfo;
 import io.dropwizard.lifecycle.Managed;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.apache.curator.framework.recipes.leader.LeaderLatch;
-
-import java.util.Collection;
-import java.util.concurrent.TimeUnit;
 
 public class BootstrapManaged implements Managed {
   private static final Log LOG = LogFactory.getLog(BootstrapManaged.class);
@@ -54,17 +57,17 @@ public class BootstrapManaged implements Managed {
       }
 
       final BaragonService service = maybeServiceInfo.get();
-      final Collection<String> upstreams = stateDatastore.getUpstreams(serviceId);
+      final Map<String, UpstreamInfo> upstreamsMap = stateDatastore.getUpstreamsMap(serviceId);
 
       if (service.getLoadBalancerGroups() == null || !service.getLoadBalancerGroups().contains(loadBalancerConfiguration.getName())) {
         LOG.info(String.format("   Skipping %s, not applicable to this LB cluster", serviceId));
         continue;
       }
 
-      LOG.info(String.format("    Applying %s: [%s]", serviceId, Joiner.on(", ").join(upstreams)));
+      LOG.info(String.format("    Applying %s: [%s]", serviceId, Joiner.on(", ").join(upstreamsMap.keySet())));
 
       try {
-        configHelper.apply(new ServiceContext(service, upstreams, now), false);
+        configHelper.apply(new ServiceContext(service, upstreamsMap.values(), now), false);
       } catch (Exception e) {
         LOG.error(String.format("Caught exception while applying %s", serviceId), e);
       }
