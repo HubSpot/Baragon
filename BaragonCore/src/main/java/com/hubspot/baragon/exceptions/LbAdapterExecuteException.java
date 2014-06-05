@@ -1,12 +1,10 @@
 package com.hubspot.baragon.exceptions;
 
-import org.apache.commons.exec.ExecuteException;
-
 public class LbAdapterExecuteException extends Exception {
   private final String output;
-  private final ExecuteException executeException;
+  private final Exception executeException;
 
-  public LbAdapterExecuteException(String output, ExecuteException executeException) {
+  public LbAdapterExecuteException(String output, Exception executeException) {
     super(executeException.getMessage());
     this.output = output;
     this.executeException = executeException;
@@ -16,7 +14,7 @@ public class LbAdapterExecuteException extends Exception {
     return output;
   }
 
-  public ExecuteException getExecuteException() {
+  public Exception getExecuteException() {
     return executeException;
   }
 }

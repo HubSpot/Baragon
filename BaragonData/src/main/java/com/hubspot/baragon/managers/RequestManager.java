@@ -1,7 +1,12 @@
 package com.hubspot.baragon.managers;
 
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+
 import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.hubspot.baragon.data.BaragonAgentResponseDatastore;
@@ -10,11 +15,13 @@ import com.hubspot.baragon.data.BaragonRequestDatastore;
 import com.hubspot.baragon.data.BaragonStateDatastore;
 import com.hubspot.baragon.exceptions.BasePathConflictException;
 import com.hubspot.baragon.exceptions.MissingLoadBalancerGroupException;
-import com.hubspot.baragon.models.*;
-
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import com.hubspot.baragon.models.AgentRequestType;
+import com.hubspot.baragon.models.AgentResponse;
+import com.hubspot.baragon.models.BaragonRequest;
+import com.hubspot.baragon.models.BaragonResponse;
+import com.hubspot.baragon.models.BaragonService;
+import com.hubspot.baragon.models.InternalRequestStates;
+import com.hubspot.baragon.models.QueuedRequestId;
 
 @Singleton
 public class RequestManager {
@@ -68,12 +75,17 @@ public class RequestManager {
 
   private void ensureBasePathAvailable(BaragonRequest request) throws BasePathConflictException {
     final BaragonService service = request.getLoadBalancerService();
+    final Map<String, String> loadBalancerServiceIds = Maps.newHashMap();
 
     for (String loadBalancerGroup : service.getLoadBalancerGroups()) {
       final Optional<String> maybeServiceId = loadBalancerDatastore.getBasePathServiceId(loadBalancerGroup, service.getServiceBasePath());
       if (maybeServiceId.isPresent() && !maybeServiceId.get().equals(service.getServiceId())) {
-        throw new BasePathConflictException(request, maybeServiceId.get());
+        loadBalancerServiceIds.put(loadBalancerGroup, maybeServiceId.get());
       }
+    }
+
+    if (!loadBalancerServiceIds.isEmpty()) {
+      throw new BasePathConflictException(request, loadBalancerServiceIds);
     }
   }
 

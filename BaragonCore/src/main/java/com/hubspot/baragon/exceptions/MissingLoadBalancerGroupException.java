@@ -1,8 +1,8 @@
 package com.hubspot.baragon.exceptions;
 
-import com.hubspot.baragon.models.BaragonRequest;
-
 import java.util.Collection;
+
+import com.hubspot.baragon.models.BaragonRequest;
 
 public class MissingLoadBalancerGroupException extends Exception {
   private final BaragonRequest request;
