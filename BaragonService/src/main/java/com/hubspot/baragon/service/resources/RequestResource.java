@@ -1,20 +1,24 @@
 package com.hubspot.baragon.service.resources;
 
+import javax.validation.Valid;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
-import com.hubspot.baragon.exceptions.BasePathConflictException;
-import com.hubspot.baragon.exceptions.MissingLoadBalancerGroupException;
 import com.hubspot.baragon.managers.RequestManager;
 import com.hubspot.baragon.models.BaragonRequest;
 import com.hubspot.baragon.models.BaragonResponse;
 import com.hubspot.baragon.service.worker.BaragonRequestWorker;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
-import javax.validation.Valid;
-import javax.ws.rs.*;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 
 @Path("/request")
 @Consumes({MediaType.APPLICATION_JSON})
@@ -40,16 +44,9 @@ public class RequestResource {
     try {
       LOG.info(String.format("Received request: %s", request));
       return manager.enqueueRequest(request);
-    } catch (BasePathConflictException e) {
-      LOG.warn(String.format("Base path conflict for request %s (original service id: %s)", request.getLoadBalancerRequestId(), e.getOriginalServiceId()), e);
-      throw new WebApplicationException(Response.status(Response.Status.CONFLICT)
-          .entity(BaragonResponse.failure(request.getLoadBalancerRequestId(), e.getMessage()))
-          .build());
-    } catch (MissingLoadBalancerGroupException e) {
-      LOG.warn(String.format("Missing load balancer(s) for request %s", request.getLoadBalancerRequestId()), e);
-      throw new WebApplicationException(Response.status(Response.Status.BAD_REQUEST)
-          .entity(BaragonResponse.failure(request.getLoadBalancerRequestId(), e.getMessage()))
-          .build());
+    } catch (Exception e) {
+      LOG.error(String.format("Caught exception for %s", request.getLoadBalancerRequestId()), e);
+      return BaragonResponse.failure(request.getLoadBalancerRequestId(), e.getMessage());
     }
   }
 
