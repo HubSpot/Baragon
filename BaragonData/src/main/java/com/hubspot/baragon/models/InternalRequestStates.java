@@ -131,7 +131,7 @@ public enum InternalRequestStates {
 
   private static String buildResponseString(Map<String, Collection<AgentResponse>> agentResponses, AgentRequestType requestType) {
     if (agentResponses.containsKey(requestType.name())) {
-      return JavaUtils.COMMA_JOINER.join(agentResponses.get(requestType));
+      return JavaUtils.COMMA_JOINER.join(agentResponses.get(requestType.name()));
     } else {
       return "no responses";
     }
