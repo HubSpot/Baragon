@@ -8,11 +8,12 @@ public enum AgentRequestType {
   CANCEL;
 
   @JsonCreator
-  public static AgentRequestType fromString(String value) {
-    if (value == null || value.equals("")) {
-      return null;
-    } else {
-      return valueOf(value.toUpperCase());
+  public static AgentRequestType fromString(String stringValue) {
+    for (AgentRequestType value : values()) {
+      if (value.name().equalsIgnoreCase(stringValue)) {
+        return value;
+      }
     }
+    throw new IllegalArgumentException("Unknown AgentRequestType: " + stringValue);
   }
 }
