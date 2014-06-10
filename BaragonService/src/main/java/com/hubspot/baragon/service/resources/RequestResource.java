@@ -1,5 +1,7 @@
 package com.hubspot.baragon.service.resources;
 
+import java.util.List;
+
 import javax.validation.Valid;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -18,6 +20,7 @@ import com.google.inject.Inject;
 import com.hubspot.baragon.managers.RequestManager;
 import com.hubspot.baragon.models.BaragonRequest;
 import com.hubspot.baragon.models.BaragonResponse;
+import com.hubspot.baragon.models.QueuedRequestId;
 import com.hubspot.baragon.service.worker.BaragonRequestWorker;
 
 @Path("/request")
@@ -48,6 +51,11 @@ public class RequestResource {
       LOG.error(String.format("Caught exception for %s", request.getLoadBalancerRequestId()), e);
       return BaragonResponse.failure(request.getLoadBalancerRequestId(), e.getMessage());
     }
+  }
+
+  @GET
+  public List<QueuedRequestId> getQueuedRequestIds() {
+    return manager.getQueuedRequestIds();
   }
 
   @DELETE
