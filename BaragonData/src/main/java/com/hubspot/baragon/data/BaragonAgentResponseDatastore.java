@@ -91,10 +91,10 @@ public class BaragonAgentResponseDatastore extends AbstractDataStore {
       if (maybeAgentResponseId.isPresent()) {
         final Optional<AgentResponse> maybeAgentResponse = getAgentResponse(requestId, agentRequestId, maybeAgentResponseId.get());
         if (maybeAgentResponse.isPresent()) {
-          if (!responses.containsKey(agentRequestId.getType())) {
+          if (!responses.containsKey(agentRequestId.getType().name())) {
             responses.put(agentRequestId.getType().name(), Lists.<AgentResponse>newArrayList());
           }
-          responses.get(agentRequestId.getType()).add(maybeAgentResponse.get());
+          responses.get(agentRequestId.getType().name()).add(maybeAgentResponse.get());
         }
       }
     }
