@@ -23,6 +23,8 @@ public enum InternalRequestStates {
     public Optional<InternalRequestStates> handle(BaragonRequest request, AgentManager agentManager, RequestManager requestManager) {
       switch (agentManager.getRequestsStatus(request, AgentRequestType.APPLY)) {
         case FAILURE:
+          final Map<String, Collection<AgentResponse>> agentResponses = agentManager.getAgentResponses(request.getLoadBalancerRequestId());
+          requestManager.setRequestMessage(request.getLoadBalancerRequestId(), String.format("Apply failed (%s), reverting...", buildResponseString(agentResponses, AgentRequestType.APPLY)));
           return Optional.of(FAILED_SEND_REVERT_REQUESTS);
         case SUCCESS:
           requestManager.commitRequest(request);
@@ -37,7 +39,7 @@ public enum InternalRequestStates {
 
   COMPLETED(BaragonRequestState.SUCCESS, false, true),
 
-  FAILED_SEND_REVERT_REQUESTS(BaragonRequestState.FAILED, true, false) {
+  FAILED_SEND_REVERT_REQUESTS(BaragonRequestState.WAITING, true, false) {
     @Override
     public Optional<InternalRequestStates> handle(BaragonRequest request, AgentManager agentManager, RequestManager requestManager) {
       agentManager.sendRequests(request, AgentRequestType.REVERT);
@@ -46,7 +48,7 @@ public enum InternalRequestStates {
     }
   },
 
-  FAILED_CHECK_REVERT_RESPONSES(BaragonRequestState.FAILED, true, false) {
+  FAILED_CHECK_REVERT_RESPONSES(BaragonRequestState.WAITING, true, false) {
     @Override
     public Optional<InternalRequestStates> handle(BaragonRequest request, AgentManager agentManager, RequestManager requestManager) {
       final Map<String, Collection<AgentResponse>> agentResponses;
