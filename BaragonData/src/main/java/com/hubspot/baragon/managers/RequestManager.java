@@ -124,7 +124,7 @@ public class RequestManager {
       loadBalancerDatastore.setBasePathServiceId(loadBalancerGroup, request.getLoadBalancerService().getServiceBasePath(), request.getLoadBalancerService().getServiceId());
     }
 
-    return new BaragonResponse(request.getLoadBalancerRequestId(), InternalRequestStates.SEND_APPLY_REQUESTS.toRequestState(), Optional.<String>absent(), Optional.<Map<AgentRequestType, Collection<AgentResponse>>>absent());
+    return new BaragonResponse(request.getLoadBalancerRequestId(), InternalRequestStates.SEND_APPLY_REQUESTS.toRequestState(), Optional.<String>absent(), Optional.<Map<String, Collection<AgentResponse>>>absent());
   }
 
   public Optional<InternalRequestStates> cancelRequest(String requestId) {

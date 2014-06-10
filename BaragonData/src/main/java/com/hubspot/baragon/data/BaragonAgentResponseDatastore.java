@@ -1,5 +1,12 @@
 package com.hubspot.baragon.data;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.curator.framework.CuratorFramework;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
@@ -10,12 +17,6 @@ import com.hubspot.baragon.models.AgentRequestId;
 import com.hubspot.baragon.models.AgentRequestType;
 import com.hubspot.baragon.models.AgentResponse;
 import com.hubspot.baragon.models.AgentResponseId;
-import org.apache.curator.framework.CuratorFramework;
-
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
 
 @Singleton
 public class BaragonAgentResponseDatastore extends AbstractDataStore {
@@ -82,8 +83,8 @@ public class BaragonAgentResponseDatastore extends AbstractDataStore {
     return Optional.of(AgentResponseId.fromString(agentResponseIds.get(0)));
   }
 
-  public Map<AgentRequestType, Collection<AgentResponse>> getLastResponses(String requestId) {
-    final Map<AgentRequestType, Collection<AgentResponse>> responses = Maps.newHashMap();
+  public Map<String, Collection<AgentResponse>> getLastResponses(String requestId) {
+    final Map<String, Collection<AgentResponse>> responses = Maps.newHashMap();
 
     for (AgentRequestId agentRequestId : getAgentRequestIds(requestId)) {
       final Optional<AgentResponseId> maybeAgentResponseId = getLastAgentResponseId(requestId, agentRequestId.getType(), agentRequestId.getBaseUrl());
@@ -91,7 +92,7 @@ public class BaragonAgentResponseDatastore extends AbstractDataStore {
         final Optional<AgentResponse> maybeAgentResponse = getAgentResponse(requestId, agentRequestId, maybeAgentResponseId.get());
         if (maybeAgentResponse.isPresent()) {
           if (!responses.containsKey(agentRequestId.getType())) {
-            responses.put(agentRequestId.getType(), Lists.<AgentResponse>newArrayList());
+            responses.put(agentRequestId.getType().name(), Lists.<AgentResponse>newArrayList());
           }
           responses.get(agentRequestId.getType()).add(maybeAgentResponse.get());
         }

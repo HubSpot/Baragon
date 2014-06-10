@@ -49,7 +49,7 @@ public enum InternalRequestStates {
   FAILED_CHECK_REVERT_RESPONSES(BaragonRequestState.FAILED, true, false) {
     @Override
     public Optional<InternalRequestStates> handle(BaragonRequest request, AgentManager agentManager, RequestManager requestManager) {
-      final Map<AgentRequestType, Collection<AgentResponse>> agentResponses;
+      final Map<String, Collection<AgentResponse>> agentResponses;
 
       switch (agentManager.getRequestsStatus(request, AgentRequestType.REVERT)) {
         case FAILURE:
@@ -85,7 +85,7 @@ public enum InternalRequestStates {
     public Optional<InternalRequestStates> handle(BaragonRequest request, AgentManager agentManager, RequestManager requestManager) {
       switch (agentManager.getRequestsStatus(request, AgentRequestType.CANCEL)) {
         case FAILURE:
-          final Map<AgentRequestType, Collection<AgentResponse>> agentResponses = agentManager.getAgentResponses(request.getLoadBalancerRequestId());
+          final Map<String, Collection<AgentResponse>> agentResponses = agentManager.getAgentResponses(request.getLoadBalancerRequestId());
           requestManager.setRequestMessage(request.getLoadBalancerRequestId(), String.format("Cancel failed (%s)", buildResponseString(agentResponses, AgentRequestType.CANCEL)));
           return Optional.of(FAILED_CANCEL_FAILED);
         case SUCCESS:
@@ -127,8 +127,8 @@ public enum InternalRequestStates {
     return Optional.absent();
   }
 
-  private static String buildResponseString(Map<AgentRequestType, Collection<AgentResponse>> agentResponses, AgentRequestType requestType) {
-    if (agentResponses.containsKey(requestType)) {
+  private static String buildResponseString(Map<String, Collection<AgentResponse>> agentResponses, AgentRequestType requestType) {
+    if (agentResponses.containsKey(requestType.name())) {
       return JavaUtils.COMMA_JOINER.join(agentResponses.get(requestType));
     } else {
       return "no responses";

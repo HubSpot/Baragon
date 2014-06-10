@@ -127,7 +127,7 @@ public class AgentManager {
     return success ? AgentRequestsStatus.SUCCESS : AgentRequestsStatus.FAILURE;
   }
 
-  public Map<AgentRequestType, Collection<AgentResponse>> getAgentResponses(String requestId) {
+  public Map<String, Collection<AgentResponse>> getAgentResponses(String requestId) {
     return agentResponseDatastore.getLastResponses(requestId);
   }
 }
