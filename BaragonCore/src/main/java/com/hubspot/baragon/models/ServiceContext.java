@@ -7,7 +7,6 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Objects;
-import com.hubspot.baragon.models.UpstreamInfo;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ServiceContext {
@@ -37,20 +36,6 @@ public class ServiceContext {
   }
 
   @Override
-  public int hashCode() {
-    return Objects.hashCode(service, upstreams, timestamp);
-  }
-
-  @Override
-  public String toString() {
-    return Objects.toStringHelper(ServiceContext.class)
-        .add("service", service)
-        .add("upstreams", upstreams)
-        .add("timestamp", timestamp)
-        .toString();
-  }
-
-  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -62,5 +47,22 @@ public class ServiceContext {
     if (!upstreams.equals(that.upstreams)) return false;
 
     return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = service.hashCode();
+    result = 31 * result + upstreams.hashCode();
+    result = 31 * result + timestamp.hashCode();
+    return result;
+  }
+
+  @Override
+  public String toString() {
+    return "ServiceContext [" +
+        "service=" + service +
+        ", upstreams=" + upstreams +
+        ", timestamp=" + timestamp +
+        ']';
   }
 }

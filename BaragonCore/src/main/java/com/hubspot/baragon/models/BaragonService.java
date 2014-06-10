@@ -1,14 +1,15 @@
 package com.hubspot.baragon.models;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class BaragonService {
@@ -63,7 +64,7 @@ public class BaragonService {
 
   @Override
   public String toString() {
-    return "Service [" +
+    return "BaragonService [" +
         "serviceId='" + serviceId + '\'' +
         ", owners=" + owners +
         ", serviceBasePath='" + serviceBasePath + '\'' +

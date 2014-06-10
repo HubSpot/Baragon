@@ -25,4 +25,24 @@ public class UpstreamInfo {
   public String toString() {
     return upstream;
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    UpstreamInfo that = (UpstreamInfo) o;
+
+    if (!requestId.equals(that.requestId)) return false;
+    if (!upstream.equals(that.upstream)) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = upstream.hashCode();
+    result = 31 * result + requestId.hashCode();
+    return result;
+  }
 }

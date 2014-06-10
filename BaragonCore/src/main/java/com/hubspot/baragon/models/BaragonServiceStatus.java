@@ -2,7 +2,6 @@ package com.hubspot.baragon.models;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.common.base.Objects;
 
 public class BaragonServiceStatus {
   private final boolean leader;
@@ -31,11 +30,33 @@ public class BaragonServiceStatus {
   }
 
   @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    BaragonServiceStatus that = (BaragonServiceStatus) o;
+
+    if (leader != that.leader) return false;
+    if (pendingRequestCount != that.pendingRequestCount) return false;
+    if (workerLagMs != that.workerLagMs) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = (leader ? 1 : 0);
+    result = 31 * result + pendingRequestCount;
+    result = 31 * result + (int) (workerLagMs ^ (workerLagMs >>> 32));
+    return result;
+  }
+
+  @Override
   public String toString() {
-    return Objects.toStringHelper(this)
-        .add("leader", leader)
-        .add("pendingRequestCount", pendingRequestCount)
-        .add("workerLagMs", workerLagMs)
-        .toString();
+    return "BaragonServiceStatus [" +
+        "leader=" + leader +
+        ", pendingRequestCount=" + pendingRequestCount +
+        ", workerLagMs=" + workerLagMs +
+        ']';
   }
 }
