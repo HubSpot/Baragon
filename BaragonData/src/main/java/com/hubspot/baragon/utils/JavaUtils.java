@@ -8,7 +8,10 @@ import java.util.Enumeration;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
+import com.google.common.base.Joiner;
+
 public class JavaUtils {
+  public static final Joiner COMMA_JOINER = Joiner.on(", ").skipNulls();
   private JavaUtils() { }
 
   public static String getHostAddress() throws Exception {

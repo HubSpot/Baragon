@@ -1,8 +1,12 @@
 package com.hubspot.baragon.models;
 
+import java.util.Collection;
+import java.util.Map;
+
 import com.google.common.base.Optional;
 import com.hubspot.baragon.managers.AgentManager;
 import com.hubspot.baragon.managers.RequestManager;
+import com.hubspot.baragon.utils.JavaUtils;
 
 public enum InternalRequestStates {
   SEND_APPLY_REQUESTS(BaragonRequestState.WAITING, true, false) {
@@ -45,12 +49,16 @@ public enum InternalRequestStates {
   FAILED_CHECK_REVERT_RESPONSES(BaragonRequestState.FAILED, true, false) {
     @Override
     public Optional<InternalRequestStates> handle(BaragonRequest request, AgentManager agentManager, RequestManager requestManager) {
+      final Map<AgentRequestType, Collection<AgentResponse>> agentResponses;
+
       switch (agentManager.getRequestsStatus(request, AgentRequestType.REVERT)) {
         case FAILURE:
-          requestManager.setRequestMessage(request.getLoadBalancerRequestId(), "Apply failed, revert failed!");
+          agentResponses = agentManager.getAgentResponses(request.getLoadBalancerRequestId());
+          requestManager.setRequestMessage(request.getLoadBalancerRequestId(), String.format("Apply failed (%s), revert failed (%s)", buildResponseString(agentResponses, AgentRequestType.APPLY), buildResponseString(agentResponses, AgentRequestType.REVERT)));
           return Optional.of(FAILED_REVERT_FAILED);
         case SUCCESS:
-          requestManager.setRequestMessage(request.getLoadBalancerRequestId(), "Apply failed, revert succeeded!");
+          agentResponses = agentManager.getAgentResponses(request.getLoadBalancerRequestId());
+          requestManager.setRequestMessage(request.getLoadBalancerRequestId(), String.format("Apply failed (%s), revert OK.", buildResponseString(agentResponses, AgentRequestType.APPLY)));
           return Optional.of(FAILED_REVERTED);
         case RETRY:
           return Optional.of(FAILED_SEND_REVERT_REQUESTS);
@@ -77,7 +85,8 @@ public enum InternalRequestStates {
     public Optional<InternalRequestStates> handle(BaragonRequest request, AgentManager agentManager, RequestManager requestManager) {
       switch (agentManager.getRequestsStatus(request, AgentRequestType.CANCEL)) {
         case FAILURE:
-          requestManager.setRequestMessage(request.getLoadBalancerRequestId(), "Cancel failed!");
+          final Map<AgentRequestType, Collection<AgentResponse>> agentResponses = agentManager.getAgentResponses(request.getLoadBalancerRequestId());
+          requestManager.setRequestMessage(request.getLoadBalancerRequestId(), String.format("Cancel failed (%s)", buildResponseString(agentResponses, AgentRequestType.CANCEL)));
           return Optional.of(FAILED_CANCEL_FAILED);
         case SUCCESS:
           return Optional.of(CANCELLED);
@@ -116,5 +125,13 @@ public enum InternalRequestStates {
 
   public Optional<InternalRequestStates> handle(BaragonRequest request, AgentManager agentManager, RequestManager requestManager) {
     return Optional.absent();
+  }
+
+  private static String buildResponseString(Map<AgentRequestType, Collection<AgentResponse>> agentResponses, AgentRequestType requestType) {
+    if (agentResponses.containsKey(requestType)) {
+      return JavaUtils.COMMA_JOINER.join(agentResponses.get(requestType));
+    } else {
+      return "no responses";
+    }
   }
 }

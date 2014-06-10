@@ -1,5 +1,11 @@
 package com.hubspot.baragon.managers;
 
+import java.util.Collection;
+import java.util.Map;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import com.google.common.base.Optional;
 import com.google.common.base.Strings;
 import com.google.inject.Inject;
@@ -10,15 +16,12 @@ import com.hubspot.baragon.data.BaragonAgentResponseDatastore;
 import com.hubspot.baragon.data.BaragonLoadBalancerDatastore;
 import com.hubspot.baragon.models.AgentRequestType;
 import com.hubspot.baragon.models.AgentRequestsStatus;
+import com.hubspot.baragon.models.AgentResponse;
 import com.hubspot.baragon.models.AgentResponseId;
 import com.hubspot.baragon.models.BaragonRequest;
 import com.ning.http.client.AsyncCompletionHandler;
 import com.ning.http.client.AsyncHttpClient;
 import com.ning.http.client.Response;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
-import java.util.Collection;
 
 @Singleton
 public class AgentManager {
@@ -122,5 +125,9 @@ public class AgentManager {
     }
 
     return success ? AgentRequestsStatus.SUCCESS : AgentRequestsStatus.FAILURE;
+  }
+
+  public Map<AgentRequestType, Collection<AgentResponse>> getAgentResponses(String requestId) {
+    return agentResponseDatastore.getLastResponses(requestId);
   }
 }
