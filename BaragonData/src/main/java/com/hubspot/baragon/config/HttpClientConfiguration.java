@@ -1,21 +1,27 @@
 package com.hubspot.baragon.config;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import org.hibernate.validator.constraints.NotEmpty;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class HttpClientConfiguration {
+  public static final int MAX_REQUEST_RETRY_DEFAULT = 5;
+  public static final int REQUEST_TIMEOUT_IN_MS_DEFAULT = 10000;
+  public static final int CONNECTION_TIMEOUT_IN_MS_DEFAULT = 5000;
+  public static final String USER_AGENT_DEFAULT = "Baragon/0.1 (+https://github.com/HubSpot/Baragon)";
+
   @JsonProperty("maxRequestRetry")
-  private int maxRequestRetry = 5;
+  private int maxRequestRetry = MAX_REQUEST_RETRY_DEFAULT;
 
   @JsonProperty("requestTimeoutInMs")
-  private int requestTimeoutInMs = 5000;
+  private int requestTimeoutInMs = REQUEST_TIMEOUT_IN_MS_DEFAULT;
 
   @JsonProperty("connectionTimeoutInMs")
-  private int connectionTimeoutInMs = 5000;
+  private int connectionTimeoutInMs = CONNECTION_TIMEOUT_IN_MS_DEFAULT;
 
   @JsonProperty("userAgent")
   @NotEmpty
-  private String userAgent = "Baragon/0.1 (+https://github.com/HubSpot/Baragon)";
+  private String userAgent = USER_AGENT_DEFAULT;
 
   public int getMaxRequestRetry() {
     return maxRequestRetry;
