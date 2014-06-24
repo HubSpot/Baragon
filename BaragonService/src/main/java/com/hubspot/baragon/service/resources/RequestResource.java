@@ -60,11 +60,11 @@ public class RequestResource {
 
   @DELETE
   @Path("/{requestId}")
-  public Optional<BaragonResponse> cancelRequest(@PathParam("requestId") String requestId) {
+  public BaragonResponse cancelRequest(@PathParam("requestId") String requestId) {
     // prevent race conditions when transitioning from a cancel-able to not cancel-able state
     synchronized (BaragonRequestWorker.class) {
       manager.cancelRequest(requestId);
-      return manager.getResponse(requestId);
+      return manager.getResponse(requestId).or(BaragonResponse.requestDoesNotExist(requestId));
     }
   }
 }
