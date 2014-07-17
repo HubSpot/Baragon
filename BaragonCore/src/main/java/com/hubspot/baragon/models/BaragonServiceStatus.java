@@ -1,20 +1,25 @@
 package com.hubspot.baragon.models;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+@JsonIgnoreProperties( ignoreUnknown = true )
 public class BaragonServiceStatus {
   private final boolean leader;
   private final int pendingRequestCount;
   private final long workerLagMs;
+  private final String zookeeperState;
 
   @JsonCreator
   public BaragonServiceStatus(@JsonProperty("leader") boolean leader,
                               @JsonProperty("pendingRequestCount") int pendingRequestCount,
-                              @JsonProperty("workerLagMs") long workerLagMs) {
+                              @JsonProperty("workerLagMs") long workerLagMs,
+                              @JsonProperty("zookeeperState") String zookeeperState) {
     this.leader = leader;
     this.pendingRequestCount = pendingRequestCount;
     this.workerLagMs = workerLagMs;
+    this.zookeeperState = zookeeperState;
   }
 
   public boolean isLeader() {
@@ -29,6 +34,10 @@ public class BaragonServiceStatus {
     return workerLagMs;
   }
 
+  public String getZookeeperState() {
+    return zookeeperState;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
@@ -39,6 +48,7 @@ public class BaragonServiceStatus {
     if (leader != that.leader) return false;
     if (pendingRequestCount != that.pendingRequestCount) return false;
     if (workerLagMs != that.workerLagMs) return false;
+    if (!zookeeperState.equals(that.zookeeperState)) return false;
 
     return true;
   }
@@ -48,6 +58,7 @@ public class BaragonServiceStatus {
     int result = (leader ? 1 : 0);
     result = 31 * result + pendingRequestCount;
     result = 31 * result + (int) (workerLagMs ^ (workerLagMs >>> 32));
+    result = 31 * result + zookeeperState.hashCode();
     return result;
   }
 
@@ -57,6 +68,7 @@ public class BaragonServiceStatus {
         "leader=" + leader +
         ", pendingRequestCount=" + pendingRequestCount +
         ", workerLagMs=" + workerLagMs +
+        ", zookeeperState='" + zookeeperState + '\'' +
         ']';
   }
 }

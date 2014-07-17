@@ -1,21 +1,24 @@
 package com.hubspot.baragon.agent.resources;
 
-import com.google.common.base.Optional;
-import com.google.inject.Inject;
-import com.google.inject.name.Named;
-import com.hubspot.baragon.agent.BaragonAgentServiceModule;
-import com.hubspot.baragon.agent.config.LoadBalancerConfiguration;
-import com.hubspot.baragon.agent.lbs.LocalLbAdapter;
-import com.hubspot.baragon.models.BaragonAgentStatus;
-import com.hubspot.baragon.exceptions.InvalidConfigException;
-
-import org.apache.curator.framework.recipes.leader.LeaderLatch;
+import java.util.concurrent.atomic.AtomicReference;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
-import java.util.concurrent.atomic.AtomicReference;
+
+import org.apache.curator.framework.recipes.leader.LeaderLatch;
+import org.apache.curator.framework.state.ConnectionState;
+
+import com.google.common.base.Optional;
+import com.google.inject.Inject;
+import com.google.inject.name.Named;
+import com.hubspot.baragon.BaragonBaseModule;
+import com.hubspot.baragon.agent.BaragonAgentServiceModule;
+import com.hubspot.baragon.agent.config.LoadBalancerConfiguration;
+import com.hubspot.baragon.agent.lbs.LocalLbAdapter;
+import com.hubspot.baragon.exceptions.InvalidConfigException;
+import com.hubspot.baragon.models.BaragonAgentStatus;
 
 @Path("/status")
 @Produces(MediaType.APPLICATION_JSON)
@@ -24,15 +27,18 @@ public class StatusResource {
   private final LoadBalancerConfiguration loadBalancerConfiguration;
   private final LeaderLatch leaderLatch;
   private final AtomicReference<String> mostRecentRequestId;
+  private final AtomicReference<ConnectionState> connectionState;
 
   @Inject
   public StatusResource(LocalLbAdapter adapter, LoadBalancerConfiguration loadBalancerConfiguration,
                         @Named(BaragonAgentServiceModule.AGENT_LEADER_LATCH) LeaderLatch leaderLatch,
-                        @Named(BaragonAgentServiceModule.AGENT_MOST_RECENT_REQUEST_ID) AtomicReference<String> mostRecentRequestId) {
+                        @Named(BaragonAgentServiceModule.AGENT_MOST_RECENT_REQUEST_ID) AtomicReference<String> mostRecentRequestId,
+                        @Named(BaragonBaseModule.BARAGON_ZK_CONNECTION_STATE) AtomicReference<ConnectionState> connectionState) {
     this.adapter = adapter;
     this.loadBalancerConfiguration = loadBalancerConfiguration;
     this.leaderLatch = leaderLatch;
     this.mostRecentRequestId = mostRecentRequestId;
+    this.connectionState = connectionState;
   }
 
   @GET
@@ -47,6 +53,10 @@ public class StatusResource {
       errorMessage = Optional.of(e.getMessage());
     }
 
-    return new BaragonAgentStatus(loadBalancerConfiguration.getName(), validConfigs, errorMessage, leaderLatch.hasLeadership(), mostRecentRequestId.get());
+    final ConnectionState currentConnectionState = connectionState.get();
+
+    final String connectionStateString = currentConnectionState == null ? "UNKNOWN" : currentConnectionState.name();
+
+    return new BaragonAgentStatus(loadBalancerConfiguration.getName(), validConfigs, errorMessage, leaderLatch.hasLeadership(), mostRecentRequestId.get(), connectionStateString);
   }
 }

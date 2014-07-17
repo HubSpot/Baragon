@@ -1,27 +1,32 @@
 package com.hubspot.baragon.models;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Optional;
 
+@JsonIgnoreProperties( ignoreUnknown = true )
 public class BaragonAgentStatus {
   private final String group;
   private final boolean validConfigs;
   private final Optional<String> errorMessage;
   private final boolean leader;
   private final String mostRecentRequestId;
+  private final String zookeeperState;
 
   @JsonCreator
   public BaragonAgentStatus(@JsonProperty("group") String group,
                             @JsonProperty("validConfigs") boolean validConfigs,
                             @JsonProperty("errorMessage") Optional<String> errorMessage,
                             @JsonProperty("leader") boolean leader,
-                            @JsonProperty("mostRecentRequestId") String mostRecentRequestId) {
+                            @JsonProperty("mostRecentRequestId") String mostRecentRequestId,
+                            @JsonProperty("zookeeperState") String zookeeperState) {
     this.group = group;
     this.validConfigs = validConfigs;
     this.errorMessage = errorMessage;
     this.leader = leader;
     this.mostRecentRequestId = mostRecentRequestId;
+    this.zookeeperState = zookeeperState;
   }
 
   public String getGroup() {
@@ -44,6 +49,10 @@ public class BaragonAgentStatus {
     return mostRecentRequestId;
   }
 
+  public String getZookeeperState() {
+    return zookeeperState;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
@@ -57,6 +66,7 @@ public class BaragonAgentStatus {
     if (!group.equals(that.group)) return false;
     if (mostRecentRequestId != null ? !mostRecentRequestId.equals(that.mostRecentRequestId) : that.mostRecentRequestId != null)
       return false;
+    if (!zookeeperState.equals(that.zookeeperState)) return false;
 
     return true;
   }
@@ -68,6 +78,7 @@ public class BaragonAgentStatus {
     result = 31 * result + errorMessage.hashCode();
     result = 31 * result + (leader ? 1 : 0);
     result = 31 * result + (mostRecentRequestId != null ? mostRecentRequestId.hashCode() : 0);
+    result = 31 * result + zookeeperState.hashCode();
     return result;
   }
 
@@ -79,6 +90,7 @@ public class BaragonAgentStatus {
         ", errorMessage=" + errorMessage +
         ", leader=" + leader +
         ", mostRecentRequestId='" + mostRecentRequestId + '\'' +
+        ", zookeeperState='" + zookeeperState + '\'' +
         ']';
   }
 }
