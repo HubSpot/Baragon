@@ -1,5 +1,7 @@
 package com.hubspot.baragon.agent.managed;
 
+import io.dropwizard.lifecycle.Managed;
+
 import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -20,7 +22,6 @@ import com.hubspot.baragon.data.BaragonStateDatastore;
 import com.hubspot.baragon.models.BaragonService;
 import com.hubspot.baragon.models.ServiceContext;
 import com.hubspot.baragon.models.UpstreamInfo;
-import io.dropwizard.lifecycle.Managed;
 
 public class BootstrapManaged implements Managed {
   private static final Log LOG = LogFactory.getLog(BootstrapManaged.class);
@@ -78,6 +79,7 @@ public class BootstrapManaged implements Managed {
 
   @Override
   public void start() throws Exception {
+    LOG.info("Applying current configs...");
     applyCurrentConfigs();
 
     LOG.info("Starting leader latch...");
@@ -88,5 +90,4 @@ public class BootstrapManaged implements Managed {
   public void stop() throws Exception {
     leaderLatch.close();
   }
-
 }
