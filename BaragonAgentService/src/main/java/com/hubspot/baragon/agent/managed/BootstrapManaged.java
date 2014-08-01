@@ -68,7 +68,7 @@ public class BootstrapManaged implements Managed {
       LOG.info(String.format("    Applying %s: [%s]", serviceId, Joiner.on(", ").join(upstreamsMap.keySet())));
 
       try {
-        configHelper.apply(new ServiceContext(service, upstreamsMap.values(), now), false);
+        configHelper.apply(new ServiceContext(service, upstreamsMap.values(), now, true), false);
       } catch (Exception e) {
         LOG.error(String.format("Caught exception while applying %s", serviceId), e);
       }

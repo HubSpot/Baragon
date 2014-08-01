@@ -19,6 +19,8 @@ import com.hubspot.baragon.models.ServiceContext;
 
 @Singleton
 public class FilesystemConfigHelper {
+  public static final String BACKUP_FILENAME_SUFFIX = ".old";
+
   private static final Log LOG = LogFactory.getLog(FilesystemConfigHelper.class);
 
   private final LbConfigGenerator configGenerator;
@@ -48,29 +50,34 @@ public class FilesystemConfigHelper {
   }
 
   public void apply(ServiceContext context, boolean revertOnFailure) throws InvalidConfigException, LbAdapterExecuteException, IOException {
+    final String serviceId = context.getService().getServiceId();
 
-    LOG.info(String.format("Going to apply %s: %s", context.getService().getServiceId(), Joiner.on(", ").join(context.getUpstreams())));
-    final boolean newServiceExists = configsExist(context.getService().getServiceId());
+    LOG.info(String.format("Going to apply %s: %s", serviceId, Joiner.on(", ").join(context.getUpstreams())));
+    final boolean newServiceExists = configsExist(serviceId);
 
     // Backup configs
     if (newServiceExists && revertOnFailure) {
-      backupConfigs(context.getService().getServiceId());
+      backupConfigs(serviceId);
     }
 
     // Write & check the configs
     try {
-      writeConfigs(configGenerator.generateConfigsForProject(context));
+      if (context.isPresent()) {
+        writeConfigs(configGenerator.generateConfigsForProject(context));
+      } else {
+        remove(serviceId, false);
+      }
 
       adapter.checkConfigs();
     } catch (Exception e) {
-      LOG.error("Caught exception while writing configs for " + context.getService().getServiceId() + ", reverting to backups!", e);
+      LOG.error("Caught exception while writing configs for " + serviceId + ", reverting to backups!", e);
 
       // Restore configs
       if (revertOnFailure) {
         if (newServiceExists) {
-          restoreConfigs(context.getService().getServiceId());
+          restoreConfigs(serviceId);
         } else {
-          remove(context.getService().getServiceId(), false);
+          remove(serviceId, false);
         }
       }
 
@@ -79,6 +86,8 @@ public class FilesystemConfigHelper {
 
     // Load the new configs
     adapter.reloadConfigs();
+
+    removeBackupConfigs(serviceId);
   }
 
   private void writeConfigs(Collection<LbConfigFile> files) {
@@ -92,14 +101,14 @@ public class FilesystemConfigHelper {
     }
   }
 
-  public void backupConfigs(String serviceId) {
+  private void backupConfigs(String serviceId) {
     for (String filename : configGenerator.getConfigPathsForProject(serviceId)) {
       try {
         File src = new File(filename);
         if (!src.exists()) {
           continue;
         }
-        File dest = new File(filename + ".old");
+        File dest = new File(filename + BACKUP_FILENAME_SUFFIX);
         Files.copy(src, dest);
       } catch (IOException e) {
         LOG.error("Failed to backup " + filename, e);
@@ -108,7 +117,16 @@ public class FilesystemConfigHelper {
     }
   }
 
-  public boolean configsExist(String serviceId) {
+  private void removeBackupConfigs(String serviceId) {
+    for (String filename : configGenerator.getConfigPathsForProject(serviceId)) {
+      File file = new File(filename + BACKUP_FILENAME_SUFFIX);
+      if (!file.exists()) {
+        continue;
+      }
+    }
+  }
+
+  private boolean configsExist(String serviceId) {
     for (String filename : configGenerator.getConfigPathsForProject(serviceId)) {
       if (!new File(filename).exists()) {
         return false;
@@ -118,10 +136,10 @@ public class FilesystemConfigHelper {
     return true;
   }
 
-  public void restoreConfigs(String serviceId) {
+  private void restoreConfigs(String serviceId) {
     for (String filename : configGenerator.getConfigPathsForProject(serviceId)) {
       try {
-        File src = new File(filename + ".old");
+        File src = new File(filename + BACKUP_FILENAME_SUFFIX);
         if (!src.exists()) {
           continue;
         }

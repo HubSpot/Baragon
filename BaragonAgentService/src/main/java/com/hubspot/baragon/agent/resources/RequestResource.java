@@ -1,5 +1,6 @@
 package com.hubspot.baragon.agent.resources;
 
+import java.util.Collections;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
@@ -22,6 +23,7 @@ import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import com.hubspot.baragon.agent.BaragonAgentServiceModule;
+import com.hubspot.baragon.agent.config.LoadBalancerConfiguration;
 import com.hubspot.baragon.agent.config.TestingConfiguration;
 import com.hubspot.baragon.agent.lbs.FilesystemConfigHelper;
 import com.hubspot.baragon.data.BaragonRequestDatastore;
@@ -45,12 +47,14 @@ public class RequestResource {
   private final long agentLockTimeoutMs;
   private final Optional<TestingConfiguration> maybeTestingConfiguration;
   private final Random random;
+  private final LoadBalancerConfiguration loadBalancerConfiguration;
   
   @Inject
   public RequestResource(BaragonStateDatastore stateDatastore,
                          BaragonRequestDatastore requestDatastore,
                          FilesystemConfigHelper configHelper,
                          Optional<TestingConfiguration> maybeTestingConfiguration,
+                         LoadBalancerConfiguration loadBalancerConfiguration,
                          Random random,
                          @Named(BaragonAgentServiceModule.AGENT_LOCK) Lock agentLock,
                          @Named(BaragonAgentServiceModule.AGENT_MOST_RECENT_REQUEST_ID) AtomicReference<String> mostRecentRequestId,
@@ -63,6 +67,7 @@ public class RequestResource {
     this.mostRecentRequestId = mostRecentRequestId;
     this.agentLockTimeoutMs = agentLockTimeoutMs;
     this.random = random;
+    this.loadBalancerConfiguration = loadBalancerConfiguration;
   }
 
   @POST
@@ -82,25 +87,29 @@ public class RequestResource {
 
       LOG.info(String.format("Received request to apply %s", request));
 
-      // Apply request
-      final Map<String, UpstreamInfo> upstreamsMap = stateDatastore.getUpstreamsMap(request.getLoadBalancerService().getServiceId());
+      final ServiceContext update;
 
-      for (String removeUpstream : request.getRemoveUpstreams()) {
-        upstreamsMap.remove(removeUpstream);
+      if (!request.getLoadBalancerService().getLoadBalancerGroups().contains(loadBalancerConfiguration.getName())) {
+        // this service has been deleted or moved off this load balancer -- delete the config
+
+        update = new ServiceContext(request.getLoadBalancerService(), Collections.<UpstreamInfo>emptyList(), System.currentTimeMillis(), false);
+      } else {
+        // Apply request
+        final Map<String, UpstreamInfo> upstreamsMap = stateDatastore.getUpstreamsMap(request.getLoadBalancerService().getServiceId());
+
+        for (String removeUpstream : request.getRemoveUpstreams()) {
+          upstreamsMap.remove(removeUpstream);
+        }
+
+        for (String addUpstream : request.getAddUpstreams()) {
+          upstreamsMap.put(addUpstream, new UpstreamInfo(addUpstream, request.getLoadBalancerRequestId()));
+        }
+
+        update = new ServiceContext(request.getLoadBalancerService(), upstreamsMap.values(), System.currentTimeMillis(), true);
       }
-
-      for (String addUpstream : request.getAddUpstreams()) {
-        upstreamsMap.put(addUpstream, new UpstreamInfo(addUpstream, request.getLoadBalancerRequestId()));
-      }
-
-      final ServiceContext update = new ServiceContext(request.getLoadBalancerService(), upstreamsMap.values(), System.currentTimeMillis());
 
       if (maybeTestingConfiguration.isPresent() && maybeTestingConfiguration.get().isEnabled() && maybeTestingConfiguration.get().getApplyDelayMs() > 0) {
-        try {
-          Thread.sleep(maybeTestingConfiguration.get().getApplyDelayMs());
-        } catch (InterruptedException e) {
-          // boo
-        }
+        Thread.sleep(maybeTestingConfiguration.get().getApplyDelayMs());
       }
 
       if (maybeTestingConfiguration.isPresent() && maybeTestingConfiguration.get().isEnabled()) {
@@ -137,26 +146,23 @@ public class RequestResource {
       }
 
       final BaragonRequest request = maybeRequest.get();
+
+      LOG.info(String.format("Received request to revert %s", request));
+
       final Optional<BaragonService> maybeService = stateDatastore.getService(request.getLoadBalancerService().getServiceId());
 
-      if (!maybeService.isPresent()) {
-        try {
-          configHelper.remove(request.getLoadBalancerService().getServiceId(), true);
-        } catch (Exception e) {
-          return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
-        }
+      final ServiceContext update;
 
-        return Response.ok().build();
+      if (!maybeService.isPresent() || !maybeService.get().getLoadBalancerGroups().contains(loadBalancerConfiguration.getName())) {
+        // this service previously didn't exist, or wasnt on this load balancer -- remove the config
+
+        update = new ServiceContext(request.getLoadBalancerService(), Collections.<UpstreamInfo>emptyList(), System.currentTimeMillis(), false);
+      } else {
+        update = new ServiceContext(maybeService.get(), stateDatastore.getUpstreamsMap(maybeService.get().getServiceId()).values(), System.currentTimeMillis(), true);
       }
 
-      final ServiceContext context = new ServiceContext(maybeService.get(), stateDatastore.getUpstreamsMap(maybeService.get().getServiceId()).values(), System.currentTimeMillis());
-
       if (maybeTestingConfiguration.isPresent() && maybeTestingConfiguration.get().isEnabled() && maybeTestingConfiguration.get().getRevertDelayMs() > 0) {
-        try {
-          Thread.sleep(maybeTestingConfiguration.get().getRevertDelayMs());
-        } catch (InterruptedException e) {
-          // boo
-        }
+        Thread.sleep(maybeTestingConfiguration.get().getRevertDelayMs());
       }
 
       if (maybeTestingConfiguration.isPresent() && maybeTestingConfiguration.get().isEnabled()) {
@@ -166,7 +172,7 @@ public class RequestResource {
       }
 
       try {
-        configHelper.apply(context, false);
+        configHelper.apply(update, false);
       } catch (Exception e) {
         return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
       }

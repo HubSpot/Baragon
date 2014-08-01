@@ -13,14 +13,17 @@ public class ServiceContext {
   private final BaragonService service;
   private final Collection<UpstreamInfo> upstreams;
   private final Long timestamp;
+  private final boolean present;
 
   @JsonCreator
   public ServiceContext(@JsonProperty("service") BaragonService service,
                         @JsonProperty("upstreams") Collection<UpstreamInfo> upstreams,
-                        @JsonProperty("timestamp") Long timestamp) {
+                        @JsonProperty("timestamp") Long timestamp,
+                        @JsonProperty("present") boolean present) {
     this.service = service;
     this.timestamp = timestamp;
     this.upstreams = Objects.firstNonNull(upstreams, Collections.<UpstreamInfo>emptyList());
+    this.present = present;
   }
 
   public BaragonService getService() {
@@ -35,6 +38,10 @@ public class ServiceContext {
     return timestamp;
   }
 
+  public boolean isPresent() {
+    return present;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
@@ -42,6 +49,7 @@ public class ServiceContext {
 
     ServiceContext that = (ServiceContext) o;
 
+    if (present != that.present) return false;
     if (!service.equals(that.service)) return false;
     if (!timestamp.equals(that.timestamp)) return false;
     if (!upstreams.equals(that.upstreams)) return false;
@@ -54,6 +62,7 @@ public class ServiceContext {
     int result = service.hashCode();
     result = 31 * result + upstreams.hashCode();
     result = 31 * result + timestamp.hashCode();
+    result = 31 * result + (present ? 1 : 0);
     return result;
   }
 
@@ -63,6 +72,7 @@ public class ServiceContext {
         "service=" + service +
         ", upstreams=" + upstreams +
         ", timestamp=" + timestamp +
+        ", present=" + present +
         ']';
   }
 }
