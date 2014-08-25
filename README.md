@@ -1,4 +1,4 @@
-# Baragon
+# Baragon [![Build Status](https://travis-ci.org/HubSpot/Baragon.svg?branch=master)](https://travis-ci.org/HubSpot/Baragon)
 
 ![Behold the mighty Baragon's roar](http://i.imgur.com/mCbkbcZ.jpg)
 
