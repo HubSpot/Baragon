@@ -39,7 +39,7 @@
 
 <scm>
     <connection>scm:git:git@github.com:HubSpot/Baragon.git</connection>
-    <developerConnection>scm:git:ssh://git@github.com:HubSpot/Baragon.git</developerConnection>
+    <developerConnection>scm:git:ssh://git@github.com/HubSpot/Baragon.git</developerConnection>
     <url>git@github.com:HubSpot/Baragon.git</url>
     <tag>HEAD</tag>
 </scm>
