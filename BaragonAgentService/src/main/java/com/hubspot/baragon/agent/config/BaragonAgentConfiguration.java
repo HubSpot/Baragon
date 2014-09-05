@@ -5,6 +5,7 @@ import io.dropwizard.Configuration;
 import java.util.Collections;
 import java.util.List;
 
+import javax.validation.Valid;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 
@@ -14,6 +15,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Optional;
 import com.google.common.base.Strings;
+import com.hubspot.baragon.config.AuthConfiguration;
 import com.hubspot.baragon.config.ZooKeeperConfiguration;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -51,6 +53,18 @@ public class BaragonAgentConfiguration extends Configuration {
 
   @JsonProperty("testing")
   private TestingConfiguration testingConfiguration;
+
+  @JsonProperty("auth")
+  @Valid
+  private AuthConfiguration authConfiguration = new AuthConfiguration();
+
+  public AuthConfiguration getAuthConfiguration() {
+    return authConfiguration;
+  }
+
+  public void setAuthConfiguration(AuthConfiguration authConfiguration) {
+    this.authConfiguration = authConfiguration;
+  }
 
   public ZooKeeperConfiguration getZooKeeperConfiguration() {
     return zooKeeperConfiguration;

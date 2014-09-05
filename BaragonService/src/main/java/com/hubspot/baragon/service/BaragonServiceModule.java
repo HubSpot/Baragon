@@ -1,23 +1,26 @@
 package com.hubspot.baragon.service;
 
+import io.dropwizard.jetty.HttpConnectorFactory;
+import io.dropwizard.server.SimpleServerFactory;
+
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.atomic.AtomicLong;
+
+import org.apache.curator.framework.recipes.leader.LeaderLatch;
+
 import com.google.common.base.Strings;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import com.hubspot.baragon.BaragonBaseModule;
+import com.hubspot.baragon.config.AuthConfiguration;
 import com.hubspot.baragon.config.HttpClientConfiguration;
 import com.hubspot.baragon.config.ZooKeeperConfiguration;
 import com.hubspot.baragon.data.BaragonWorkerDatastore;
 import com.hubspot.baragon.service.config.BaragonConfiguration;
 import com.hubspot.baragon.utils.JavaUtils;
-import io.dropwizard.jetty.HttpConnectorFactory;
-import io.dropwizard.server.SimpleServerFactory;
-import org.apache.curator.framework.recipes.leader.LeaderLatch;
-
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.atomic.AtomicLong;
 
 
 public class BaragonServiceModule extends AbstractModule {
@@ -28,6 +31,8 @@ public class BaragonServiceModule extends AbstractModule {
 
   public static final String BARAGON_SERVICE_HTTP_PORT = "baragon.service.http.port";
   public static final String BARAGON_SERVICE_HOSTNAME = "baragon.service.hostname";
+
+  public static final String BARAGON_MASTER_AUTH_KEY = "baragon.master.auth.key";
 
   @Override
   protected void configure() {
@@ -60,6 +65,11 @@ public class BaragonServiceModule extends AbstractModule {
   @Named(BARAGON_SERVICE_WORKER_INTERVAL_MS)
   public long provideWorkerIntervalMs(BaragonConfiguration configuration) {
     return configuration.getWorkerIntervalMs();
+  }
+
+  @Provides
+  public AuthConfiguration providesAuthConfiguration(BaragonConfiguration configuration) {
+    return configuration.getAuthConfiguration();
   }
 
   @Provides
@@ -103,5 +113,11 @@ public class BaragonServiceModule extends AbstractModule {
     final String baseUri = String.format("http://%s:%s%s", hostname, httpPort, appRoot);
 
     return datastore.createLeaderLatch(baseUri);
+  }
+
+  @Provides
+  @Named(BARAGON_MASTER_AUTH_KEY)
+  public String providesMasterAuthKey(BaragonConfiguration configuration) {
+    return configuration.getMasterAuthKey();
   }
 }

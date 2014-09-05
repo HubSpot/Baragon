@@ -25,6 +25,7 @@ import com.hubspot.baragon.agent.config.TestingConfiguration;
 import com.hubspot.baragon.agent.handlebars.FirstOfHelper;
 import com.hubspot.baragon.agent.handlebars.FormatTimestampHelper;
 import com.hubspot.baragon.agent.models.LbConfigTemplate;
+import com.hubspot.baragon.config.AuthConfiguration;
 import com.hubspot.baragon.config.ZooKeeperConfiguration;
 import com.hubspot.baragon.data.BaragonLoadBalancerDatastore;
 import com.hubspot.baragon.utils.JavaUtils;
@@ -82,6 +83,11 @@ public class BaragonAgentServiceModule extends AbstractModule {
   @Named(AGENT_LOCK_TIMEOUT_MS)
   public long provideAgentLockTimeoutMs(BaragonAgentConfiguration configuration) {
     return configuration.getAgentLockTimeoutMs();
+  }
+
+  @Provides
+  public AuthConfiguration providesAuthConfiguration(BaragonAgentConfiguration configuration) {
+    return configuration.getAuthConfiguration();
   }
 
   @Provides

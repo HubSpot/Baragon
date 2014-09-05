@@ -1,11 +1,13 @@
 package com.hubspot.baragon.agent;
 
-import com.google.inject.Stage;
-import com.hubspot.baragon.agent.config.BaragonAgentConfiguration;
-import com.hubspot.dropwizard.guice.GuiceBundle;
 import io.dropwizard.Application;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
+
+import com.google.inject.Stage;
+import com.hubspot.baragon.agent.config.BaragonAgentConfiguration;
+import com.hubspot.baragon.auth.BaragonAuthBundle;
+import com.hubspot.dropwizard.guice.GuiceBundle;
 
 public class BaragonAgentService extends Application<BaragonAgentConfiguration> {
 
@@ -16,7 +18,9 @@ public class BaragonAgentService extends Application<BaragonAgentConfiguration> 
         .enableAutoConfig(getClass().getPackage().getName())
         .setConfigClass(BaragonAgentConfiguration.class)
         .build(Stage.DEVELOPMENT);
+
     bootstrap.addBundle(guiceBundle);
+    bootstrap.addBundle(new BaragonAuthBundle());
   }
 
   @Override

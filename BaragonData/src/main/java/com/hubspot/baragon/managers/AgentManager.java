@@ -25,6 +25,7 @@ import com.hubspot.baragon.models.BaragonRequest;
 import com.hubspot.baragon.models.BaragonService;
 import com.ning.http.client.AsyncCompletionHandler;
 import com.ning.http.client.AsyncHttpClient;
+import com.ning.http.client.AsyncHttpClient.BoundRequestBuilder;
 import com.ning.http.client.Response;
 
 @Singleton
@@ -37,6 +38,7 @@ public class AgentManager {
   private final AsyncHttpClient asyncHttpClient;
   private final String baragonAgentRequestUriFormat;
   private final Integer baragonAgentMaxAttempts;
+  private final Optional<String> baragonAuthKey;
 
   @Inject
   public AgentManager(BaragonLoadBalancerDatastore loadBalancerDatastore,
@@ -44,25 +46,36 @@ public class AgentManager {
                       BaragonAgentResponseDatastore agentResponseDatastore,
                       @Named(BaragonBaseModule.BARAGON_SERVICE_HTTP_CLIENT) AsyncHttpClient asyncHttpClient,
                       @Named(BaragonBaseModule.BARAGON_AGENT_REQUEST_URI_FORMAT) String baragonAgentRequestUriFormat,
-                      @Named(BaragonBaseModule.BARAGON_AGENT_MAX_ATTEMPTS) Integer baragonAgentMaxAttempts) {
+                      @Named(BaragonBaseModule.BARAGON_AGENT_MAX_ATTEMPTS) Integer baragonAgentMaxAttempts,
+                      @Named(BaragonBaseModule.BARAGON_AUTH_KEY) Optional<String> baragonAuthKey) {
     this.loadBalancerDatastore = loadBalancerDatastore;
     this.stateDatastore = stateDatastore;
     this.agentResponseDatastore = agentResponseDatastore;
     this.asyncHttpClient = asyncHttpClient;
     this.baragonAgentRequestUriFormat = baragonAgentRequestUriFormat;
     this.baragonAgentMaxAttempts = baragonAgentMaxAttempts;
+    this.baragonAuthKey = baragonAuthKey;
   }
 
   private AsyncHttpClient.BoundRequestBuilder buildAgentRequest(String url, AgentRequestType requestType) {
+    final BoundRequestBuilder builder;
     switch (requestType) {
       case APPLY:
-        return asyncHttpClient.preparePost(url);
+        builder = asyncHttpClient.preparePost(url);
+        break;
       case REVERT:
       case CANCEL:
-        return asyncHttpClient.prepareDelete(url);
+        builder = asyncHttpClient.prepareDelete(url);
+        break;
       default:
         throw new RuntimeException("Don't know how to send requests for " + requestType);
     }
+
+    if (baragonAuthKey.isPresent()) {
+      builder.addQueryParameter("authkey", baragonAuthKey.get());
+    }
+
+    return builder;
   }
 
   public void sendRequests(final BaragonRequest request, final AgentRequestType requestType) {

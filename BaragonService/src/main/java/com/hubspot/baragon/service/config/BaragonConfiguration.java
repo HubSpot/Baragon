@@ -1,14 +1,18 @@
 package com.hubspot.baragon.service.config;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.hubspot.baragon.config.HttpClientConfiguration;
-import com.hubspot.baragon.config.ZooKeeperConfiguration;
 import io.dropwizard.Configuration;
-import org.hibernate.validator.constraints.NotEmpty;
 
+import javax.validation.Valid;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
+
+import org.hibernate.validator.constraints.NotEmpty;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.hubspot.baragon.config.AuthConfiguration;
+import com.hubspot.baragon.config.HttpClientConfiguration;
+import com.hubspot.baragon.config.ZooKeeperConfiguration;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class BaragonConfiguration extends Configuration {
@@ -32,8 +36,15 @@ public class BaragonConfiguration extends Configuration {
   @Min(1)
   private int agentMaxAttempts = 5;
 
+  @JsonProperty("auth")
+  @Valid
+  private AuthConfiguration authConfiguration = new AuthConfiguration();
+
   @JsonProperty("hostname")
   private String hostname;
+
+  @JsonProperty("masterAuthKey")
+  private String masterAuthKey;
 
   public ZooKeeperConfiguration getZooKeeperConfiguration() {
     return zooKeeperConfiguration;
@@ -81,5 +92,21 @@ public class BaragonConfiguration extends Configuration {
 
   public void setHostname(String hostname) {
     this.hostname = hostname;
+  }
+
+  public AuthConfiguration getAuthConfiguration() {
+    return authConfiguration;
+  }
+
+  public void setAuthConfiguration(AuthConfiguration authConfiguration) {
+    this.authConfiguration = authConfiguration;
+  }
+
+  public String getMasterAuthKey() {
+    return masterAuthKey;
+  }
+
+  public void setMasterAuthKey(String masterAuthKey) {
+    this.masterAuthKey = masterAuthKey;
   }
 }

@@ -14,6 +14,7 @@ import org.apache.curator.framework.state.ConnectionState;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import com.hubspot.baragon.BaragonBaseModule;
+import com.hubspot.baragon.auth.NoAuth;
 import com.hubspot.baragon.data.BaragonRequestDatastore;
 import com.hubspot.baragon.models.BaragonServiceStatus;
 import com.hubspot.baragon.service.BaragonServiceModule;
@@ -38,6 +39,7 @@ public class StatusResource {
   }
 
   @GET
+  @NoAuth
   public BaragonServiceStatus getServiceStatus() {
     final ConnectionState currentConnectionState = connectionState.get();
     final String connectionStateString = currentConnectionState == null ? "UNKNOWN" : currentConnectionState.name();
