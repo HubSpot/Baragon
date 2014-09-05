@@ -23,20 +23,18 @@ public class ZkParallelFetcher {
   private static final Logger LOG = Logger.getLogger(ZkParallelFetcher.class);
   private static final int TIMEOUT_SECONDS = 10;
 
-  private final Queue<KeeperException> exceptions;
   private final CuratorFramework curatorFramework;
 
   @Inject
   public ZkParallelFetcher(CuratorFramework framework) {
     this.curatorFramework = framework;
-    this.exceptions = new ConcurrentLinkedQueue<>();
   }
 
   public <T> Map<String, T> fetchDataInParallel(Collection<String> paths, Function<byte[], T> transformFunction) throws Exception {
-    // Didn't use Guava Multimap because we need thread-safety
     Map<String, T> dataMap = new ConcurrentHashMap<>();
     CountDownLatch countDownLatch = new CountDownLatch(paths.size());
-    BackgroundCallback callback = new GetDataCallback<>(dataMap, transformFunction, countDownLatch);
+    Queue<KeeperException> exceptions = new ConcurrentLinkedQueue<>();
+    BackgroundCallback callback = new GetDataCallback<>(dataMap, transformFunction, countDownLatch, exceptions);
 
     for (String path : paths) {
       curatorFramework.getData().inBackground(callback).forPath(path);
@@ -61,7 +59,8 @@ public class ZkParallelFetcher {
     // Didn't use Guava Multimap because we need thread-safety
     Map<String, Collection<String>> childMap = new ConcurrentHashMap<>();
     CountDownLatch countDownLatch = new CountDownLatch(paths.size());
-    BackgroundCallback callback = new GetChildrenCallback(childMap, countDownLatch);
+    Queue<KeeperException> exceptions = new ConcurrentLinkedQueue<>();
+    BackgroundCallback callback = new GetChildrenCallback(childMap, countDownLatch, exceptions);
 
     for (String path : paths) {
       curatorFramework.getChildren().inBackground(callback).forPath(path);
@@ -86,11 +85,16 @@ public class ZkParallelFetcher {
     private final Map<String, T> dataMap;
     private final Function<byte[], T> transformFunction;
     private final CountDownLatch countDownLatch;
+    private final Queue<KeeperException> exceptions;
 
-    private GetDataCallback(Map<String, T> dataMap, Function<byte[], T> transformFunction, CountDownLatch countDownLatch) {
+    private GetDataCallback(Map<String, T> dataMap,
+                            Function<byte[], T> transformFunction,
+                            CountDownLatch countDownLatch,
+                            Queue<KeeperException> exceptions) {
       this.dataMap = dataMap;
       this.transformFunction = transformFunction;
       this.countDownLatch = countDownLatch;
+      this.exceptions = exceptions;
     }
 
     @Override
@@ -118,10 +122,14 @@ public class ZkParallelFetcher {
   private class GetChildrenCallback implements BackgroundCallback {
     private final Map<String, Collection<String>> childMap;
     private final CountDownLatch countDownLatch;
+    private final Queue<KeeperException> exceptions;
 
-    private GetChildrenCallback(Map<String, Collection<String>> childMap, CountDownLatch countDownLatch) {
+    private GetChildrenCallback(Map<String, Collection<String>> childMap,
+                                CountDownLatch countDownLatch,
+                                Queue<KeeperException> exceptions) {
       this.childMap = childMap;
       this.countDownLatch = countDownLatch;
+      this.exceptions = exceptions;
     }
 
     @Override
