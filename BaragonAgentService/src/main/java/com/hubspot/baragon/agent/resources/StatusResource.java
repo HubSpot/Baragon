@@ -17,6 +17,7 @@ import com.hubspot.baragon.BaragonBaseModule;
 import com.hubspot.baragon.agent.BaragonAgentServiceModule;
 import com.hubspot.baragon.agent.config.LoadBalancerConfiguration;
 import com.hubspot.baragon.agent.lbs.LocalLbAdapter;
+import com.hubspot.baragon.auth.NoAuth;
 import com.hubspot.baragon.exceptions.InvalidConfigException;
 import com.hubspot.baragon.models.BaragonAgentStatus;
 
@@ -42,6 +43,7 @@ public class StatusResource {
   }
 
   @GET
+  @NoAuth
   public BaragonAgentStatus getStatus() {
     boolean validConfigs = true;
     Optional<String> errorMessage = Optional.absent();
