@@ -40,18 +40,7 @@ public class ZkParallelFetcher {
       curatorFramework.getData().inBackground(callback).forPath(path);
     }
 
-    if (!countDownLatch.await(TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
-      throw new TimeoutException("ZkChildrenFetcher timed out waiting for data");
-    }
-
-    for (KeeperException exception : exceptions) {
-      LOG.error(exception);
-    }
-
-    if (!exceptions.isEmpty()) {
-      throw exceptions.peek();
-    }
-
+    waitAndThrowExceptions(countDownLatch, exceptions);
     return dataMap;
   }
 
@@ -66,6 +55,11 @@ public class ZkParallelFetcher {
       curatorFramework.getChildren().inBackground(callback).forPath(path);
     }
 
+    waitAndThrowExceptions(countDownLatch, exceptions);
+    return childMap;
+  }
+
+  private void waitAndThrowExceptions(CountDownLatch countDownLatch, Queue<KeeperException> exceptions) throws Exception {
     if (!countDownLatch.await(TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
       throw new TimeoutException("ZkChildrenFetcher timed out waiting for data");
     }
@@ -77,8 +71,6 @@ public class ZkParallelFetcher {
     if (!exceptions.isEmpty()) {
       throw exceptions.peek();
     }
-
-    return childMap;
   }
 
   private class GetDataCallback<T> implements BackgroundCallback {
