@@ -10,6 +10,7 @@ import org.apache.curator.framework.api.PathAndBytesable;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -75,10 +76,18 @@ public abstract class AbstractDataStore {
 
   protected <T> Optional<T> readFromZk(String path, Class<T> klass) {
     try {
-      return Optional.of(objectMapper.readValue(curatorFramework.getData().forPath(path), klass));
+      return Optional.of(deserialize(curatorFramework.getData().forPath(path), klass));
     } catch (KeeperException.NoNodeException nne) {
       return Optional.absent();
     } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  protected <T> T deserialize(byte[] data, Class<T> klass) {
+    try {
+      return objectMapper.readValue(data, klass);
+    } catch (IOException e) {
       throw Throwables.propagate(e);
     }
   }
