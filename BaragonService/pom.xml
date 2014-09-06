@@ -16,29 +16,14 @@
 
 	<dependencies>
         <dependency>
-            <groupId>com.hubspot</groupId>
-            <artifactId>BaragonData</artifactId>
-            <version>0.1.1-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>jul-to-slf4j</artifactId>
-            <version>1.7.2</version>
-        </dependency>
-        <dependency>
             <groupId>com.hubspot.dropwizard</groupId>
             <artifactId>dropwizard-guice</artifactId>
             <version>${dropwizard.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.slf4j</groupId>
-                    <artifactId>log4j-over-slf4j</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.slf4j</groupId>
-                    <artifactId>jul-to-slf4j</artifactId>
-                </exclusion>
-            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>com.hubspot</groupId>
+            <artifactId>BaragonData</artifactId>
+            <version>0.1.1-SNAPSHOT</version>
         </dependency>
 	</dependencies>
 

@@ -4,8 +4,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Optional;
 import com.google.common.collect.Sets;
@@ -19,7 +19,7 @@ import com.hubspot.baragon.models.QueuedRequestId;
 import com.hubspot.baragon.service.BaragonServiceModule;
 
 public class BaragonRequestWorker implements Runnable {
-  private static final Log LOG = LogFactory.getLog(BaragonRequestWorker.class);
+  private static final Logger LOG = LoggerFactory.getLogger(BaragonRequestWorker.class);
 
   private final AgentManager agentManager;
   private final RequestManager requestManager;

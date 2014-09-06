@@ -1,21 +1,24 @@
 package com.hubspot.baragon.service.managed;
 
-import com.google.inject.Inject;
-import com.hubspot.baragon.service.BaragonServiceModule;
-import com.hubspot.baragon.service.worker.BaragonRequestWorker;
 import io.dropwizard.lifecycle.Managed;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.apache.curator.framework.recipes.leader.LeaderLatch;
-import org.apache.curator.framework.recipes.leader.LeaderLatchListener;
 
-import javax.inject.Named;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+import javax.inject.Named;
+
+import org.apache.curator.framework.recipes.leader.LeaderLatch;
+import org.apache.curator.framework.recipes.leader.LeaderLatchListener;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.inject.Inject;
+import com.hubspot.baragon.service.BaragonServiceModule;
+import com.hubspot.baragon.service.worker.BaragonRequestWorker;
+
 public class BaragonWorkerManaged implements Managed {
-  private static final Log LOG = LogFactory.getLog(BaragonWorkerManaged.class);
+  private static final Logger LOG = LoggerFactory.getLogger(BaragonWorkerManaged.class);
 
   private final ScheduledExecutorService executorService;
   private final BaragonRequestWorker worker;

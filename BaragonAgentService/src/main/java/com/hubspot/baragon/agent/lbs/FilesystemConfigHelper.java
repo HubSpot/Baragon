@@ -4,8 +4,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
@@ -21,7 +21,7 @@ import com.hubspot.baragon.models.ServiceContext;
 public class FilesystemConfigHelper {
   public static final String BACKUP_FILENAME_SUFFIX = ".old";
 
-  private static final Log LOG = LogFactory.getLog(FilesystemConfigHelper.class);
+  private static final Logger LOG = LoggerFactory.getLogger(FilesystemConfigHelper.class);
 
   private final LbConfigGenerator configGenerator;
   private final LocalLbAdapter adapter;
