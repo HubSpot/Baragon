@@ -19,11 +19,17 @@
             <groupId>com.hubspot</groupId>
             <artifactId>BaragonData</artifactId>
             <version>0.1.1-SNAPSHOT</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>jcl-over-slf4j</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
-            <artifactId>jul-to-slf4j</artifactId>
-            <version>1.7.2</version>
+            <artifactId>jcl-over-slf4j</artifactId>
+            <version>1.7.6</version>
         </dependency>
         <dependency>
             <groupId>com.hubspot.dropwizard</groupId>
