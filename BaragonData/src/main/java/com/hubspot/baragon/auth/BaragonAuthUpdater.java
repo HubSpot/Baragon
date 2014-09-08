@@ -5,13 +5,13 @@ import io.dropwizard.lifecycle.Managed;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.cache.PathChildrenCache;
 import org.apache.curator.framework.recipes.cache.PathChildrenCache.StartMode;
 import org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent;
 import org.apache.curator.framework.recipes.cache.PathChildrenCacheListener;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.io.Closeables;
 import com.google.inject.Inject;
@@ -21,7 +21,7 @@ import com.hubspot.baragon.data.BaragonAuthDatastore;
 import com.hubspot.baragon.models.BaragonAuthKey;
 
 public class BaragonAuthUpdater implements Managed, PathChildrenCacheListener {
-  private static final Log LOG = LogFactory.getLog(BaragonAuthUpdater.class);
+  private static final Logger LOG = LoggerFactory.getLogger(BaragonAuthUpdater.class);
 
   private final BaragonAuthDatastore datastore;
   private final PathChildrenCache pathChildrenCache;

@@ -16,8 +16,8 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
@@ -37,7 +37,7 @@ import com.hubspot.baragon.models.UpstreamInfo;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class RequestResource {
-  private static final Log LOG = LogFactory.getLog(RequestResource.class);
+  private static final Logger LOG = LoggerFactory.getLogger(RequestResource.class);
 
   private final FilesystemConfigHelper configHelper;
   private final BaragonStateDatastore stateDatastore;

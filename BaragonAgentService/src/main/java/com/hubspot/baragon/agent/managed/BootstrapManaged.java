@@ -6,9 +6,9 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.curator.framework.recipes.leader.LeaderLatch;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Optional;
@@ -24,7 +24,7 @@ import com.hubspot.baragon.models.ServiceContext;
 import com.hubspot.baragon.models.UpstreamInfo;
 
 public class BootstrapManaged implements Managed {
-  private static final Log LOG = LogFactory.getLog(BootstrapManaged.class);
+  private static final Logger LOG = LoggerFactory.getLogger(BootstrapManaged.class);
   
   private final LoadBalancerConfiguration loadBalancerConfiguration;
   private final FilesystemConfigHelper configHelper;

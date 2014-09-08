@@ -1,15 +1,16 @@
 package com.hubspot.baragon.agent.healthcheck;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.google.inject.Inject;
 import com.hubspot.baragon.agent.lbs.LocalLbAdapter;
 import com.hubspot.dropwizard.guice.InjectableHealthCheck;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 
 public class LoadBalancerHealthcheck extends InjectableHealthCheck {
   public static final String NAME = "loadBalancerConfigs";
 
-  private static final Log LOG = LogFactory.getLog(LoadBalancerHealthcheck.class);
+  private static final Logger LOG = LoggerFactory.getLogger(LoadBalancerHealthcheck.class);
 
   private final LocalLbAdapter adapter;
   

@@ -4,8 +4,8 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Optional;
 import com.google.common.base.Strings;
@@ -30,7 +30,7 @@ import com.ning.http.client.Response;
 
 @Singleton
 public class AgentManager {
-  private static final Log LOG = LogFactory.getLog(AgentManager.class);
+  private static final Logger LOG = LoggerFactory.getLogger(AgentManager.class);
 
   private final BaragonLoadBalancerDatastore loadBalancerDatastore;
   private final BaragonStateDatastore stateDatastore;

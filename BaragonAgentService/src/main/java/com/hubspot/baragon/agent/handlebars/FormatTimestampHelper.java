@@ -1,16 +1,17 @@
 package com.hubspot.baragon.agent.handlebars;
 
-import com.github.jknack.handlebars.Helper;
-import com.github.jknack.handlebars.Options;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.github.jknack.handlebars.Helper;
+import com.github.jknack.handlebars.Options;
+
 public class FormatTimestampHelper implements Helper<Number> {
-  private static final Log LOG = LogFactory.getLog(FormatTimestampHelper.class);
+  private static final Logger LOG = LoggerFactory.getLogger(FormatTimestampHelper.class);
 
   private final String defaultFormatString;
 
