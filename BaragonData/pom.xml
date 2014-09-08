@@ -16,6 +16,13 @@
             <artifactId>BaragonCore</artifactId>
             <version>0.1.1-SNAPSHOT</version>
         </dependency>
+
+        <dependency>
+            <groupId>io.dropwizard</groupId>
+            <artifactId>dropwizard-core</artifactId>
+            <version>${dropwizard.version}</version>
+        </dependency>
+
         <dependency>
             <groupId>com.google.inject</groupId>
             <artifactId>guice</artifactId>
@@ -57,12 +64,6 @@
             <groupId>com.ning</groupId>
             <artifactId>async-http-client</artifactId>
             <version>${ning.async.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>io.dropwizard</groupId>
-            <artifactId>dropwizard-core</artifactId>
-            <version>${dropwizard.version}</version>
         </dependency>
 
         <dependency>
