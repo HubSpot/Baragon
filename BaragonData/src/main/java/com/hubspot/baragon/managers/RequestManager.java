@@ -15,7 +15,6 @@ import com.hubspot.baragon.data.BaragonRequestDatastore;
 import com.hubspot.baragon.data.BaragonStateDatastore;
 import com.hubspot.baragon.exceptions.BasePathConflictException;
 import com.hubspot.baragon.exceptions.MissingLoadBalancerGroupException;
-import com.hubspot.baragon.models.AgentRequestType;
 import com.hubspot.baragon.models.AgentResponse;
 import com.hubspot.baragon.models.BaragonRequest;
 import com.hubspot.baragon.models.BaragonResponse;
@@ -139,7 +138,7 @@ public class RequestManager {
     return Optional.of(InternalRequestStates.CANCELLED_SEND_REVERT_REQUESTS);
   }
 
-  public void commitRequest(BaragonRequest request) {
+  public synchronized void commitRequest(BaragonRequest request) {
     final Optional<BaragonService> maybeOriginalService = stateDatastore.getService(request.getLoadBalancerService().getServiceId());
 
     // if we've changed the base path, clear out the old ones
@@ -152,5 +151,6 @@ public class RequestManager {
     stateDatastore.addService(request.getLoadBalancerService());
     stateDatastore.removeUpstreams(request.getLoadBalancerService().getServiceId(), request.getRemoveUpstreams());
     stateDatastore.addUpstreams(request.getLoadBalancerRequestId(), request.getLoadBalancerService().getServiceId(), request.getAddUpstreams());
+    stateDatastore.updateStateNode();
   }
 }
