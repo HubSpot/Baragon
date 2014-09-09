@@ -21,6 +21,7 @@ import com.hubspot.baragon.models.AgentRequestType;
 import com.hubspot.baragon.models.AgentRequestsStatus;
 import com.hubspot.baragon.models.AgentResponse;
 import com.hubspot.baragon.models.AgentResponseId;
+import com.hubspot.baragon.models.BaragonAgentMetadata;
 import com.hubspot.baragon.models.BaragonRequest;
 import com.hubspot.baragon.models.BaragonService;
 import com.ning.http.client.AsyncCompletionHandler;
@@ -89,7 +90,9 @@ public class AgentManager {
 
     final String requestId = request.getLoadBalancerRequestId();
 
-    for (final String baseUrl : loadBalancerDatastore.getAllBaseUrls(loadBalancerGroupsToUpdate)) {
+    for (final BaragonAgentMetadata agentMetadata : loadBalancerDatastore.getAgentMetadata(loadBalancerGroupsToUpdate)) {
+      final String baseUrl = agentMetadata.getBaseAgentUri();
+
       // wait until pending request has completed.
       if (agentResponseDatastore.hasPendingRequest(requestId, baseUrl)) {
         continue;
@@ -133,11 +136,12 @@ public class AgentManager {
   }
 
   public AgentRequestsStatus getRequestsStatus(BaragonRequest request, AgentRequestType requestType) {
-    final Collection<String> baseUrls = loadBalancerDatastore.getAllBaseUrls(request.getLoadBalancerService().getLoadBalancerGroups());
+    final Collection<BaragonAgentMetadata> agentMetadatas = loadBalancerDatastore.getAgentMetadata(request.getLoadBalancerService().getLoadBalancerGroups());
 
     boolean success = true;
 
-    for (String baseUrl : baseUrls) {
+    for (BaragonAgentMetadata agentMetadata : agentMetadatas) {
+      final String baseUrl = agentMetadata.getBaseAgentUri();
       final Optional<AgentResponseId> maybeAgentResponseId = agentResponseDatastore.getLastAgentResponseId(request.getLoadBalancerRequestId(), requestType, baseUrl);
 
       if (!maybeAgentResponseId.isPresent() || agentResponseDatastore.hasPendingRequest(request.getLoadBalancerRequestId(), baseUrl)) {

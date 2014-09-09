@@ -28,11 +28,13 @@ import com.hubspot.baragon.agent.models.LbConfigTemplate;
 import com.hubspot.baragon.config.AuthConfiguration;
 import com.hubspot.baragon.config.ZooKeeperConfiguration;
 import com.hubspot.baragon.data.BaragonLoadBalancerDatastore;
+import com.hubspot.baragon.models.BaragonAgentMetadata;
 import com.hubspot.baragon.utils.JavaUtils;
 
 public class BaragonAgentServiceModule extends AbstractModule {
   public static final String BARAGON_AGENT_HTTP_PORT = "baragon.agent.http.port";
   public static final String BARAGON_AGENT_HOSTNAME = "baragon.agent.hostname";
+  public static final String BARAGON_AGENT_DOMAIN = "baragon.agent.domain";
   public static final String AGENT_LEADER_LATCH = "baragon.agent.leaderLatch";
   public static final String AGENT_LOCK = "baragon.agent.lock";
   public static final String AGENT_TEMPLATES = "baragon.agent.templates";
@@ -107,16 +109,23 @@ public class BaragonAgentServiceModule extends AbstractModule {
   }
 
   @Provides
+  @Named(BARAGON_AGENT_DOMAIN)
+  public Optional<String> providesAgentDomain(LoadBalancerConfiguration loadBalancerConfiguration) {
+    return loadBalancerConfiguration.getDomain();
+  }
+
+  @Provides
   @Singleton
   @Named(AGENT_LEADER_LATCH)
   public LeaderLatch providesAgentLeaderLatch(BaragonLoadBalancerDatastore loadBalancerDatastore,
                                               BaragonAgentConfiguration config,
                                               @Named(BARAGON_AGENT_HTTP_PORT) int httpPort,
-                                              @Named(BARAGON_AGENT_HOSTNAME) String hostname) {
+                                              @Named(BARAGON_AGENT_HOSTNAME) String hostname,
+                                              @Named(BARAGON_AGENT_DOMAIN) Optional<String> domain) {
     final String appRoot = ((SimpleServerFactory)config.getServerFactory()).getApplicationContextPath();
-    final String baseUri = String.format(config.getBaseUrlTemplate(), hostname, httpPort, appRoot);
+    final String baseAgentUri = String.format(config.getBaseUrlTemplate(), hostname, httpPort, appRoot);
 
-    return loadBalancerDatastore.createLeaderLatch(config.getLoadBalancerConfiguration().getName(), baseUri);
+    return loadBalancerDatastore.createLeaderLatch(config.getLoadBalancerConfiguration().getName(), new BaragonAgentMetadata(baseAgentUri, domain));
   }
 
   @Provides

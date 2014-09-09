@@ -1,20 +1,24 @@
 package com.hubspot.baragon.data;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Set;
+
+import org.apache.curator.framework.CuratorFramework;
+import org.apache.curator.framework.recipes.leader.LeaderLatch;
+import org.apache.zookeeper.KeeperException;
+
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.base.Charsets;
 import com.google.common.base.Optional;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import org.apache.curator.framework.CuratorFramework;
-import org.apache.curator.framework.recipes.leader.LeaderLatch;
-import org.apache.zookeeper.KeeperException;
-
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Set;
+import com.hubspot.baragon.models.BaragonAgentMetadata;
 
 @Singleton
 public class BaragonLoadBalancerDatastore extends AbstractDataStore {
@@ -30,44 +34,50 @@ public class BaragonLoadBalancerDatastore extends AbstractDataStore {
     super(curatorFramework, objectMapper);
   }
 
-  public LeaderLatch createLeaderLatch(String clusterName, String hostname) {
-    return new LeaderLatch(curatorFramework, String.format(LOAD_BALANCER_GROUP_HOSTS_FORMAT, clusterName), hostname);
+  public LeaderLatch createLeaderLatch(String clusterName, BaragonAgentMetadata agentMetadata) {
+    try {
+      return new LeaderLatch(curatorFramework, String.format(LOAD_BALANCER_GROUP_HOSTS_FORMAT, clusterName), objectMapper.writeValueAsString(agentMetadata));
+    } catch (JsonProcessingException e) {
+      throw Throwables.propagate(e);
+    }
   }
 
   public Collection<String> getClusters() {
     return getChildren(LOAD_BALANCER_GROUPS_FORMAT);
   }
 
-  public Collection<String> getBaseUrls(String clusterName) {
+  public Collection<BaragonAgentMetadata> getAgentMetadata(String clusterName) {
     final Collection<String> nodes = getChildren(String.format(LOAD_BALANCER_GROUP_HOSTS_FORMAT, clusterName));
 
     if (nodes.isEmpty()) {
       return Collections.emptyList();
     }
 
-    final Collection<String> baseUrls = Lists.newArrayListWithCapacity(nodes.size());
+    final Collection<BaragonAgentMetadata> metadata = Lists.newArrayListWithCapacity(nodes.size());
 
     for (String node : nodes) {
       try {
-        baseUrls.add(new String(curatorFramework.getData().forPath(String.format(LOAD_BALANCER_GROUP_HOST_FORMAT, clusterName, node)), Charsets.UTF_8));
+        metadata.add(objectMapper.readValue(curatorFramework.getData().forPath(String.format(LOAD_BALANCER_GROUP_HOST_FORMAT, clusterName, node)), BaragonAgentMetadata.class));
       } catch (KeeperException.NoNodeException nne) {
         // uhh, didnt see that...
+      } catch (JsonParseException | JsonMappingException je) {
+        // TODO: log
       } catch (Exception e) {
         throw Throwables.propagate(e);
       }
     }
 
-    return baseUrls;
+    return metadata;
   }
 
-  public Collection<String> getAllBaseUrls(Collection<String> clusterNames) {
-    final Set<String> baseUrls = Sets.newHashSet();
+  public Collection<BaragonAgentMetadata> getAgentMetadata(Collection<String> clusterNames) {
+    final Set<BaragonAgentMetadata> metadata = Sets.newHashSet();
 
     for (String clusterName : clusterNames) {
-      baseUrls.addAll(getBaseUrls(clusterName));
+      metadata.addAll(getAgentMetadata(clusterName));
     }
 
-    return baseUrls;
+    return metadata;
   }
 
   public Optional<String> getBasePathServiceId(String loadBalancerGroup, String basePath) {
