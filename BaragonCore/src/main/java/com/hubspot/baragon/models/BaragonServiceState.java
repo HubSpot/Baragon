@@ -7,11 +7,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class BaragonServiceState {
   private final BaragonService service;
-  private final Collection<String> upstreams;
+  private final Collection<UpstreamInfo> upstreams;
 
   @JsonCreator
   public BaragonServiceState(@JsonProperty("service") BaragonService service,
-                             @JsonProperty("upstreams") Collection<String> upstreams) {
+                             @JsonProperty("upstreams") Collection<UpstreamInfo> upstreams) {
     this.service = service;
     this.upstreams = upstreams;
   }
@@ -20,7 +20,7 @@ public class BaragonServiceState {
     return service;
   }
 
-  public Collection<String> getUpstreams() {
+  public Collection<UpstreamInfo> getUpstreams() {
     return upstreams;
   }
 

@@ -30,8 +30,8 @@ public class StateResource {
   }
 
   @GET
-  public Collection<String> getServices() {
-    return stateDatastore.getServices();
+  public Collection<BaragonServiceState> getServices() {
+    return stateDatastore.getGlobalState();
   }
 
   @GET
@@ -43,7 +43,7 @@ public class StateResource {
       return Optional.absent();
     }
 
-    return Optional.of(new BaragonServiceState(maybeServiceInfo.get(), stateDatastore.getUpstreams(serviceId)));
+    return Optional.of(new BaragonServiceState(maybeServiceInfo.get(), stateDatastore.getUpstreamsMap(serviceId).values()));
   }
 
   @DELETE
@@ -60,7 +60,7 @@ public class StateResource {
       loadBalancerDatastore.clearBasePath(loadBalancerGroup, maybeServiceInfo.get().getServiceBasePath());
     }
 
-    return Optional.of(new BaragonServiceState(maybeServiceInfo.get(), stateDatastore.getUpstreams(serviceId)));
+    return Optional.of(new BaragonServiceState(maybeServiceInfo.get(), stateDatastore.getUpstreamsMap(serviceId).values()));
   }
 
   @GET
