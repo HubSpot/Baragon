@@ -1,14 +1,23 @@
 package com.hubspot.baragon.service.resources;
 
+import java.util.Collection;
+
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.MediaType;
+
 import com.google.common.base.Optional;
+import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import com.hubspot.baragon.data.BaragonLoadBalancerDatastore;
 import com.hubspot.baragon.data.BaragonStateDatastore;
+import com.hubspot.baragon.models.BaragonAgentMetadata;
 import com.hubspot.baragon.models.BaragonService;
-
-import javax.ws.rs.*;
-import javax.ws.rs.core.MediaType;
-import java.util.Collection;
 
 @Path("/load-balancer")
 @Produces(MediaType.APPLICATION_JSON)
@@ -31,8 +40,22 @@ public class LoadBalancerResource {
   
   @GET
   @Path("/{clusterName}/hosts")
+  @Deprecated
   public Collection<String> getHosts(@PathParam("clusterName") String clusterName) {
-    return loadBalancerDatastore.getBaseUrls(clusterName);
+    final Collection<BaragonAgentMetadata> agentMetadatas = loadBalancerDatastore.getAgentMetadata(clusterName);
+    final Collection<String> baseUris = Lists.newArrayListWithCapacity(agentMetadatas.size());
+
+    for (BaragonAgentMetadata agentMetadata : agentMetadatas) {
+      baseUris.add(agentMetadata.getBaseAgentUri());
+    }
+
+    return baseUris;
+  }
+
+  @GET
+  @Path("/{clusterName}/agents")
+  public Collection<BaragonAgentMetadata> getAgentMetadata(@PathParam("clusterName") String clusterName) {
+    return loadBalancerDatastore.getAgentMetadata(clusterName);
   }
 
   @GET

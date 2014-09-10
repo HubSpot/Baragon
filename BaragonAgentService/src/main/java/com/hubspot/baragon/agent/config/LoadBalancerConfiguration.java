@@ -3,10 +3,16 @@ package com.hubspot.baragon.agent.config;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 
+import com.google.common.base.Optional;
+import com.google.common.base.Strings;
+
 public class LoadBalancerConfiguration {
+  public static final int DEFAULT_COMMAND_TIMEOUT_MS = 10000;
 
   @NotNull
   private String name;
+
+  private String domain;
 
   @NotNull
   private String rootPath;
@@ -18,7 +24,7 @@ public class LoadBalancerConfiguration {
   private String reloadConfigCommand;
 
   @Min(0)
-  private int commandTimeoutMs = 10000;
+  private int commandTimeoutMs = DEFAULT_COMMAND_TIMEOUT_MS;
 
   public String getName() {
     return name;
@@ -58,5 +64,13 @@ public class LoadBalancerConfiguration {
 
   public void setCommandTimeoutMs(int commandTimeoutMs) {
     this.commandTimeoutMs = commandTimeoutMs;
+  }
+
+  public Optional<String> getDomain() {
+    return Optional.fromNullable(Strings.emptyToNull(domain));
+  }
+
+  public void setDomain(String domain) {
+    this.domain = domain;
   }
 }
