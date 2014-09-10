@@ -7,11 +7,14 @@ import java.util.Set;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.leader.LeaderLatch;
 import org.apache.zookeeper.KeeperException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Charsets;
 import com.google.common.base.Optional;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
@@ -22,6 +25,8 @@ import com.hubspot.baragon.models.BaragonAgentMetadata;
 
 @Singleton
 public class BaragonLoadBalancerDatastore extends AbstractDataStore {
+  private static final Logger LOG = LoggerFactory.getLogger(BaragonLoadBalancerDatastore.class);
+
   public static final String LOAD_BALANCER_GROUPS_FORMAT = "/load-balancer";
   public static final String LOAD_BALANCER_GROUP_HOSTS_FORMAT = LOAD_BALANCER_GROUPS_FORMAT + "/%s/hosts";
   public static final String LOAD_BALANCER_GROUP_HOST_FORMAT = LOAD_BALANCER_GROUP_HOSTS_FORMAT + "/%s";
@@ -57,11 +62,16 @@ public class BaragonLoadBalancerDatastore extends AbstractDataStore {
 
     for (String node : nodes) {
       try {
-        metadata.add(objectMapper.readValue(curatorFramework.getData().forPath(String.format(LOAD_BALANCER_GROUP_HOST_FORMAT, clusterName, node)), BaragonAgentMetadata.class));
+        final String value = new String(curatorFramework.getData().forPath(String.format(LOAD_BALANCER_GROUP_HOST_FORMAT, clusterName, node)), Charsets.UTF_8);
+        if (value.startsWith("http://")) {
+          metadata.add(new BaragonAgentMetadata(value, Optional.<String>absent()));
+        } else {
+          metadata.add(objectMapper.readValue(value, BaragonAgentMetadata.class));
+        }
       } catch (KeeperException.NoNodeException nne) {
         // uhh, didnt see that...
       } catch (JsonParseException | JsonMappingException je) {
-        // TODO: log
+        LOG.warn(String.format("Exception deserializing %s", String.format(LOAD_BALANCER_GROUP_HOST_FORMAT, clusterName, node)), je);
       } catch (Exception e) {
         throw Throwables.propagate(e);
       }
