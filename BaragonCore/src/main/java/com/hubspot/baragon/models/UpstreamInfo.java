@@ -1,14 +1,22 @@
 package com.hubspot.baragon.models;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.base.Optional;
 
+@JsonIgnoreProperties( ignoreUnknown = true )
 public class UpstreamInfo {
   private final String upstream;
-  private final String requestId;
+  private final Optional<String> requestId;
 
   @JsonCreator
-  public UpstreamInfo(@JsonProperty("upstream") String upstream, @JsonProperty("requestId") String requestId) {
+  public static UpstreamInfo fromString(String value) {
+    return new UpstreamInfo(value, Optional.<String>absent());
+  }
+
+  @JsonCreator
+  public UpstreamInfo(@JsonProperty("upstream") String upstream, @JsonProperty("requestId") Optional<String> requestId) {
     this.upstream = upstream;
     this.requestId = requestId;
   }
@@ -17,7 +25,7 @@ public class UpstreamInfo {
     return upstream;
   }
 
-  public String getRequestId() {
+  public Optional<String> getRequestId() {
     return requestId;
   }
 

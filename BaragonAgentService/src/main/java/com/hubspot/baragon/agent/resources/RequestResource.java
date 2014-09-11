@@ -102,7 +102,7 @@ public class RequestResource {
         }
 
         for (String addUpstream : request.getAddUpstreams()) {
-          upstreamsMap.put(addUpstream, new UpstreamInfo(addUpstream, request.getLoadBalancerRequestId()));
+          upstreamsMap.put(addUpstream, new UpstreamInfo(addUpstream, Optional.of(request.getLoadBalancerRequestId())));
         }
 
         update = new ServiceContext(request.getLoadBalancerService(), upstreamsMap.values(), System.currentTimeMillis(), true);

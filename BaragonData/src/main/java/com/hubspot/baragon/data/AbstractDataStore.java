@@ -1,19 +1,21 @@
 package com.hubspot.baragon.data;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.base.Charsets;
-import com.google.common.base.Optional;
-import com.google.common.base.Throwables;
-import com.google.common.io.BaseEncoding;
+import java.io.IOException;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.api.PathAndBytesable;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 
-import java.io.IOException;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Charsets;
+import com.google.common.base.Optional;
+import com.google.common.base.Throwables;
+import com.google.common.io.BaseEncoding;
 
 // because curator is a piece of shit
 public abstract class AbstractDataStore {
@@ -84,9 +86,27 @@ public abstract class AbstractDataStore {
     }
   }
 
+  protected <T> Optional<T> readFromZk(String path, TypeReference<T> typeReference) {
+    try {
+      return Optional.of(deserialize(curatorFramework.getData().forPath(path), typeReference));
+    } catch (KeeperException.NoNodeException nne) {
+      return Optional.absent();
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
   protected <T> T deserialize(byte[] data, Class<T> klass) {
     try {
       return objectMapper.readValue(data, klass);
+    } catch (IOException e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  protected <T> T deserialize(byte[] data, TypeReference<T> typeReference) {
+    try {
+      return objectMapper.readValue(data, typeReference);
     } catch (IOException e) {
       throw Throwables.propagate(e);
     }

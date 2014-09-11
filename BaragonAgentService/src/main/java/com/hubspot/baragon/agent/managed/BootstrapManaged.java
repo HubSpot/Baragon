@@ -3,15 +3,12 @@ package com.hubspot.baragon.agent.managed;
 import io.dropwizard.lifecycle.Managed;
 
 import java.util.Collection;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.curator.framework.recipes.leader.LeaderLatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.base.Joiner;
-import com.google.common.base.Optional;
 import com.google.common.base.Stopwatch;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
@@ -19,9 +16,9 @@ import com.hubspot.baragon.agent.BaragonAgentServiceModule;
 import com.hubspot.baragon.agent.config.LoadBalancerConfiguration;
 import com.hubspot.baragon.agent.lbs.FilesystemConfigHelper;
 import com.hubspot.baragon.data.BaragonStateDatastore;
-import com.hubspot.baragon.models.BaragonService;
+import com.hubspot.baragon.models.BaragonServiceState;
 import com.hubspot.baragon.models.ServiceContext;
-import com.hubspot.baragon.models.UpstreamInfo;
+import com.hubspot.baragon.utils.JavaUtils;
 
 public class BootstrapManaged implements Managed {
   private static final Logger LOG = LoggerFactory.getLogger(BootstrapManaged.class);
@@ -43,38 +40,29 @@ public class BootstrapManaged implements Managed {
   }
 
   private void applyCurrentConfigs() {
-    final long now = System.currentTimeMillis();
     LOG.info("Loading current state of the world from zookeeper...");
 
-    final Stopwatch stopwatch = new Stopwatch();
+    final Stopwatch stopwatch = new Stopwatch().start();
+    final long now = System.currentTimeMillis();
 
-    stopwatch.start();
     final Collection<String> services = stateDatastore.getServices();
+    LOG.info("Going to apply {} services...", services.size());
 
-    for (String serviceId : services) {
-      final Optional<BaragonService> maybeServiceInfo = stateDatastore.getService(serviceId);
-      if (!maybeServiceInfo.isPresent()) {
-        continue;  // doubt this will ever happen
-      }
-
-      final BaragonService service = maybeServiceInfo.get();
-      final Map<String, UpstreamInfo> upstreamsMap = stateDatastore.getUpstreamsMap(serviceId);
-
-      if (service.getLoadBalancerGroups() == null || !service.getLoadBalancerGroups().contains(loadBalancerConfiguration.getName())) {
-        LOG.info(String.format("   Skipping %s, not applicable to this LB cluster", serviceId));
+    for (BaragonServiceState serviceState : stateDatastore.getGlobalState()) {
+      if (serviceState.getService().getLoadBalancerGroups() == null || !serviceState.getService().getLoadBalancerGroups().contains(loadBalancerConfiguration.getName())) {
         continue;
       }
 
-      LOG.info(String.format("    Applying %s: [%s]", serviceId, Joiner.on(", ").join(upstreamsMap.keySet())));
+      LOG.info("    Applying {}: [{}]", serviceState.getService(), JavaUtils.COMMA_JOINER.join(serviceState.getUpstreams()));
 
       try {
-        configHelper.apply(new ServiceContext(service, upstreamsMap.values(), now, true), false);
+        configHelper.apply(new ServiceContext(serviceState.getService(), serviceState.getUpstreams(), now, true), false);
       } catch (Exception e) {
-        LOG.error(String.format("Caught exception while applying %s", serviceId), e);
+        LOG.error(String.format("Caught exception while applying %s", serviceState.getService().getServiceId()), e);
       }
     }
 
-    LOG.info(String.format("Applied %d services in %sms", services.size(), stopwatch.elapsed(TimeUnit.MILLISECONDS)));
+    LOG.info(String.format("Applied {} services in {}ms", services.size(), stopwatch.elapsed(TimeUnit.MILLISECONDS)));
   }
 
   @Override
