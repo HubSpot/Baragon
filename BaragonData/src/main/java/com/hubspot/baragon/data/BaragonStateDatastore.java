@@ -3,9 +3,11 @@ package com.hubspot.baragon.data;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import com.google.common.collect.Lists;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.utils.ZKPaths;
 import org.slf4j.Logger;
@@ -118,28 +120,66 @@ public class BaragonStateDatastore extends AbstractDataStore {
     }
 
     final Map<String, BaragonService> serviceMap = zkFetcher.fetchDataInParallel(services, new BaragonServiceDeserializer());
-    final Map<String, Collection<String>> upstreamMap = zkFetcher.fetchChildrenInParallel(services);
-
-    final UpstreamInfoDeserializer upstreamInfoDeserializer = new UpstreamInfoDeserializer();
+    final Map<String, Collection<UpstreamInfo>> serviceToUpstreamInfoMap = fetchServiceToUpstreamInfoMap(services);
 
     final Collection<BaragonServiceState> serviceStates = new ArrayList<>(serviceMap.size());
 
     for (final Entry<String, BaragonService> serviceEntry : serviceMap.entrySet()) {
       BaragonService service = serviceEntry.getValue();
-      Collection<String> upstreams = upstreamMap.get(serviceEntry.getKey());
-
-      final Collection<String> upstreamPaths = new ArrayList<>(upstreams.size());
-
-      for (String upstream : upstreams) {
-        upstreamPaths.add(ZKPaths.makePath(serviceEntry.getKey(), upstream));
-      }
-
+      Collection<UpstreamInfo> upstreams = serviceToUpstreamInfoMap.get(serviceEntry.getKey());
       Preconditions.checkNotNull(upstreams, String.format("Invalid state for service '%s'", serviceEntry.getKey()));
 
-      serviceStates.add(new BaragonServiceState(service, zkFetcher.fetchDataInParallel(upstreamPaths, upstreamInfoDeserializer).values()));
+      serviceStates.add(new BaragonServiceState(service, upstreams));
     }
 
     return serviceStates;
+  }
+
+  private Map<String, Collection<UpstreamInfo>> fetchServiceToUpstreamInfoMap(Collection<String> services) throws Exception {
+    Map<String, String> upstreamToService = fetchUpstreamToServiceMap(services);
+
+    Collection<String> upstreamPaths = new ArrayList<>(upstreamToService.size());
+    for (Entry<String, String> entry : upstreamToService.entrySet()) {
+      String service = entry.getValue();
+      String servicePath = ZKPaths.makePath(SERVICES_FORMAT, service);
+
+      String upstream = entry.getKey();
+      String upstreamPath = ZKPaths.makePath(servicePath, upstream);
+
+      upstreamPaths.add(upstreamPath);
+    }
+
+    Map<String, UpstreamInfo> upstreamToInfo = zkFetcher.fetchDataInParallel(upstreamPaths, new UpstreamInfoDeserializer());
+
+    Map<String, Collection<UpstreamInfo>> serviceToUpstreamInfo = new HashMap<>(services.size());
+    for (Entry<String, UpstreamInfo> entry : upstreamToInfo.entrySet()) {
+      String upstream = entry.getKey();
+      String service = upstreamToService.get(upstream);
+      Preconditions.checkNotNull(service, String.format("Invalid state for upstream '%s'", upstream));
+
+      if (serviceToUpstreamInfo.containsKey(service)) {
+        serviceToUpstreamInfo.get(service).add(entry.getValue());
+      } else {
+        serviceToUpstreamInfo.put(service, Lists.newArrayList(entry.getValue()));
+      }
+    }
+
+    return serviceToUpstreamInfo;
+  }
+
+  private Map<String, String> fetchUpstreamToServiceMap(Collection<String> services) throws Exception {
+    Map<String, Collection<String>> serviceToUpstreams = zkFetcher.fetchChildrenInParallel(services);
+
+    Map<String, String> upstreamToService = new HashMap<>();
+    for (Entry<String, Collection<String>> entry : serviceToUpstreams.entrySet()) {
+      String service = entry.getKey();
+
+      for (String upstream : entry.getValue()) {
+        upstreamToService.put(upstream, service);
+      }
+    }
+
+    return upstreamToService;
   }
 
   private class BaragonServiceDeserializer implements Function<byte[], BaragonService> {
