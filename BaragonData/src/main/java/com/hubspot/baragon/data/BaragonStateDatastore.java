@@ -7,7 +7,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import com.google.common.collect.Lists;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.utils.ZKPaths;
 import org.slf4j.Logger;
@@ -16,9 +15,11 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Function;
+import com.google.common.base.Objects;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -127,9 +128,8 @@ public class BaragonStateDatastore extends AbstractDataStore {
     for (final Entry<String, BaragonService> serviceEntry : serviceMap.entrySet()) {
       BaragonService service = serviceEntry.getValue();
       Collection<UpstreamInfo> upstreams = serviceToUpstreamInfoMap.get(serviceEntry.getKey());
-      Preconditions.checkNotNull(upstreams, String.format("Invalid state for service '%s'", serviceEntry.getKey()));
 
-      serviceStates.add(new BaragonServiceState(service, upstreams));
+      serviceStates.add(new BaragonServiceState(service, Objects.firstNonNull(upstreams, Collections.<UpstreamInfo>emptyList())));
     }
 
     return serviceStates;
