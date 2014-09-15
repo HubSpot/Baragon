@@ -3,7 +3,6 @@ package com.hubspot.baragon.models;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.common.base.Objects;
 import com.google.common.base.Optional;
 
 import javax.validation.Valid;
@@ -37,8 +36,8 @@ public class BaragonRequest {
                         @JsonProperty("removeUpstreamInfo") List<UpstreamInfo> removeUpstreamInfo) {
     this.loadBalancerRequestId = loadBalancerRequestId;
     this.loadBalancerService = loadBalancerService;
-    this.addUpstreamInfo = Objects.firstNonNull(addUpstreamInfo, toUpstreamInfo(addUpstreams, loadBalancerRequestId));
-    this.removeUpstreamInfo = Objects.firstNonNull(removeUpstreamInfo, toUpstreamInfo(removeUpstreams, loadBalancerRequestId));
+    this.addUpstreamInfo = addUpstreamInfo == null ? toUpstreamInfo(addUpstreams, loadBalancerRequestId) : addUpstreamInfo;
+    this.removeUpstreamInfo = removeUpstreamInfo == null ? toUpstreamInfo(removeUpstreams, loadBalancerRequestId) : removeUpstreamInfo;
   }
 
   public String getLoadBalancerRequestId() {
@@ -58,12 +57,13 @@ public class BaragonRequest {
   }
 
   private List<UpstreamInfo> toUpstreamInfo(List<String> upstreams, String loadBalancerRequestId) {
-    List<UpstreamInfo> upstreamInfo = new ArrayList<>();
+    if (upstreams == null) {
+      return null;
+    }
 
-    if (upstreams != null) {
-      for (String upstream : upstreams) {
-        upstreamInfo.add(new UpstreamInfo(upstream, Optional.fromNullable(loadBalancerRequestId), Optional.<String>absent()));
-      }
+    List<UpstreamInfo> upstreamInfo = new ArrayList<>();
+    for (String upstream : upstreams) {
+      upstreamInfo.add(new UpstreamInfo(upstream, Optional.fromNullable(loadBalancerRequestId), Optional.<String>absent()));
     }
 
     return upstreamInfo;
