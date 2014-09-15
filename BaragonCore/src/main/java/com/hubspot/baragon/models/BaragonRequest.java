@@ -3,10 +3,13 @@ package com.hubspot.baragon.models;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.base.Objects;
+import com.google.common.base.Optional;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
+import java.util.ArrayList;
 import java.util.List;
 
 @JsonIgnoreProperties( ignoreUnknown = true )
@@ -20,20 +23,22 @@ public class BaragonRequest {
   private final BaragonService loadBalancerService;
 
   @NotNull
-  private final List<String> addUpstreams;
+  private final List<UpstreamInfo> addUpstreamInfo;
 
   @NotNull
-  private final List<String> removeUpstreams;
+  private final List<UpstreamInfo> removeUpstreamInfo;
 
   @JsonCreator
   public BaragonRequest(@JsonProperty("loadBalancerRequestId") String loadBalancerRequestId,
                         @JsonProperty("loadBalancerService") BaragonService loadBalancerService,
                         @JsonProperty("addUpstreams") List<String> addUpstreams,
-                        @JsonProperty("removeUpstreams") List<String> removeUpstreams) {
+                        @JsonProperty("removeUpstreams") List<String> removeUpstreams,
+                        @JsonProperty("addUpstreamInfo") List<UpstreamInfo> addUpstreamInfo,
+                        @JsonProperty("removeUpstreamInfo") List<UpstreamInfo> removeUpstreamInfo) {
     this.loadBalancerRequestId = loadBalancerRequestId;
     this.loadBalancerService = loadBalancerService;
-    this.addUpstreams = addUpstreams;
-    this.removeUpstreams = removeUpstreams;
+    this.addUpstreamInfo = Objects.firstNonNull(addUpstreamInfo, toUpstreamInfo(addUpstreams, loadBalancerRequestId));
+    this.removeUpstreamInfo = Objects.firstNonNull(removeUpstreamInfo, toUpstreamInfo(removeUpstreams, loadBalancerRequestId));
   }
 
   public String getLoadBalancerRequestId() {
@@ -44,12 +49,24 @@ public class BaragonRequest {
     return loadBalancerService;
   }
 
-  public List<String> getAddUpstreams() {
-    return addUpstreams;
+  public List<UpstreamInfo> getAddUpstreamInfo() {
+    return addUpstreamInfo;
   }
 
-  public List<String> getRemoveUpstreams() {
-    return removeUpstreams;
+  public List<UpstreamInfo> getRemoveUpstreamInfo() {
+    return removeUpstreamInfo;
+  }
+
+  private List<UpstreamInfo> toUpstreamInfo(List<String> upstreams, String loadBalancerRequestId) {
+    List<UpstreamInfo> upstreamInfo = new ArrayList<>();
+
+    if (upstreams != null) {
+      for (String upstream : upstreams) {
+        upstreamInfo.add(new UpstreamInfo(upstream, Optional.fromNullable(loadBalancerRequestId), Optional.<String>absent()));
+      }
+    }
+
+    return upstreamInfo;
   }
 
   @Override
@@ -57,8 +74,8 @@ public class BaragonRequest {
     return "BaragonRequest [" +
         "loadBalancerRequestId='" + loadBalancerRequestId + '\'' +
         ", loadBalancerService=" + loadBalancerService +
-        ", addUpstreams=" + addUpstreams +
-        ", removeUpstreams=" + removeUpstreams +
+        ", addUpstreamInfo=" + addUpstreamInfo +
+        ", removeUpstreamInfo=" + removeUpstreamInfo +
         ']';
   }
 
@@ -69,10 +86,10 @@ public class BaragonRequest {
 
     BaragonRequest request = (BaragonRequest) o;
 
-    if (!addUpstreams.equals(request.addUpstreams)) return false;
+    if (!addUpstreamInfo.equals(request.addUpstreamInfo)) return false;
     if (!loadBalancerRequestId.equals(request.loadBalancerRequestId)) return false;
     if (!loadBalancerService.equals(request.loadBalancerService)) return false;
-    if (!removeUpstreams.equals(request.removeUpstreams)) return false;
+    if (!removeUpstreamInfo.equals(request.removeUpstreamInfo)) return false;
 
     return true;
   }
@@ -81,8 +98,8 @@ public class BaragonRequest {
   public int hashCode() {
     int result = loadBalancerRequestId.hashCode();
     result = 31 * result + loadBalancerService.hashCode();
-    result = 31 * result + addUpstreams.hashCode();
-    result = 31 * result + removeUpstreams.hashCode();
+    result = 31 * result + addUpstreamInfo.hashCode();
+    result = 31 * result + removeUpstreamInfo.hashCode();
     return result;
   }
 }
