@@ -97,11 +97,11 @@ public class RequestResource {
         // Apply request
         final Map<String, UpstreamInfo> upstreamsMap = stateDatastore.getUpstreamsMap(request.getLoadBalancerService().getServiceId());
 
-        for (UpstreamInfo removeUpstreamInfo : request.getRemoveUpstreamInfo()) {
+        for (UpstreamInfo removeUpstreamInfo : request.getRemoveUpstreams()) {
           upstreamsMap.remove(removeUpstreamInfo.getUpstream());
         }
 
-        for (UpstreamInfo addUpstreamInfo : request.getAddUpstreamInfo()) {
+        for (UpstreamInfo addUpstreamInfo : request.getAddUpstreams()) {
           upstreamsMap.put(addUpstreamInfo.getUpstream(), addUpstreamInfo);
         }
 

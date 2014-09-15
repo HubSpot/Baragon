@@ -149,8 +149,8 @@ public class RequestManager {
     }
 
     stateDatastore.addService(request.getLoadBalancerService());
-    stateDatastore.removeUpstreams(request.getLoadBalancerService().getServiceId(), request.getRemoveUpstreamInfo());
-    stateDatastore.addUpstreams(request.getLoadBalancerService().getServiceId(), request.getAddUpstreamInfo());
+    stateDatastore.removeUpstreams(request.getLoadBalancerService().getServiceId(), request.getRemoveUpstreams());
+    stateDatastore.addUpstreams(request.getLoadBalancerService().getServiceId(), request.getAddUpstreams());
     stateDatastore.updateStateNode();
   }
 }
