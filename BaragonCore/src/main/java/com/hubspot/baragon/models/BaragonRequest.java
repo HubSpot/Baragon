@@ -4,11 +4,11 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Optional;
+import com.google.common.collect.Lists;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
-import java.util.ArrayList;
 import java.util.List;
 
 @JsonIgnoreProperties( ignoreUnknown = true )
@@ -22,22 +22,20 @@ public class BaragonRequest {
   private final BaragonService loadBalancerService;
 
   @NotNull
-  private final List<UpstreamInfo> addUpstreamInfo;
+  private final List<UpstreamInfo> addUpstreams;
 
   @NotNull
-  private final List<UpstreamInfo> removeUpstreamInfo;
+  private final List<UpstreamInfo> removeUpstreams;
 
   @JsonCreator
   public BaragonRequest(@JsonProperty("loadBalancerRequestId") String loadBalancerRequestId,
                         @JsonProperty("loadBalancerService") BaragonService loadBalancerService,
-                        @JsonProperty("addUpstreams") List<String> addUpstreams,
-                        @JsonProperty("removeUpstreams") List<String> removeUpstreams,
-                        @JsonProperty("addUpstreamInfo") List<UpstreamInfo> addUpstreamInfo,
-                        @JsonProperty("removeUpstreamInfo") List<UpstreamInfo> removeUpstreamInfo) {
+                        @JsonProperty("addUpstreams") List<UpstreamInfo> addUpstreams,
+                        @JsonProperty("removeUpstreams") List<UpstreamInfo> removeUpstreams) {
     this.loadBalancerRequestId = loadBalancerRequestId;
     this.loadBalancerService = loadBalancerService;
-    this.addUpstreamInfo = addUpstreamInfo == null ? toUpstreamInfo(addUpstreams, loadBalancerRequestId) : addUpstreamInfo;
-    this.removeUpstreamInfo = removeUpstreamInfo == null ? toUpstreamInfo(removeUpstreams, loadBalancerRequestId) : removeUpstreamInfo;
+    this.addUpstreams = addRequestId(addUpstreams, loadBalancerRequestId);
+    this.removeUpstreams = addRequestId(removeUpstreams, loadBalancerRequestId);
   }
 
   public String getLoadBalancerRequestId() {
@@ -48,25 +46,29 @@ public class BaragonRequest {
     return loadBalancerService;
   }
 
-  public List<UpstreamInfo> getAddUpstreamInfo() {
-    return addUpstreamInfo;
+  public List<UpstreamInfo> getAddUpstreams() {
+    return addUpstreams;
   }
 
-  public List<UpstreamInfo> getRemoveUpstreamInfo() {
-    return removeUpstreamInfo;
+  public List<UpstreamInfo> getRemoveUpstreams() {
+    return removeUpstreams;
   }
 
-  private List<UpstreamInfo> toUpstreamInfo(List<String> upstreams, String loadBalancerRequestId) {
-    if (upstreams == null) {
-      return null;
+  private List<UpstreamInfo> addRequestId(List<UpstreamInfo> upstreams, String requestId) {
+    if (upstreams == null || requestId == null) {
+      return upstreams;
     }
 
-    List<UpstreamInfo> upstreamInfo = new ArrayList<>();
-    for (String upstream : upstreams) {
-      upstreamInfo.add(new UpstreamInfo(upstream, Optional.fromNullable(loadBalancerRequestId), Optional.<String>absent()));
+    List<UpstreamInfo> upstreamsWithRequestId = Lists.newArrayListWithCapacity(upstreams.size());
+    for (UpstreamInfo upstream : upstreams) {
+      upstreamsWithRequestId.add(addRequestId(upstream, requestId));
     }
 
-    return upstreamInfo;
+    return upstreamsWithRequestId;
+  }
+
+  private UpstreamInfo addRequestId(UpstreamInfo upstream, String requestId) {
+    return new UpstreamInfo(upstream.getUpstream(), Optional.of(requestId), Optional.<String>absent());
   }
 
   @Override
@@ -74,8 +76,8 @@ public class BaragonRequest {
     return "BaragonRequest [" +
         "loadBalancerRequestId='" + loadBalancerRequestId + '\'' +
         ", loadBalancerService=" + loadBalancerService +
-        ", addUpstreamInfo=" + addUpstreamInfo +
-        ", removeUpstreamInfo=" + removeUpstreamInfo +
+        ", addUpstreams=" + addUpstreams +
+        ", removeUpstreams=" + removeUpstreams +
         ']';
   }
 
@@ -86,10 +88,10 @@ public class BaragonRequest {
 
     BaragonRequest request = (BaragonRequest) o;
 
-    if (!addUpstreamInfo.equals(request.addUpstreamInfo)) return false;
+    if (!addUpstreams.equals(request.addUpstreams)) return false;
     if (!loadBalancerRequestId.equals(request.loadBalancerRequestId)) return false;
     if (!loadBalancerService.equals(request.loadBalancerService)) return false;
-    if (!removeUpstreamInfo.equals(request.removeUpstreamInfo)) return false;
+    if (!removeUpstreams.equals(request.removeUpstreams)) return false;
 
     return true;
   }
@@ -98,8 +100,8 @@ public class BaragonRequest {
   public int hashCode() {
     int result = loadBalancerRequestId.hashCode();
     result = 31 * result + loadBalancerService.hashCode();
-    result = 31 * result + addUpstreamInfo.hashCode();
-    result = 31 * result + removeUpstreamInfo.hashCode();
+    result = 31 * result + addUpstreams.hashCode();
+    result = 31 * result + removeUpstreams.hashCode();
     return result;
   }
 }
