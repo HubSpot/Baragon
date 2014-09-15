@@ -97,7 +97,7 @@ public class BaragonStateDatastore extends AbstractDataStore {
 
   public void addUpstreams(String serviceId, Collection<UpstreamInfo> upstreams) {
     for (UpstreamInfo upstreamInfo : upstreams) {
-      writeToZk(String.format(UPSTREAM_FORMAT, serviceId, upstreamInfo.getUpstream()),upstreamInfo);
+      writeToZk(String.format(UPSTREAM_FORMAT, serviceId, upstreamInfo.getUpstream()), upstreamInfo);
     }
   }
 
