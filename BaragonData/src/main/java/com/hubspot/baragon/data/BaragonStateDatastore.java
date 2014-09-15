@@ -89,15 +89,15 @@ public class BaragonStateDatastore extends AbstractDataStore {
     return readFromZk(String.format(UPSTREAM_FORMAT, serviceId, upstream), UpstreamInfo.class);
   }
 
-  public void removeUpstreams(String serviceId, Collection<String> upstreams) {
-    for (String remove : upstreams) {
-      deleteNode(String.format(UPSTREAM_FORMAT, serviceId, remove));
+  public void removeUpstreams(String serviceId, Collection<UpstreamInfo> upstreams) {
+    for (UpstreamInfo upstreamInfo : upstreams) {
+      deleteNode(String.format(UPSTREAM_FORMAT, serviceId, upstreamInfo.getUpstream()));
     }
   }
 
-  public void addUpstreams(String requestId, String serviceId, Collection<String> upstreams) {
-    for (String add : upstreams) {
-      writeToZk(String.format(UPSTREAM_FORMAT, serviceId, add), new UpstreamInfo(add, Optional.of(requestId)));
+  public void addUpstreams(String serviceId, Collection<UpstreamInfo> upstreams) {
+    for (UpstreamInfo upstreamInfo : upstreams) {
+      writeToZk(String.format(UPSTREAM_FORMAT, serviceId, upstreamInfo.getUpstream()), upstreamInfo);
     }
   }
 

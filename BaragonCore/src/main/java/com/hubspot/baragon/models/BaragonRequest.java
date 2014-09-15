@@ -3,6 +3,8 @@ package com.hubspot.baragon.models;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.base.Optional;
+import com.google.common.collect.Lists;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -20,20 +22,20 @@ public class BaragonRequest {
   private final BaragonService loadBalancerService;
 
   @NotNull
-  private final List<String> addUpstreams;
+  private final List<UpstreamInfo> addUpstreams;
 
   @NotNull
-  private final List<String> removeUpstreams;
+  private final List<UpstreamInfo> removeUpstreams;
 
   @JsonCreator
   public BaragonRequest(@JsonProperty("loadBalancerRequestId") String loadBalancerRequestId,
                         @JsonProperty("loadBalancerService") BaragonService loadBalancerService,
-                        @JsonProperty("addUpstreams") List<String> addUpstreams,
-                        @JsonProperty("removeUpstreams") List<String> removeUpstreams) {
+                        @JsonProperty("addUpstreams") List<UpstreamInfo> addUpstreams,
+                        @JsonProperty("removeUpstreams") List<UpstreamInfo> removeUpstreams) {
     this.loadBalancerRequestId = loadBalancerRequestId;
     this.loadBalancerService = loadBalancerService;
-    this.addUpstreams = addUpstreams;
-    this.removeUpstreams = removeUpstreams;
+    this.addUpstreams = addRequestId(addUpstreams, loadBalancerRequestId);
+    this.removeUpstreams = addRequestId(removeUpstreams, loadBalancerRequestId);
   }
 
   public String getLoadBalancerRequestId() {
@@ -44,12 +46,29 @@ public class BaragonRequest {
     return loadBalancerService;
   }
 
-  public List<String> getAddUpstreams() {
+  public List<UpstreamInfo> getAddUpstreams() {
     return addUpstreams;
   }
 
-  public List<String> getRemoveUpstreams() {
+  public List<UpstreamInfo> getRemoveUpstreams() {
     return removeUpstreams;
+  }
+
+  private List<UpstreamInfo> addRequestId(List<UpstreamInfo> upstreams, String requestId) {
+    if (upstreams == null || requestId == null) {
+      return upstreams;
+    }
+
+    List<UpstreamInfo> upstreamsWithRequestId = Lists.newArrayListWithCapacity(upstreams.size());
+    for (UpstreamInfo upstream : upstreams) {
+      upstreamsWithRequestId.add(addRequestId(upstream, requestId));
+    }
+
+    return upstreamsWithRequestId;
+  }
+
+  private UpstreamInfo addRequestId(UpstreamInfo upstream, String requestId) {
+    return new UpstreamInfo(upstream.getUpstream(), Optional.of(requestId), Optional.<String>absent());
   }
 
   @Override

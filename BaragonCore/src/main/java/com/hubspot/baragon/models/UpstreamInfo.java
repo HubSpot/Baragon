@@ -9,16 +9,20 @@ import com.google.common.base.Optional;
 public class UpstreamInfo {
   private final String upstream;
   private final Optional<String> requestId;
+  private final Optional<String> rackId;
 
   @JsonCreator
   public static UpstreamInfo fromString(String value) {
-    return new UpstreamInfo(value, Optional.<String>absent());
+    return new UpstreamInfo(value, Optional.<String>absent(), Optional.<String>absent());
   }
 
   @JsonCreator
-  public UpstreamInfo(@JsonProperty("upstream") String upstream, @JsonProperty("requestId") Optional<String> requestId) {
+  public UpstreamInfo(@JsonProperty("upstream") String upstream,
+                      @JsonProperty("requestId") Optional<String> requestId,
+                      @JsonProperty("rackId") Optional<String> rackId) {
     this.upstream = upstream;
     this.requestId = requestId;
+    this.rackId = rackId;
   }
 
   public String getUpstream() {
@@ -27,6 +31,10 @@ public class UpstreamInfo {
 
   public Optional<String> getRequestId() {
     return requestId;
+  }
+
+  public Optional<String> getRackId() {
+    return rackId;
   }
 
   @Override
@@ -41,6 +49,7 @@ public class UpstreamInfo {
 
     UpstreamInfo that = (UpstreamInfo) o;
 
+    if (!rackId.equals(that.rackId)) return false;
     if (!requestId.equals(that.requestId)) return false;
     if (!upstream.equals(that.upstream)) return false;
 
@@ -51,6 +60,7 @@ public class UpstreamInfo {
   public int hashCode() {
     int result = upstream.hashCode();
     result = 31 * result + requestId.hashCode();
+    result = 31 * result + rackId.hashCode();
     return result;
   }
 }
