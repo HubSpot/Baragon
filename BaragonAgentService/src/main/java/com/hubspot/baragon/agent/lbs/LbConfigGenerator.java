@@ -1,5 +1,8 @@
 package com.hubspot.baragon.agent.lbs;
 
+import java.io.StringWriter;
+import java.util.Collection;
+
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
@@ -8,11 +11,8 @@ import com.google.inject.name.Named;
 import com.hubspot.baragon.agent.BaragonAgentServiceModule;
 import com.hubspot.baragon.agent.config.LoadBalancerConfiguration;
 import com.hubspot.baragon.agent.models.LbConfigTemplate;
-import com.hubspot.baragon.agent.models.LbConfigFile;
+import com.hubspot.baragon.models.BaragonConfigFile;
 import com.hubspot.baragon.models.ServiceContext;
-
-import java.io.StringWriter;
-import java.util.Collection;
 
 @Singleton
 public class LbConfigGenerator {
@@ -26,8 +26,8 @@ public class LbConfigGenerator {
     this.templates = templates;
   }
 
-  public Collection<LbConfigFile> generateConfigsForProject(ServiceContext snapshot) {
-    final Collection<LbConfigFile> files = Lists.newArrayListWithCapacity(templates.size());
+  public Collection<BaragonConfigFile> generateConfigsForProject(ServiceContext snapshot) {
+    final Collection<BaragonConfigFile> files = Lists.newArrayListWithCapacity(templates.size());
 
     for (LbConfigTemplate template : templates) {
       final String filename = String.format(template.getFilename(), snapshot.getService().getServiceId());
@@ -39,7 +39,7 @@ public class LbConfigGenerator {
         throw Throwables.propagate(e);
       }
 
-      files.add(new LbConfigFile(String.format("%s/%s", loadBalancerConfiguration.getRootPath(), filename), sw.toString()));
+      files.add(new BaragonConfigFile(String.format("%s/%s", loadBalancerConfiguration.getRootPath(), filename), sw.toString()));
     }
 
     return files;

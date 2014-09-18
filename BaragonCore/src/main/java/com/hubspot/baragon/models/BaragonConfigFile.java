@@ -1,12 +1,16 @@
-package com.hubspot.baragon.agent.models;
+package com.hubspot.baragon.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Objects;
 
-public class LbConfigFile {
+@JsonIgnoreProperties( ignoreUnknown = true )
+public class BaragonConfigFile {
   private final String fullPath;
   private final String content;
 
-  public LbConfigFile(final String fullPath, final String content) {
+  public BaragonConfigFile(@JsonProperty("fullPath") String fullPath,
+                           @JsonProperty("content") String content) {
     this.fullPath = fullPath;
     this.content = content;
   }
@@ -21,15 +25,10 @@ public class LbConfigFile {
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(LbConfigFile.class)
+    return Objects.toStringHelper(BaragonConfigFile.class)
         .add("fullPath", fullPath)
         .add("content", content)
         .toString();
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hashCode(fullPath, content);
   }
 
   @Override
@@ -37,11 +36,18 @@ public class LbConfigFile {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
 
-    LbConfigFile that = (LbConfigFile) o;
+    BaragonConfigFile that = (BaragonConfigFile) o;
 
     if (!content.equals(that.content)) return false;
     if (!fullPath.equals(that.fullPath)) return false;
 
     return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = fullPath.hashCode();
+    result = 31 * result + content.hashCode();
+    return result;
   }
 }

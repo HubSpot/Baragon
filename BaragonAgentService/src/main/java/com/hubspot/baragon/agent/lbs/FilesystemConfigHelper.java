@@ -2,19 +2,21 @@ package com.hubspot.baragon.agent.lbs;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
 import com.google.common.io.Files;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import com.hubspot.baragon.agent.models.LbConfigFile;
 import com.hubspot.baragon.exceptions.InvalidConfigException;
 import com.hubspot.baragon.exceptions.LbAdapterExecuteException;
+import com.hubspot.baragon.models.BaragonConfigFile;
 import com.hubspot.baragon.models.ServiceContext;
 
 @Singleton
@@ -55,6 +57,11 @@ public class FilesystemConfigHelper {
     LOG.info(String.format("Going to apply %s: %s", serviceId, Joiner.on(", ").join(context.getUpstreams())));
     final boolean newServiceExists = configsExist(serviceId);
 
+    if (configGenerator.generateConfigsForProject(context).equals(readConfigs(context.getService().getServiceId()))) {
+      LOG.info("    Configs are unchanged, skipping apply");
+      return;
+    }
+
     // Backup configs
     if (newServiceExists && revertOnFailure) {
       backupConfigs(serviceId);
@@ -90,8 +97,8 @@ public class FilesystemConfigHelper {
     removeBackupConfigs(serviceId);
   }
 
-  private void writeConfigs(Collection<LbConfigFile> files) {
-    for (LbConfigFile file : files) {
+  private void writeConfigs(Collection<BaragonConfigFile> files) {
+    for (BaragonConfigFile file : files) {
       try {
         Files.write(file.getContent().getBytes(), new File(file.getFullPath()));
       } catch (IOException e) {
@@ -99,6 +106,25 @@ public class FilesystemConfigHelper {
         throw new RuntimeException("Failed writing " + file.getFullPath(), e);
       }
     }
+  }
+
+  private Collection<BaragonConfigFile> readConfigs(String serviceId) {
+    final Collection<BaragonConfigFile> configs = new ArrayList<>();
+
+    for (String filename : configGenerator.getConfigPathsForProject(serviceId)) {
+      File file = new File(filename);
+      if (!file.exists()) {
+        continue;
+      }
+
+      try {
+        configs.add(new BaragonConfigFile(filename, Files.asCharSource(file, Charsets.UTF_8).read()));
+      } catch (IOException e) {
+        throw Throwables.propagate(e);
+      }
+    }
+
+    return configs;
   }
 
   private void backupConfigs(String serviceId) {

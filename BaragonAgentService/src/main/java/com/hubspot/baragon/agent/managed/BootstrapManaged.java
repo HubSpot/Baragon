@@ -62,7 +62,7 @@ public class BootstrapManaged implements Managed {
       }
     }
 
-    LOG.info(String.format("Applied {} services in {}ms", services.size(), stopwatch.elapsed(TimeUnit.MILLISECONDS)));
+    LOG.info("Applied {} services in {}ms", services.size(), stopwatch.elapsed(TimeUnit.MILLISECONDS));
   }
 
   @Override
