@@ -68,7 +68,11 @@ public class BaragonRequest {
   }
 
   private UpstreamInfo addRequestId(UpstreamInfo upstream, String requestId) {
-    return new UpstreamInfo(upstream.getUpstream(), Optional.of(requestId), Optional.<String>absent());
+    if (!upstream.getRequestId().isPresent()) {
+      return new UpstreamInfo(upstream.getUpstream(), Optional.of(requestId), upstream.getRackId());
+    } else {
+      return upstream;
+    }
   }
 
   @Override
