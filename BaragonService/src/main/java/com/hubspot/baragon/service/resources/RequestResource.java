@@ -12,6 +12,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,10 +31,12 @@ public class RequestResource {
   private static final Logger LOG = LoggerFactory.getLogger(RequestResource.class);
 
   private final RequestManager manager;
+  private final ObjectMapper objectMapper;
 
   @Inject
-  public RequestResource(RequestManager manager) {
+  public RequestResource(RequestManager manager, ObjectMapper objectMapper) {
     this.manager = manager;
+    this.objectMapper = objectMapper;
   }
 
   @GET
@@ -45,7 +48,7 @@ public class RequestResource {
   @POST
   public BaragonResponse enqueueRequest(@Valid BaragonRequest request) {
     try {
-      LOG.info(String.format("Received request: %s", request));
+      LOG.info(String.format("Received request: %s", objectMapper.writeValueAsString(request)));
       return manager.enqueueRequest(request);
     } catch (Exception e) {
       LOG.error(String.format("Caught exception for %s", request.getLoadBalancerRequestId()), e);
