@@ -4,7 +4,7 @@
     <parent>
         <groupId>com.hubspot</groupId>
         <artifactId>Baragon</artifactId>
-        <version>0.1.3</version>
+        <version>0.1.4-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
@@ -23,7 +23,7 @@
         <dependency>
             <groupId>com.hubspot</groupId>
             <artifactId>BaragonData</artifactId>
-            <version>0.1.3</version>
+            <version>0.1.4-SNAPSHOT</version>
         </dependency>
 	</dependencies>
 
