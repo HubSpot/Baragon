@@ -1,16 +1,15 @@
 package com.hubspot.baragon.models;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-
 public enum BaragonRequestState {
-  UNKNOWN, FAILED, WAITING, SUCCESS, CANCELING, CANCELED;
+  UNKNOWN(false), FAILED(false), WAITING(true), SUCCESS(false), CANCELING(true), CANCELED(false);
 
-  @JsonCreator
-  public static BaragonRequestState fromString(String value) {
-    if (value == null || value.equals("")) {
-      return null;
-    } else {
-      return valueOf(value.toUpperCase());
-    }
+  private final boolean inProgress;
+
+  BaragonRequestState(boolean inProgress) {
+    this.inProgress = inProgress;
+  }
+
+  public boolean isInProgress() {
+    return inProgress;
   }
 }
