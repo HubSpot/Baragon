@@ -1,7 +1,7 @@
 package com.hubspot.baragon.models;
 
 public enum BaragonRequestState {
-  UNKNOWN(false), FAILED(false), WAITING(true), SUCCESS(false), CANCELING(true), CANCELED(false);
+  UNKNOWN(false), FAILED(false), WAITING(true), SUCCESS(false), CANCELING(true), CANCELED(false), INVALID_REQUEST_NOOP(false);
 
   private final boolean inProgress;
 
