@@ -1,0 +1,36 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure("2") do |config|
+  if !Vagrant.has_plugin?("vagrant-hostsupdater")
+    raise "Please install vagrant-hostsupdater via `vagrant plugin install vagrant-hostsupdater`"
+  end
+
+  config.vm.synced_folder "../", "/baragon", type: "nfs"
+
+  # TODO: make my own box
+  config.vm.box = "singularity-develop-0.20.1"
+  config.vm.box_url = "https://vagrantcloud.com/tpetr/boxes/singularity-develop-0.20.1/versions/1/providers/virtualbox.box"
+
+  config.vm.provider :virtualbox do |vb|
+    vb.customize ["modifyvm", :id, "--memory", "1024"]
+  end
+
+  if Vagrant.has_plugin?("vagrant-cachier")
+    config.cache.auto_detect = true
+  end
+
+  config.vm.define "service", autostart: true do |config|
+    config.vm.hostname = 'vagrant-baragon-service'
+    config.vm.network :private_network, ip: '192.168.33.20'
+    config.vm.provision "shell", path: "provision-service.sh"
+  end
+
+  config.vm.define "agent", autostart: true do |config|
+    config.vm.hostname = 'vagrant-baragon-agent'
+    config.vm.network :private_network, ip: '192.168.33.21'
+    config.vm.provision "shell", path: "provision-agent.sh"
+  end  
+end
+
+
