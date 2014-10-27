@@ -34,3 +34,7 @@ Prerequisite: A working ZooKeeper cluster.
 4. Copy BaragonService*.jar and `$SERVICE_CONFIG_YAML` onto one or more hosts, and start the service via `java -jar BaragonService-*-SNAPSHOT.jar server $SERVICE_CONFIG_YAML`.
 
 5. Copy BaragonAgentService*.jar and `$AGENT_CONFIG_YAML` onto each of your load balancer hosts. Start the BaragonAgent service via `java -jar BaragonAgentService-*-SNAPSHOT.jar server $AGENT_CONFIG_YAML`.
+
+## Quickstart with Vagrant
+
+Baragon comes with Vagrant boxes for easy local development and integration testing. Ensure Virtualbox and Vagrant is installed on your machine, and then run `vagrant up` inside the `vagrant` folder of the git repo to spin up a Baragon cluster for testing.
