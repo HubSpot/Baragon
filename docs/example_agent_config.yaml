@@ -14,10 +14,10 @@ zookeeper:
   retryMaxTries: 3
 
 loadBalancerConfig:
-  name: loadBalancerGroupName                  # load balancer group name goes here
-  rootPath: /tmp                               # base path for writing load balancer configs goes here
-  checkConfigCommand: "/bin/bash -c 'exit 0'"  # command for checking configs goes here (i.e. nginx -t)
-  reloadConfigCommand: "/bin/bash -c 'exit 0'" # command for reloading configs goes here (i.s. nginx -s reload)
+name: loadBalancerGroupName      # load balancer group name goes here
+rootPath: /tmp                   # base path for writing load balancer configs goes here
+checkConfigCommand: "/bin/true"  # command for checking configs goes here (i.e. nginx -t)
+reloadConfigCommand: "/bin/true" # command for reloading configs goes here (i.s. nginx -s reload)
 
 templates:
   - filename: proxy/%s.conf  # filename to append to loadBalancerConfig.rootPath. %s is replaced with the serviceId
