@@ -12,7 +12,7 @@ Baragon is made up of two services:
 
 - BaragonAgentService -- applies changes on the actual load balancer
 
-When a web service changes (i.e. upstreams added / removed), POST a [BaragonRequest](BaragonCore/src/main/java/com/hubspot/baragon/models/BaragonRequest.java) JSON object to BaragonService's `request` endpoint like this one:
+When a web service changes (i.e. upstreams added / removed), POST a [BaragonRequest](BaragonCore/src/main/java/com/hubspot/baragon/models/BaragonRequest.java) JSON object to BaragonService's `/[contextname]/request` endpoint like this one:
 
 ```json
 {
@@ -28,7 +28,7 @@ When a web service changes (i.e. upstreams added / removed), POST a [BaragonRequ
 }
 ```
 
-BaragonService will then fan out this change to all affected BaragonAgentServices. Polling the request status url (`request/{requestId}`) will indicate the current status of the request:
+BaragonService will then fan out this change to all affected BaragonAgentServices. Polling the request status url (`/[contextname]/request/{requestId}`) will indicate the current status of the request:
 
 - `WAITING`: waiting for request to be applied on all agents
 - `SUCCESS`: request was successfully applied on all agents
