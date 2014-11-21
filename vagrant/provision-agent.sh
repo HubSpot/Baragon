@@ -119,6 +119,12 @@ exec java -Xmx512m -Djava.net.preferIPv4Stack=true -jar /usr/local/baragon/bin/b
 EOF
 }
 
+function install_nginx {
+  apt-get -y install nginx
+  mkdir /etc/nginx/conf.d/proxy
+  mkdir /etc/nginx/conf.d/upstreams
+}
+
 
 function stop_baragon {
   set +e  # okay if this fails (i.e. not installed)
@@ -134,6 +140,7 @@ stop_baragon
 install_baragon_config
 build_baragon
 install_baragon
+install_nginx
 start_baragon
 
 echo "Great Job!"
