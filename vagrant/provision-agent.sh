@@ -161,6 +161,7 @@ http {
     include /etc/nginx/sites-enabled/*;
 }
 EOF
+  service nginx reload
 }
 
 function stop_baragon {
