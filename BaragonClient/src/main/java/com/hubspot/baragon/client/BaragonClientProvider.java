@@ -23,7 +23,7 @@ import com.hubspot.horizon.HttpClient;
 
 @Singleton
 public class BaragonClientProvider implements Provider<BaragonClient> {
-  private static final String DEFAULT_CONTEXT_PATH = "Baragon/api";
+  private static final String DEFAULT_CONTEXT_PATH = "baragon/v2";
 
   private final HttpClient httpClient;
 

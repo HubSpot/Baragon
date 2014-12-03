@@ -46,10 +46,7 @@ public class BaragonClient {
 
   private static final String STATUS_FORMAT = "http://%s/%s/status";
 
-  private static final TypeReference<Collection<String>> WORKERS_COLLECTION = new TypeReference<Collection<String>>() {};
-  private static final TypeReference<Collection<String>> LOAD_BALANCER_COLLECTION = new TypeReference<Collection<String>>() {};
-  private static final TypeReference<Collection<String>> LOAD_BALANCER_HOSTS_COLLECTION = new TypeReference<Collection<String>>() {};
-  private static final TypeReference<Collection<String>> BASE_PATHS_COLLECTION = new TypeReference<Collection<String>>() {};
+  private static final TypeReference<Collection<String>> STRING_COLLECTION = new TypeReference<Collection<String>>() {};
   private static final TypeReference<Collection<BaragonAgentMetadata>> BARAGON_AGENTS_COLLECTION = new TypeReference<Collection<BaragonAgentMetadata>>() {};
   private static final TypeReference<Collection<QueuedRequestId>> QUEUED_REQUEST_COLLECTION = new TypeReference<Collection<QueuedRequestId>>() {};
   private static final TypeReference<Collection<BaragonAuthKey>> BARAGON_AUTH_KEY_COLLECTION = new TypeReference<Collection<BaragonAuthKey>>() {};
@@ -241,24 +238,24 @@ public class BaragonClient {
 
   public Collection<String> getWorkers() {
     final String requestUri = String.format(WORKERS_FORMAT, getHost(), contextPath);
-    return getCollection(requestUri, "workers", WORKERS_COLLECTION);
+    return getCollection(requestUri, "workers", STRING_COLLECTION);
   }
 
   // BaragonService load balancer actions
 
   public Collection<String> getLoadBalancers() {
     final String requestUri = String.format(LOAD_BALANCER_FORMAT, getHost(), contextPath);
-    return getCollection(requestUri, "load balancers", LOAD_BALANCER_COLLECTION);
+    return getCollection(requestUri, "load balancers", STRING_COLLECTION);
   }
 
   public Collection<String> getHosts(String clusterName) {
     final String requestUri = String.format(LOAD_BALANCER_HOSTS_FORMAT, getHost(), contextPath, clusterName);
-    return getCollection(requestUri, "load balancer hosts", LOAD_BALANCER_HOSTS_COLLECTION);
+    return getCollection(requestUri, "load balancer hosts", STRING_COLLECTION);
   }
 
   public Collection<String> getAllBasePaths(String clusterName) {
     final String requestUri = String.format(LOAD_BALANCER_ALL_BASE_PATHS_FORMAT, getHost(), contextPath, clusterName);
-    return getCollection(requestUri, "base paths", BASE_PATHS_COLLECTION);
+    return getCollection(requestUri, "base paths", STRING_COLLECTION);
   }
 
   public BaragonService getBasePath(String clusterName, String basePath) {
