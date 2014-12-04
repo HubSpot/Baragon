@@ -73,15 +73,11 @@ public class BaragonKnownAgentsDatastore extends AbstractDataStore {
   }
 
   public void addKnownAgent(String clusterName, BaragonAgentMetadata agentMetadata, String agentId) {
-    try {
-    writeToZk(String.format(KNOWN_AGENTS_GROUP_HOST_FORMAT, clusterName, agentId), objectMapper.writeValueAsString(agentMetadata));
-    } catch (JsonProcessingException e) {
-      throw Throwables.propagate(e);
-    }
+    writeToZk(String.format(KNOWN_AGENTS_GROUP_HOST_FORMAT, clusterName, agentId), agentMetadata);
   }
 
-  public void clearKnownAgent(String clusterName, String node) {
-    deleteNode(String.format(KNOWN_AGENTS_GROUP_HOST_FORMAT, clusterName, node));
+  public void clearKnownAgent(String clusterName, String agentId) {
+    deleteNode(String.format(KNOWN_AGENTS_GROUP_HOST_FORMAT, clusterName, agentId));
   }
 
 }
