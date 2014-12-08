@@ -19,27 +19,20 @@ set -eo pipefail
 function install_baragon_config {
   mkdir -p /etc/baragon
   cat > /etc/baragon/baragon_service.yaml <<EOF
-# singularity-related config:
 server:
   type: simple
-  applicationContextPath: /baragon/v1
+  applicationContextPath: /baragon/v2
   connector:
     type: http
     port: 8080
-  requestLog:
-    appenders:
-      - type: file
-        currentLogFilename: ../logs/access.log
-        archivedLogFilenamePattern: ../logs/access-%d.log.gz
 
 zookeeper:
-  quorum: localhost:2181
-  zkNamespace: baragon
+  quorum: localhost:2181  # comma separated list of ZK host:port goes here
+  zkNamespace: baragon    # base zk node goes here
   sessionTimeoutMillis: 60000
   connectTimeoutMillis: 5000
   retryBaseSleepTimeMilliseconds: 1000
   retryMaxTries: 3
-
 EOF
 }
 

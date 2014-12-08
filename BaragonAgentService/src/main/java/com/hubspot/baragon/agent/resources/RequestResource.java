@@ -2,6 +2,7 @@ package com.hubspot.baragon.agent.resources;
 
 import java.util.Collections;
 import java.util.Map;
+import java.util.HashMap;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -28,6 +29,7 @@ import com.hubspot.baragon.agent.config.TestingConfiguration;
 import com.hubspot.baragon.agent.lbs.FilesystemConfigHelper;
 import com.hubspot.baragon.data.BaragonRequestDatastore;
 import com.hubspot.baragon.data.BaragonStateDatastore;
+import com.hubspot.baragon.data.BaragonLoadBalancerDatastore;
 import com.hubspot.baragon.models.BaragonRequest;
 import com.hubspot.baragon.models.BaragonService;
 import com.hubspot.baragon.models.ServiceContext;
@@ -42,6 +44,7 @@ public class RequestResource {
   private final FilesystemConfigHelper configHelper;
   private final BaragonStateDatastore stateDatastore;
   private final BaragonRequestDatastore requestDatastore;
+  private final BaragonLoadBalancerDatastore loadBalancerDatastore;
   private final Lock agentLock;
   private final AtomicReference<String> mostRecentRequestId;
   private final long agentLockTimeoutMs;
@@ -52,6 +55,7 @@ public class RequestResource {
   @Inject
   public RequestResource(BaragonStateDatastore stateDatastore,
                          BaragonRequestDatastore requestDatastore,
+                         BaragonLoadBalancerDatastore loadBalancerDatastore,
                          FilesystemConfigHelper configHelper,
                          Optional<TestingConfiguration> maybeTestingConfiguration,
                          LoadBalancerConfiguration loadBalancerConfiguration,
@@ -61,6 +65,7 @@ public class RequestResource {
                          @Named(BaragonAgentServiceModule.AGENT_LOCK_TIMEOUT_MS) long agentLockTimeoutMs) {
     this.configHelper = configHelper;
     this.stateDatastore = stateDatastore;
+    this.loadBalancerDatastore = loadBalancerDatastore;
     this.maybeTestingConfiguration = maybeTestingConfiguration;
     this.requestDatastore = requestDatastore;
     this.agentLock = agentLock;
@@ -88,14 +93,18 @@ public class RequestResource {
       LOG.info(String.format("Received request to apply %s", request));
 
       final ServiceContext update;
+      final Map<String, UpstreamInfo> upstreamsMap;
 
-      if (!request.getLoadBalancerService().getLoadBalancerGroups().contains(loadBalancerConfiguration.getName())) {
+      Boolean serviceExists = request.getLoadBalancerService().getLoadBalancerGroups().contains(loadBalancerConfiguration.getName());
+
+      if (!serviceExists) {
         // this service has been deleted or moved off this load balancer -- delete the config
 
         update = new ServiceContext(request.getLoadBalancerService(), Collections.<UpstreamInfo>emptyList(), System.currentTimeMillis(), false);
+        upstreamsMap = Collections.emptyMap();
       } else {
         // Apply request
-        final Map<String, UpstreamInfo> upstreamsMap = stateDatastore.getUpstreamsMap(request.getLoadBalancerService().getServiceId());
+        upstreamsMap = stateDatastore.getUpstreamsMap(request.getLoadBalancerService().getServiceId());
 
         for (UpstreamInfo removeUpstreamInfo : request.getRemoveUpstreams()) {
           upstreamsMap.remove(removeUpstreamInfo.getUpstream());
@@ -122,6 +131,13 @@ public class RequestResource {
         configHelper.apply(update, true);
       } catch (Exception e) {
         return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
+      }
+
+      if (upstreamsMap.isEmpty()) {
+        BaragonService service = request.getLoadBalancerService();
+        for (String loadBalancerGroup : service.getLoadBalancerGroups()) {
+          loadBalancerDatastore.clearBasePath(loadBalancerGroup, service.getServiceBasePath());
+        }
       }
 
       mostRecentRequestId.set(requestId);
