@@ -76,7 +76,7 @@ public class BaragonKnownAgentsDatastore extends AbstractDataStore {
     writeToZk(String.format(KNOWN_AGENTS_GROUP_HOST_FORMAT, clusterName, agentId), agentMetadata);
   }
 
-  public void clearKnownAgent(String clusterName, String agentId) {
+  public void removeKnownAgent(String clusterName, String agentId) {
     deleteNode(String.format(KNOWN_AGENTS_GROUP_HOST_FORMAT, clusterName, agentId));
   }
 

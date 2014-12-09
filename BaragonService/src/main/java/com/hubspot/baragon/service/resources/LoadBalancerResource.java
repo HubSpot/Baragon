@@ -69,9 +69,9 @@ public class LoadBalancerResource {
   }
 
   @DELETE
-  @Path("/{clusterName}/known-agents")
-  public void deleteKnownAgent(@PathParam("clusterName") String clusterName, @QueryParam("agentId") String agentId) {
-    knownAgentsDatastore.clearKnownAgent(clusterName, agentId);
+  @Path("/{clusterName}/known-agents/{agentId}")
+  public void deleteKnownAgent(@PathParam("clusterName") String clusterName, @PathParam("agentId") String agentId) {
+    knownAgentsDatastore.removeKnownAgent(clusterName, agentId);
   }
 
   @GET
