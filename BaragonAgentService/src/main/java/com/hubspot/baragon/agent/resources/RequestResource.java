@@ -127,6 +127,9 @@ public class RequestResource {
       mostRecentRequestId.set(requestId);
 
       return Response.ok().build();
+    } catch (Exception e) {
+      LOG.error(String.format("Caught exception while applying %s", requestId), e);
+      return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(String.format("Caught exception while applying %s: %s", requestId, e.getMessage())).build();
     } finally {
       agentLock.unlock();
     }
@@ -178,6 +181,9 @@ public class RequestResource {
       }
 
       return Response.ok().build();
+    } catch (Exception e) {
+      LOG.error(String.format("Caught exception while reverting %s", requestId), e);
+      return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(String.format("Caught exception while reverting %s: %s", requestId, e.getMessage())).build();
     } finally {
       agentLock.unlock();
     }
