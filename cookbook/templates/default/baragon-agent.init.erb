@@ -1,0 +1,12 @@
+description "Baragon Agent Service"
+author "EverTrue"
+
+start on runlevel [2345]
+stop on runlevel [!2345]
+
+respawn
+respawn limit 10 5
+
+script
+    <%= node['java']['java_home'] %>/bin/java -jar /usr/share/java/<%= @baragon_jar %> server <%= @config_yaml %>
+end script

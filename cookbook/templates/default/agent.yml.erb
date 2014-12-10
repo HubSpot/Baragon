@@ -1,0 +1,63 @@
+server:
+  type: simple
+  applicationContextPath: /baragon-agent/v2
+  connector:
+    type: http
+    port: 8882
+
+zookeeper:
+  quorum: localhost:2181  # comma separated list of ZK host:port goes here
+  zkNamespace: baragon    # base zk node goes here
+  sessionTimeoutMillis: 60000
+  connectTimeoutMillis: 5000
+  retryBaseSleepTimeMilliseconds: 1000
+  retryMaxTries: 3
+
+loadBalancerConfig:
+  name: loadBalancerGroupName                  # load balancer group name goes here
+  rootPath: <%= node[:baragon][:proxy_conf_dir] %> # base path for writing load balancer configs goes here
+  checkConfigCommand: "<%= node['nginx']['binary'] %> -t"  # command for checking configs goes here (i.e. nginx -t)
+  reloadConfigCommand: "<%= node['nginx']['binary'] %> -s reload" # command for reloading configs goes here (i.s. nginx -s reload)
+
+templates:
+  - filename: proxy/%s.conf  # filename to append to loadBalancerConfig.rootPath. %s is replaced with the serviceId
+    template: |
+      # This config is auto-managed by Baragon, your changes may be lost!
+      # Service: {{service.serviceId}}
+      # Route: {{service.serviceBasePath}}
+      # Last applied: {{formatTimestamp timestamp}} UTC
+      # Owners:
+
+      {{#if service.owners}}
+      #   - {{{.}}}
+      {{else}}
+      #   No owners!
+      {{/if}}
+
+      location {{service.serviceBasePath}} {
+          proxy_pass_header Server;
+          proxy_set_header Host $http_host;
+          proxy_redirect off;
+          proxy_set_header X-RealIP $remote_addr;
+          proxy_set_header X-Scheme $scheme;
+          proxy_pass http://{{service.serviceId}};
+          proxy_connect_timeout {{firstOf service.options.proxyConnectTimeout 55}};
+          proxy_read_timeout {{firstOf service.options.proxyReadTimeout 60}};
+      }
+  - filename: upstreams/%s.conf
+    template: |
+      # This config is auto-managed by Baragon, your changes may be lost!
+      # Service: {{service.serviceId}}
+      # Route: {{service.serviceBasePath}}
+      # Last applied: {{formatTimestamp timestamp}}
+      # Owners:
+      {{#if service.owners}}
+      #   - {{{.}}}
+      {{else}}
+      #   No owners!
+      {{/if}}
+
+      upstream {{service.serviceId}} {
+      {{#upstreams}}    server {{{.}}};
+      {{/upstreams}}
+      }

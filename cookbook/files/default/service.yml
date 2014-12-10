@@ -1,0 +1,14 @@
+server:
+  type: simple
+  applicationContextPath: /baragon/v2
+  connector:
+    type: http
+    port: 8088
+
+zookeeper:
+  quorum: localhost:2181  # comma separated list of ZK host:port goes here
+  zkNamespace: baragon    # base zk node goes here
+  sessionTimeoutMillis: 60000
+  connectTimeoutMillis: 5000
+  retryBaseSleepTimeMilliseconds: 1000
+  retryMaxTries: 3
