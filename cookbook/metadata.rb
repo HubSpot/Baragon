@@ -4,7 +4,7 @@ maintainer_email 'eric.herot@evertrue.com'
 license          'Apache 2.0'
 description      'Installs/Configures baragon'
 long_description 'Installs/Configures baragon'
-version          '0.1.0'
+version          '1.0.0'
 
 depends 's3_file'
 depends 'java'
