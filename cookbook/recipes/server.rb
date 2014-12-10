@@ -1,3 +1,7 @@
+node.set['zookeeper']['service_style'] = 'upstart'
+
+include_recipe 'zookeeper'
+include_recipe 'zookeeper::service'
 include_recipe 'baragon::common'
 
 creds = Chef::EncryptedDataBagItem.load('secrets',
@@ -15,8 +19,8 @@ s3_file "/usr/share/java/#{baragon_server_jar}" do
   mode                  0644
 end
 
-cookbook_file '/etc/baragon/service.yml' do
-  source 'service.yml'
+template '/etc/baragon/service.yml' do
+  source 'service.yml.erb'
   owner  'root'
   group  'root'
   mode   0644

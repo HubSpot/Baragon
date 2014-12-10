@@ -3,7 +3,7 @@ server:
   applicationContextPath: /baragon/v2
   connector:
     type: http
-    port: 8088
+    port: <%= node[:baragon][:server_port] %>
 
 zookeeper:
   quorum: localhost:2181  # comma separated list of ZK host:port goes here

@@ -1,0 +1,5 @@
+{
+  "name": "stage",
+  "json_class": "Chef::Environment",
+  "chef_type": "environment"
+}

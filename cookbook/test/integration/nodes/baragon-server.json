@@ -1,0 +1,10 @@
+{
+  "name": "baragon-server",
+  "chef_environment": "stage",
+  "automatic": {
+    "fqdn": "baragon-server.vagrantup.com",
+    "recipes": [
+      "baragon::server"
+    ]
+  }
+}

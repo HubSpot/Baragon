@@ -6,7 +6,7 @@ server:
     port: 8882
 
 zookeeper:
-  quorum: localhost:2181  # comma separated list of ZK host:port goes here
+  quorum: <%= @baragon_server_host %>:2181  # comma separated list of ZK host:port goes here
   zkNamespace: baragon    # base zk node goes here
   sessionTimeoutMillis: 60000
   connectTimeoutMillis: 5000
