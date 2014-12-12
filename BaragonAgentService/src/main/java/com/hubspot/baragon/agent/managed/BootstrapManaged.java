@@ -6,6 +6,8 @@ import io.dropwizard.lifecycle.Managed;
 
 import java.util.Collection;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 
 import org.apache.curator.framework.recipes.leader.LeaderLatch;
 import org.slf4j.Logger;
@@ -82,8 +84,11 @@ public class BootstrapManaged implements Managed {
     leaderLatch.start();
 
     LOG.info("Adding to known-agents...");
-    String localhostname = java.net.InetAddress.getLocalHost().getHostName();
-    knownAgentsDatastore.addKnownAgent(loadBalancerConfiguration.getName(), baragonAgentMetadata, localhostname);
+    Pattern pattern = Pattern.compile("http[s]?:\\/\\/([^:\\/]+:\\d{1,5})\\/");
+    Matcher matcher = pattern.matcher(baragonAgentMetadata.getBaseAgentUri());
+    matcher.find();
+    String agentKey = matcher.group(1);
+    knownAgentsDatastore.addKnownAgent(loadBalancerConfiguration.getName(), baragonAgentMetadata, agentKey);
   }
 
   @Override
