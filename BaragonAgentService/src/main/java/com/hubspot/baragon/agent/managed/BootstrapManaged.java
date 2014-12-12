@@ -6,8 +6,6 @@ import io.dropwizard.lifecycle.Managed;
 
 import java.util.Collection;
 import java.util.concurrent.TimeUnit;
-import java.util.regex.Pattern;
-import java.util.regex.Matcher;
 
 import org.apache.curator.framework.recipes.leader.LeaderLatch;
 import org.slf4j.Logger;
@@ -33,6 +31,8 @@ public class BootstrapManaged implements Managed {
   private final LeaderLatch leaderLatch;
   private final BaragonKnownAgentsDatastore knownAgentsDatastore;
   private final BaragonAgentMetadata baragonAgentMetadata;
+  private final int httpPort;
+  private final String localHostname;
   
   @Inject
   public BootstrapManaged(BaragonStateDatastore stateDatastore,
@@ -40,13 +40,17 @@ public class BootstrapManaged implements Managed {
                           LoadBalancerConfiguration loadBalancerConfiguration,
                           FilesystemConfigHelper configHelper,
                           @Named(BaragonAgentServiceModule.AGENT_LEADER_LATCH) LeaderLatch leaderLatch,
-                          @Named(BaragonAgentServiceModule.BARAGON_AGENT_METADATA)BaragonAgentMetadata baragonAgentMetadata) {
+                          @Named(BaragonAgentServiceModule.BARAGON_AGENT_METADATA)BaragonAgentMetadata baragonAgentMetadata,
+                          @Named(BaragonAgentServiceModule.BARAGON_AGENT_HTTP_PORT)int httpPort,
+                          @Named(BaragonAgentServiceModule.BARAGON_AGENT_HOSTNAME)String localHostname) {
     this.loadBalancerConfiguration = loadBalancerConfiguration;
     this.configHelper = configHelper;
     this.stateDatastore = stateDatastore;
     this.leaderLatch = leaderLatch;
     this.knownAgentsDatastore = knownAgentsDatastore;
     this.baragonAgentMetadata = baragonAgentMetadata;
+    this.httpPort = httpPort;
+    this.localHostname = localHostname;
   }
 
   private void applyCurrentConfigs() {
@@ -84,10 +88,7 @@ public class BootstrapManaged implements Managed {
     leaderLatch.start();
 
     LOG.info("Adding to known-agents...");
-    Pattern pattern = Pattern.compile("http[s]?:\\/\\/([^:\\/]+:\\d{1,5})\\/");
-    Matcher matcher = pattern.matcher(baragonAgentMetadata.getBaseAgentUri());
-    matcher.find();
-    String agentKey = matcher.group(1);
+    String agentKey = localHostname + ":" + Integer.toString(httpPort);
     knownAgentsDatastore.addKnownAgent(loadBalancerConfiguration.getName(), baragonAgentMetadata, agentKey);
   }
 
