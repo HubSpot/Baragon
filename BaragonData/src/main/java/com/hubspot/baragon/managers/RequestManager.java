@@ -152,5 +152,12 @@ public class RequestManager {
     stateDatastore.removeUpstreams(request.getLoadBalancerService().getServiceId(), request.getRemoveUpstreams());
     stateDatastore.addUpstreams(request.getLoadBalancerService().getServiceId(), request.getAddUpstreams());
     stateDatastore.updateStateNode();
+
+    // if there are no remaining upstreams, clear the base path
+    if (stateDatastore.getUpstreams(request.getLoadBalancerService().getServiceId()).isEmpty()) {
+      for (String loadbalancerGroup : request.getLoadBalancerService().getLoadBalancerGroups()) {
+        loadBalancerDatastore.clearBasePath(loadbalancerGroup, request.getLoadBalancerService().getServiceBasePath());
+      }
+    }
   }
 }
