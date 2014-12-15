@@ -54,6 +54,12 @@ templates:
       #
       # Service ID: {{{service.serviceId}}}
       # Service base path: {{{service.serviceBasePath}}}
+      # Last applied: {{formatTimestamp timestamp}} UTC
+      # Owners:
+      {{#if service.owners}}
+      #   - {{{.}}}
+      {{else}}
+      #   No owners!
 
       {{#if upstreams}}
       {{#if service.options.nginxExtraConfigs}}
@@ -97,6 +103,12 @@ templates:
       #
       # Service ID: {{{service.serviceId}}}
       # Service base path: {{{service.serviceBasePath}}}
+      # Last applied: {{formatTimestamp timestamp}} UTC
+      # Owners:
+      {{#if service.owners}}
+      #   - {{{.}}}
+      {{else}}
+      #   No owners!
 
       {{#if upstreams}}
       upstream baragon_{{{service.serviceId}}} {

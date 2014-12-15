@@ -25,6 +25,11 @@ server:
   connector:
     type: http
     port: 8080
+  requestLog:
+    appenders:
+      - type: file
+        currentLogFilename: ../logs/access.log
+        archivedLogFilenamePattern: ../logs/access-%d.log.gz
 
 zookeeper:
   quorum: localhost:2181  # comma separated list of ZK host:port goes here
