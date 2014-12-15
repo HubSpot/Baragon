@@ -1,9 +1,6 @@
 package com.hubspot.baragon.client;
 
 import java.util.List;
-
-import org.apache.curator.framework.CuratorFramework;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.AbstractModule;
 import com.google.inject.Binder;
@@ -14,7 +11,6 @@ import com.google.inject.name.Names;
 import com.hubspot.horizon.HttpClient;
 import com.hubspot.horizon.HttpConfig;
 import com.hubspot.horizon.ning.NingHttpClient;
-import com.hubspot.baragon.BaragonBaseModule;
 
 
 public class BaragonClientModule extends AbstractModule {

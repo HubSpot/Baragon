@@ -1,7 +1,5 @@
 package com.hubspot.baragon.client;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -9,15 +7,8 @@ import java.util.List;
 import javax.inject.Named;
 import javax.inject.Provider;
 import javax.inject.Singleton;
-
-import org.apache.curator.framework.CuratorFramework;
-import org.apache.curator.utils.ZKPaths;
-
-import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import com.hubspot.horizon.HttpClient;
 

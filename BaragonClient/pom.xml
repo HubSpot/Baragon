@@ -20,12 +20,6 @@
     </dependency>
 
     <dependency>
-      <groupId>com.hubspot</groupId>
-      <artifactId>BaragonData</artifactId>
-      <version>0.1.5-SNAPSHOT</version>
-    </dependency>
-
-    <dependency>
       <groupId>com.google.inject</groupId>
       <artifactId>guice</artifactId>
       <version>3.0</version>
