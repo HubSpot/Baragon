@@ -126,7 +126,8 @@ public class BaragonAgentServiceModule extends AbstractModule {
 
     final String appRoot = ((SimpleServerFactory)config.getServerFactory()).getApplicationContextPath();
     final String baseAgentUri = String.format(config.getBaseUrlTemplate(), hostname, httpPort, appRoot);
-    return new BaragonAgentMetadata(baseAgentUri, domain);
+    final String agentId = String.format("%s:%s", hostname, httpPort);
+    return new BaragonAgentMetadata(baseAgentUri, agentId, domain);
   }
 
   @Provides

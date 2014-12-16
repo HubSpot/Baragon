@@ -47,7 +47,7 @@ public class BaragonKnownAgentsDatastore extends AbstractDataStore {
       try {
         final String value = new String(curatorFramework.getData().forPath(String.format(KNOWN_AGENTS_GROUP_HOST_FORMAT, clusterName, node)), Charsets.UTF_8);
         if (value.startsWith("http://")) {
-          metadata.add(new BaragonAgentMetadata(value, Optional.<String>absent()));
+          metadata.add(BaragonAgentMetadata.fromString(value));
         } else {
           metadata.add(objectMapper.readValue(value, BaragonAgentMetadata.class));
         }
@@ -72,8 +72,8 @@ public class BaragonKnownAgentsDatastore extends AbstractDataStore {
     return metadata;
   }
 
-  public void addKnownAgent(String clusterName, BaragonAgentMetadata agentMetadata, String agentId) {
-    writeToZk(String.format(KNOWN_AGENTS_GROUP_HOST_FORMAT, clusterName, agentId), agentMetadata);
+  public void addKnownAgent(String clusterName, BaragonAgentMetadata agentMetadata) {
+    writeToZk(String.format(KNOWN_AGENTS_GROUP_HOST_FORMAT, clusterName, agentMetadata.getAgentId()), agentMetadata);
   }
 
   public void removeKnownAgent(String clusterName, String agentId) {
