@@ -9,7 +9,6 @@
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <groupId>BaragonClient</groupId>
     <artifactId>BaragonClient</artifactId>
 
   <dependencies>
