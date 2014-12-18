@@ -89,6 +89,7 @@ public class RequestResource {
 
       final ServiceContext update;
 
+
       if (!request.getLoadBalancerService().getLoadBalancerGroups().contains(loadBalancerConfiguration.getName())) {
         // this service has been deleted or moved off this load balancer -- delete the config
 
