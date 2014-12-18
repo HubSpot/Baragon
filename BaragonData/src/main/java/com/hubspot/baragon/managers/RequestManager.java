@@ -21,9 +21,12 @@ import com.hubspot.baragon.models.BaragonResponse;
 import com.hubspot.baragon.models.BaragonService;
 import com.hubspot.baragon.models.InternalRequestStates;
 import com.hubspot.baragon.models.QueuedRequestId;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Singleton
 public class RequestManager {
+  private static final Logger LOG = LoggerFactory.getLogger(BaragonStateDatastore.class);
   private final BaragonRequestDatastore requestDatastore;
   private final BaragonLoadBalancerDatastore loadBalancerDatastore;
   private final BaragonStateDatastore stateDatastore;
@@ -154,10 +157,14 @@ public class RequestManager {
     stateDatastore.updateStateNode();
 
     // if there are no remaining upstreams, clear the base path
-    if (stateDatastore.getUpstreams(request.getLoadBalancerService().getServiceId()).isEmpty()) {
-      for (String loadbalancerGroup : request.getLoadBalancerService().getLoadBalancerGroups()) {
-        loadBalancerDatastore.clearBasePath(loadbalancerGroup, request.getLoadBalancerService().getServiceBasePath());
+    try {
+      if (stateDatastore.getUpstreamsMap(request.getLoadBalancerService().getServiceId()).isEmpty()) {
+        for (String loadbalancerGroup : request.getLoadBalancerService().getLoadBalancerGroups()) {
+          loadBalancerDatastore.clearBasePath(loadbalancerGroup, request.getLoadBalancerService().getServiceBasePath());
+        }
       }
+    } catch (Exception e) {
+      LOG.info(String.format("Error clearing base path %s", e));
     }
   }
 }
