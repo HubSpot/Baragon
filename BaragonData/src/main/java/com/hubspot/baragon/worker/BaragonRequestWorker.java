@@ -1,4 +1,4 @@
-package com.hubspot.baragon.service.worker;
+package com.hubspot.baragon.worker;
 
 import java.util.List;
 import java.util.Set;
@@ -11,12 +11,12 @@ import com.google.common.base.Optional;
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
+import com.hubspot.baragon.BaragonBaseModule;
 import com.hubspot.baragon.managers.AgentManager;
 import com.hubspot.baragon.managers.RequestManager;
 import com.hubspot.baragon.models.BaragonRequest;
 import com.hubspot.baragon.models.InternalRequestStates;
 import com.hubspot.baragon.models.QueuedRequestId;
-import com.hubspot.baragon.service.BaragonServiceModule;
 
 public class BaragonRequestWorker implements Runnable {
   private static final Logger LOG = LoggerFactory.getLogger(BaragonRequestWorker.class);
@@ -28,7 +28,7 @@ public class BaragonRequestWorker implements Runnable {
   @Inject
   public BaragonRequestWorker(AgentManager agentManager,
                               RequestManager requestManager,
-                              @Named(BaragonServiceModule.BARAGON_SERVICE_WORKER_LAST_START) AtomicLong workerLastStartAt) {
+                              @Named(BaragonBaseModule.BARAGON_SERVICE_WORKER_LAST_START) AtomicLong workerLastStartAt) {
     this.agentManager = agentManager;
     this.requestManager = requestManager;
     this.workerLastStartAt = workerLastStartAt;

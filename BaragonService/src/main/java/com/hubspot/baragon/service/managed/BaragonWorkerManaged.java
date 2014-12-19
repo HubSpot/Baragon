@@ -15,7 +15,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.inject.Inject;
 import com.hubspot.baragon.service.BaragonServiceModule;
-import com.hubspot.baragon.service.worker.BaragonRequestWorker;
+import com.hubspot.baragon.worker.BaragonRequestWorker;
 
 public class BaragonWorkerManaged implements Managed {
   private static final Logger LOG = LoggerFactory.getLogger(BaragonWorkerManaged.class);

@@ -31,6 +31,8 @@ public class BaragonBaseModule extends AbstractModule {
   public static final String BARAGON_AGENT_MAX_ATTEMPTS = "baragon.agent.maxAttempts";
   public static final String BARAGON_SERVICE_HTTP_CLIENT = "baragon.service.http.client";
 
+  public static final String BARAGON_SERVICE_WORKER_LAST_START = "baragon.service.worker.lastStartedAt";
+
   public static final String BARAGON_AUTH_KEY_MAP = "baragon.auth.keyMap";
 
   public static final String BARAGON_AUTH_KEY = "baragon.auth.key";

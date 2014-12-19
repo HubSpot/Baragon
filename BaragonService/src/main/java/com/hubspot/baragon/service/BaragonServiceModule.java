@@ -27,7 +27,7 @@ public class BaragonServiceModule extends AbstractModule {
   public static final String BARAGON_SERVICE_SCHEDULED_EXECUTOR = "baragon.service.scheduledExecutor";
   public static final String BARAGON_SERVICE_LEADER_LATCH = "baragon.service.leaderLatch";
   public static final String BARAGON_SERVICE_WORKER_INTERVAL_MS = "baragon.service.worker.intervalMs";
-  public static final String BARAGON_SERVICE_WORKER_LAST_START = "baragon.service.worker.lastStartedAt";
+
 
   public static final String BARAGON_SERVICE_HTTP_PORT = "baragon.service.http.port";
   public static final String BARAGON_SERVICE_HOSTNAME = "baragon.service.hostname";
@@ -81,7 +81,7 @@ public class BaragonServiceModule extends AbstractModule {
 
   @Provides
   @Singleton
-  @Named(BARAGON_SERVICE_WORKER_LAST_START)
+  @Named(BaragonBaseModule.BARAGON_SERVICE_WORKER_LAST_START)
   public AtomicLong providesWorkerLastStartAt() {
     return new AtomicLong();
   }
