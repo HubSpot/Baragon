@@ -1,5 +1,7 @@
 package com.hubspot.baragon.agent.managed;
 
+import com.hubspot.baragon.data.BaragonKnownAgentsDatastore;
+import com.hubspot.baragon.models.BaragonAgentMetadata;
 import io.dropwizard.lifecycle.Managed;
 
 import java.util.Collection;
@@ -27,16 +29,22 @@ public class BootstrapManaged implements Managed {
   private final FilesystemConfigHelper configHelper;
   private final BaragonStateDatastore stateDatastore;
   private final LeaderLatch leaderLatch;
+  private final BaragonKnownAgentsDatastore knownAgentsDatastore;
+  private final BaragonAgentMetadata baragonAgentMetadata;
   
   @Inject
   public BootstrapManaged(BaragonStateDatastore stateDatastore,
+                          BaragonKnownAgentsDatastore knownAgentsDatastore,
                           LoadBalancerConfiguration loadBalancerConfiguration,
                           FilesystemConfigHelper configHelper,
-                          @Named(BaragonAgentServiceModule.AGENT_LEADER_LATCH) LeaderLatch leaderLatch) {
+                          @Named(BaragonAgentServiceModule.AGENT_LEADER_LATCH) LeaderLatch leaderLatch,
+                          @Named(BaragonAgentServiceModule.BARAGON_AGENT_METADATA) BaragonAgentMetadata baragonAgentMetadata) {
     this.loadBalancerConfiguration = loadBalancerConfiguration;
     this.configHelper = configHelper;
     this.stateDatastore = stateDatastore;
     this.leaderLatch = leaderLatch;
+    this.knownAgentsDatastore = knownAgentsDatastore;
+    this.baragonAgentMetadata = baragonAgentMetadata;
   }
 
   private void applyCurrentConfigs() {
@@ -72,6 +80,9 @@ public class BootstrapManaged implements Managed {
 
     LOG.info("Starting leader latch...");
     leaderLatch.start();
+
+    LOG.info("Adding to known-agents...");
+    knownAgentsDatastore.addKnownAgent(loadBalancerConfiguration.getName(), baragonAgentMetadata);
   }
 
   @Override

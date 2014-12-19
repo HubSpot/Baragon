@@ -1,5 +1,6 @@
 package com.hubspot.baragon.agent;
 
+import com.hubspot.baragon.data.BaragonKnownAgentsDatastore;
 import io.dropwizard.jetty.HttpConnectorFactory;
 import io.dropwizard.server.SimpleServerFactory;
 
@@ -40,6 +41,7 @@ public class BaragonAgentServiceModule extends AbstractModule {
   public static final String AGENT_TEMPLATES = "baragon.agent.templates";
   public static final String AGENT_MOST_RECENT_REQUEST_ID = "baragon.agent.mostRecentRequestId";
   public static final String AGENT_LOCK_TIMEOUT_MS = "baragon.agent.lock.timeoutMs";
+  public static final String BARAGON_AGENT_METADATA = "baragon.agent.metadata";
 
   @Override
   protected void configure() {
@@ -116,16 +118,25 @@ public class BaragonAgentServiceModule extends AbstractModule {
 
   @Provides
   @Singleton
+  @Named(BARAGON_AGENT_METADATA)
+  public BaragonAgentMetadata providesAgentMetadata(BaragonAgentConfiguration config,
+                                                    @Named(BARAGON_AGENT_HTTP_PORT) int httpPort,
+                                                    @Named(BARAGON_AGENT_HOSTNAME) String hostname,
+                                                    @Named(BARAGON_AGENT_DOMAIN) Optional<String> domain) {
+
+    final String appRoot = ((SimpleServerFactory)config.getServerFactory()).getApplicationContextPath();
+    final String baseAgentUri = String.format(config.getBaseUrlTemplate(), hostname, httpPort, appRoot);
+    final String agentId = String.format("%s:%s", hostname, httpPort);
+    return new BaragonAgentMetadata(baseAgentUri, agentId, domain);
+  }
+
+  @Provides
+  @Singleton
   @Named(AGENT_LEADER_LATCH)
   public LeaderLatch providesAgentLeaderLatch(BaragonLoadBalancerDatastore loadBalancerDatastore,
                                               BaragonAgentConfiguration config,
-                                              @Named(BARAGON_AGENT_HTTP_PORT) int httpPort,
-                                              @Named(BARAGON_AGENT_HOSTNAME) String hostname,
-                                              @Named(BARAGON_AGENT_DOMAIN) Optional<String> domain) {
-    final String appRoot = ((SimpleServerFactory)config.getServerFactory()).getApplicationContextPath();
-    final String baseAgentUri = String.format(config.getBaseUrlTemplate(), hostname, httpPort, appRoot);
-
-    return loadBalancerDatastore.createLeaderLatch(config.getLoadBalancerConfiguration().getName(), new BaragonAgentMetadata(baseAgentUri, domain));
+                                              @Named(BARAGON_AGENT_METADATA) BaragonAgentMetadata baragonAgentMetadata) {
+    return loadBalancerDatastore.createLeaderLatch(config.getLoadBalancerConfiguration().getName(), baragonAgentMetadata);
   }
 
   @Provides

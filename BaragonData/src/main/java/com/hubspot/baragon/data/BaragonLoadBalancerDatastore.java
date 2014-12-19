@@ -64,7 +64,7 @@ public class BaragonLoadBalancerDatastore extends AbstractDataStore {
       try {
         final String value = new String(curatorFramework.getData().forPath(String.format(LOAD_BALANCER_GROUP_HOST_FORMAT, clusterName, node)), Charsets.UTF_8);
         if (value.startsWith("http://")) {
-          metadata.add(new BaragonAgentMetadata(value, Optional.<String>absent()));
+          metadata.add(BaragonAgentMetadata.fromString(value));
         } else {
           metadata.add(objectMapper.readValue(value, BaragonAgentMetadata.class));
         }
