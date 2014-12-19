@@ -1,6 +1,7 @@
 package com.hubspot.baragon.agent.resources;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
@@ -96,7 +97,8 @@ public class RequestResource {
         update = new ServiceContext(request.getLoadBalancerService(), Collections.<UpstreamInfo>emptyList(), System.currentTimeMillis(), false);
       } else {
         // Apply request
-        final Map<String, UpstreamInfo> upstreamsMap = stateDatastore.getUpstreamsMap(request.getLoadBalancerService().getServiceId());
+        final Map<String, UpstreamInfo> upstreamsMap = new HashMap<>();
+        upstreamsMap.putAll(stateDatastore.getUpstreamsMap(request.getLoadBalancerService().getServiceId()));
 
         for (UpstreamInfo removeUpstreamInfo : request.getRemoveUpstreams()) {
           upstreamsMap.remove(removeUpstreamInfo.getUpstream());
