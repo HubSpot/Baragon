@@ -89,6 +89,7 @@
           <groupId>org.apache.curator</groupId>
           <artifactId>curator-test</artifactId>
           <version>2.2.0-incubating</version>
+          <scope>test</scope>
           <exclusions>
               <exclusion>
                   <groupId>org.slf4j</groupId>
