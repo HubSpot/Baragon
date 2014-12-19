@@ -44,8 +44,13 @@ public abstract class AbstractDataStore {
   protected String encodeUrl(String url) {
     return BaseEncoding.base64Url().encode(url.getBytes(Charsets.UTF_8));
   }
+
   protected String decodeUrl(String encodedUrl) {
     return new String(BaseEncoding.base64Url().decode(encodedUrl), Charsets.UTF_8);
+  }
+
+  protected String sanitizeNodeName(String name) {
+    return name.contains("/") ? encodeUrl(name) : name;
   }
 
   protected boolean nodeExists(String path) {

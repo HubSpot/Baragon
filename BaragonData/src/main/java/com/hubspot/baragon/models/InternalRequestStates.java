@@ -1,5 +1,8 @@
 package com.hubspot.baragon.models;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.Collection;
 import java.util.Map;
 
@@ -27,8 +30,13 @@ public enum InternalRequestStates {
           requestManager.setRequestMessage(request.getLoadBalancerRequestId(), String.format("Apply failed (%s), reverting...", buildResponseString(agentResponses, AgentRequestType.APPLY)));
           return Optional.of(FAILED_SEND_REVERT_REQUESTS);
         case SUCCESS:
-          requestManager.commitRequest(request);
-          return Optional.of(COMPLETED);
+          try {
+            requestManager.commitRequest(request);
+            return Optional.of(COMPLETED);
+          } catch (Exception e) {
+            LOG.warn(String.format("Request %s was successful, but failed to commit!", request.getLoadBalancerRequestId()), e);
+            return Optional.of(FAILED_SEND_REVERT_REQUESTS);
+          }
         case RETRY:
           return Optional.of(SEND_APPLY_REQUESTS);
         default:
@@ -102,6 +110,8 @@ public enum InternalRequestStates {
 
   FAILED_CANCEL_FAILED(BaragonRequestState.FAILED, false, true),
   CANCELLED(BaragonRequestState.CANCELED, false, true);
+
+  private static final Logger LOG = LoggerFactory.getLogger(InternalRequestStates.class);
 
   private final boolean cancelable;
   private final boolean removable;

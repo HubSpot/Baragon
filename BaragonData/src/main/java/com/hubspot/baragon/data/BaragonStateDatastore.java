@@ -59,45 +59,36 @@ public class BaragonStateDatastore extends AbstractDataStore {
   }
 
   public void removeService(String serviceId) {
-    for (String upstream : getUpstreams(serviceId)) {
+    for (String upstream : getUpstreamNodes(serviceId)) {
       deleteNode(String.format(UPSTREAM_FORMAT, serviceId, upstream));
     }
 
     deleteNode(String.format(SERVICE_FORMAT, serviceId));
   }
 
-  public Collection<String> getUpstreams(String serviceId) {
+  private Collection<String> getUpstreamNodes(String serviceId) {
     return getChildren(String.format(SERVICE_FORMAT, serviceId));
   }
 
-  public Map<String, UpstreamInfo> getUpstreamsMap(String serviceId) {
-    final Collection<String> upstreams = getUpstreams(serviceId);
-
-    final Map<String, UpstreamInfo> upstreamsMap = Maps.newHashMap();
-
-    for (String upstream : upstreams) {
-      final Optional<UpstreamInfo> maybeUpstreamInfo = getUpstream(serviceId, upstream);
-      if (maybeUpstreamInfo.isPresent()) {
-        upstreamsMap.put(upstream, maybeUpstreamInfo.get());
-      }
+  public Map<String, UpstreamInfo> getUpstreamsMap(String serviceId) throws Exception {
+    final Collection<String> upstreamNodes = getUpstreamNodes(serviceId);
+    final Collection<String> upstreamPaths = new ArrayList<>(upstreamNodes.size());
+    for (String upstreamNode : upstreamNodes) {
+      upstreamPaths.add(String.format(UPSTREAM_FORMAT, serviceId, upstreamNode));
     }
 
-    return upstreamsMap;
-  }
-
-  public Optional<UpstreamInfo> getUpstream(String serviceId, String upstream) {
-    return readFromZk(String.format(UPSTREAM_FORMAT, serviceId, upstream), UpstreamInfo.class);
+    return Maps.uniqueIndex(zkFetcher.fetchDataInParallel(upstreamPaths, new UpstreamInfoDeserializer()).values(), new UpstreamKeyFunction());
   }
 
   public void removeUpstreams(String serviceId, Collection<UpstreamInfo> upstreams) {
     for (UpstreamInfo upstreamInfo : upstreams) {
-      deleteNode(String.format(UPSTREAM_FORMAT, serviceId, upstreamInfo.getUpstream()));
+      deleteNode(String.format(UPSTREAM_FORMAT, serviceId, sanitizeNodeName(upstreamInfo.getUpstream())));
     }
   }
 
   public void addUpstreams(String serviceId, Collection<UpstreamInfo> upstreams) {
     for (UpstreamInfo upstreamInfo : upstreams) {
-      writeToZk(String.format(UPSTREAM_FORMAT, serviceId, upstreamInfo.getUpstream()), upstreamInfo);
+      writeToZk(String.format(UPSTREAM_FORMAT, serviceId, sanitizeNodeName(upstreamInfo.getUpstream())), upstreamInfo);
     }
   }
 
@@ -193,6 +184,13 @@ public class BaragonStateDatastore extends AbstractDataStore {
     @Override
     public UpstreamInfo apply(byte[] input) {
       return deserialize(input, UpstreamInfo.class);
+    }
+  }
+
+  private class UpstreamKeyFunction implements Function<UpstreamInfo, String> {
+    @Override
+    public String apply(UpstreamInfo input) {
+      return input.getUpstream();
     }
   }
 

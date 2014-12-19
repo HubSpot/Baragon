@@ -13,8 +13,10 @@ import java.util.Collections;
 import com.google.common.base.Optional;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.inject.Scopes;
 import com.hubspot.baragon.data.BaragonLoadBalancerDatastore;
+import com.hubspot.baragon.data.BaragonStateDatastore;
 import com.hubspot.baragon.managers.RequestManager;
 import com.hubspot.baragon.models.BaragonRequest;
 import com.hubspot.baragon.models.BaragonRequestState;
@@ -73,6 +75,39 @@ public class RequestTests {
       
       assertTrue(maybeNewResponse.isPresent());
       assertEquals(maybeNewResponse.get().getLoadBalancerState(), BaragonRequestState.SUCCESS);
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  @Test
+  public void addHttpUrlUpstream(RequestManager requestManager, BaragonRequestWorker requestWorker, BaragonStateDatastore stateDatastore) {
+    final String requestId = "test-http-url-upstream-1";
+    final String serviceId = "httpUrlUpstreamService";
+
+    final BaragonService service = new BaragonService(serviceId, Collections.<String>emptyList(), "/http-url-upstream", ImmutableList.of(REAL_LB_GROUP), Collections.<String, Object>emptyMap());
+
+    final UpstreamInfo httpUrlUpstream = new UpstreamInfo("http://test.com:8080/foo", Optional.of(requestId), Optional.<String>absent());
+
+    final BaragonRequest request = new BaragonRequest(requestId, service, ImmutableList.of(httpUrlUpstream), Collections.<UpstreamInfo>emptyList());
+
+    try {
+      LOG.info("Going to enqueue request: {}", request);
+      final BaragonResponse response = requestManager.enqueueRequest(request);
+
+      assertEquals(BaragonRequestState.WAITING, response.getLoadBalancerState());
+      requestWorker.run();
+
+      assertEquals(BaragonRequestState.WAITING, response.getLoadBalancerState());
+      requestWorker.run();
+
+      final Optional<BaragonResponse> maybeNewResponse = requestManager.getResponse(requestId);
+      LOG.info("Got response: {}", maybeNewResponse);
+
+      assertTrue(maybeNewResponse.isPresent());
+      assertEquals(BaragonRequestState.SUCCESS, maybeNewResponse.get().getLoadBalancerState());
+
+      assertEquals(ImmutableSet.of(httpUrlUpstream.getUpstream()), stateDatastore.getUpstreamsMap(serviceId).keySet());
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
