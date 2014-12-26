@@ -13,7 +13,7 @@ import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
-import com.hubspot.baragon.BaragonBaseModule;
+import com.hubspot.baragon.BaragonDataModule;
 import com.hubspot.baragon.data.BaragonAgentResponseDatastore;
 import com.hubspot.baragon.data.BaragonLoadBalancerDatastore;
 import com.hubspot.baragon.data.BaragonStateDatastore;
@@ -45,10 +45,10 @@ public class AgentManager {
   public AgentManager(BaragonLoadBalancerDatastore loadBalancerDatastore,
                       BaragonStateDatastore stateDatastore,
                       BaragonAgentResponseDatastore agentResponseDatastore,
-                      @Named(BaragonBaseModule.BARAGON_SERVICE_HTTP_CLIENT) AsyncHttpClient asyncHttpClient,
-                      @Named(BaragonBaseModule.BARAGON_AGENT_REQUEST_URI_FORMAT) String baragonAgentRequestUriFormat,
-                      @Named(BaragonBaseModule.BARAGON_AGENT_MAX_ATTEMPTS) Integer baragonAgentMaxAttempts,
-                      @Named(BaragonBaseModule.BARAGON_AUTH_KEY) Optional<String> baragonAuthKey) {
+                      @Named(BaragonDataModule.BARAGON_SERVICE_HTTP_CLIENT) AsyncHttpClient asyncHttpClient,
+                      @Named(BaragonDataModule.BARAGON_AGENT_REQUEST_URI_FORMAT) String baragonAgentRequestUriFormat,
+                      @Named(BaragonDataModule.BARAGON_AGENT_MAX_ATTEMPTS) Integer baragonAgentMaxAttempts,
+                      @Named(BaragonDataModule.BARAGON_AUTH_KEY) Optional<String> baragonAuthKey) {
     this.loadBalancerDatastore = loadBalancerDatastore;
     this.stateDatastore = stateDatastore;
     this.agentResponseDatastore = agentResponseDatastore;

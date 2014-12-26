@@ -39,7 +39,7 @@ public class RequestTests {
   public static class Module extends JukitoModule {
     @Override
     protected void configureTest() {
-      install(new BaragonTestingModule());
+      install(new BaragonDataTestModule());
       bindMock(BaragonLoadBalancerDatastore.class).in(Scopes.SINGLETON);
     }
   }

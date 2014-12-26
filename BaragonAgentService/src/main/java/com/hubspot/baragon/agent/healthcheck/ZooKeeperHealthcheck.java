@@ -6,14 +6,14 @@ import org.apache.curator.framework.state.ConnectionState;
 
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
-import com.hubspot.baragon.BaragonBaseModule;
+import com.hubspot.baragon.BaragonDataModule;
 import com.hubspot.dropwizard.guice.InjectableHealthCheck;
 
 public class ZooKeeperHealthcheck extends InjectableHealthCheck {
   private final AtomicReference<ConnectionState> connectionState;
 
   @Inject
-  public ZooKeeperHealthcheck(@Named(BaragonBaseModule.BARAGON_ZK_CONNECTION_STATE) AtomicReference<ConnectionState> connectionState) {
+  public ZooKeeperHealthcheck(@Named(BaragonDataModule.BARAGON_ZK_CONNECTION_STATE) AtomicReference<ConnectionState> connectionState) {
     this.connectionState = connectionState;
   }
 

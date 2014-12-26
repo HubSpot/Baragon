@@ -11,7 +11,7 @@ import com.google.common.base.Optional;
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
-import com.hubspot.baragon.BaragonBaseModule;
+import com.hubspot.baragon.BaragonDataModule;
 import com.hubspot.baragon.managers.AgentManager;
 import com.hubspot.baragon.managers.RequestManager;
 import com.hubspot.baragon.models.BaragonRequest;
@@ -28,7 +28,7 @@ public class BaragonRequestWorker implements Runnable {
   @Inject
   public BaragonRequestWorker(AgentManager agentManager,
                               RequestManager requestManager,
-                              @Named(BaragonBaseModule.BARAGON_SERVICE_WORKER_LAST_START) AtomicLong workerLastStartAt) {
+                              @Named(BaragonDataModule.BARAGON_SERVICE_WORKER_LAST_START) AtomicLong workerLastStartAt) {
     this.agentManager = agentManager;
     this.requestManager = requestManager;
     this.workerLastStartAt = workerLastStartAt;

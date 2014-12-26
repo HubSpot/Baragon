@@ -18,7 +18,7 @@ import com.hubspot.baragon.config.HttpClientConfiguration;
 import com.ning.http.client.AsyncHttpClient;
 import com.ning.http.client.AsyncHttpClientConfig;
 
-public class BaragonTestingModule extends AbstractModule {
+public class BaragonDataTestModule extends AbstractModule {
   @Override
   protected void configure() {
     bind(TestingServer.class).in(Scopes.SINGLETON);
@@ -34,14 +34,14 @@ public class BaragonTestingModule extends AbstractModule {
 
   @Singleton
   @Provides
-  @Named(BaragonBaseModule.BARAGON_SERVICE_WORKER_LAST_START)
+  @Named(BaragonDataModule.BARAGON_SERVICE_WORKER_LAST_START)
   public AtomicLong providesLastStart() {
     return new AtomicLong();
   }
 
   @Provides
   @Singleton
-  @Named(BaragonBaseModule.BARAGON_SERVICE_HTTP_CLIENT)
+  @Named(BaragonDataModule.BARAGON_SERVICE_HTTP_CLIENT)
   public AsyncHttpClient providesHttpClient(HttpClientConfiguration config) {
     AsyncHttpClientConfig.Builder builder = new AsyncHttpClientConfig.Builder();
 
