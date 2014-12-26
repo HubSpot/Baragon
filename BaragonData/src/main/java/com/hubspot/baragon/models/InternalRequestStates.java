@@ -20,8 +20,6 @@ public enum InternalRequestStates {
     public Optional<InternalRequestStates> handle(BaragonRequest request, AgentManager agentManager, RequestManager requestManager) {
       final Map<String, String> conflicts = requestManager.getBasePathConflicts(request);
 
-      System.out.println(String.format("conflicts: %s", conflicts));
-
       if (!conflicts.isEmpty()) {
         requestManager.setRequestMessage(request.getLoadBalancerRequestId(), String.format("Invalid request due to base path conflicts: %s", conflicts));
         return Optional.of(INVALID_REQUEST_NOOP);
