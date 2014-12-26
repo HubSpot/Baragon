@@ -1,21 +1,20 @@
 package com.hubspot.baragon.managers;
 
-import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.google.common.base.Optional;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.hubspot.baragon.data.BaragonAgentResponseDatastore;
 import com.hubspot.baragon.data.BaragonLoadBalancerDatastore;
 import com.hubspot.baragon.data.BaragonRequestDatastore;
 import com.hubspot.baragon.data.BaragonStateDatastore;
-import com.hubspot.baragon.exceptions.BasePathConflictException;
-import com.hubspot.baragon.exceptions.MissingLoadBalancerGroupException;
-import com.hubspot.baragon.models.AgentResponse;
+import com.hubspot.baragon.exceptions.RequestAlreadyEnqueuedException;
 import com.hubspot.baragon.models.BaragonRequest;
 import com.hubspot.baragon.models.BaragonResponse;
 import com.hubspot.baragon.models.BaragonService;
@@ -75,7 +74,7 @@ public class RequestManager {
     return Optional.of(new BaragonResponse(requestId, maybeStatus.get().toRequestState(), requestDatastore.getRequestMessage(requestId), Optional.of(agentResponseDatastore.getLastResponses(requestId))));
   }
 
-  private void ensureBasePathAvailable(BaragonRequest request) throws BasePathConflictException {
+  public Map<String, String> getBasePathConflicts(BaragonRequest request) {
     final BaragonService service = request.getLoadBalancerService();
     final Map<String, String> loadBalancerServiceIds = Maps.newHashMap();
 
@@ -86,47 +85,36 @@ public class RequestManager {
       }
     }
 
-    if (!loadBalancerServiceIds.isEmpty()) {
-      throw new BasePathConflictException(request, loadBalancerServiceIds);
-    }
+    return loadBalancerServiceIds;
   }
 
-  private void ensureRequestedLoadBalancersExist(BaragonRequest request) throws MissingLoadBalancerGroupException {
-    final BaragonService service = request.getLoadBalancerService();
-    final Collection<String> loadBalancerGroups = loadBalancerDatastore.getClusters();
+  public Set<String> getMissingLoadBalancerGroups(BaragonRequest request) {
+    final Set<String> groups = new HashSet<>(request.getLoadBalancerService().getLoadBalancerGroups());
 
-    final Collection<String> missingGroups = Lists.newArrayListWithCapacity(service.getLoadBalancerGroups().size());
-
-    for (String loadBalancerGroup : service.getLoadBalancerGroups()) {
-      if (!loadBalancerGroups.contains(loadBalancerGroup)) {
-        missingGroups.add(loadBalancerGroup);
-      }
-    }
-
-    if (!missingGroups.isEmpty()) {
-      throw new MissingLoadBalancerGroupException(request, missingGroups);
-    }
+    return Sets.difference(groups, loadBalancerDatastore.getLoadBalancerGroups());
   }
 
-  public BaragonResponse enqueueRequest(BaragonRequest request) throws BasePathConflictException, MissingLoadBalancerGroupException {
-    final Optional<BaragonResponse> maybePreexistingResponse = getResponse(request.getLoadBalancerRequestId());
-
-    if (maybePreexistingResponse.isPresent()) {
-      return maybePreexistingResponse.get();
-    }
-
-    ensureBasePathAvailable(request);
-    ensureRequestedLoadBalancersExist(request);
-
-    requestDatastore.addRequest(request);
-    requestDatastore.setRequestState(request.getLoadBalancerRequestId(), InternalRequestStates.SEND_APPLY_REQUESTS);
-    requestDatastore.enqueueRequest(request);
-
+  public void lockBasePaths(BaragonRequest request) {
     for (String loadBalancerGroup : request.getLoadBalancerService().getLoadBalancerGroups()) {
       loadBalancerDatastore.setBasePathServiceId(loadBalancerGroup, request.getLoadBalancerService().getServiceBasePath(), request.getLoadBalancerService().getServiceId());
     }
+  }
 
-    return new BaragonResponse(request.getLoadBalancerRequestId(), InternalRequestStates.SEND_APPLY_REQUESTS.toRequestState(), Optional.<String>absent(), Optional.<Map<String, Collection<AgentResponse>>>absent());
+  public BaragonResponse enqueueRequest(BaragonRequest request) throws RequestAlreadyEnqueuedException {
+    final Optional<BaragonResponse> maybePreexistingResponse = getResponse(request.getLoadBalancerRequestId());
+
+    if (maybePreexistingResponse.isPresent()) {
+      throw new RequestAlreadyEnqueuedException(request.getLoadBalancerRequestId(), maybePreexistingResponse.get());
+    }
+
+    requestDatastore.addRequest(request);
+    requestDatastore.setRequestState(request.getLoadBalancerRequestId(), InternalRequestStates.PENDING);
+
+    final QueuedRequestId queuedRequestId = requestDatastore.enqueueRequest(request);
+
+    requestDatastore.setRequestMessage(request.getLoadBalancerRequestId(), String.format("Queued as %s", queuedRequestId));
+
+    return getResponse(request.getLoadBalancerRequestId()).get();
   }
 
   public Optional<InternalRequestStates> cancelRequest(String requestId) {

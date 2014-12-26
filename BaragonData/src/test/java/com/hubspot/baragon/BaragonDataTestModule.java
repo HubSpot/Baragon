@@ -15,6 +15,7 @@ import com.google.inject.Scopes;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import com.hubspot.baragon.config.HttpClientConfiguration;
+import com.hubspot.baragon.data.BaragonLoadBalancerDatastore;
 import com.ning.http.client.AsyncHttpClient;
 import com.ning.http.client.AsyncHttpClientConfig;
 
@@ -22,6 +23,7 @@ public class BaragonDataTestModule extends AbstractModule {
   @Override
   protected void configure() {
     bind(TestingServer.class).in(Scopes.SINGLETON);
+    bind(BaragonLoadBalancerDatastore.class).to(BaragonLoadBalancerTestDatastore.class).in(Scopes.SINGLETON);
   }
 
   @Singleton

@@ -5,13 +5,40 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.Set;
 
 import com.google.common.base.Optional;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
 import com.hubspot.baragon.managers.AgentManager;
 import com.hubspot.baragon.managers.RequestManager;
 import com.hubspot.baragon.utils.JavaUtils;
 
 public enum InternalRequestStates {
+  PENDING(BaragonRequestState.WAITING, true, false) {
+    @Override
+    public Optional<InternalRequestStates> handle(BaragonRequest request, AgentManager agentManager, RequestManager requestManager) {
+      final Map<String, String> conflicts = requestManager.getBasePathConflicts(request);
+
+      System.out.println(String.format("conflicts: %s", conflicts));
+
+      if (!conflicts.isEmpty()) {
+        requestManager.setRequestMessage(request.getLoadBalancerRequestId(), String.format("Invalid request due to base path conflicts: %s", conflicts));
+        return Optional.of(INVALID_REQUEST_NOOP);
+      }
+
+      final Set<String> missingGroups = requestManager.getMissingLoadBalancerGroups(request);
+
+      if (!missingGroups.isEmpty()) {
+        requestManager.setRequestMessage(request.getLoadBalancerRequestId(), String.format("Invalid request due to non-existent load balancer groups: %s", missingGroups));
+        return Optional.of(INVALID_REQUEST_NOOP);
+      }
+
+      requestManager.lockBasePaths(request);
+
+      return Optional.of(SEND_APPLY_REQUESTS);
+    }
+  },
   SEND_APPLY_REQUESTS(BaragonRequestState.WAITING, true, false) {
     @Override
     public Optional<InternalRequestStates> handle(BaragonRequest request, AgentManager agentManager, RequestManager requestManager) {
@@ -109,7 +136,8 @@ public enum InternalRequestStates {
   },
 
   FAILED_CANCEL_FAILED(BaragonRequestState.FAILED, false, true),
-  CANCELLED(BaragonRequestState.CANCELED, false, true);
+  CANCELLED(BaragonRequestState.CANCELED, false, true),
+  INVALID_REQUEST_NOOP(BaragonRequestState.INVALID_REQUEST_NOOP, false, true);
 
   private static final Logger LOG = LoggerFactory.getLogger(InternalRequestStates.class);
 
