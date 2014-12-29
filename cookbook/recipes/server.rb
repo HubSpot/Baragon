@@ -1,7 +1,3 @@
-node.set['zookeeper']['service_style'] = 'upstart'
-
-include_recipe 'zookeeper'
-include_recipe 'zookeeper::service'
 include_recipe 'baragon::common'
 
 creds = Chef::EncryptedDataBagItem.load('secrets',
@@ -19,11 +15,18 @@ s3_file "/usr/share/java/#{baragon_server_jar}" do
   mode                  0644
 end
 
+zookeeper_hosts = search(:node,
+                         "chef_environment:#{node.chef_environment} AND " \
+                         'roles:zookeeper').map { |n| "#{n[:fqdn]}:2181" }
+
+fail 'Search returned no Zookeeper server nodes' if zookeeper_hosts.empty?
+
 template '/etc/baragon/service.yml' do
   source 'service.yml.erb'
   owner  'root'
   group  'root'
   mode   0644
+  variables(zookeeper_hosts: zookeeper_hosts)
   notifies :restart, 'service[baragon-server]'
 end
 

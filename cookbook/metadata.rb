@@ -8,4 +8,3 @@ version          '1.0.0'
 
 depends 's3_file'
 depends 'java'
-depends 'zookeeper', '~> 2.5'

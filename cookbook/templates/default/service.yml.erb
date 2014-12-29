@@ -6,7 +6,7 @@ server:
     port: <%= node[:baragon][:server_port] %>
 
 zookeeper:
-  quorum: localhost:2181  # comma separated list of ZK host:port goes here
+  quorum: <%= @zookeeper_hosts.join(',') %>  # comma separated list of ZK host:port goes here
   zkNamespace: baragon    # base zk node goes here
   sessionTimeoutMillis: 60000
   connectTimeoutMillis: 5000
