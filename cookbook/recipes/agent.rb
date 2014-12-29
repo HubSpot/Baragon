@@ -22,18 +22,18 @@ s3_file "/usr/share/java/#{baragon_agent_jar}" do
   mode                  0644
 end
 
-baragon_server = search(:node,
-                             "chef_environment:#{node.chef_environment} AND " \
-                             'recipes:baragon\:\:server').first
+zookeeper_hosts = search(:node,
+                         "chef_environment:#{node.chef_environment} AND " \
+                         'roles:zookeeper').map { |n| "#{n[:fqdn]}:2181" }
 
-fail 'Search returned no Baragon server nodes' if baragon_server.nil?
+fail 'Search returned no Zookeeper server nodes' if zookeeper_hosts.empty?
 
 template '/etc/baragon/agent.yml' do
   source 'agent.yml.erb'
   owner  'root'
   group  'root'
   mode   0644
-  variables(baragon_server_host: baragon_server[:fqdn])
+  variables(zookeeper_hosts: zookeeper_hosts)
   notifies :restart, 'service[baragon-agent]'
 end
 
