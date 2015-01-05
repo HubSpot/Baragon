@@ -51,11 +51,33 @@ public class BaragonAgentMetadata {
   }
 
   @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    BaragonAgentMetadata metadata = (BaragonAgentMetadata) o;
+
+    if (!agentId.equals(metadata.agentId)) return false;
+    if (!baseAgentUri.equals(metadata.baseAgentUri)) return false;
+    if (!domain.equals(metadata.domain)) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = baseAgentUri.hashCode();
+    result = 31 * result + domain.hashCode();
+    result = 31 * result + agentId.hashCode();
+    return result;
+  }
+
+  @Override
   public String toString() {
     return Objects.toStringHelper(this)
             .add("baseAgentUri", baseAgentUri)
-        .add("agentId", agentId)
-        .add("domain", domain)
-        .toString();
+            .add("domain", domain)
+            .add("agentId", agentId)
+            .toString();
   }
 }
