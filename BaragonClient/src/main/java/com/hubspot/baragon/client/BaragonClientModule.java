@@ -2,6 +2,8 @@ package com.hubspot.baragon.client;
 
 import java.util.List;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.guava.GuavaModule;
+import com.google.common.base.Optional;
 import com.google.inject.AbstractModule;
 import com.google.inject.Binder;
 import com.google.inject.Scopes;
@@ -20,7 +22,10 @@ public class BaragonClientModule extends AbstractModule {
   public static final String HOSTS_PROPERTY_NAME = "baragon.hosts";
 
   // bind this to provide the path for baragon eg: baragon/v2
-  public static final String CONTEXT_PATH = "baragon.context.path";
+  public static final String CONTEXT_PATH_PROPERTY_NAME = "baragon.context.path";
+
+  // bind this to provide the authkey for baragon
+  public static final String AUTHKEY_PROPERTY_NAME = "baragon.authkey";
 
   private final List<String> hosts;
 
@@ -32,14 +37,25 @@ public class BaragonClientModule extends AbstractModule {
     this.hosts = hosts;
   }
 
+  private ObjectMapper buildObjectMapper() {
+    final ObjectMapper objectMapper = new ObjectMapper();
+
+    objectMapper.registerModule(new GuavaModule());
+
+    return objectMapper;
+  }
+
   @Override
   protected void configure() {
     ObjectMapper objectMapper = new ObjectMapper();
 
-    HttpClient httpClient = new NingHttpClient(HttpConfig.newBuilder().setObjectMapper(objectMapper).build());
+    HttpClient httpClient = new NingHttpClient(HttpConfig.newBuilder()
+            .setObjectMapper(buildObjectMapper())
+            .build());
+
     bind(HttpClient.class).annotatedWith(Names.named(HTTP_CLIENT_NAME)).toInstance(httpClient);
 
-    bind(BaragonClient.class).toProvider(BaragonClientProvider.class).in(Scopes.SINGLETON);
+    bind(BaragonServiceClient.class).toProvider(BaragonClientProvider.class).in(Scopes.SINGLETON);
 
     if (hosts != null) {
       bindHosts(binder()).toInstance(hosts);
@@ -51,6 +67,10 @@ public class BaragonClientModule extends AbstractModule {
   }
 
   public static LinkedBindingBuilder<String> bindContextPath(Binder binder) {
-    return binder.bind(String.class).annotatedWith(Names.named(CONTEXT_PATH));
+    return binder.bind(String.class).annotatedWith(Names.named(CONTEXT_PATH_PROPERTY_NAME));
+  }
+
+  public static LinkedBindingBuilder<Optional<String>> bindAuthkey(Binder binder) {
+    return binder.bind(new TypeLiteral<Optional<String>>() {}).annotatedWith(Names.named(AUTHKEY_PROPERTY_NAME));
   }
 }

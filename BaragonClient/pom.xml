@@ -1,22 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
+  <modelVersion>4.0.0</modelVersion>
 
-    <parent>
-        <groupId>com.hubspot</groupId>
-        <artifactId>Baragon</artifactId>
-        <version>0.1.5-SNAPSHOT</version>
-        <relativePath>../pom.xml</relativePath>
-    </parent>
+  <parent>
+    <groupId>com.hubspot</groupId>
+    <artifactId>Baragon</artifactId>
+    <version>0.1.5-SNAPSHOT</version>
+  </parent>
 
-    <groupId>BaragonClient</groupId>
-    <artifactId>BaragonClient</artifactId>
+  <artifactId>BaragonClient</artifactId>
 
   <dependencies>
     <dependency>
-        <groupId>com.hubspot</groupId>
-        <artifactId>BaragonCore</artifactId>
-        <version>0.1.5-SNAPSHOT</version>
+      <groupId>com.hubspot</groupId>
+      <artifactId>BaragonCore</artifactId>
+      <version>0.1.5-SNAPSHOT</version>
     </dependency>
 
     <dependency>
@@ -25,23 +23,23 @@
       <version>3.0</version>
     </dependency>
 
-      <dependency>
-          <groupId>com.hubspot</groupId>
-          <artifactId>HorizonCore</artifactId>
-          <version>${horizon.version}</version>
-      </dependency>
+    <dependency>
+      <groupId>com.hubspot</groupId>
+      <artifactId>HorizonCore</artifactId>
+      <version>${horizon.version}</version>
+    </dependency>
 
-      <dependency>
-          <groupId>com.hubspot</groupId>
-          <artifactId>HorizonNing</artifactId>
-          <version>${horizon.version}</version>
-      </dependency>
+    <dependency>
+      <groupId>com.hubspot</groupId>
+      <artifactId>HorizonNing</artifactId>
+      <version>${horizon.version}</version>
+    </dependency>
 
-      <dependency>
-          <groupId>junit</groupId>
-          <artifactId>junit</artifactId>
-          <scope>test</scope>
-          <version>${junit.version}</version>
-      </dependency>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <scope>test</scope>
+      <version>${junit.version}</version>
+    </dependency>
   </dependencies>
 </project>

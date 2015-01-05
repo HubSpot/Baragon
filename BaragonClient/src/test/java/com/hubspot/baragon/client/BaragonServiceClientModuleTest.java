@@ -10,10 +10,10 @@ import com.google.inject.Stage;
 
 import org.junit.Test;
 
-public class BaragonClientModuleTest {
+public class BaragonServiceClientModuleTest {
 
   @Inject
-  BaragonClient client;
+  BaragonServiceClient client;
 
   @Test
   public void testModuleWithHosts() {
