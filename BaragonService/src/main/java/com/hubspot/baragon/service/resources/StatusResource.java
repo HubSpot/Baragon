@@ -30,7 +30,7 @@ public class StatusResource {
   @Inject
   public StatusResource(BaragonRequestDatastore datastore,
                         @Named(BaragonServiceModule.BARAGON_SERVICE_LEADER_LATCH) LeaderLatch leaderLatch,
-                        @Named(BaragonServiceModule.BARAGON_SERVICE_WORKER_LAST_START) AtomicLong workerLastStart,
+                        @Named(BaragonBaseModule.BARAGON_SERVICE_WORKER_LAST_START) AtomicLong workerLastStart,
                         @Named(BaragonBaseModule.BARAGON_ZK_CONNECTION_STATE) AtomicReference<ConnectionState> connectionState) {
     this.datastore = datastore;
     this.leaderLatch = leaderLatch;

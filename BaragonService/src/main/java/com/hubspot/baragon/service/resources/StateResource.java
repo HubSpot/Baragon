@@ -36,7 +36,7 @@ public class StateResource {
 
   @GET
   @Path("/{serviceId}")
-  public Optional<BaragonServiceState> getService(@PathParam("serviceId") String serviceId) {
+  public Optional<BaragonServiceState> getService(@PathParam("serviceId") String serviceId) throws Exception {
     final Optional<BaragonService> maybeServiceInfo = stateDatastore.getService(serviceId);
 
     if (!maybeServiceInfo.isPresent()) {
@@ -48,7 +48,7 @@ public class StateResource {
 
   @DELETE
   @Path("/{serviceId}")
-  public Optional<BaragonServiceState> deleteService(@PathParam("serviceId") String serviceId) {
+  public Optional<BaragonServiceState> deleteService(@PathParam("serviceId") String serviceId) throws Exception {
     final Optional<BaragonService> maybeServiceInfo = stateDatastore.getService(serviceId);
 
     if (!maybeServiceInfo.isPresent()) {
@@ -61,11 +61,5 @@ public class StateResource {
     }
 
     return Optional.of(new BaragonServiceState(maybeServiceInfo.get(), stateDatastore.getUpstreamsMap(serviceId).values()));
-  }
-
-  @GET
-  @Path("/{serviceId}/{upstream}")
-  public Optional<UpstreamInfo> getUpstream(@PathParam("serviceId") String serviceId, @PathParam("upstream") String upstream) {
-    return stateDatastore.getUpstream(serviceId, upstream);
   }
 }

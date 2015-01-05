@@ -22,7 +22,7 @@ import com.hubspot.baragon.managers.RequestManager;
 import com.hubspot.baragon.models.BaragonRequest;
 import com.hubspot.baragon.models.BaragonResponse;
 import com.hubspot.baragon.models.QueuedRequestId;
-import com.hubspot.baragon.service.worker.BaragonRequestWorker;
+import com.hubspot.baragon.worker.BaragonRequestWorker;
 
 @Path("/request")
 @Consumes({MediaType.APPLICATION_JSON})

@@ -17,6 +17,8 @@
     <jackson.version>2.3.1</jackson.version>
     <ning.async.version>1.7.24</ning.async.version>
     <dropwizard.version>0.7.0</dropwizard.version>
+    <horizon.version>0.0.10</horizon.version>
+    <junit.version>4.11</junit.version>
 </properties>
 
 <groupId>com.hubspot</groupId>
@@ -55,6 +57,7 @@
     <module>BaragonData</module>
     <module>BaragonService</module>
     <module>BaragonAgentService</module>
+    <module>BaragonClient</module>
 </modules>
 
 <build>
