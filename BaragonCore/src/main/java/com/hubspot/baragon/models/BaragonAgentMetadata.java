@@ -5,22 +5,28 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Objects;
 import com.google.common.base.Optional;
+import com.hubspot.baragon.exceptions.InvalidAgentMetadataStringException;
+
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 
 @JsonIgnoreProperties( ignoreUnknown = true )
 public class BaragonAgentMetadata {
+  public static final Pattern AGENT_METADATA_STRING_REGEX = Pattern.compile("^http[s]?:\\/\\/([^:\\/]+:\\d{1,5})\\/.*$");
+
   private final String baseAgentUri;
   private final Optional<String> domain;
   private final String agentId;
 
   @JsonCreator
   public static BaragonAgentMetadata fromString(String value) {
-    Pattern pattern = Pattern.compile("http[s]?:\\/\\/([^:\\/]+:\\d{1,5})\\/");
-    Matcher matcher = pattern.matcher(value);
-    matcher.find();
-    String agentId = matcher.group(1);
-    return new BaragonAgentMetadata(value, agentId, Optional.<String>absent());
+    final Matcher matcher = AGENT_METADATA_STRING_REGEX.matcher(value);
+
+    if (!matcher.matches()) {
+      throw new InvalidAgentMetadataStringException(value);
+    }
+
+    return new BaragonAgentMetadata(value, matcher.group(1), Optional.<String>absent());
   }
 
   @JsonCreator

@@ -11,6 +11,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import com.hubspot.baragon.exceptions.InvalidAgentMetadataStringException;
 import com.hubspot.baragon.models.BaragonAgentMetadata;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.leader.LeaderLatch;
@@ -54,19 +55,11 @@ public class BaragonKnownAgentsDatastore extends AbstractDataStore {
       } catch (KeeperException.NoNodeException nne) {
       } catch (JsonParseException | JsonMappingException je) {
         LOG.warn(String.format("Exception deserializing %s", String.format(KNOWN_AGENTS_GROUP_HOST_FORMAT, clusterName, node)), je);
+      } catch (InvalidAgentMetadataStringException iamse) {
+        LOG.warn(String.format("Exception loading agent metadata from old-style string '%s', ignoring...", iamse.getAgentMetadataString()));
       } catch (Exception e) {
         throw Throwables.propagate(e);
       }
-    }
-
-    return metadata;
-  }
-
-  public Collection<BaragonAgentMetadata> getKnownAgentsMetadata(Collection<String> clusterNames) {
-    final Set<BaragonAgentMetadata> metadata = Sets.newHashSet();
-
-    for (String clusterName : clusterNames) {
-      metadata.addAll(getKnownAgentsMetadata(clusterName));
     }
 
     return metadata;
