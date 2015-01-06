@@ -14,7 +14,7 @@ zookeeper:
   retryMaxTries: 3
 
 loadBalancerConfig:
-  name: loadBalancerGroupName                  # load balancer group name goes here
+  name: <%= node[:baragon][:group_name] %>                  # load balancer group name goes here
   rootPath: <%= node[:baragon][:proxy_conf_dir] %> # base path for writing load balancer configs goes here
   checkConfigCommand: "<%= node[:nginx][:binary] %> -t"  # command for checking configs goes here (i.e. nginx -t)
   reloadConfigCommand: "<%= node[:nginx][:binary] %> -s reload" # command for reloading configs goes here (i.s. nginx -s reload)
