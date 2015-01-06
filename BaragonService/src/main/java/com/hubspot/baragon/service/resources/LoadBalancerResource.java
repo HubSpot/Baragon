@@ -18,6 +18,7 @@ import com.hubspot.baragon.data.BaragonKnownAgentsDatastore;
 import com.hubspot.baragon.data.BaragonLoadBalancerDatastore;
 import com.hubspot.baragon.data.BaragonStateDatastore;
 import com.hubspot.baragon.models.BaragonAgentMetadata;
+import com.hubspot.baragon.models.BaragonKnownAgentMetadata;
 import com.hubspot.baragon.models.BaragonService;
 
 @Path("/load-balancer")
@@ -64,7 +65,7 @@ public class LoadBalancerResource {
 
   @GET
   @Path("/{clusterName}/known-agents")
-  public Collection<BaragonAgentMetadata> getKnownAgentsMetadata(@PathParam("clusterName") String clusterName) {
+  public Collection<BaragonKnownAgentMetadata> getKnownAgentsMetadata(@PathParam("clusterName") String clusterName) {
     return knownAgentsDatastore.getKnownAgentsMetadata(clusterName);
   }
 

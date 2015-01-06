@@ -13,6 +13,8 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.hubspot.baragon.exceptions.InvalidAgentMetadataStringException;
 import com.hubspot.baragon.models.BaragonAgentMetadata;
+import com.hubspot.baragon.models.BaragonKnownAgentMetadata;
+
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.leader.LeaderLatch;
 import org.apache.zookeeper.KeeperException;
@@ -35,37 +37,23 @@ public class BaragonKnownAgentsDatastore extends AbstractDataStore {
     super(curatorFramework, objectMapper);
   }
 
-  public Collection<BaragonAgentMetadata> getKnownAgentsMetadata(String clusterName) {
+  public Collection<BaragonKnownAgentMetadata> getKnownAgentsMetadata(String clusterName) {
     final Collection<String> nodes = getChildren(String.format(KNOWN_AGENTS_GROUP_HOSTS_FORMAT, clusterName));
 
     if (nodes.isEmpty()) {
       return Collections.emptyList();
     }
 
-    final Collection<BaragonAgentMetadata> metadata = Lists.newArrayListWithCapacity(nodes.size());
+    final Collection<BaragonKnownAgentMetadata> metadata = Lists.newArrayListWithCapacity(nodes.size());
 
     for (String node : nodes) {
-      try {
-        final String value = new String(curatorFramework.getData().forPath(String.format(KNOWN_AGENTS_GROUP_HOST_FORMAT, clusterName, node)), Charsets.UTF_8);
-        if (value.startsWith("http://")) {
-          metadata.add(BaragonAgentMetadata.fromString(value));
-        } else {
-          metadata.add(objectMapper.readValue(value, BaragonAgentMetadata.class));
-        }
-      } catch (KeeperException.NoNodeException nne) {
-      } catch (JsonParseException | JsonMappingException je) {
-        LOG.warn(String.format("Exception deserializing %s", String.format(KNOWN_AGENTS_GROUP_HOST_FORMAT, clusterName, node)), je);
-      } catch (InvalidAgentMetadataStringException iamse) {
-        LOG.warn(String.format("Exception loading agent metadata from old-style string '%s', ignoring...", iamse.getAgentMetadataString()));
-      } catch (Exception e) {
-        throw Throwables.propagate(e);
-      }
+      metadata.addAll(readFromZk(String.format(KNOWN_AGENTS_GROUP_HOST_FORMAT, clusterName, node), BaragonKnownAgentMetadata.class).asSet());
     }
 
     return metadata;
   }
 
-  public void addKnownAgent(String clusterName, BaragonAgentMetadata agentMetadata) {
+  public void addKnownAgent(String clusterName, BaragonKnownAgentMetadata agentMetadata) {
     writeToZk(String.format(KNOWN_AGENTS_GROUP_HOST_FORMAT, clusterName, agentMetadata.getAgentId()), agentMetadata);
   }
 

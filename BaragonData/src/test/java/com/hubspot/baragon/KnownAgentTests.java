@@ -11,6 +11,7 @@ import com.google.common.base.Optional;
 import com.hubspot.baragon.data.BaragonKnownAgentsDatastore;
 import com.hubspot.baragon.exceptions.InvalidAgentMetadataStringException;
 import com.hubspot.baragon.models.BaragonAgentMetadata;
+import com.hubspot.baragon.models.BaragonKnownAgentMetadata;
 
 import static org.junit.Assert.assertEquals;
 
@@ -32,7 +33,7 @@ public class KnownAgentTests {
 
   @Test
   public void testKnownAgentBaragonMetadata(BaragonKnownAgentsDatastore datastore) {
-    final BaragonAgentMetadata metadata = new BaragonAgentMetadata(BASE_URI, AGENT_ID, Optional.of(DOMAIN));
+    final BaragonKnownAgentMetadata metadata = new BaragonKnownAgentMetadata(BASE_URI, AGENT_ID, Optional.of(DOMAIN), System.currentTimeMillis());
     datastore.addKnownAgent(CLUSTER_NAME, metadata);
 
     assertEquals(Collections.singletonList(metadata), datastore.getKnownAgentsMetadata(CLUSTER_NAME));

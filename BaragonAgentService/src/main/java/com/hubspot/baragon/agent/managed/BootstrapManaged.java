@@ -18,6 +18,7 @@ import com.hubspot.baragon.agent.BaragonAgentServiceModule;
 import com.hubspot.baragon.agent.config.LoadBalancerConfiguration;
 import com.hubspot.baragon.agent.lbs.FilesystemConfigHelper;
 import com.hubspot.baragon.data.BaragonStateDatastore;
+import com.hubspot.baragon.models.BaragonKnownAgentMetadata;
 import com.hubspot.baragon.models.BaragonServiceState;
 import com.hubspot.baragon.models.ServiceContext;
 import com.hubspot.baragon.utils.JavaUtils;
@@ -82,7 +83,7 @@ public class BootstrapManaged implements Managed {
     leaderLatch.start();
 
     LOG.info("Adding to known-agents...");
-    knownAgentsDatastore.addKnownAgent(loadBalancerConfiguration.getName(), baragonAgentMetadata);
+    knownAgentsDatastore.addKnownAgent(loadBalancerConfiguration.getName(), BaragonKnownAgentMetadata.fromAgentMetadata(baragonAgentMetadata, System.currentTimeMillis()));
   }
 
   @Override
