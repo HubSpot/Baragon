@@ -1,5 +1,6 @@
 package com.hubspot.baragon.agent;
 
+import com.hubspot.baragon.data.BaragonKnownAgentsDatastore;
 import io.dropwizard.jetty.HttpConnectorFactory;
 import io.dropwizard.server.SimpleServerFactory;
 
@@ -32,9 +33,6 @@ import com.hubspot.baragon.models.BaragonAgentMetadata;
 import com.hubspot.baragon.utils.JavaUtils;
 
 public class BaragonAgentServiceModule extends AbstractModule {
-  public static final String BARAGON_AGENT_HTTP_PORT = "baragon.agent.http.port";
-  public static final String BARAGON_AGENT_HOSTNAME = "baragon.agent.hostname";
-  public static final String BARAGON_AGENT_DOMAIN = "baragon.agent.domain";
   public static final String AGENT_LEADER_LATCH = "baragon.agent.leaderLatch";
   public static final String AGENT_LOCK = "baragon.agent.lock";
   public static final String AGENT_TEMPLATES = "baragon.agent.templates";
@@ -94,24 +92,19 @@ public class BaragonAgentServiceModule extends AbstractModule {
 
   @Provides
   @Singleton
-  @Named(BARAGON_AGENT_HTTP_PORT)
-  public int providesHttpPortProperty(BaragonAgentConfiguration config) {
-    SimpleServerFactory simpleServerFactory = (SimpleServerFactory) config.getServerFactory();
-    HttpConnectorFactory httpFactory = (HttpConnectorFactory) simpleServerFactory.getConnector();
+  public BaragonAgentMetadata providesAgentMetadata(BaragonAgentConfiguration config) throws Exception {
+    final SimpleServerFactory simpleServerFactory = (SimpleServerFactory) config.getServerFactory();
+    final HttpConnectorFactory httpFactory = (HttpConnectorFactory) simpleServerFactory.getConnector();
 
-    return httpFactory.getPort();
-  }
+    final int httpPort = httpFactory.getPort();
+    final String hostname = config.getHostname().or(JavaUtils.getHostAddress());
+    final Optional<String> domain = config.getLoadBalancerConfiguration().getDomain();
+    final String appRoot = simpleServerFactory.getApplicationContextPath();
 
-  @Provides
-  @Named(BARAGON_AGENT_HOSTNAME)
-  public String providesHostnameProperty(BaragonAgentConfiguration config) throws Exception {
-    return config.getHostname().or(JavaUtils.getHostAddress());
-  }
+    final String baseAgentUri = String.format(config.getBaseUrlTemplate(), hostname, httpPort, appRoot);
+    final String agentId = String.format("%s:%s", hostname, httpPort);
 
-  @Provides
-  @Named(BARAGON_AGENT_DOMAIN)
-  public Optional<String> providesAgentDomain(LoadBalancerConfiguration loadBalancerConfiguration) {
-    return loadBalancerConfiguration.getDomain();
+    return new BaragonAgentMetadata(baseAgentUri, agentId, domain);
   }
 
   @Provides
@@ -119,13 +112,8 @@ public class BaragonAgentServiceModule extends AbstractModule {
   @Named(AGENT_LEADER_LATCH)
   public LeaderLatch providesAgentLeaderLatch(BaragonLoadBalancerDatastore loadBalancerDatastore,
                                               BaragonAgentConfiguration config,
-                                              @Named(BARAGON_AGENT_HTTP_PORT) int httpPort,
-                                              @Named(BARAGON_AGENT_HOSTNAME) String hostname,
-                                              @Named(BARAGON_AGENT_DOMAIN) Optional<String> domain) {
-    final String appRoot = ((SimpleServerFactory)config.getServerFactory()).getApplicationContextPath();
-    final String baseAgentUri = String.format(config.getBaseUrlTemplate(), hostname, httpPort, appRoot);
-
-    return loadBalancerDatastore.createLeaderLatch(config.getLoadBalancerConfiguration().getName(), new BaragonAgentMetadata(baseAgentUri, domain));
+                                              BaragonAgentMetadata baragonAgentMetadata) {
+    return loadBalancerDatastore.createLeaderLatch(config.getLoadBalancerConfiguration().getName(), baragonAgentMetadata);
   }
 
   @Provides

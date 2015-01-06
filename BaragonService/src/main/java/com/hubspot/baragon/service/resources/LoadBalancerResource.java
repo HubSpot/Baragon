@@ -14,6 +14,7 @@ import javax.ws.rs.core.MediaType;
 import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
+import com.hubspot.baragon.data.BaragonKnownAgentsDatastore;
 import com.hubspot.baragon.data.BaragonLoadBalancerDatastore;
 import com.hubspot.baragon.data.BaragonStateDatastore;
 import com.hubspot.baragon.models.BaragonAgentMetadata;
@@ -24,12 +25,15 @@ import com.hubspot.baragon.models.BaragonService;
 @Consumes(MediaType.APPLICATION_JSON)
 public class LoadBalancerResource {
   private final BaragonLoadBalancerDatastore loadBalancerDatastore;
+  private final BaragonKnownAgentsDatastore knownAgentsDatastore;
   private final BaragonStateDatastore stateDatastore;
 
   @Inject
   public LoadBalancerResource(BaragonLoadBalancerDatastore loadBalancerDatastore,
+                              BaragonKnownAgentsDatastore knownAgentsDatastore,
                               BaragonStateDatastore stateDatastore) {
     this.loadBalancerDatastore = loadBalancerDatastore;
+    this.knownAgentsDatastore = knownAgentsDatastore;
     this.stateDatastore = stateDatastore;
   }
 
@@ -56,6 +60,18 @@ public class LoadBalancerResource {
   @Path("/{clusterName}/agents")
   public Collection<BaragonAgentMetadata> getAgentMetadata(@PathParam("clusterName") String clusterName) {
     return loadBalancerDatastore.getAgentMetadata(clusterName);
+  }
+
+  @GET
+  @Path("/{clusterName}/known-agents")
+  public Collection<BaragonAgentMetadata> getKnownAgentsMetadata(@PathParam("clusterName") String clusterName) {
+    return knownAgentsDatastore.getKnownAgentsMetadata(clusterName);
+  }
+
+  @DELETE
+  @Path("/{clusterName}/known-agents/{agentId}")
+  public void deleteKnownAgent(@PathParam("clusterName") String clusterName, @PathParam("agentId") String agentId) {
+    knownAgentsDatastore.removeKnownAgent(clusterName, agentId);
   }
 
   @GET
