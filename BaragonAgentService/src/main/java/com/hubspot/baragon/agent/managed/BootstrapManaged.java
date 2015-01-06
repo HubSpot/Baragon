@@ -38,7 +38,7 @@ public class BootstrapManaged implements Managed {
                           LoadBalancerConfiguration loadBalancerConfiguration,
                           FilesystemConfigHelper configHelper,
                           @Named(BaragonAgentServiceModule.AGENT_LEADER_LATCH) LeaderLatch leaderLatch,
-                          @Named(BaragonAgentServiceModule.BARAGON_AGENT_METADATA) BaragonAgentMetadata baragonAgentMetadata) {
+                          BaragonAgentMetadata baragonAgentMetadata) {
     this.loadBalancerConfiguration = loadBalancerConfiguration;
     this.configHelper = configHelper;
     this.stateDatastore = stateDatastore;
