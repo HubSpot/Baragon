@@ -1,10 +1,12 @@
 package com.hubspot.baragon.models;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Objects;
 import com.google.common.base.Optional;
 
+@JsonIgnoreProperties( ignoreUnknown = true )
 public class BaragonAuthKey {
   private final String value;
   private final String owner;

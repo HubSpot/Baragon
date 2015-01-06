@@ -3,8 +3,10 @@ package com.hubspot.baragon.models;
 import java.util.Collection;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+@JsonIgnoreProperties( ignoreUnknown = true )
 public class BaragonServiceState {
   private final BaragonService service;
   private final Collection<UpstreamInfo> upstreams;

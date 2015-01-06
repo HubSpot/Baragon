@@ -2,9 +2,11 @@ package com.hubspot.baragon.models;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Optional;
 
+@JsonIgnoreProperties( ignoreUnknown = true )
 public class AgentResponse {
   private final String url;
   private final int attempt;
