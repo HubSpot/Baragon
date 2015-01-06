@@ -22,20 +22,20 @@ zookeeper_hosts = search(:node,
 fail 'Search returned no Zookeeper server nodes' if zookeeper_hosts.empty?
 
 template '/etc/baragon/service.yml' do
-  source 'service.yml.erb'
-  owner  'root'
-  group  'root'
-  mode   0644
-  variables(zookeeper_hosts: zookeeper_hosts)
-  notifies :restart, 'service[baragon-server]'
+  source    'service.yml.erb'
+  owner     'root'
+  group     'root'
+  mode      0644
+  variables zookeeper_hosts: zookeeper_hosts
+  notifies  :restart, 'service[baragon-server]'
 end
 
 template '/etc/init/baragon-server.conf' do
-  source 'baragon-server.init.erb'
-  owner  'root'
-  group  'root'
-  mode   0644
-  notifies :restart, 'service[baragon-server]'
+  source    'baragon-server.init.erb'
+  owner     'root'
+  group     'root'
+  mode      0644
+  notifies  :restart, 'service[baragon-server]'
   variables baragon_jar: baragon_server_jar,
             config_yaml: '/etc/baragon/service.yml'
 end
