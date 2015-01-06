@@ -57,7 +57,7 @@ public class BaragonAgentMetadata {
 
     BaragonAgentMetadata metadata = (BaragonAgentMetadata) o;
 
-    if (!agentId.equals(metadata.agentId)) return false;
+    if (agentId != null ? !agentId.equals(metadata.agentId) : metadata.agentId != null) return false;
     if (!baseAgentUri.equals(metadata.baseAgentUri)) return false;
     if (!domain.equals(metadata.domain)) return false;
 
@@ -68,7 +68,7 @@ public class BaragonAgentMetadata {
   public int hashCode() {
     int result = baseAgentUri.hashCode();
     result = 31 * result + domain.hashCode();
-    result = 31 * result + agentId.hashCode();
+    result = 31 * result + (agentId != null ? agentId.hashCode() : 0);
     return result;
   }
 
