@@ -3,7 +3,7 @@ server:
   applicationContextPath: /baragon-agent/v2
   connector:
     type: http
-    port: 8882
+    port: <%= node[:baragon][:agent_port] %>
 
 zookeeper:
   quorum: <%= @zookeeper_hosts.join(',') %>  # comma separated list of ZK host:port goes here
