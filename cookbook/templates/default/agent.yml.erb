@@ -1,6 +1,6 @@
 server:
   type: simple
-  applicationContextPath: /baragon-agent/v2
+  applicationContextPath: <%= node[:baragon][:agent_app_context_path] %>
   connector:
     type: http
     port: <%= node[:baragon][:agent_port] %>

@@ -1,6 +1,6 @@
 server:
   type: simple
-  applicationContextPath: /baragon/v2
+  applicationContextPath: <%= node[:baragon][:server_app_context_path] %>
   connector:
     type: http
     port: <%= node[:baragon][:server_port] %>
