@@ -3,7 +3,7 @@ include_recipe 'baragon::common'
 creds = Chef::EncryptedDataBagItem.load('secrets',
                                         'aws_credentials')['Baragon']
 
-baragon_server_jar = 'BaragonService-0.1.5-SNAPSHOT.jar'
+baragon_server_jar = "BaragonService-#{node[:baragon][:version]}.jar"
 
 s3_file "/usr/share/java/#{baragon_server_jar}" do
   aws_access_key_id     creds['access_key_id']

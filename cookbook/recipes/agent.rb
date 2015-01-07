@@ -10,7 +10,7 @@ end
 creds = Chef::EncryptedDataBagItem.load('secrets',
                                         'aws_credentials')['Baragon']
 
-baragon_agent_jar = 'BaragonAgentService-0.1.5-SNAPSHOT.jar'
+baragon_agent_jar = "BaragonAgentService-#{node[:baragon][:version]}.jar"
 
 s3_file "/usr/share/java/#{baragon_agent_jar}" do
   aws_access_key_id     creds['access_key_id']
