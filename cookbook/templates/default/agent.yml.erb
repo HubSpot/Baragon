@@ -15,6 +15,7 @@ zookeeper:
 
 loadBalancerConfig:
   name: <%= node[:baragon][:group_name] %>                  # load balancer group name goes here
+  domain: <%= node[:baragon][:domain] %>
   rootPath: <%= node[:baragon][:proxy_conf_dir] %> # base path for writing load balancer configs goes here
   checkConfigCommand: "<%= node[:nginx][:binary] %> -t"  # command for checking configs goes here (i.e. nginx -t)
   reloadConfigCommand: "<%= node[:nginx][:binary] %> -s reload" # command for reloading configs goes here (i.s. nginx -s reload)
