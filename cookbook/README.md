@@ -1,6 +1,6 @@
 # baragon-cookbook
 
-Installs Baragon (service or agent) on a node.  Baragon is the loadbalancer management service for [HubSpot's Singularity cluster management system](https://github.com/HubSpot/Singularity).
+Installs Baragon (service or agent) on a node. Baragon is the loadbalancer management service for [HubSpot's Singularity cluster management system](https://github.com/HubSpot/Singularity).
 
 ## Supported Platforms
 
@@ -14,7 +14,7 @@ Baragon depends on ZooKeeper to store internal state, and perform coordination b
 
 ### Nginx
 
-Baragon write nginx-style config files by default.  In theory other load balancers could be used, but the tool is designed around the style of config files used by nginx.
+Baragon write nginx-style config files by default. In theory other load balancers could be used, but the tool is designed around the style of config files used by nginx.
 
 The main requirement is that each application and upstream has its own file containing all necessary configuration directives (as opposed to, say, haproxy, where all configuration is parsed in order from top to bottom from a single, monolithic file).
 
