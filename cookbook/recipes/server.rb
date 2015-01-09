@@ -1,18 +1,15 @@
 include_recipe 'baragon::common'
 
-creds = Chef::EncryptedDataBagItem.load('secrets',
-                                        'aws_credentials')['Baragon']
-
 baragon_server_jar = "BaragonService-#{node[:baragon][:version]}.jar"
 
-s3_file "/usr/share/java/#{baragon_server_jar}" do
-  aws_access_key_id     creds['access_key_id']
-  aws_secret_access_key creds['secret_access_key']
-  bucket                'ops.evertrue.com'
-  remote_path           "/pkgs/#{baragon_server_jar}"
-  owner                 'root'
-  group                 'root'
-  mode                  0644
+remote_file "/usr/share/java/#{baragon_server_jar}" do
+  action   :create
+  backup   5
+  owner    'root'
+  group    'root'
+  mode     0644
+  source   "file://#{Chef::Config[:file_cache_path]}/Baragon/BaragonService" \
+           "/target/#{baragon_server_jar}"
 end
 
 zookeeper_hosts = search(:node,

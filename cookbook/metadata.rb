@@ -8,3 +8,4 @@ version          '1.0.0'
 
 depends 's3_file'
 depends 'java'
+depends 'git'
