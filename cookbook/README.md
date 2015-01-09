@@ -93,4 +93,4 @@ include_recipe 'baragon::agent'
 
 ## License and Authors
 
-Author:: EverTrue, Inc. (<eric.herot@evertrue.com>)
+Author:: EverTrue, Inc. (<devops@evertrue.com>)
