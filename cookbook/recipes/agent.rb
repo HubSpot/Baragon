@@ -19,18 +19,11 @@ remote_file "/usr/share/java/#{baragon_agent_jar}" do
            "BaragonAgentService/target/#{baragon_agent_jar}"
 end
 
-zookeeper_hosts = search(:node,
-                         "chef_environment:#{node.chef_environment} AND " \
-                         'roles:zookeeper').map { |n| "#{n[:fqdn]}:2181" }
-
-fail 'Search returned no Zookeeper server nodes' if zookeeper_hosts.empty?
-
 template '/etc/baragon/agent.yml' do
   source   'agent.yml.erb'
   owner    'root'
   group    'root'
   mode     0644
-  variables(zookeeper_hosts: zookeeper_hosts)
   notifies :restart, 'service[baragon-agent]'
 end
 

@@ -20,7 +20,16 @@ platforms:
           - ip: '192.168.33.10'
 
 suites:
-  - name: default
+  - name: remotezk
+    run_list:
+      - recipe[java]
+      - recipe[baragon::server]
+      - recipe[et_nginx]
+      - recipe[baragon::agent]
+    attributes:
+      java:
+        jdk_version: 7
+  - name: localzk
     run_list:
       - recipe[java]
       - recipe[zookeeper]
@@ -29,6 +38,10 @@ suites:
       - recipe[et_nginx]
       - recipe[baragon::agent]
     attributes:
+      baragon:
+        mocking: true
+        zk_hosts:
+        - 'localhost:2181'
       java:
         jdk_version: 7
       zookeeper:
