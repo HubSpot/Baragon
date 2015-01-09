@@ -14,7 +14,6 @@ group :test, :integration do
   gem 'test-kitchen',
       github: 'test-kitchen/test-kitchen',
       tag: '2ae3e6813e8f8eb2a0fd3f1a274ac63d9a9379bf'
-  gem 'serverspec', '~> 2.7'
 end
 
 group :test, :vagrant do
