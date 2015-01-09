@@ -3,7 +3,9 @@ node.set[:java][:jdk_version] = 7
 include_recipe 'java'
 include_recipe 'baragon::build'
 
-directory '/etc/baragon'
+%w(/etc/baragon /var/log/baragon).each do |dir|
+  directory dir
+end
 
 unless node[:baragon][:mocking]
   node.set[:baragon][:zk_hosts] =
