@@ -53,7 +53,7 @@ public class BootstrapManaged implements Managed {
   private void applyCurrentConfigs() {
     LOG.info("Loading current state of the world from zookeeper...");
 
-    final Stopwatch stopwatch = new Stopwatch().start();
+    final Stopwatch stopwatch = Stopwatch.createStarted();
     final long now = System.currentTimeMillis();
 
     final Collection<String> services = stateDatastore.getServices();
