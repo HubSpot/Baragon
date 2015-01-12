@@ -73,7 +73,7 @@ public class ZkParallelFetcher {
     }
   }
 
-  private class GetDataCallback<T> implements BackgroundCallback {
+  private static class GetDataCallback<T> implements BackgroundCallback {
     private final Map<String, T> dataMap;
     private final Function<byte[], T> transformFunction;
     private final CountDownLatch countDownLatch;
