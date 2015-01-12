@@ -23,7 +23,7 @@ suites:
     run_list:
       - recipe[java]
       - recipe[baragon::server]
-      - recipe[et_nginx]
+      - recipe[nginx]
       - recipe[baragon::agent]
     attributes:
       java:
@@ -33,7 +33,7 @@ suites:
       - recipe[java]
       - recipe[zookeeper]
       - recipe[zookeeper::service]
-      - recipe[et_nginx]
+      - recipe[nginx]
       - recipe[baragon::server]
       - recipe[baragon::agent]
     attributes:
