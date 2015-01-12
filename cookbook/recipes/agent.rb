@@ -1,11 +1,13 @@
 include_recipe 'baragon::common'
 
-["#{node[:baragon][:proxy_conf_dir]}/proxy",
- "#{node[:baragon][:upstream_conf_dir]}/upstreams"].each do |dir|
+# rubocop:disable Metrics/LineLength
+["#{node['baragon']['agent_yaml']['loadBalancerConfig']['rootPath']}/proxy",
+ "#{node['baragon']['agent_yaml']['loadBalancerConfig']['rootPath']}/upstreams"].each do |dir|
   directory dir do
     recursive true
   end
 end
+# rubocop:enable Metrics/LineLength
 
 baragon_agent_jar = "BaragonAgentService-#{node[:baragon][:version]}.jar"
 
@@ -19,11 +21,22 @@ remote_file "/usr/share/java/#{baragon_agent_jar}" do
            "BaragonAgentService/target/#{baragon_agent_jar}"
 end
 
-template '/etc/baragon/agent.yml' do
-  source   'agent.yml.erb'
-  owner    'root'
-  group    'root'
-  mode     0644
+node.set[:baragon][:agent_yaml][:zookeeper][:quorum] =
+  node[:baragon][:zk_hosts].join(',')
+node.set[:baragon][:agent_yaml][:zookeeper][:zkNamespace] =
+  node[:baragon][:zk_namespace]
+
+file '/etc/baragon/agent.yml' do
+  action  :create
+  owner   'root'
+  group   'root'
+  mode    0644
+  content(YAML.dump(JSON.parse(node[:baragon][:agent_yaml].merge(
+        templates:
+          [node[:baragon][:proxy_template],
+           node[:baragon][:upstream_template]]).to_hash.to_json)
+    )
+  )
   notifies :restart, 'service[baragon-agent]'
 end
 
