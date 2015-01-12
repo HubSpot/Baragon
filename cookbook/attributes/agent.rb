@@ -18,11 +18,19 @@ default[:baragon][:agent_yaml] = {
   'loadBalancerConfig' => {
     'name' => 'default',
     'domain' => 'vagrant.baragon.biz',
-    'rootPath' => '/tmp',
-    'checkConfigCommand' => "#{node[:nginx][:binary]} -t",
-    'reloadConfigCommand' => "#{node[:nginx][:binary]} -s reload"
+    'rootPath' => '/tmp'
   }
 }
+
+if node[:nginx]
+  default['loadBalancerConfig']['checkConfigCommand'] =
+    "#{node[:nginx][:binary]} -t"
+  default['loadBalancerConfig']['reloadConfigCommand'] =
+    "#{node[:nginx][:binary]} -s reload"
+else
+  default['loadBalancerConfig']['checkConfigCommand'] = '/bin/true'
+  default['loadBalancerConfig']['reloadConfigCommand'] = '/bin/true'
+end
 
 default[:baragon][:proxy_template][:filename] = 'proxy/%s'
 # rubocop:disable Metrics/LineLength
