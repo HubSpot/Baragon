@@ -36,6 +36,10 @@
         </dependency>
         <dependency>
             <groupId>com.hubspot</groupId>
+            <artifactId>BaragonCore</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.hubspot</groupId>
             <artifactId>BaragonData</artifactId>
         </dependency>
         <dependency>
@@ -89,6 +93,14 @@
         <dependency>
             <groupId>javax.servlet</groupId>
             <artifactId>javax.servlet-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.curator</groupId>
+            <artifactId>curator-framework</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.curator</groupId>
+            <artifactId>curator-recipes</artifactId>
         </dependency>
     </dependencies>
 </project>
