@@ -51,15 +51,9 @@ public class BaragonAuthUpdater implements Managed, PathChildrenCacheListener {
 
   @Override
   public void childEvent(CuratorFramework client, PathChildrenCacheEvent event) throws Exception {
-    switch (event.getType()) {
-      case CHILD_UPDATED:
-      case CHILD_ADDED:
-      case CHILD_REMOVED:
-      case CONNECTION_RECONNECTED:
-        LOG.info("Auth keys changed, updating map...");
-        authKeys.set(datastore.getAuthKeyMap());
-      default:
-        // nop
+    if (event.getType() == PathChildrenCacheEvent.Type.CHILD_ADDED || event.getType() == PathChildrenCacheEvent.Type.CHILD_UPDATED || event.getType() == PathChildrenCacheEvent.Type.CHILD_REMOVED || event.getType() == PathChildrenCacheEvent.Type.CONNECTION_RECONNECTED) {
+      LOG.info("Received {} event, updating authkey map...", event.getType());
+      authKeys.set(datastore.getAuthKeyMap());
     }
   }
 }
