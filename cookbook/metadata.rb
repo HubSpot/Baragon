@@ -6,6 +6,5 @@ description      'Installs/Configures baragon'
 long_description 'Installs/Configures baragon'
 version          '1.0.0'
 
-depends 's3_file'
 depends 'java'
 depends 'git'
