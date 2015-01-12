@@ -1,6 +1,6 @@
 name             'baragon'
-maintainer       'EverTrue, Inc.'
-maintainer_email 'eric.herot@evertrue.com'
+maintainer       'Tom Petr'
+maintainer_email 'tpetr@hubspot.com'
 license          'Apache 2.0'
 description      'Installs/Configures baragon'
 long_description 'Installs/Configures baragon'
