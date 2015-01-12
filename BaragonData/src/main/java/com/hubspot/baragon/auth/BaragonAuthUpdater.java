@@ -57,6 +57,8 @@ public class BaragonAuthUpdater implements Managed, PathChildrenCacheListener {
       case CHILD_REMOVED:
         LOG.info("Auth keys changed, updating map...");
         authKeys.set(datastore.getAuthKeyMap());
+      default:
+        // nop
     }
   }
 }

@@ -89,19 +89,33 @@ public class BaragonService {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
 
     BaragonService service = (BaragonService) o;
 
-    if (loadBalancerGroups != null ? !loadBalancerGroups.equals(service.loadBalancerGroups) : service.loadBalancerGroups != null)
+    if (loadBalancerGroups != null ? !loadBalancerGroups.equals(service.loadBalancerGroups) : service.loadBalancerGroups != null) {
       return false;
-    if (options != null ? !options.equals(service.options) : service.options != null) return false;
-    if (owners != null ? !owners.equals(service.owners) : service.owners != null) return false;
-    if (serviceBasePath != null ? !serviceBasePath.equals(service.serviceBasePath) : service.serviceBasePath != null)
+    }
+    if (options != null ? !options.equals(service.options) : service.options != null) {
       return false;
-    if (serviceId != null ? !serviceId.equals(service.serviceId) : service.serviceId != null) return false;
-    if (templateName != null ? !templateName.equals(service.templateName) : service.templateName != null) return false;
+    }
+    if (owners != null ? !owners.equals(service.owners) : service.owners != null) {
+      return false;
+    }
+    if (serviceBasePath != null ? !serviceBasePath.equals(service.serviceBasePath) : service.serviceBasePath != null) {
+      return false;
+    }
+    if (serviceId != null ? !serviceId.equals(service.serviceId) : service.serviceId != null) {
+      return false;
+    }
+    if (templateName != null ? !templateName.equals(service.templateName) : service.templateName != null) {
+      return false;
+    }
 
     return true;
   }

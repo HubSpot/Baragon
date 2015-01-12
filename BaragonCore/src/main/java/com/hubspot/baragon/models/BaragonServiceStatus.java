@@ -47,16 +47,27 @@ public class BaragonServiceStatus {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
 
     BaragonServiceStatus that = (BaragonServiceStatus) o;
 
-    if (globalStateNodeSize != that.globalStateNodeSize) return false;
-    if (leader != that.leader) return false;
-    if (pendingRequestCount != that.pendingRequestCount) return false;
-    if (workerLagMs != that.workerLagMs) return false;
-    if (!zookeeperState.equals(that.zookeeperState)) return false;
+    if (leader != that.leader) {
+      return false;
+    }
+    if (pendingRequestCount != that.pendingRequestCount) {
+      return false;
+    }
+    if (workerLagMs != that.workerLagMs) {
+      return false;
+    }
+    if (!zookeeperState.equals(that.zookeeperState)) {
+      return false;
+    }
 
     return true;
   }

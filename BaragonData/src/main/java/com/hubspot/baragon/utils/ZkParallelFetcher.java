@@ -111,7 +111,7 @@ public class ZkParallelFetcher {
     }
   }
 
-  private class GetChildrenCallback implements BackgroundCallback {
+  private static class GetChildrenCallback implements BackgroundCallback {
     private final Map<String, Collection<String>> childMap;
     private final CountDownLatch countDownLatch;
     private final Queue<KeeperException> exceptions;

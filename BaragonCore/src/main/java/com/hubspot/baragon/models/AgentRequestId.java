@@ -28,6 +28,34 @@ public class AgentRequestId {
   }
 
   @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    AgentRequestId that = (AgentRequestId) o;
+
+    if (!baseUrl.equals(that.baseUrl)) {
+      return false;
+    }
+    if (type != that.type) {
+      return false;
+    }
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = type.hashCode();
+    result = 31 * result + baseUrl.hashCode();
+    return result;
+  }
+
+  @Override
   public String toString() {
     return Objects.toStringHelper(this)
         .add("type", type)
