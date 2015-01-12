@@ -10,7 +10,7 @@ Tested on an extensive range of platforms including Ubuntu 14.04 and nothing els
 
 ### Zookeeper
 
-Baragon depends on ZooKeeper to store internal state, and perform coordination between multiple BaragonService instances if high availability is desired. Using an existing Zookeeper cluster is totally fine if you happen to have one. Separate Baragon installations can also share the same Zookeeper cluster, provided they use different zkNamespace values.
+Baragon depends on ZooKeeper to store internal state, and perform coordination between multiple `BaragonService` instances if high availability is desired. Using an existing Zookeeper cluster is totally fine if you happen to have one. Separate Baragon installations can also share the same Zookeeper cluster, provided they use different `zkNamespace` values.
 
 ### Nginx
 
