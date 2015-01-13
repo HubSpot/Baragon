@@ -26,6 +26,22 @@ node.set[:baragon][:agent_yaml][:zookeeper][:quorum] =
 node.set[:baragon][:agent_yaml][:zookeeper][:zkNamespace] =
   node[:baragon][:zk_namespace]
 
+
+if node[:nginx]
+  unless node[:nginx][:binary]
+    fail "attribute :binary not found in node[:nginx]: #{node[:nginx].inspect}"
+  end
+  node.set['baragon']['agent_yaml']['loadBalancerConfig']['checkConfigCommand'] =
+    "#{node[:nginx][:binary]} -t"
+  node.set['baragon']['agent_yaml']['loadBalancerConfig']['reloadConfigCommand'] =
+    "#{node[:nginx][:binary]} -s reload"
+else
+  node.set['baragon']['agent_yaml']['loadBalancerConfig']['checkConfigCommand'] =
+  '/bin/true'
+  node.set['baragon']['agent_yaml']['loadBalancerConfig']['reloadConfigCommand'] =
+  '/bin/true'
+end
+
 file '/etc/baragon/agent.yml' do
   action  :create
   owner   'root'
