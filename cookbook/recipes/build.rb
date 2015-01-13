@@ -25,6 +25,5 @@ git "#{Chef::Config[:file_cache_path]}/Baragon" do
   repository 'https://github.com/HubSpot/Baragon.git'
   reference  node[:baragon][:git_ref]
   user       node[:baragon][:user]
-  action     :export
   notifies   :run, 'execute[build_baragon]', :immediately
 end
