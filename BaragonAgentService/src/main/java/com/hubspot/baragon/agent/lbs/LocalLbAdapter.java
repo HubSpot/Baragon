@@ -1,11 +1,17 @@
 package com.hubspot.baragon.agent.lbs;
 
+import org.apache.commons.exec.CommandLine;
+import org.apache.commons.exec.DefaultExecutor;
+import org.apache.commons.exec.ExecuteException;
+import org.apache.commons.exec.ExecuteWatchdog;
+import org.apache.commons.exec.PumpStreamHandler;
+
+import com.google.common.base.Charsets;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.hubspot.baragon.agent.config.LoadBalancerConfiguration;
 import com.hubspot.baragon.exceptions.InvalidConfigException;
 import com.hubspot.baragon.exceptions.LbAdapterExecuteException;
-import org.apache.commons.exec.*;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -18,18 +24,18 @@ public class LocalLbAdapter {
   public LocalLbAdapter(LoadBalancerConfiguration loadBalancerConfiguration) {
     this.loadBalancerConfiguration = loadBalancerConfiguration;
   }
-  
+
   private void executeWithTimeout(CommandLine command, int timeout) throws LbAdapterExecuteException, IOException {
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     DefaultExecutor executor = new DefaultExecutor();
-    
+
     executor.setStreamHandler(new PumpStreamHandler(baos));
     executor.setWatchdog(new ExecuteWatchdog(timeout));
-    
+
     try {
       executor.execute(command);
     } catch (ExecuteException e) {
-      throw new LbAdapterExecuteException(baos.toString(), e);
+      throw new LbAdapterExecuteException(baos.toString(Charsets.UTF_8.name()), e);
     }
   }
 

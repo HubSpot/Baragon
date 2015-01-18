@@ -117,7 +117,7 @@ public class FilesystemConfigHelper {
   private void writeConfigs(Collection<BaragonConfigFile> files) {
     for (BaragonConfigFile file : files) {
       try {
-        Files.write(file.getContent().getBytes(), new File(file.getFullPath()));
+        Files.write(file.getContent().getBytes(Charsets.UTF_8), new File(file.getFullPath()));
       } catch (IOException e) {
         LOG.error("Failed writing " + file.getFullPath(), e);
         throw new RuntimeException("Failed writing " + file.getFullPath(), e);

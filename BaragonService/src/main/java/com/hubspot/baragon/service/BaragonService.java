@@ -35,5 +35,4 @@ public class BaragonService extends Application<BaragonConfiguration> {
   public static void main(String[] args) throws Exception {
     new BaragonService().run(args);
   }
-
 }
