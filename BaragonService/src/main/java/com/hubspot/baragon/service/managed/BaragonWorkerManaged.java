@@ -14,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.inject.Inject;
+import com.hubspot.baragon.BaragonBaseModule;
 import com.hubspot.baragon.service.BaragonServiceModule;
 import com.hubspot.baragon.worker.BaragonRequestWorker;
 
@@ -27,7 +28,7 @@ public class BaragonWorkerManaged implements Managed {
 
   @Inject
   public BaragonWorkerManaged(@Named(BaragonServiceModule.BARAGON_SERVICE_SCHEDULED_EXECUTOR) ScheduledExecutorService executorService,
-                              @Named(BaragonServiceModule.BARAGON_SERVICE_LEADER_LATCH) LeaderLatch leaderLatch,
+                              @Named(BaragonBaseModule.BARAGON_SERVICE_LEADER_LATCH) LeaderLatch leaderLatch,
                               @Named(BaragonServiceModule.BARAGON_SERVICE_WORKER_INTERVAL_MS) long workerIntervalMs,
                               BaragonRequestWorker worker) {
     this.executorService = executorService;
