@@ -26,7 +26,6 @@ import com.hubspot.baragon.utils.JavaUtils;
 public class BaragonServiceModule extends AbstractModule {
   public static final String BARAGON_SERVICE_SCHEDULED_EXECUTOR = "baragon.service.scheduledExecutor";
   public static final String BARAGON_SERVICE_LEADER_LATCH = "baragon.service.leaderLatch";
-  public static final String BARAGON_SERVICE_WORKER_INTERVAL_MS = "baragon.service.worker.intervalMs";
 
 
   public static final String BARAGON_SERVICE_HTTP_PORT = "baragon.service.http.port";
@@ -59,12 +58,6 @@ public class BaragonServiceModule extends AbstractModule {
   @Named(BaragonBaseModule.BARAGON_AGENT_MAX_ATTEMPTS)
   public Integer provideAgentMaxAttempts(BaragonConfiguration configuration) {
     return configuration.getAgentMaxAttempts();
-  }
-
-  @Provides
-  @Named(BARAGON_SERVICE_WORKER_INTERVAL_MS)
-  public long provideWorkerIntervalMs(BaragonConfiguration configuration) {
-    return configuration.getWorkerIntervalMs();
   }
 
   @Provides
