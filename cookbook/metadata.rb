@@ -1,0 +1,10 @@
+name             'baragon'
+maintainer       'Tom Petr'
+maintainer_email 'tpetr@hubspot.com'
+license          'Apache 2.0'
+description      'Installs/Configures baragon'
+long_description 'Installs/Configures baragon'
+version          '1.0.0'
+
+depends 'java'
+depends 'git'
