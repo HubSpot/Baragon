@@ -53,11 +53,11 @@ public class FilesystemConfigHelper {
     }
   }
 
-  public void apply(ServiceContext context, Optional<BaragonService> oldService,boolean revertOnFailure) throws InvalidConfigException, LbAdapterExecuteException, IOException {
+  public void apply(ServiceContext context, Optional<BaragonService> maybeOldService,boolean revertOnFailure) throws InvalidConfigException, LbAdapterExecuteException, IOException {
     final String serviceId = context.getService().getServiceId();
     final String oldServiceId;
-    if (oldService.isPresent()) {
-      oldServiceId = oldService.get().getServiceId();
+    if (maybeOldService.isPresent()) {
+      oldServiceId = maybeOldService.get().getServiceId();
     } else {
       oldServiceId = serviceId;
     }

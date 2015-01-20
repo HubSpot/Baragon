@@ -90,7 +90,7 @@ public class RequestResource {
 
       final BaragonRequest request = maybeRequest.get();
 
-      Optional<BaragonService> oldService = getOldService(request);
+      Optional<BaragonService> maybeOldService = getOldService(request);
 
       LOG.info(String.format("Received request to apply %s", request));
 
@@ -127,7 +127,7 @@ public class RequestResource {
       }
 
       try {
-        configHelper.apply(update, oldService, true);
+        configHelper.apply(update, maybeOldService, true);
       } catch (Exception e) {
         return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
       }
@@ -183,8 +183,7 @@ public class RequestResource {
       }
 
       try {
-        Optional<BaragonService> oldService = Optional.absent();
-        configHelper.apply(update, oldService, false);
+        configHelper.apply(update, Optional.<BaragonService>absent(), false);
       } catch (Exception e) {
         return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
       }

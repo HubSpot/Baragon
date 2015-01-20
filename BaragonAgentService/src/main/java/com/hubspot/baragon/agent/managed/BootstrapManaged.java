@@ -67,8 +67,7 @@ public class BootstrapManaged implements Managed {
       LOG.info("    Applying {}: [{}]", serviceState.getService(), JavaUtils.COMMA_JOINER.join(serviceState.getUpstreams()));
 
       try {
-        Optional<BaragonService> oldService = Optional.absent();
-        configHelper.apply(new ServiceContext(serviceState.getService(), serviceState.getUpstreams(), now, true), oldService, false);
+        configHelper.apply(new ServiceContext(serviceState.getService(), serviceState.getUpstreams(), now, true), Optional.<BaragonService>absent(), false);
       } catch (Exception e) {
         LOG.error(String.format("Caught exception while applying %s", serviceState.getService().getServiceId()), e);
       }
