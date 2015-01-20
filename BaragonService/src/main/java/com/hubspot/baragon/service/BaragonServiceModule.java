@@ -27,6 +27,7 @@ public class BaragonServiceModule extends AbstractModule {
   public static final String BARAGON_SERVICE_SCHEDULED_EXECUTOR = "baragon.service.scheduledExecutor";
   public static final String BARAGON_SERVICE_LEADER_LATCH = "baragon.service.leaderLatch";
   public static final String BARAGON_SERVICE_WORKER_INTERVAL_MS = "baragon.service.worker.intervalMs";
+  public static final String BARAGON_SERVICE_START_WORKER = "baragon.service.worker.start";
 
 
   public static final String BARAGON_SERVICE_HTTP_PORT = "baragon.service.http.port";
@@ -65,6 +66,12 @@ public class BaragonServiceModule extends AbstractModule {
   @Named(BARAGON_SERVICE_WORKER_INTERVAL_MS)
   public long provideWorkerIntervalMs(BaragonConfiguration configuration) {
     return configuration.getWorkerIntervalMs();
+  }
+
+  @Provides
+  @Named(BARAGON_SERVICE_START_WORKER)
+  public Boolean provideStartWorker(BaragonConfiguration configuration) {
+    return configuration.getStartWorker();
   }
 
   @Provides

@@ -28,6 +28,9 @@ public class BaragonConfiguration extends Configuration {
   @JsonProperty("workerIntervalMs")
   private long workerIntervalMs = 1000;
 
+  @JsonProperty("startWorker")
+  private Boolean startWorker = true;
+
   @JsonProperty("agentRequestUriFormat")
   @NotEmpty
   private String agentRequestUriFormat = DEFAULT_AGENT_REQUEST_URI_FORMAT;
@@ -78,6 +81,13 @@ public class BaragonConfiguration extends Configuration {
     this.workerIntervalMs = workerIntervalMs;
   }
 
+  public Boolean getStartWorker() {
+    return startWorker;
+  }
+
+  public void setStartWorker(Boolean startWorker) {
+    this.startWorker = startWorker;
+  }
   public int getAgentMaxAttempts() {
     return agentMaxAttempts;
   }

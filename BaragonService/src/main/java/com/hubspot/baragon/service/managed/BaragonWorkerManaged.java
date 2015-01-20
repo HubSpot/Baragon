@@ -24,15 +24,18 @@ public class BaragonWorkerManaged implements Managed {
   private final BaragonRequestWorker worker;
   private final LeaderLatch leaderLatch;
   private final long workerIntervalMs;
+  private final Boolean startWorker;
 
   @Inject
   public BaragonWorkerManaged(@Named(BaragonServiceModule.BARAGON_SERVICE_SCHEDULED_EXECUTOR) ScheduledExecutorService executorService,
                               @Named(BaragonServiceModule.BARAGON_SERVICE_LEADER_LATCH) LeaderLatch leaderLatch,
                               @Named(BaragonServiceModule.BARAGON_SERVICE_WORKER_INTERVAL_MS) long workerIntervalMs,
+                              @Named(BaragonServiceModule.BARAGON_SERVICE_START_WORKER) Boolean startWorker,
                               BaragonRequestWorker worker) {
     this.executorService = executorService;
     this.leaderLatch = leaderLatch;
     this.workerIntervalMs = workerIntervalMs;
+    this.startWorker = startWorker;
     this.worker = worker;
   }
 
@@ -49,7 +52,13 @@ public class BaragonWorkerManaged implements Managed {
           future.cancel(false);
         }
 
-        future = executorService.scheduleAtFixedRate(worker, 0, workerIntervalMs, TimeUnit.MILLISECONDS);
+        if (startWorker) {
+          LOG.info("Starting Baragon Service worker");
+          future = executorService.scheduleAtFixedRate(worker, 0, workerIntervalMs, TimeUnit.MILLISECONDS);
+        } else {
+          LOG.info("Not starting Baragon Service worker");
+          future.cancel(false);
+        }
       }
 
       @Override
