@@ -115,15 +115,19 @@ public class RequestManager {
       return maybePreexistingResponse.get();
     }
 
-    ensureBasePathAvailable(request);
+    if (!request.getAllowBasepathOverride()) {
+      ensureBasePathAvailable(request);
+    }
+
     ensureRequestedLoadBalancersExist(request);
 
     requestDatastore.addRequest(request);
     requestDatastore.setRequestState(request.getLoadBalancerRequestId(), InternalRequestStates.SEND_APPLY_REQUESTS);
     requestDatastore.enqueueRequest(request);
 
+    //Write to any new base path to reserve the base path, but don't overwrite so we can get the old service id if needed
     for (String loadBalancerGroup : request.getLoadBalancerService().getLoadBalancerGroups()) {
-      loadBalancerDatastore.setBasePathServiceId(loadBalancerGroup, request.getLoadBalancerService().getServiceBasePath(), request.getLoadBalancerService().getServiceId());
+      loadBalancerDatastore.setBasePathServiceId(loadBalancerGroup, request.getLoadBalancerService().getServiceBasePath(), request.getLoadBalancerService().getServiceId(), false);
     }
 
     return new BaragonResponse(request.getLoadBalancerRequestId(), InternalRequestStates.SEND_APPLY_REQUESTS.toRequestState(), Optional.<String>absent(), Optional.<Map<String, Collection<AgentResponse>>>absent());

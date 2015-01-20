@@ -1,7 +1,9 @@
 package com.hubspot.baragon.agent.managed;
 
+import com.google.common.base.Optional;
 import com.hubspot.baragon.data.BaragonKnownAgentsDatastore;
 import com.hubspot.baragon.models.BaragonAgentMetadata;
+import com.hubspot.baragon.models.BaragonService;
 import io.dropwizard.lifecycle.Managed;
 
 import java.util.Collection;
@@ -65,7 +67,8 @@ public class BootstrapManaged implements Managed {
       LOG.info("    Applying {}: [{}]", serviceState.getService(), JavaUtils.COMMA_JOINER.join(serviceState.getUpstreams()));
 
       try {
-        configHelper.apply(new ServiceContext(serviceState.getService(), serviceState.getUpstreams(), now, true), false);
+        Optional<BaragonService> oldService = Optional.absent();
+        configHelper.apply(new ServiceContext(serviceState.getService(), serviceState.getUpstreams(), now, true), oldService, false);
       } catch (Exception e) {
         LOG.error(String.format("Caught exception while applying %s", serviceState.getService().getServiceId()), e);
       }

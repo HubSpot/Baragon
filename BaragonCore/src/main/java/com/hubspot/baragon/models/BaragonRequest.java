@@ -27,15 +27,19 @@ public class BaragonRequest {
   @NotNull
   private final List<UpstreamInfo> removeUpstreams;
 
+  private Optional<Boolean> allowBasepathOverride = Optional.of(false);
+
   @JsonCreator
   public BaragonRequest(@JsonProperty("loadBalancerRequestId") String loadBalancerRequestId,
                         @JsonProperty("loadBalancerService") BaragonService loadBalancerService,
                         @JsonProperty("addUpstreams") List<UpstreamInfo> addUpstreams,
-                        @JsonProperty("removeUpstreams") List<UpstreamInfo> removeUpstreams) {
+                        @JsonProperty("removeUpstreams") List<UpstreamInfo> removeUpstreams,
+                        @JsonProperty("allowBasepathOverride") Optional<Boolean> allowBasepathOverride) {
     this.loadBalancerRequestId = loadBalancerRequestId;
     this.loadBalancerService = loadBalancerService;
     this.addUpstreams = addRequestId(addUpstreams, loadBalancerRequestId);
     this.removeUpstreams = addRequestId(removeUpstreams, loadBalancerRequestId);
+    this.allowBasepathOverride = allowBasepathOverride;
   }
 
   public String getLoadBalancerRequestId() {
@@ -52,6 +56,14 @@ public class BaragonRequest {
 
   public List<UpstreamInfo> getRemoveUpstreams() {
     return removeUpstreams;
+  }
+
+  public Boolean getAllowBasepathOverride() {
+    if (allowBasepathOverride.isPresent()) {
+      return allowBasepathOverride.get();
+    } else {
+      return false;
+    }
   }
 
   private List<UpstreamInfo> addRequestId(List<UpstreamInfo> upstreams, String requestId) {

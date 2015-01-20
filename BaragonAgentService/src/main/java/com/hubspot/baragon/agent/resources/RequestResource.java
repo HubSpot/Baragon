@@ -8,6 +8,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 
+import javax.swing.text.html.Option;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.POST;
@@ -17,6 +18,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import com.hubspot.baragon.data.BaragonLoadBalancerDatastore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,6 +45,7 @@ public class RequestResource {
   private final FilesystemConfigHelper configHelper;
   private final BaragonStateDatastore stateDatastore;
   private final BaragonRequestDatastore requestDatastore;
+  private final BaragonLoadBalancerDatastore loadBalancerDatastore;
   private final Lock agentLock;
   private final AtomicReference<String> mostRecentRequestId;
   private final long agentLockTimeoutMs;
@@ -53,6 +56,7 @@ public class RequestResource {
   @Inject
   public RequestResource(BaragonStateDatastore stateDatastore,
                          BaragonRequestDatastore requestDatastore,
+                         BaragonLoadBalancerDatastore loadBalancerDatastore,
                          FilesystemConfigHelper configHelper,
                          Optional<TestingConfiguration> maybeTestingConfiguration,
                          LoadBalancerConfiguration loadBalancerConfiguration,
@@ -64,6 +68,7 @@ public class RequestResource {
     this.stateDatastore = stateDatastore;
     this.maybeTestingConfiguration = maybeTestingConfiguration;
     this.requestDatastore = requestDatastore;
+    this.loadBalancerDatastore = loadBalancerDatastore;
     this.agentLock = agentLock;
     this.mostRecentRequestId = mostRecentRequestId;
     this.agentLockTimeoutMs = agentLockTimeoutMs;
@@ -86,10 +91,11 @@ public class RequestResource {
 
       final BaragonRequest request = maybeRequest.get();
 
+      Optional<BaragonService> oldService = getOldService(request);
+
       LOG.info(String.format("Received request to apply %s", request));
 
       final ServiceContext update;
-
 
       if (!request.getLoadBalancerService().getLoadBalancerGroups().contains(loadBalancerConfiguration.getName())) {
         // this service has been deleted or moved off this load balancer -- delete the config
@@ -122,7 +128,11 @@ public class RequestResource {
       }
 
       try {
-        configHelper.apply(update, true);
+        configHelper.apply(update, oldService, true);
+        // Write over the service id, don't need old service id for reference now that configs have been applied
+        for (String loadBalancerGroup : request.getLoadBalancerService().getLoadBalancerGroups()) {
+          loadBalancerDatastore.setBasePathServiceId(loadBalancerGroup, request.getLoadBalancerService().getServiceBasePath(), request.getLoadBalancerService().getServiceId(), true);
+        }
       } catch (Exception e) {
         return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
       }
@@ -178,7 +188,8 @@ public class RequestResource {
       }
 
       try {
-        configHelper.apply(update, false);
+        Optional<BaragonService> oldService = Optional.absent();
+        configHelper.apply(update, oldService, false);
       } catch (Exception e) {
         return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
       }
@@ -189,6 +200,19 @@ public class RequestResource {
       return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(String.format("Caught exception while reverting %s: %s", requestId, e.getMessage())).build();
     } finally {
       agentLock.unlock();
+    }
+  }
+
+  private Optional<BaragonService> getOldService(BaragonRequest request) {
+    try {
+      Optional<String> oldServiceId = loadBalancerDatastore.getBasePathServiceId(loadBalancerConfiguration.getName(), request.getLoadBalancerService().getServiceBasePath());
+      if (oldServiceId.isPresent()) {
+        return stateDatastore.getService(oldServiceId.get());
+      } else {
+        return Optional.absent();
+      }
+    } catch (Exception e) {
+      return Optional.absent();
     }
   }
 }
