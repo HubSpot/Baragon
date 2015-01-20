@@ -129,10 +129,6 @@ public class RequestResource {
 
       try {
         configHelper.apply(update, oldService, true);
-        // Write over the service id, don't need old service id for reference now that configs have been applied
-        for (String loadBalancerGroup : request.getLoadBalancerService().getLoadBalancerGroups()) {
-          loadBalancerDatastore.setBasePathServiceId(loadBalancerGroup, request.getLoadBalancerService().getServiceBasePath(), request.getLoadBalancerService().getServiceId(), true);
-        }
       } catch (Exception e) {
         return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
       }
