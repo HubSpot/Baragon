@@ -6,5 +6,7 @@ description      'Installs/Configures baragon'
 long_description 'Installs/Configures baragon'
 version          '1.0.0'
 
+supports 'ubuntu', '= 14.04'
+
 depends 'java'
 depends 'git'
