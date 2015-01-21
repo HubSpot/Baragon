@@ -67,7 +67,7 @@ Include `baragon::server` in your node's `run_list`:
 }
 ```
 
-...or in a wrapper cookbook:
+…or in a wrapper cookbook:
 
 ```ruby
 include_recipe 'baragon::server'
@@ -85,7 +85,7 @@ Include `baragon::agent` in your node's `run_list`:
 }
 ```
 
-...or in a wrapper cookbook:
+…or in a wrapper cookbook:
 
 ```ruby
 include_recipe 'baragon::agent'
