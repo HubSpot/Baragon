@@ -8,16 +8,11 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
-import javax.xml.ws.Service;
 
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
-import com.hubspot.baragon.data.BaragonLoadBalancerDatastore;
-import com.hubspot.baragon.data.BaragonStateDatastore;
 import com.hubspot.baragon.managers.ServiceManager;
-import com.hubspot.baragon.models.BaragonService;
 import com.hubspot.baragon.models.BaragonServiceState;
-import com.hubspot.baragon.models.UpstreamInfo;
 
 @Path("/state")
 @Produces(MediaType.APPLICATION_JSON)
