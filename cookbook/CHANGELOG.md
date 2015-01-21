@@ -1,3 +1,5 @@
-# 1.0.0
+# Baragon cookbook CHANGELOG
 
-Initial release of baragon
+## v1.0.0 (2015-01-18)
+
+* Initial release of baragon
