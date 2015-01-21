@@ -158,18 +158,24 @@ public class RequestResource {
 
       final BaragonRequest request = maybeRequest.get();
 
-      LOG.info(String.format("Received request to revert %s", request));
+      // Find the old service id to revert to in case it has changed
+      Optional<BaragonService> maybeOldService = getOldService(request);
+      BaragonService oldService;
+      if (maybeOldService.isPresent() && !maybeOldService.get().getServiceId().equals(request.getLoadBalancerService().getServiceId())) {
+        oldService = maybeOldService.get();
+      } else {
+        oldService = request.getLoadBalancerService();
+      }
 
-      final Optional<BaragonService> maybeService = stateDatastore.getService(request.getLoadBalancerService().getServiceId());
+      LOG.info(String.format("Received request to revert %s", request));
 
       final ServiceContext update;
 
-      if (!maybeService.isPresent() || !maybeService.get().getLoadBalancerGroups().contains(loadBalancerConfiguration.getName())) {
+      if (!oldService.getLoadBalancerGroups().contains(loadBalancerConfiguration.getName())) {
         // this service previously didn't exist, or wasnt on this load balancer -- remove the config
-
-        update = new ServiceContext(request.getLoadBalancerService(), Collections.<UpstreamInfo>emptyList(), System.currentTimeMillis(), false);
+        update = new ServiceContext(oldService, Collections.<UpstreamInfo>emptyList(), System.currentTimeMillis(), false);
       } else {
-        update = new ServiceContext(maybeService.get(), stateDatastore.getUpstreamsMap(maybeService.get().getServiceId()).values(), System.currentTimeMillis(), true);
+        update = new ServiceContext(oldService, stateDatastore.getUpstreamsMap(oldService.getServiceId()).values(), System.currentTimeMillis(), true);
       }
 
       if (maybeTestingConfiguration.isPresent() && maybeTestingConfiguration.get().isEnabled() && maybeTestingConfiguration.get().getRevertDelayMs() > 0) {
