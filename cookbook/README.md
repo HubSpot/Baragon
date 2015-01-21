@@ -14,7 +14,7 @@ Baragon depends on ZooKeeper to store internal state, and perform coordination b
 
 ### Nginx
 
-Baragon write nginx-style config files by default. In theory other load balancers could be used, but the tool is designed around the style of config files used by nginx.
+Baragon writes nginx-style config files by default. In theory other load balancers could be used, but the tool is designed around the style of config files used by nginx.
 
 The main requirement is that each application and upstream has its own file containing all necessary configuration directives (as opposed to, say, haproxy, where all configuration is parsed in order from top to bottom from a single, monolithic file).
 
