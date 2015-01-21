@@ -125,7 +125,7 @@ public class RequestManager {
     requestDatastore.setRequestState(request.getLoadBalancerRequestId(), InternalRequestStates.SEND_APPLY_REQUESTS);
     requestDatastore.enqueueRequest(request);
 
-    //Write to any new base path to reserve the base path, but don't overwrite so we can get the old service id if needed
+    //Write to any new base path to reserve any new base path, but don't overwrite so we can get the old service id if needed
     for (String loadBalancerGroup : request.getLoadBalancerService().getLoadBalancerGroups()) {
       loadBalancerDatastore.setBasePathServiceId(loadBalancerGroup, request.getLoadBalancerService().getServiceBasePath(), request.getLoadBalancerService().getServiceId(), false);
     }
@@ -164,6 +164,11 @@ public class RequestManager {
       for (String loadBalancerGroup : maybeOriginalService.get().getLoadBalancerGroups()) {
         loadBalancerDatastore.clearBasePath(loadBalancerGroup, maybeOriginalService.get().getServiceBasePath());
       }
+    }
+
+    // If the service ID has been changed, remove the old service from the state datastore
+    if (maybeOriginalService.isPresent() && !maybeOriginalService.get().getServiceId().equals(request.getLoadBalancerService().getServiceId())) {
+      stateDatastore.removeService(maybeOriginalService.get().getServiceId());
     }
 
     stateDatastore.addService(request.getLoadBalancerService());
