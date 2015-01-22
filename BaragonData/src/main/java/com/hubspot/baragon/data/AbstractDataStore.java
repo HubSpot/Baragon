@@ -81,28 +81,6 @@ public abstract class AbstractDataStore {
     }
   }
 
-  protected <T> void writeToZk(String path, T data, Boolean overwrite) {
-    try {
-      final byte[] serializedInfo = objectMapper.writeValueAsBytes(data);
-
-      final PathAndBytesable<?> builder;
-
-      if (curatorFramework.checkExists().forPath(path) != null) {
-        if (overwrite) {
-          builder = curatorFramework.setData();
-        } else {
-          return;
-        }
-      } else {
-        builder = curatorFramework.create().creatingParentsIfNeeded();
-      }
-
-      builder.forPath(path, serializedInfo);
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
-    }
-  }
-
   protected <T> Optional<T> readFromZk(String path, Class<T> klass) {
     try {
       return Optional.of(deserialize(curatorFramework.getData().forPath(path), klass));

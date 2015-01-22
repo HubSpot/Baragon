@@ -58,7 +58,7 @@ public class RequestTests {
 
     final UpstreamInfo fakeUpstream = new UpstreamInfo("testhost:8080", Optional.of(requestId), Optional.<String>absent());
 
-    final BaragonRequest request = new BaragonRequest(requestId, service, Collections.<UpstreamInfo>emptyList(), ImmutableList.of(fakeUpstream), Optional.of(false));
+    final BaragonRequest request = new BaragonRequest(requestId, service, Collections.<UpstreamInfo>emptyList(), ImmutableList.of(fakeUpstream), Optional.<String>absent());
 
     try {
       LOG.info("Going to enqueue request: {}", request);
@@ -89,7 +89,7 @@ public class RequestTests {
 
     final UpstreamInfo httpUrlUpstream = new UpstreamInfo("http://test.com:8080/foo", Optional.of(requestId), Optional.<String>absent());
 
-    final BaragonRequest request = new BaragonRequest(requestId, service, ImmutableList.of(httpUrlUpstream), Collections.<UpstreamInfo>emptyList(), Optional.of(false));
+    final BaragonRequest request = new BaragonRequest(requestId, service, ImmutableList.of(httpUrlUpstream), Collections.<UpstreamInfo>emptyList(), Optional.<String>absent());
 
     try {
       LOG.info("Going to enqueue request: {}", request);

@@ -44,7 +44,6 @@ public class RequestResource {
   private final FilesystemConfigHelper configHelper;
   private final BaragonStateDatastore stateDatastore;
   private final BaragonRequestDatastore requestDatastore;
-  private final BaragonLoadBalancerDatastore loadBalancerDatastore;
   private final Lock agentLock;
   private final AtomicReference<String> mostRecentRequestId;
   private final long agentLockTimeoutMs;
@@ -55,7 +54,6 @@ public class RequestResource {
   @Inject
   public RequestResource(BaragonStateDatastore stateDatastore,
                          BaragonRequestDatastore requestDatastore,
-                         BaragonLoadBalancerDatastore loadBalancerDatastore,
                          FilesystemConfigHelper configHelper,
                          Optional<TestingConfiguration> maybeTestingConfiguration,
                          LoadBalancerConfiguration loadBalancerConfiguration,
@@ -67,7 +65,6 @@ public class RequestResource {
     this.stateDatastore = stateDatastore;
     this.maybeTestingConfiguration = maybeTestingConfiguration;
     this.requestDatastore = requestDatastore;
-    this.loadBalancerDatastore = loadBalancerDatastore;
     this.agentLock = agentLock;
     this.mostRecentRequestId = mostRecentRequestId;
     this.agentLockTimeoutMs = agentLockTimeoutMs;
@@ -204,14 +201,9 @@ public class RequestResource {
   }
 
   private Optional<BaragonService> getOldService(BaragonRequest request) {
-    try {
-      Optional<String> oldServiceId = loadBalancerDatastore.getBasePathServiceId(loadBalancerConfiguration.getName(), request.getLoadBalancerService().getServiceBasePath());
-      if (oldServiceId.isPresent()) {
-        return stateDatastore.getService(oldServiceId.get());
-      } else {
-        return Optional.absent();
-      }
-    } catch (Exception e) {
+    if (request.getReplaceServiceId().isPresent()) {
+      return stateDatastore.getService(request.getReplaceServiceId().get());
+    } else {
       return Optional.absent();
     }
   }

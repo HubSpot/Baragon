@@ -98,8 +98,8 @@ public class BaragonLoadBalancerDatastore extends AbstractDataStore {
     deleteNode(String.format(LOAD_BALANCER_BASE_PATH_FORMAT, loadBalancerGroup, encodeUrl(basePath)));
   }
 
-  public void setBasePathServiceId(String loadBalancerGroup, String basePath, String serviceId, Boolean overwrite) {
-    writeToZk(String.format(LOAD_BALANCER_BASE_PATH_FORMAT, loadBalancerGroup, encodeUrl(basePath)), serviceId, overwrite);
+  public void setBasePathServiceId(String loadBalancerGroup, String basePath, String serviceId) {
+    writeToZk(String.format(LOAD_BALANCER_BASE_PATH_FORMAT, loadBalancerGroup, encodeUrl(basePath)), serviceId);
   }
 
   public Collection<String> getBasePaths(String loadBalancerGroup) {

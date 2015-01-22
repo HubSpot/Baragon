@@ -82,7 +82,9 @@ public class RequestManager {
     for (String loadBalancerGroup : service.getLoadBalancerGroups()) {
       final Optional<String> maybeServiceId = loadBalancerDatastore.getBasePathServiceId(loadBalancerGroup, service.getServiceBasePath());
       if (maybeServiceId.isPresent() && !maybeServiceId.get().equals(service.getServiceId())) {
-        loadBalancerServiceIds.put(loadBalancerGroup, maybeServiceId.get());
+        if (request.getReplaceServiceId().isPresent() && !request.getReplaceServiceId().get().equals(maybeServiceId.get())) {
+          loadBalancerServiceIds.put(loadBalancerGroup, maybeServiceId.get());
+        }
       }
     }
 
@@ -115,19 +117,15 @@ public class RequestManager {
       return maybePreexistingResponse.get();
     }
 
-    if (!request.getAllowBasepathOverride()) {
-      ensureBasePathAvailable(request);
-    }
-
+    ensureBasePathAvailable(request);
     ensureRequestedLoadBalancersExist(request);
 
     requestDatastore.addRequest(request);
     requestDatastore.setRequestState(request.getLoadBalancerRequestId(), InternalRequestStates.SEND_APPLY_REQUESTS);
     requestDatastore.enqueueRequest(request);
 
-    //Write to any new base path to reserve any new base path, but don't overwrite so we can get the old service id if needed
     for (String loadBalancerGroup : request.getLoadBalancerService().getLoadBalancerGroups()) {
-      loadBalancerDatastore.setBasePathServiceId(loadBalancerGroup, request.getLoadBalancerService().getServiceBasePath(), request.getLoadBalancerService().getServiceId(), false);
+      loadBalancerDatastore.setBasePathServiceId(loadBalancerGroup, request.getLoadBalancerService().getServiceBasePath(), request.getLoadBalancerService().getServiceId());
     }
 
     return new BaragonResponse(request.getLoadBalancerRequestId(), InternalRequestStates.SEND_APPLY_REQUESTS.toRequestState(), Optional.<String>absent(), Optional.<Map<String, Collection<AgentResponse>>>absent());
@@ -146,17 +144,11 @@ public class RequestManager {
   }
 
   public synchronized void commitRequest(BaragonRequest request) {
-    Optional<String> maybeOldServiceId = loadBalancerDatastore.getBasePathServiceId(request.getLoadBalancerService().getLoadBalancerGroups().get(0), request.getLoadBalancerService().getServiceBasePath());
     final Optional<BaragonService> maybeOriginalService;
-    if (maybeOldServiceId.isPresent()) {
-      maybeOriginalService = stateDatastore.getService(maybeOldServiceId.get());
+    if (request.getReplaceServiceId().isPresent()) {
+      maybeOriginalService = stateDatastore.getService(request.getReplaceServiceId().get());
     } else {
-      maybeOriginalService = Optional.absent();
-    }
-
-    // Write over the service id, don't need old service id for reference now that configs have been applied
-    for (String loadBalancerGroup : request.getLoadBalancerService().getLoadBalancerGroups()) {
-      loadBalancerDatastore.setBasePathServiceId(loadBalancerGroup, request.getLoadBalancerService().getServiceBasePath(), request.getLoadBalancerService().getServiceId(), true);
+      maybeOriginalService = stateDatastore.getService(request.getLoadBalancerService().getServiceId());
     }
 
     // if we've changed the base path, clear out the old ones
