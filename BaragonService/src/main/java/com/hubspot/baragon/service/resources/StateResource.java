@@ -11,55 +11,33 @@ import javax.ws.rs.core.MediaType;
 
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
-import com.hubspot.baragon.data.BaragonLoadBalancerDatastore;
-import com.hubspot.baragon.data.BaragonStateDatastore;
-import com.hubspot.baragon.models.BaragonService;
+import com.hubspot.baragon.managers.ServiceManager;
 import com.hubspot.baragon.models.BaragonServiceState;
-import com.hubspot.baragon.models.UpstreamInfo;
 
 @Path("/state")
 @Produces(MediaType.APPLICATION_JSON)
 public class StateResource {
-  private final BaragonStateDatastore stateDatastore;
-  private final BaragonLoadBalancerDatastore loadBalancerDatastore;
+  private final ServiceManager manager;
 
   @Inject
-  public StateResource(BaragonStateDatastore stateDatastore, BaragonLoadBalancerDatastore loadBalancerDatastore) {
-    this.stateDatastore = stateDatastore;
-    this.loadBalancerDatastore = loadBalancerDatastore;
+  public StateResource(ServiceManager manager) {
+    this.manager = manager;
   }
 
   @GET
-  public Collection<BaragonServiceState> getServices() {
-    return stateDatastore.getGlobalState();
+  public Collection<BaragonServiceState> getAllServices() {
+    return manager.getAllServices();
   }
 
   @GET
   @Path("/{serviceId}")
-  public Optional<BaragonServiceState> getService(@PathParam("serviceId") String serviceId) throws Exception {
-    final Optional<BaragonService> maybeServiceInfo = stateDatastore.getService(serviceId);
-
-    if (!maybeServiceInfo.isPresent()) {
-      return Optional.absent();
-    }
-
-    return Optional.of(new BaragonServiceState(maybeServiceInfo.get(), stateDatastore.getUpstreamsMap(serviceId).values()));
+  public Optional<BaragonServiceState> getService(@PathParam("serviceId") String serviceId) {
+    return manager.getService(serviceId);
   }
 
   @DELETE
   @Path("/{serviceId}")
-  public Optional<BaragonServiceState> deleteService(@PathParam("serviceId") String serviceId) throws Exception {
-    final Optional<BaragonService> maybeServiceInfo = stateDatastore.getService(serviceId);
-
-    if (!maybeServiceInfo.isPresent()) {
-      return Optional.absent();
-    }
-
-    stateDatastore.removeService(serviceId);
-    for (String loadBalancerGroup : maybeServiceInfo.get().getLoadBalancerGroups()) {
-      loadBalancerDatastore.clearBasePath(loadBalancerGroup, maybeServiceInfo.get().getServiceBasePath());
-    }
-
-    return Optional.of(new BaragonServiceState(maybeServiceInfo.get(), stateDatastore.getUpstreamsMap(serviceId).values()));
+  public Optional<BaragonServiceState> removeService(@PathParam("serviceId") String serviceId) {
+    return manager.removeService(serviceId);
   }
 }
