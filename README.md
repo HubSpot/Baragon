@@ -37,7 +37,7 @@ BaragonService will then fan out this change to all affected BaragonAgentService
 - `CANCELED`: request was cancelled (rolled back) on all agents
 - `UNKNOWN`: unknown.
 
-## Endpoints
+## Resources
 
 * `/auth` - 
 * `/keys` - 
