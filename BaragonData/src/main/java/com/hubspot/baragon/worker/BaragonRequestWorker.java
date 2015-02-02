@@ -20,6 +20,7 @@ import com.hubspot.baragon.models.AgentRequestType;
 import com.hubspot.baragon.models.AgentResponse;
 import com.hubspot.baragon.models.BaragonRequest;
 import com.hubspot.baragon.models.InternalRequestStates;
+import com.hubspot.baragon.models.InternalStatesMap;
 import com.hubspot.baragon.models.QueuedRequestId;
 import com.hubspot.baragon.utils.JavaUtils;
 
@@ -50,19 +51,19 @@ public class BaragonRequestWorker implements Runnable {
   private InternalRequestStates handleCheckRevertResponse(BaragonRequest request, InternalRequestStates currentState) {
     final Map<String, Collection<AgentResponse>> agentResponses;
 
-    switch (agentManager.getRequestsStatus(request, currentState.getRequestType())) {
+    switch (agentManager.getRequestsStatus(request, InternalStatesMap.getRequestType(currentState))) {
       case FAILURE:
         agentResponses = agentManager.getAgentResponses(request.getLoadBalancerRequestId());
-        requestManager.setRequestMessage(request.getLoadBalancerRequestId(), String.format("Apply failed (%s), %s failed (%s)", buildResponseString(agentResponses, AgentRequestType.APPLY), currentState.getRequestType().name(), buildResponseString(agentResponses, currentState.getRequestType())));
-        return currentState.getRequestType().getFailureState();
+        requestManager.setRequestMessage(request.getLoadBalancerRequestId(), String.format("Apply failed (%s), %s failed (%s)", buildResponseString(agentResponses, AgentRequestType.APPLY), InternalStatesMap.getRequestType(currentState).name(), buildResponseString(agentResponses, InternalStatesMap.getRequestType(currentState))));
+        return InternalStatesMap.getFailureState(currentState);
       case SUCCESS:
         agentResponses = agentManager.getAgentResponses(request.getLoadBalancerRequestId());
-        requestManager.setRequestMessage(request.getLoadBalancerRequestId(), String.format("Apply failed (%s), %s OK.", buildResponseString(agentResponses, AgentRequestType.APPLY), currentState.getRequestType().name()));
-        return currentState.getRequestType().getSuccessState();
+        requestManager.setRequestMessage(request.getLoadBalancerRequestId(), String.format("Apply failed (%s), %s OK.", buildResponseString(agentResponses, AgentRequestType.APPLY), InternalStatesMap.getRequestType(currentState).name()));
+        return InternalStatesMap.getSuccessState(currentState);
       case RETRY:
-        return currentState.getRequestType().getRetryState();
+        return InternalStatesMap.getRetryState(currentState);
       default:
-        return currentState.getRequestType().getWaitingState();
+        return InternalStatesMap.getWaitingState(currentState);
     }
   }
 
@@ -88,10 +89,10 @@ public class BaragonRequestWorker implements Runnable {
         return InternalRequestStates.SEND_APPLY_REQUESTS;
 
       case CHECK_APPLY_RESPONSES:
-        switch (agentManager.getRequestsStatus(request, currentState.getRequestType())) {
+        switch (agentManager.getRequestsStatus(request, InternalStatesMap.getRequestType(currentState))) {
           case FAILURE:
             final Map<String, Collection<AgentResponse>> agentResponses = agentManager.getAgentResponses(request.getLoadBalancerRequestId());
-            requestManager.setRequestMessage(request.getLoadBalancerRequestId(), String.format("Apply failed (%s), reverting...", buildResponseString(agentResponses, currentState.getRequestType())));
+            requestManager.setRequestMessage(request.getLoadBalancerRequestId(), String.format("Apply failed (%s), reverting...", buildResponseString(agentResponses, InternalStatesMap.getRequestType(currentState))));
             return InternalRequestStates.FAILED_SEND_REVERT_REQUESTS;
           case SUCCESS:
             try {
@@ -110,8 +111,8 @@ public class BaragonRequestWorker implements Runnable {
       case SEND_APPLY_REQUESTS:
       case FAILED_SEND_REVERT_REQUESTS:
       case CANCELLED_SEND_REVERT_REQUESTS:
-        agentManager.sendRequests(request, currentState.getRequestType());
-        return currentState.getRequestType().getWaitingState();
+        agentManager.sendRequests(request, InternalStatesMap.getRequestType(currentState));
+        return InternalStatesMap.getWaitingState(currentState);
 
       case FAILED_CHECK_REVERT_RESPONSES:
       case CANCELLED_CHECK_REVERT_RESPONSES:
@@ -148,7 +149,7 @@ public class BaragonRequestWorker implements Runnable {
       requestManager.setRequestState(requestId, newState);
     }
 
-    if (newState.isRemovable()) {
+    if (InternalStatesMap.isRemovable(newState)) {
       requestManager.removeQueuedRequest(queuedRequestId);
     }
   }
