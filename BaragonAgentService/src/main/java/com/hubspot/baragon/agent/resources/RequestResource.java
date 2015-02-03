@@ -157,22 +157,16 @@ public class RequestResource {
 
       // Find the old service id to revert to in case it has changed
       Optional<BaragonService> maybeOldService = getOldService(request);
-      BaragonService oldService;
-      if (maybeOldService.isPresent() && !maybeOldService.get().getServiceId().equals(request.getLoadBalancerService().getServiceId())) {
-        oldService = maybeOldService.get();
-      } else {
-        oldService = request.getLoadBalancerService();
-      }
 
       LOG.info(String.format("Received request to revert %s", request));
 
       final ServiceContext update;
 
-      if (!oldService.getLoadBalancerGroups().contains(loadBalancerConfiguration.getName())) {
+      if (!maybeOldService.isPresent() || !maybeOldService.get().getLoadBalancerGroups().contains(loadBalancerConfiguration.getName())) {
         // this service previously didn't exist, or wasnt on this load balancer -- remove the config
-        update = new ServiceContext(oldService, Collections.<UpstreamInfo>emptyList(), System.currentTimeMillis(), false);
+        update = new ServiceContext(request.getLoadBalancerService(), Collections.<UpstreamInfo>emptyList(), System.currentTimeMillis(), false);
       } else {
-        update = new ServiceContext(oldService, stateDatastore.getUpstreamsMap(oldService.getServiceId()).values(), System.currentTimeMillis(), true);
+        update = new ServiceContext(maybeOldService.get(), stateDatastore.getUpstreamsMap(maybeOldService.get().getServiceId()).values(), System.currentTimeMillis(), true);
       }
 
       if (maybeTestingConfiguration.isPresent() && maybeTestingConfiguration.get().isEnabled() && maybeTestingConfiguration.get().getRevertDelayMs() > 0) {
@@ -185,6 +179,8 @@ public class RequestResource {
         }
       }
 
+      LOG.info(String.format("Reverting to %s", update));
+      
       try {
         configHelper.apply(update, Optional.<BaragonService>absent(), false);
       } catch (Exception e) {
@@ -201,10 +197,14 @@ public class RequestResource {
   }
 
   private Optional<BaragonService> getOldService(BaragonRequest request) {
+    Optional<BaragonService> service = Optional.absent();
     if (request.getReplaceServiceId().isPresent()) {
-      return stateDatastore.getService(request.getReplaceServiceId().get());
+      service = stateDatastore.getService(request.getReplaceServiceId().get());
+    }
+    if (service.isPresent()) {
+      return service;
     } else {
-      return Optional.absent();
+      return stateDatastore.getService(request.getLoadBalancerService().getServiceId());
     }
   }
 }
