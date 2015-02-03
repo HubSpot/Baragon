@@ -1,0 +1,47 @@
+---
+driver:
+  name: vagrant
+  require_chef_omnibus: 11.16.4
+
+provisioner:
+  name: chef_zero
+  client_rb:
+    environment: stage
+
+platforms:
+  - name: ubuntu-14.04
+    driver_config:
+      customize:
+        cpus: 4
+        memory: 1536
+      network:
+        - - private_network
+          - ip: '192.168.33.10'
+
+suites:
+  - name: remotezk
+    run_list:
+      - recipe[java]
+      - recipe[baragon::server]
+      - recipe[nginx]
+      - recipe[baragon::agent]
+    attributes:
+      java:
+        jdk_version: 7
+  - name: localzk
+    run_list:
+      - recipe[java]
+      - recipe[zookeeper]
+      - recipe[zookeeper::service]
+      - recipe[nginx]
+      - recipe[baragon::server]
+      - recipe[baragon::agent]
+    attributes:
+      baragon:
+        mocking: true
+        zk_hosts:
+        - 'localhost:2181'
+      java:
+        jdk_version: 7
+      zookeeper:
+        service_style: upstart
