@@ -34,10 +34,10 @@ public class InternalStatesMap {
     .put(InternalRequestStates.FAILED_CANCEL_FAILED, BaragonRequestState.FAILED)
     .build();
 
-  private static final ImmutableMap<AgentRequestType, ImmutableMap<String, InternalRequestStates>> typeToRequestStateMap = new ImmutableMap.Builder<AgentRequestType, ImmutableMap<String, InternalRequestStates>>()
-    .put(AgentRequestType.APPLY, ImmutableMap.of("waiting", InternalRequestStates.CHECK_APPLY_RESPONSES, "failure", InternalRequestStates.FAILED_SEND_REVERT_REQUESTS, "retry", InternalRequestStates.SEND_APPLY_REQUESTS, "success", InternalRequestStates.COMPLETED))
-    .put(AgentRequestType.REVERT, ImmutableMap.of("waiting", InternalRequestStates.FAILED_CHECK_REVERT_RESPONSES, "failure", InternalRequestStates.FAILED_REVERT_FAILED, "retry", InternalRequestStates.FAILED_SEND_REVERT_REQUESTS, "success", InternalRequestStates.FAILED_REVERTED))
-    .put(AgentRequestType.CANCEL, ImmutableMap.of("waiting", InternalRequestStates.CANCELLED_CHECK_REVERT_RESPONSES, "failure", InternalRequestStates.FAILED_CANCEL_FAILED, "retry", InternalRequestStates.CANCELLED_SEND_REVERT_REQUESTS, "success", InternalRequestStates.CANCELLED))
+  private static final ImmutableMap<AgentRequestType, ImmutableMap<AgentRequestsStatus, InternalRequestStates>> typeToRequestStateMap = new ImmutableMap.Builder<AgentRequestType, ImmutableMap<AgentRequestsStatus, InternalRequestStates>>()
+    .put(AgentRequestType.APPLY, ImmutableMap.of(AgentRequestsStatus.WAITING, InternalRequestStates.CHECK_APPLY_RESPONSES, AgentRequestsStatus.FAILURE, InternalRequestStates.FAILED_SEND_REVERT_REQUESTS, AgentRequestsStatus.RETRY, InternalRequestStates.SEND_APPLY_REQUESTS, AgentRequestsStatus.SUCCESS, InternalRequestStates.COMPLETED))
+    .put(AgentRequestType.REVERT, ImmutableMap.of(AgentRequestsStatus.WAITING, InternalRequestStates.FAILED_CHECK_REVERT_RESPONSES, AgentRequestsStatus.FAILURE, InternalRequestStates.FAILED_REVERT_FAILED, AgentRequestsStatus.RETRY, InternalRequestStates.FAILED_SEND_REVERT_REQUESTS, AgentRequestsStatus.SUCCESS, InternalRequestStates.FAILED_REVERTED))
+    .put(AgentRequestType.CANCEL, ImmutableMap.of(AgentRequestsStatus.WAITING, InternalRequestStates.CANCELLED_CHECK_REVERT_RESPONSES, AgentRequestsStatus.FAILURE, InternalRequestStates.FAILED_CANCEL_FAILED, AgentRequestsStatus.RETRY, InternalRequestStates.CANCELLED_SEND_REVERT_REQUESTS, AgentRequestsStatus.SUCCESS, InternalRequestStates.CANCELLED))
     .build();
 
   public static InternalRequestStates getWaitingState(InternalRequestStates requestState) {
