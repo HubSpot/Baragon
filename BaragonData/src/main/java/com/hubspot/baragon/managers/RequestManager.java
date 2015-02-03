@@ -19,6 +19,7 @@ import com.hubspot.baragon.models.BaragonRequest;
 import com.hubspot.baragon.models.BaragonResponse;
 import com.hubspot.baragon.models.BaragonService;
 import com.hubspot.baragon.models.InternalRequestStates;
+import com.hubspot.baragon.models.InternalStatesMap;
 import com.hubspot.baragon.models.QueuedRequestId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -71,7 +72,7 @@ public class RequestManager {
       return Optional.absent();
     }
 
-    return Optional.of(new BaragonResponse(requestId, maybeStatus.get().toRequestState(), requestDatastore.getRequestMessage(requestId), Optional.of(agentResponseDatastore.getLastResponses(requestId))));
+    return Optional.of(new BaragonResponse(requestId, InternalStatesMap.getRequestState(maybeStatus.get()), requestDatastore.getRequestMessage(requestId), Optional.of(agentResponseDatastore.getLastResponses(requestId))));
   }
 
   public Map<String, String> getBasePathConflicts(BaragonRequest request) {
@@ -120,7 +121,7 @@ public class RequestManager {
   public Optional<InternalRequestStates> cancelRequest(String requestId) {
     final Optional<InternalRequestStates> maybeState = getRequestState(requestId);
 
-    if (!maybeState.isPresent() || !maybeState.get().isCancelable()) {
+    if (!maybeState.isPresent() || !InternalStatesMap.isCancelable(maybeState.get())) {
       return maybeState;
     }
 
