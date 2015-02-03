@@ -70,7 +70,7 @@ public class InternalStatesMap {
 
   public static boolean isRemovable(InternalRequestStates requestState) {
     BaragonRequestState state = stateToRequestStateMap.get(requestState);
-    return state == BaragonRequestState.SUCCESS || state == BaragonRequestState.FAILED || state == BaragonRequestState.CANCELED;
+    return state == BaragonRequestState.SUCCESS || state == BaragonRequestState.FAILED || state == BaragonRequestState.CANCELED || state == BaragonRequestState.INVALID_REQUEST_NOOP;
   }
 
 }
