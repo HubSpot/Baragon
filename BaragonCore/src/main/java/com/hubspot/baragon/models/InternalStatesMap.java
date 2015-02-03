@@ -25,6 +25,7 @@ public class InternalStatesMap {
     .put(InternalRequestStates.CHECK_APPLY_RESPONSES, BaragonRequestState.WAITING)
     .put(InternalRequestStates.COMPLETED, BaragonRequestState.SUCCESS)
     .put(InternalRequestStates.FAILED_SEND_REVERT_REQUESTS, BaragonRequestState.WAITING)
+    .put(InternalRequestStates.FAILED_REVERTED, BaragonRequestState.FAILED)
     .put(InternalRequestStates.FAILED_CHECK_REVERT_RESPONSES, BaragonRequestState.WAITING)
     .put(InternalRequestStates.FAILED_REVERT_FAILED, BaragonRequestState.FAILED)
     .put(InternalRequestStates.CANCELLED_SEND_REVERT_REQUESTS, BaragonRequestState.CANCELING)
