@@ -148,7 +148,7 @@ public class RequestTests {
 
     final UpstreamInfo upstream = new UpstreamInfo("testhost:8080", Optional.of(requestId), Optional.<String>absent());
 
-    final BaragonRequest request = new BaragonRequest(requestId, service, ImmutableList.of(upstream), ImmutableList.<UpstreamInfo>of());
+    final BaragonRequest request = new BaragonRequest(requestId, service, ImmutableList.of(upstream), ImmutableList.<UpstreamInfo>of(), Optional.<String>absent());
 
     try {
       assertResponseStateAbsent(requestManager, requestId);
@@ -173,7 +173,7 @@ public class RequestTests {
 
     final UpstreamInfo upstream = new UpstreamInfo("testhost:8080", Optional.of(requestId), Optional.<String>absent());
 
-    final BaragonRequest request = new BaragonRequest(requestId, service, ImmutableList.of(upstream), ImmutableList.<UpstreamInfo>of());
+    final BaragonRequest request = new BaragonRequest(requestId, service, ImmutableList.of(upstream), ImmutableList.<UpstreamInfo>of(), Optional.<String>absent());
 
     requestManager.enqueueRequest(request);
     requestManager.enqueueRequest(request);
@@ -188,7 +188,7 @@ public class RequestTests {
 
     final UpstreamInfo upstream = new UpstreamInfo("testhost:8080", Optional.of(requestId), Optional.<String>absent());
 
-    final BaragonRequest request = new BaragonRequest(requestId, service, ImmutableList.of(upstream), ImmutableList.<UpstreamInfo>of());
+    final BaragonRequest request = new BaragonRequest(requestId, service, ImmutableList.of(upstream), ImmutableList.<UpstreamInfo>of(), Optional.<String>absent());
 
     try {
       assertResponseStateAbsent(requestManager, requestId);
