@@ -41,19 +41,19 @@ public class InternalStatesMap {
     .build();
 
   public static InternalRequestStates getWaitingState(InternalRequestStates requestState) {
-    return typeToRequestStateMap.get(stateToRequestTypeMap.get(requestState)).get("waiting");
+    return typeToRequestStateMap.get(stateToRequestTypeMap.get(requestState)).get(AgentRequestsStatus.WAITING);
   }
 
   public static InternalRequestStates getFailureState(InternalRequestStates requestState) {
-    return typeToRequestStateMap.get(stateToRequestTypeMap.get(requestState)).get("failure");
+    return typeToRequestStateMap.get(stateToRequestTypeMap.get(requestState)).get(AgentRequestsStatus.FAILURE);
   }
 
   public static InternalRequestStates getRetryState(InternalRequestStates requestState) {
-    return typeToRequestStateMap.get(stateToRequestTypeMap.get(requestState)).get("retry");
+    return typeToRequestStateMap.get(stateToRequestTypeMap.get(requestState)).get(AgentRequestsStatus.RETRY);
   }
 
   public static InternalRequestStates getSuccessState(InternalRequestStates requestState) {
-    return typeToRequestStateMap.get(stateToRequestTypeMap.get(requestState)).get("success");
+    return typeToRequestStateMap.get(stateToRequestTypeMap.get(requestState)).get(AgentRequestsStatus.SUCCESS);
   }
 
   public static AgentRequestType getRequestType(InternalRequestStates requestState) {
