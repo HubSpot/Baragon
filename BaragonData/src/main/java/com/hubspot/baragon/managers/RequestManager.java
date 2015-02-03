@@ -82,7 +82,9 @@ public class RequestManager {
     for (String loadBalancerGroup : service.getLoadBalancerGroups()) {
       final Optional<String> maybeServiceId = loadBalancerDatastore.getBasePathServiceId(loadBalancerGroup, service.getServiceBasePath());
       if (maybeServiceId.isPresent() && !maybeServiceId.get().equals(service.getServiceId())) {
-        loadBalancerServiceIds.put(loadBalancerGroup, maybeServiceId.get());
+        if (request.getReplaceServiceId().isPresent() && !request.getReplaceServiceId().get().equals(maybeServiceId.get())) {
+          loadBalancerServiceIds.put(loadBalancerGroup, maybeServiceId.get());
+        }
       }
     }
 
@@ -131,13 +133,23 @@ public class RequestManager {
   }
 
   public synchronized void commitRequest(BaragonRequest request) {
-    final Optional<BaragonService> maybeOriginalService = stateDatastore.getService(request.getLoadBalancerService().getServiceId());
+    final Optional<BaragonService> maybeOriginalService;
+    if (request.getReplaceServiceId().isPresent()) {
+      maybeOriginalService = stateDatastore.getService(request.getReplaceServiceId().get());
+    } else {
+      maybeOriginalService = stateDatastore.getService(request.getLoadBalancerService().getServiceId());
+    }
 
     // if we've changed the base path, clear out the old ones
     if (maybeOriginalService.isPresent() && !maybeOriginalService.get().getServiceBasePath().equals(request.getLoadBalancerService().getServiceBasePath())) {
       for (String loadBalancerGroup : maybeOriginalService.get().getLoadBalancerGroups()) {
         loadBalancerDatastore.clearBasePath(loadBalancerGroup, maybeOriginalService.get().getServiceBasePath());
       }
+    }
+
+    // If the service ID has been changed, remove the old service from the state datastore
+    if (maybeOriginalService.isPresent() && !maybeOriginalService.get().getServiceId().equals(request.getLoadBalancerService().getServiceId())) {
+      stateDatastore.removeService(maybeOriginalService.get().getServiceId());
     }
 
     stateDatastore.addService(request.getLoadBalancerService());

@@ -29,6 +29,7 @@ import com.hubspot.baragon.agent.config.TestingConfiguration;
 import com.hubspot.baragon.agent.lbs.FilesystemConfigHelper;
 import com.hubspot.baragon.data.BaragonRequestDatastore;
 import com.hubspot.baragon.data.BaragonStateDatastore;
+import com.hubspot.baragon.data.BaragonLoadBalancerDatastore;
 import com.hubspot.baragon.models.BaragonRequest;
 import com.hubspot.baragon.models.BaragonService;
 import com.hubspot.baragon.models.ServiceContext;
@@ -86,10 +87,11 @@ public class RequestResource {
 
       final BaragonRequest request = maybeRequest.get();
 
+      Optional<BaragonService> maybeOldService = getOldService(request);
+
       LOG.info(String.format("Received request to apply %s", request));
 
       final ServiceContext update;
-
 
       if (!request.getLoadBalancerService().getLoadBalancerGroups().contains(loadBalancerConfiguration.getName())) {
         // this service has been deleted or moved off this load balancer -- delete the config
@@ -122,7 +124,7 @@ public class RequestResource {
       }
 
       try {
-        configHelper.apply(update, true);
+        configHelper.apply(update, maybeOldService, true);
       } catch (Exception e) {
         return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
       }
@@ -153,18 +155,18 @@ public class RequestResource {
 
       final BaragonRequest request = maybeRequest.get();
 
-      LOG.info(String.format("Received request to revert %s", request));
+      // Find the old service id to revert to in case it has changed
+      Optional<BaragonService> maybeOldService = getOldService(request);
 
-      final Optional<BaragonService> maybeService = stateDatastore.getService(request.getLoadBalancerService().getServiceId());
+      LOG.info(String.format("Received request to revert %s", request));
 
       final ServiceContext update;
 
-      if (!maybeService.isPresent() || !maybeService.get().getLoadBalancerGroups().contains(loadBalancerConfiguration.getName())) {
+      if (!maybeOldService.isPresent() || !maybeOldService.get().getLoadBalancerGroups().contains(loadBalancerConfiguration.getName())) {
         // this service previously didn't exist, or wasnt on this load balancer -- remove the config
-
         update = new ServiceContext(request.getLoadBalancerService(), Collections.<UpstreamInfo>emptyList(), System.currentTimeMillis(), false);
       } else {
-        update = new ServiceContext(maybeService.get(), stateDatastore.getUpstreamsMap(maybeService.get().getServiceId()).values(), System.currentTimeMillis(), true);
+        update = new ServiceContext(maybeOldService.get(), stateDatastore.getUpstreamsMap(maybeOldService.get().getServiceId()).values(), System.currentTimeMillis(), true);
       }
 
       if (maybeTestingConfiguration.isPresent() && maybeTestingConfiguration.get().isEnabled() && maybeTestingConfiguration.get().getRevertDelayMs() > 0) {
@@ -177,8 +179,10 @@ public class RequestResource {
         }
       }
 
+      LOG.info(String.format("Reverting to %s", update));
+      
       try {
-        configHelper.apply(update, false);
+        configHelper.apply(update, Optional.<BaragonService>absent(), false);
       } catch (Exception e) {
         return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
       }
@@ -189,6 +193,18 @@ public class RequestResource {
       return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(String.format("Caught exception while reverting %s: %s", requestId, e.getMessage())).build();
     } finally {
       agentLock.unlock();
+    }
+  }
+
+  private Optional<BaragonService> getOldService(BaragonRequest request) {
+    Optional<BaragonService> service = Optional.absent();
+    if (request.getReplaceServiceId().isPresent()) {
+      service = stateDatastore.getService(request.getReplaceServiceId().get());
+    }
+    if (service.isPresent()) {
+      return service;
+    } else {
+      return stateDatastore.getService(request.getLoadBalancerService().getServiceId());
     }
   }
 }
