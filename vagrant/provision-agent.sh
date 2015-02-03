@@ -60,6 +60,7 @@ templates:
       #   - {{{.}}}
       {{else}}
       #   No owners!
+      {{/if}}
 
       {{#if upstreams}}
       {{#if service.options.nginxExtraConfigs}}
@@ -71,11 +72,11 @@ templates:
 
       location {{{service.options.nginxLocationModifier}}} {{{service.serviceBasePath}}} {
           proxy_pass_header Server;
-          proxy_set_header Host $http_host;
+          proxy_set_header Host \$http_host;
           proxy_redirect off;
-          proxy_set_header X-RealIP $remote_addr;
-          proxy_set_header X-Scheme $scheme;
-          proxy_set_header X-Request-Start "${msec}";
+          proxy_set_header X-RealIP \$remote_addr;
+          proxy_set_header X-Scheme \$scheme;
+          proxy_set_header X-Request-Start "\${msec}";
           {{#if service.options.nginxProxyPassOverride}}
           proxy_pass http://{{{service.options.nginxProxyPassOverride}}};
           {{else}}
@@ -109,6 +110,7 @@ templates:
       #   - {{{.}}}
       {{else}}
       #   No owners!
+      {{/if}}
 
       {{#if upstreams}}
       upstream baragon_{{{service.serviceId}}} {
