@@ -1,44 +1,65 @@
 package com.hubspot.baragon.models;
 
 import com.google.common.collect.ImmutableMap;
+import java.util.EnumMap;
 
 public class InternalStatesMap {
-  private static final ImmutableMap<InternalRequestStates, AgentRequestType> stateToRequestTypeMap = new ImmutableMap.Builder<InternalRequestStates, AgentRequestType>()
-    .put(InternalRequestStates.PENDING, AgentRequestType.APPLY)
-    .put(InternalRequestStates.INVALID_REQUEST_NOOP, AgentRequestType.APPLY)
-    .put(InternalRequestStates.SEND_APPLY_REQUESTS, AgentRequestType.APPLY)
-    .put(InternalRequestStates.CHECK_APPLY_RESPONSES, AgentRequestType.APPLY)
-    .put(InternalRequestStates.COMPLETED, AgentRequestType.APPLY)
-    .put(InternalRequestStates.FAILED_SEND_REVERT_REQUESTS, AgentRequestType.REVERT)
-    .put(InternalRequestStates.FAILED_CHECK_REVERT_RESPONSES, AgentRequestType.REVERT)
-    .put(InternalRequestStates.FAILED_REVERT_FAILED, AgentRequestType.REVERT)
-    .put(InternalRequestStates.CANCELLED_SEND_REVERT_REQUESTS, AgentRequestType.CANCEL)
-    .put(InternalRequestStates.CANCELLED_CHECK_REVERT_RESPONSES, AgentRequestType.CANCEL)
-    .put(InternalRequestStates.CANCELLED, AgentRequestType.CANCEL)
-    .put(InternalRequestStates.FAILED_CANCEL_FAILED, AgentRequestType.CANCEL)
-    .build();
+  private static EnumMap<InternalRequestStates, AgentRequestType> stateToRequestTypeMap = new EnumMap<>(InternalRequestStates.class);
+  static {
+    stateToRequestTypeMap.put(InternalRequestStates.PENDING, AgentRequestType.APPLY);
+    stateToRequestTypeMap.put(InternalRequestStates.INVALID_REQUEST_NOOP, AgentRequestType.APPLY);
+    stateToRequestTypeMap.put(InternalRequestStates.SEND_APPLY_REQUESTS, AgentRequestType.APPLY);
+    stateToRequestTypeMap.put(InternalRequestStates.CHECK_APPLY_RESPONSES, AgentRequestType.APPLY);
+    stateToRequestTypeMap.put(InternalRequestStates.COMPLETED, AgentRequestType.APPLY);
+    stateToRequestTypeMap.put(InternalRequestStates.FAILED_SEND_REVERT_REQUESTS, AgentRequestType.REVERT);
+    stateToRequestTypeMap.put(InternalRequestStates.FAILED_CHECK_REVERT_RESPONSES, AgentRequestType.REVERT);
+    stateToRequestTypeMap.put(InternalRequestStates.FAILED_REVERT_FAILED, AgentRequestType.REVERT);
+    stateToRequestTypeMap.put(InternalRequestStates.CANCELLED_SEND_REVERT_REQUESTS, AgentRequestType.CANCEL);
+    stateToRequestTypeMap.put(InternalRequestStates.CANCELLED_CHECK_REVERT_RESPONSES, AgentRequestType.CANCEL);
+    stateToRequestTypeMap.put(InternalRequestStates.CANCELLED, AgentRequestType.CANCEL);
+    stateToRequestTypeMap.put(InternalRequestStates.FAILED_CANCEL_FAILED, AgentRequestType.CANCEL);
+  }
 
-  private static final ImmutableMap<InternalRequestStates, BaragonRequestState> stateToRequestStateMap = new ImmutableMap.Builder<InternalRequestStates, BaragonRequestState>()
-    .put(InternalRequestStates.PENDING, BaragonRequestState.WAITING)
-    .put(InternalRequestStates.INVALID_REQUEST_NOOP, BaragonRequestState.INVALID_REQUEST_NOOP)
-    .put(InternalRequestStates.SEND_APPLY_REQUESTS, BaragonRequestState.WAITING)
-    .put(InternalRequestStates.CHECK_APPLY_RESPONSES, BaragonRequestState.WAITING)
-    .put(InternalRequestStates.COMPLETED, BaragonRequestState.SUCCESS)
-    .put(InternalRequestStates.FAILED_SEND_REVERT_REQUESTS, BaragonRequestState.WAITING)
-    .put(InternalRequestStates.FAILED_REVERTED, BaragonRequestState.FAILED)
-    .put(InternalRequestStates.FAILED_CHECK_REVERT_RESPONSES, BaragonRequestState.WAITING)
-    .put(InternalRequestStates.FAILED_REVERT_FAILED, BaragonRequestState.FAILED)
-    .put(InternalRequestStates.CANCELLED_SEND_REVERT_REQUESTS, BaragonRequestState.CANCELING)
-    .put(InternalRequestStates.CANCELLED_CHECK_REVERT_RESPONSES, BaragonRequestState.CANCELING)
-    .put(InternalRequestStates.CANCELLED, BaragonRequestState.CANCELED)
-    .put(InternalRequestStates.FAILED_CANCEL_FAILED, BaragonRequestState.FAILED)
-    .build();
+  private static EnumMap<InternalRequestStates, BaragonRequestState> stateToRequestStateMap = new EnumMap<>(InternalRequestStates.class);
+  static {
+    stateToRequestStateMap.put(InternalRequestStates.PENDING, BaragonRequestState.WAITING);
+    stateToRequestStateMap.put(InternalRequestStates.INVALID_REQUEST_NOOP, BaragonRequestState.INVALID_REQUEST_NOOP);
+    stateToRequestStateMap.put(InternalRequestStates.SEND_APPLY_REQUESTS, BaragonRequestState.WAITING);
+    stateToRequestStateMap.put(InternalRequestStates.CHECK_APPLY_RESPONSES, BaragonRequestState.WAITING);
+    stateToRequestStateMap.put(InternalRequestStates.COMPLETED, BaragonRequestState.SUCCESS);
+    stateToRequestStateMap.put(InternalRequestStates.FAILED_SEND_REVERT_REQUESTS, BaragonRequestState.WAITING);
+    stateToRequestStateMap.put(InternalRequestStates.FAILED_REVERTED, BaragonRequestState.FAILED);
+    stateToRequestStateMap.put(InternalRequestStates.FAILED_CHECK_REVERT_RESPONSES, BaragonRequestState.WAITING);
+    stateToRequestStateMap.put(InternalRequestStates.FAILED_REVERT_FAILED, BaragonRequestState.FAILED);
+    stateToRequestStateMap.put(InternalRequestStates.CANCELLED_SEND_REVERT_REQUESTS, BaragonRequestState.CANCELING);
+    stateToRequestStateMap.put(InternalRequestStates.CANCELLED_CHECK_REVERT_RESPONSES, BaragonRequestState.CANCELING);
+    stateToRequestStateMap.put(InternalRequestStates.CANCELLED, BaragonRequestState.CANCELED);
+    stateToRequestStateMap.put(InternalRequestStates.FAILED_CANCEL_FAILED, BaragonRequestState.FAILED);
+  }
 
-  private static final ImmutableMap<AgentRequestType, ImmutableMap<AgentRequestsStatus, InternalRequestStates>> typeToRequestStateMap = new ImmutableMap.Builder<AgentRequestType, ImmutableMap<AgentRequestsStatus, InternalRequestStates>>()
-    .put(AgentRequestType.APPLY, ImmutableMap.of(AgentRequestsStatus.WAITING, InternalRequestStates.CHECK_APPLY_RESPONSES, AgentRequestsStatus.FAILURE, InternalRequestStates.FAILED_SEND_REVERT_REQUESTS, AgentRequestsStatus.RETRY, InternalRequestStates.SEND_APPLY_REQUESTS, AgentRequestsStatus.SUCCESS, InternalRequestStates.COMPLETED))
-    .put(AgentRequestType.REVERT, ImmutableMap.of(AgentRequestsStatus.WAITING, InternalRequestStates.FAILED_CHECK_REVERT_RESPONSES, AgentRequestsStatus.FAILURE, InternalRequestStates.FAILED_REVERT_FAILED, AgentRequestsStatus.RETRY, InternalRequestStates.FAILED_SEND_REVERT_REQUESTS, AgentRequestsStatus.SUCCESS, InternalRequestStates.FAILED_REVERTED))
-    .put(AgentRequestType.CANCEL, ImmutableMap.of(AgentRequestsStatus.WAITING, InternalRequestStates.CANCELLED_CHECK_REVERT_RESPONSES, AgentRequestsStatus.FAILURE, InternalRequestStates.FAILED_CANCEL_FAILED, AgentRequestsStatus.RETRY, InternalRequestStates.CANCELLED_SEND_REVERT_REQUESTS, AgentRequestsStatus.SUCCESS, InternalRequestStates.CANCELLED))
-    .build();
+  private static EnumMap<AgentRequestType, EnumMap<AgentRequestsStatus, InternalRequestStates>> typeToRequestStateMap = new EnumMap<>(AgentRequestType.class);
+  static {
+    EnumMap<AgentRequestsStatus, InternalRequestStates> applyMap = new EnumMap<>(AgentRequestsStatus.class);
+    applyMap.put(AgentRequestsStatus.WAITING, InternalRequestStates.CHECK_APPLY_RESPONSES);
+    applyMap.put(AgentRequestsStatus.FAILURE, InternalRequestStates.FAILED_SEND_REVERT_REQUESTS);
+    applyMap.put(AgentRequestsStatus.RETRY, InternalRequestStates.SEND_APPLY_REQUESTS);
+    applyMap.put(AgentRequestsStatus.SUCCESS, InternalRequestStates.COMPLETED);
+    typeToRequestStateMap.put(AgentRequestType.APPLY, applyMap);
+
+    EnumMap<AgentRequestsStatus, InternalRequestStates> revertMap = new EnumMap<>(AgentRequestsStatus.class);
+    revertMap.put(AgentRequestsStatus.WAITING, InternalRequestStates.FAILED_CHECK_REVERT_RESPONSES);
+    revertMap.put(AgentRequestsStatus.FAILURE, InternalRequestStates.FAILED_REVERT_FAILED);
+    revertMap.put(AgentRequestsStatus.RETRY, InternalRequestStates.FAILED_SEND_REVERT_REQUESTS);
+    revertMap.put(AgentRequestsStatus.SUCCESS, InternalRequestStates.FAILED_REVERTED);;
+    typeToRequestStateMap.put(AgentRequestType.REVERT, revertMap);
+
+    EnumMap<AgentRequestsStatus, InternalRequestStates> cancelMap = new EnumMap<>(AgentRequestsStatus.class);
+    cancelMap.put(AgentRequestsStatus.WAITING, InternalRequestStates.CANCELLED_CHECK_REVERT_RESPONSES);
+    cancelMap.put(AgentRequestsStatus.FAILURE, InternalRequestStates.FAILED_CANCEL_FAILED);
+    cancelMap.put(AgentRequestsStatus.RETRY, InternalRequestStates.CANCELLED_SEND_REVERT_REQUESTS);
+    cancelMap.put(AgentRequestsStatus.SUCCESS, InternalRequestStates.CANCELLED);
+    typeToRequestStateMap.put(AgentRequestType.CANCEL, cancelMap);
+  }
 
   public static InternalRequestStates getWaitingState(InternalRequestStates requestState) {
     return typeToRequestStateMap.get(stateToRequestTypeMap.get(requestState)).get(AgentRequestsStatus.WAITING);
