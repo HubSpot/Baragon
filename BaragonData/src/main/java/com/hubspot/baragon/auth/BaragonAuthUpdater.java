@@ -16,7 +16,7 @@ import org.slf4j.LoggerFactory;
 import com.google.common.io.Closeables;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
-import com.hubspot.baragon.BaragonBaseModule;
+import com.hubspot.baragon.BaragonDataModule;
 import com.hubspot.baragon.data.BaragonAuthDatastore;
 import com.hubspot.baragon.models.BaragonAuthKey;
 
@@ -29,8 +29,8 @@ public class BaragonAuthUpdater implements Managed, PathChildrenCacheListener {
 
   @Inject
   public BaragonAuthUpdater(BaragonAuthDatastore datastore,
-                            @Named(BaragonBaseModule.BARAGON_AUTH_PATH_CACHE) PathChildrenCache pathChildrenCache,
-                            @Named(BaragonBaseModule.BARAGON_AUTH_KEY_MAP) AtomicReference<Map<String, BaragonAuthKey>> authKeys) {
+                            @Named(BaragonDataModule.BARAGON_AUTH_PATH_CACHE) PathChildrenCache pathChildrenCache,
+                            @Named(BaragonDataModule.BARAGON_AUTH_KEY_MAP) AtomicReference<Map<String, BaragonAuthKey>> authKeys) {
     this.datastore = datastore;
     this.pathChildrenCache = pathChildrenCache;
     this.authKeys = authKeys;

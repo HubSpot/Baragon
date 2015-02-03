@@ -9,14 +9,14 @@ import org.apache.curator.framework.state.ConnectionStateListener;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
-import com.hubspot.baragon.BaragonBaseModule;
+import com.hubspot.baragon.BaragonDataModule;
 
 @Singleton
 public class BaragonConnectionStateListener implements ConnectionStateListener {
   private final AtomicReference<ConnectionState> connectionState;
 
   @Inject
-  public BaragonConnectionStateListener(@Named(BaragonBaseModule.BARAGON_ZK_CONNECTION_STATE) AtomicReference<ConnectionState> connectionState) {
+  public BaragonConnectionStateListener(@Named(BaragonDataModule.BARAGON_ZK_CONNECTION_STATE) AtomicReference<ConnectionState> connectionState) {
     this.connectionState = connectionState;
   }
 

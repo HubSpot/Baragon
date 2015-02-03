@@ -13,7 +13,7 @@ import org.apache.curator.framework.state.ConnectionState;
 
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
-import com.hubspot.baragon.BaragonBaseModule;
+import com.hubspot.baragon.BaragonDataModule;
 import com.hubspot.baragon.auth.NoAuth;
 import com.hubspot.baragon.data.BaragonRequestDatastore;
 import com.hubspot.baragon.models.BaragonServiceStatus;
@@ -30,8 +30,8 @@ public class StatusResource {
   @Inject
   public StatusResource(BaragonRequestDatastore datastore,
                         @Named(BaragonServiceModule.BARAGON_SERVICE_LEADER_LATCH) LeaderLatch leaderLatch,
-                        @Named(BaragonBaseModule.BARAGON_SERVICE_WORKER_LAST_START) AtomicLong workerLastStart,
-                        @Named(BaragonBaseModule.BARAGON_ZK_CONNECTION_STATE) AtomicReference<ConnectionState> connectionState) {
+                        @Named(BaragonDataModule.BARAGON_SERVICE_WORKER_LAST_START) AtomicLong workerLastStart,
+                        @Named(BaragonDataModule.BARAGON_ZK_CONNECTION_STATE) AtomicReference<ConnectionState> connectionState) {
     this.datastore = datastore;
     this.leaderLatch = leaderLatch;
     this.workerLastStart = workerLastStart;

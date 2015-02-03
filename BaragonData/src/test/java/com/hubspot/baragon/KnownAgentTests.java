@@ -27,7 +27,7 @@ public class KnownAgentTests {
 
     @Override
     protected void configureTest() {
-      install(new BaragonTestingModule());
+      install(new BaragonDataTestModule());
     }
   }
 
