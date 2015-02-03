@@ -133,10 +133,11 @@ public class RequestManager {
   }
 
   public synchronized void commitRequest(BaragonRequest request) {
-    final Optional<BaragonService> maybeOriginalService;
+    Optional<BaragonService> maybeOriginalService = Optional.absent();
     if (request.getReplaceServiceId().isPresent()) {
       maybeOriginalService = stateDatastore.getService(request.getReplaceServiceId().get());
-    } else {
+    }
+    if (!maybeOriginalService.isPresent()) {
       maybeOriginalService = stateDatastore.getService(request.getLoadBalancerService().getServiceId());
     }
 
