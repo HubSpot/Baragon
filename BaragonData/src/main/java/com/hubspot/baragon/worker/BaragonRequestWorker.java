@@ -59,6 +59,7 @@ public class BaragonRequestWorker implements Runnable {
       case SUCCESS:
         agentResponses = agentManager.getAgentResponses(request.getLoadBalancerRequestId());
         requestManager.setRequestMessage(request.getLoadBalancerRequestId(), String.format("Apply failed (%s), %s OK.", buildResponseString(agentResponses, AgentRequestType.APPLY), InternalStatesMap.getRequestType(currentState).name()));
+        requestManager.revertBasePath(request);
         return InternalStatesMap.getSuccessState(currentState);
       case RETRY:
         return InternalStatesMap.getRetryState(currentState);
