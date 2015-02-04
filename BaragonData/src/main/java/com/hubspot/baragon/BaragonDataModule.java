@@ -40,6 +40,8 @@ public class BaragonDataModule extends AbstractModule {
 
   public static final String BARAGON_ZK_CONNECTION_STATE = "baragon.zk.connectionState";
 
+  public static final String BARAGON_SERVICE_LEADER_LATCH = "baragon.service.leaderLatch";
+
   @Override
   protected void configure() {
 

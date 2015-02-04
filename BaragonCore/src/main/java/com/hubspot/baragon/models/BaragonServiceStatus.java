@@ -10,16 +10,19 @@ public class BaragonServiceStatus {
   private final int pendingRequestCount;
   private final long workerLagMs;
   private final String zookeeperState;
+  private final int globalStateNodeSize;
 
   @JsonCreator
   public BaragonServiceStatus(@JsonProperty("leader") boolean leader,
                               @JsonProperty("pendingRequestCount") int pendingRequestCount,
                               @JsonProperty("workerLagMs") long workerLagMs,
-                              @JsonProperty("zookeeperState") String zookeeperState) {
+                              @JsonProperty("zookeeperState") String zookeeperState,
+                              @JsonProperty("globalStateNodeSize") int globalStateNodeSize) {
     this.leader = leader;
     this.pendingRequestCount = pendingRequestCount;
     this.workerLagMs = workerLagMs;
     this.zookeeperState = zookeeperState;
+    this.globalStateNodeSize = globalStateNodeSize;
   }
 
   public boolean isLeader() {
@@ -38,6 +41,10 @@ public class BaragonServiceStatus {
     return zookeeperState;
   }
 
+  public long getGlobalStateNodeSize() {
+    return globalStateNodeSize;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
@@ -45,6 +52,7 @@ public class BaragonServiceStatus {
 
     BaragonServiceStatus that = (BaragonServiceStatus) o;
 
+    if (globalStateNodeSize != that.globalStateNodeSize) return false;
     if (leader != that.leader) return false;
     if (pendingRequestCount != that.pendingRequestCount) return false;
     if (workerLagMs != that.workerLagMs) return false;
@@ -59,6 +67,7 @@ public class BaragonServiceStatus {
     result = 31 * result + pendingRequestCount;
     result = 31 * result + (int) (workerLagMs ^ (workerLagMs >>> 32));
     result = 31 * result + zookeeperState.hashCode();
+    result = 31 * result + globalStateNodeSize;
     return result;
   }
 
@@ -69,6 +78,7 @@ public class BaragonServiceStatus {
         ", pendingRequestCount=" + pendingRequestCount +
         ", workerLagMs=" + workerLagMs +
         ", zookeeperState='" + zookeeperState + '\'' +
+        ", globalStateNodeSize='" + globalStateNodeSize + '\'' +
         ']';
   }
 }

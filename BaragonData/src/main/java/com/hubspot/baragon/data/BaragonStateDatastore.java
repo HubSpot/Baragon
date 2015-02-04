@@ -9,6 +9,8 @@ import java.util.Map.Entry;
 
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.utils.ZKPaths;
+import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -102,6 +104,18 @@ public class BaragonStateDatastore extends AbstractDataStore {
 
   public Collection<BaragonServiceState> getGlobalState() {
     return readFromZk(SERVICES_FORMAT, BARAGON_SERVICE_STATE_COLLECTION).or(Collections.<BaragonServiceState>emptyList());
+  }
+
+  public int getGlobalStateSize() {
+    final Stat stat = new Stat();
+    try {
+      curatorFramework.getData().storingStatIn(stat).forPath(SERVICES_FORMAT);
+      return stat.getDataLength();
+    } catch (KeeperException.NoNodeException nne) {
+      return 0;
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
   }
 
   private Collection<BaragonServiceState> computeAllServiceStates() throws Exception {
