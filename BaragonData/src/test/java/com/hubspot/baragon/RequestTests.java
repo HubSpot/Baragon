@@ -2,6 +2,7 @@ package com.hubspot.baragon;
 
 import org.jukito.JukitoModule;
 import org.jukito.JukitoRunner;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -14,9 +15,9 @@ import com.google.common.base.Optional;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.inject.Scopes;
 import com.hubspot.baragon.data.BaragonLoadBalancerDatastore;
 import com.hubspot.baragon.data.BaragonStateDatastore;
+import com.hubspot.baragon.exceptions.RequestAlreadyEnqueuedException;
 import com.hubspot.baragon.managers.RequestManager;
 import com.hubspot.baragon.models.BaragonRequest;
 import com.hubspot.baragon.models.BaragonRequestState;
@@ -26,29 +27,70 @@ import com.hubspot.baragon.models.UpstreamInfo;
 import com.hubspot.baragon.worker.BaragonRequestWorker;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.when;
 
 @RunWith(JukitoRunner.class)
 public class RequestTests {
   private static final Logger LOG = LoggerFactory.getLogger(RequestTests.class);
 
   public static final String REAL_LB_GROUP = "real";
+  public static final String FAKE_LB_GROUP = "fake";
 
   public static class Module extends JukitoModule {
     @Override
     protected void configureTest() {
-      install(new BaragonTestingModule());
-      bindMock(BaragonLoadBalancerDatastore.class).in(Scopes.SINGLETON);
+      install(new BaragonDataTestModule());
     }
   }
 
   @Before
-  public void setupMocks(BaragonLoadBalancerDatastore loadBalancerDatastore) {
-    when(loadBalancerDatastore.getClusters()).thenReturn(Collections.singleton(REAL_LB_GROUP));
-    when(loadBalancerDatastore.getBasePaths(anyString())).thenReturn(Collections.<String>emptyList());
-    when(loadBalancerDatastore.getBasePathServiceId(anyString(), anyString())).thenReturn(Optional.<String>absent());
+  public void setupLbGroups(BaragonLoadBalancerTestDatastore loadBalancerDatastore) {
+    loadBalancerDatastore.setLoadBalancerGroupsOverride(Optional.of(Collections.singleton(REAL_LB_GROUP)));
+  }
+
+  @After
+  public void clearBasePaths(BaragonLoadBalancerDatastore loadBalancerDatastore) {
+    LOG.debug("Clearing base paths...");
+    for (String loadBalancerGroup : loadBalancerDatastore.getLoadBalancerGroups()) {
+      for (String basePath : loadBalancerDatastore.getBasePaths(loadBalancerGroup)) {
+        LOG.debug(String.format("  Clearing %s on %s", basePath, loadBalancerGroup));
+        loadBalancerDatastore.clearBasePath(loadBalancerGroup, basePath);
+      }
+    }
+  }
+
+  private Optional<BaragonResponse> assertResponseStateExists(RequestManager requestManager, String requestId, BaragonRequestState expected) {
+    final Optional<BaragonResponse> maybeResponse = requestManager.getResponse(requestId);
+
+    assertTrue(String.format("Response for request %s exists", requestId), maybeResponse.isPresent());
+    assertEquals(expected, maybeResponse.get().getLoadBalancerState());
+
+    return maybeResponse;
+  }
+
+  private Optional<BaragonResponse> assertResponseStateAbsent(RequestManager requestManager, String requestId) {
+    final Optional<BaragonResponse> maybeResponse = requestManager.getResponse(requestId);
+
+    assertTrue(String.format("Response for request %s does not exist", requestId), !maybeResponse.isPresent());
+
+    return maybeResponse;
+  }
+
+  private void assertSuccessfulRequestLifecycle(RequestManager requestManager, BaragonRequestWorker requestWorker, String requestId) {
+    assertResponseStateExists(requestManager, requestId, BaragonRequestState.WAITING);  // PENDING
+
+    requestWorker.run();
+
+    assertResponseStateExists(requestManager, requestId, BaragonRequestState.WAITING);  // SEND REQUESTS
+
+    requestWorker.run();
+
+    assertResponseStateExists(requestManager, requestId, BaragonRequestState.WAITING);  // CHECK REQUESTS
+
+    requestWorker.run();
+
+    assertResponseStateExists(requestManager, requestId, BaragonRequestState.SUCCESS);  // SUCCESS
   }
 
   @Test
@@ -58,23 +100,17 @@ public class RequestTests {
 
     final UpstreamInfo fakeUpstream = new UpstreamInfo("testhost:8080", Optional.of(requestId), Optional.<String>absent());
 
-    final BaragonRequest request = new BaragonRequest(requestId, service, Collections.<UpstreamInfo>emptyList(), ImmutableList.of(fakeUpstream));
+    final BaragonRequest request = new BaragonRequest(requestId, service, Collections.<UpstreamInfo>emptyList(), ImmutableList.of(fakeUpstream), Optional.<String>absent());
+
+    Optional<BaragonResponse> maybeResponse;
 
     try {
+      assertResponseStateAbsent(requestManager, requestId);
+
       LOG.info("Going to enqueue request: {}", request);
-      final BaragonResponse response = requestManager.enqueueRequest(request);
+      requestManager.enqueueRequest(request);
 
-      assertEquals(BaragonRequestState.WAITING, response.getLoadBalancerState());
-      requestWorker.run();
-
-      assertEquals(BaragonRequestState.WAITING, response.getLoadBalancerState());
-      requestWorker.run();
-
-      final Optional<BaragonResponse> maybeNewResponse = requestManager.getResponse(requestId);
-      LOG.info("Got response: {}", maybeNewResponse);
-      
-      assertTrue(maybeNewResponse.isPresent());
-      assertEquals(maybeNewResponse.get().getLoadBalancerState(), BaragonRequestState.SUCCESS);
+      assertSuccessfulRequestLifecycle(requestManager, requestWorker, requestId);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -89,25 +125,82 @@ public class RequestTests {
 
     final UpstreamInfo httpUrlUpstream = new UpstreamInfo("http://test.com:8080/foo", Optional.of(requestId), Optional.<String>absent());
 
-    final BaragonRequest request = new BaragonRequest(requestId, service, ImmutableList.of(httpUrlUpstream), Collections.<UpstreamInfo>emptyList());
+    final BaragonRequest request = new BaragonRequest(requestId, service, ImmutableList.of(httpUrlUpstream), Collections.<UpstreamInfo>emptyList(), Optional.<String>absent());
 
     try {
+      assertResponseStateAbsent(requestManager, requestId);
+
       LOG.info("Going to enqueue request: {}", request);
-      final BaragonResponse response = requestManager.enqueueRequest(request);
+      requestManager.enqueueRequest(request);
 
-      assertEquals(BaragonRequestState.WAITING, response.getLoadBalancerState());
-      requestWorker.run();
-
-      assertEquals(BaragonRequestState.WAITING, response.getLoadBalancerState());
-      requestWorker.run();
-
-      final Optional<BaragonResponse> maybeNewResponse = requestManager.getResponse(requestId);
-      LOG.info("Got response: {}", maybeNewResponse);
-
-      assertTrue(maybeNewResponse.isPresent());
-      assertEquals(BaragonRequestState.SUCCESS, maybeNewResponse.get().getLoadBalancerState());
+      assertSuccessfulRequestLifecycle(requestManager, requestWorker, requestId);
 
       assertEquals(ImmutableSet.of(httpUrlUpstream.getUpstream()), stateDatastore.getUpstreamsMap(serviceId).keySet());
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  @Test
+  public void testNonExistentLoadBalancerGroup(RequestManager requestManager, BaragonRequestWorker requestWorker) {
+    final String requestId = "test-126";
+    final BaragonService service = new BaragonService("testservice", Collections.<String>emptyList(), "/test", ImmutableList.of(FAKE_LB_GROUP), Collections.<String, Object>emptyMap());
+
+    final UpstreamInfo upstream = new UpstreamInfo("testhost:8080", Optional.of(requestId), Optional.<String>absent());
+
+    final BaragonRequest request = new BaragonRequest(requestId, service, ImmutableList.of(upstream), ImmutableList.<UpstreamInfo>of(), Optional.<String>absent());
+
+    try {
+      assertResponseStateAbsent(requestManager, requestId);
+
+      LOG.info("Going to enqueue request: {}", request);
+      requestManager.enqueueRequest(request);
+
+      assertResponseStateExists(requestManager, requestId, BaragonRequestState.WAITING);
+
+      requestWorker.run();
+
+      assertResponseStateExists(requestManager, requestId, BaragonRequestState.INVALID_REQUEST_NOOP);
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  @Test(expected = RequestAlreadyEnqueuedException.class)
+  public void testPreexistingResponse(RequestManager requestManager) throws RequestAlreadyEnqueuedException {
+    final String requestId = "test-127";
+    final BaragonService service = new BaragonService("testservice", Collections.<String>emptyList(), "/test", ImmutableList.of(FAKE_LB_GROUP), Collections.<String, Object>emptyMap());
+
+    final UpstreamInfo upstream = new UpstreamInfo("testhost:8080", Optional.of(requestId), Optional.<String>absent());
+
+    final BaragonRequest request = new BaragonRequest(requestId, service, ImmutableList.of(upstream), ImmutableList.<UpstreamInfo>of(), Optional.<String>absent());
+
+    requestManager.enqueueRequest(request);
+    requestManager.enqueueRequest(request);
+  }
+
+  @Test
+  public void testBasePathConflicts(RequestManager requestManager, BaragonRequestWorker requestWorker, BaragonLoadBalancerDatastore loadBalancerDatastore) {
+    loadBalancerDatastore.setBasePathServiceId(REAL_LB_GROUP, "/foo", "foo-service");
+
+    final String requestId = "test-128";
+    final BaragonService service = new BaragonService("testservice", Collections.<String>emptyList(), "/foo", ImmutableList.of(REAL_LB_GROUP), Collections.<String, Object>emptyMap());
+
+    final UpstreamInfo upstream = new UpstreamInfo("testhost:8080", Optional.of(requestId), Optional.<String>absent());
+
+    final BaragonRequest request = new BaragonRequest(requestId, service, ImmutableList.of(upstream), ImmutableList.<UpstreamInfo>of(), Optional.<String>absent());
+
+    try {
+      assertResponseStateAbsent(requestManager, requestId);
+
+      LOG.info("Going to enqueue request: {}", request);
+      requestManager.enqueueRequest(request);
+
+      assertResponseStateExists(requestManager, requestId, BaragonRequestState.WAITING);
+
+      requestWorker.run();
+
+      assertResponseStateExists(requestManager, requestId, BaragonRequestState.INVALID_REQUEST_NOOP);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }

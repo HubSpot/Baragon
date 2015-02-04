@@ -14,58 +14,66 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.inject.Inject;
-import com.hubspot.baragon.BaragonBaseModule;
+import com.hubspot.baragon.BaragonDataModule;
 import com.hubspot.baragon.service.BaragonServiceModule;
+import com.hubspot.baragon.service.config.BaragonConfiguration;
 import com.hubspot.baragon.worker.BaragonRequestWorker;
 
-public class BaragonWorkerManaged implements Managed {
+public class BaragonWorkerManaged implements Managed, LeaderLatchListener {
   private static final Logger LOG = LoggerFactory.getLogger(BaragonWorkerManaged.class);
 
   private final ScheduledExecutorService executorService;
   private final BaragonRequestWorker worker;
   private final LeaderLatch leaderLatch;
-  private final long workerIntervalMs;
+  private final BaragonConfiguration config;
+
+  private ScheduledFuture<?> workerFuture = null;
 
   @Inject
   public BaragonWorkerManaged(@Named(BaragonServiceModule.BARAGON_SERVICE_SCHEDULED_EXECUTOR) ScheduledExecutorService executorService,
-                              @Named(BaragonBaseModule.BARAGON_SERVICE_LEADER_LATCH) LeaderLatch leaderLatch,
-                              @Named(BaragonServiceModule.BARAGON_SERVICE_WORKER_INTERVAL_MS) long workerIntervalMs,
+                              @Named(BaragonDataModule.BARAGON_SERVICE_LEADER_LATCH) LeaderLatch leaderLatch,
+                              BaragonConfiguration config,
                               BaragonRequestWorker worker) {
     this.executorService = executorService;
     this.leaderLatch = leaderLatch;
-    this.workerIntervalMs = workerIntervalMs;
+    this.config = config;
     this.worker = worker;
   }
 
   @Override
   public void start() throws Exception {
-    leaderLatch.addListener(new LeaderLatchListener() {
-      private ScheduledFuture<?> future = null;
-
-      @Override
-      public void isLeader() {
-        LOG.info("We are the leader!");
-
-        if (future != null) {
-          future.cancel(false);
-        }
-
-        future = executorService.scheduleAtFixedRate(worker, 0, workerIntervalMs, TimeUnit.MILLISECONDS);
+    if (config.getWorkerConfiguration().isEnabled()) {
+      if (config.getWorkerIntervalMs().isPresent()) {
+        LOG.warn("workerIntervalMs configuration setting is deprecated! Use worker.intervalMs instead.");
       }
 
-      @Override
-      public void notLeader() {
-        LOG.info("We are not the leader!");
-        future.cancel(false);
-      }
-    });
-
-    leaderLatch.start();
+      leaderLatch.addListener(this);
+      leaderLatch.start();
+    }
   }
 
   @Override
   public void stop() throws Exception {
-    leaderLatch.close();
-    executorService.shutdown();
+    if (config.getWorkerConfiguration().isEnabled()) {
+      leaderLatch.close();
+      executorService.shutdown();
+    }
+  }
+
+  @Override
+  public void isLeader() {
+    LOG.info("We are the leader!");
+
+    if (workerFuture != null) {
+      workerFuture.cancel(false);
+    }
+
+    workerFuture = executorService.scheduleAtFixedRate(worker, config.getWorkerConfiguration().getInitialDelayMs(), config.getWorkerConfiguration().getIntervalMs(), TimeUnit.MILLISECONDS);
+  }
+
+  @Override
+  public void notLeader() {
+    LOG.info("We are not the leader!");
+    workerFuture.cancel(false);
   }
 }

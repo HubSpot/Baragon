@@ -11,12 +11,14 @@ import org.slf4j.LoggerFactory;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
+import com.google.common.base.Optional;
 import com.google.common.io.Files;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.hubspot.baragon.exceptions.InvalidConfigException;
 import com.hubspot.baragon.exceptions.LbAdapterExecuteException;
 import com.hubspot.baragon.models.BaragonConfigFile;
+import com.hubspot.baragon.models.BaragonService;
 import com.hubspot.baragon.models.ServiceContext;
 
 @Singleton
@@ -51,26 +53,36 @@ public class FilesystemConfigHelper {
     }
   }
 
-  public void apply(ServiceContext context, boolean revertOnFailure) throws InvalidConfigException, LbAdapterExecuteException, IOException {
+  public void apply(ServiceContext context, Optional<BaragonService> maybeOldService,boolean revertOnFailure) throws InvalidConfigException, LbAdapterExecuteException, IOException {
     final String serviceId = context.getService().getServiceId();
+    final String oldServiceId;
+    if (maybeOldService.isPresent()) {
+      oldServiceId = maybeOldService.get().getServiceId();
+    } else {
+      oldServiceId = serviceId;
+    }
 
     LOG.info(String.format("Going to apply %s: %s", serviceId, Joiner.on(", ").join(context.getUpstreams())));
-    final boolean newServiceExists = configsExist(serviceId);
+    final boolean oldServiceExists = configsExist(oldServiceId);
 
-    if (configGenerator.generateConfigsForProject(context).equals(readConfigs(context.getService().getServiceId()))) {
+    if (configGenerator.generateConfigsForProject(context).equals(readConfigs(oldServiceId))) {
       LOG.info("    Configs are unchanged, skipping apply");
       return;
     }
 
     // Backup configs
-    if (newServiceExists && revertOnFailure) {
-      backupConfigs(serviceId);
+    if (oldServiceExists && revertOnFailure) {
+      backupConfigs(oldServiceId);
     }
 
     // Write & check the configs
     try {
       if (context.isPresent()) {
         writeConfigs(configGenerator.generateConfigsForProject(context));
+        //If the new service id for this base path is different, remove the configs for the old service id
+        if (oldServiceExists && !oldServiceId.equals(serviceId)) {
+          remove(oldServiceId, false);
+        }
       } else {
         remove(serviceId, false);
       }
@@ -81,7 +93,7 @@ public class FilesystemConfigHelper {
 
       // Restore configs
       if (revertOnFailure) {
-        if (newServiceExists) {
+        if (oldServiceExists) {
           restoreConfigs(serviceId);
         } else {
           remove(serviceId, false);
@@ -94,7 +106,7 @@ public class FilesystemConfigHelper {
     // Load the new configs
     adapter.reloadConfigs();
 
-    removeBackupConfigs(serviceId);
+    removeBackupConfigs(oldServiceId);
   }
 
   private void writeConfigs(Collection<BaragonConfigFile> files) {

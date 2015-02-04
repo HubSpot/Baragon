@@ -40,7 +40,7 @@ public class LoadBalancerResource {
 
   @GET
   public Collection<String> getClusters() {
-    return loadBalancerDatastore.getClusters();
+    return loadBalancerDatastore.getLoadBalancerGroups();
   }
   
   @GET

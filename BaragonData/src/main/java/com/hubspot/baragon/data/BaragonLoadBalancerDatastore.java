@@ -17,6 +17,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Charsets;
 import com.google.common.base.Optional;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;
@@ -47,8 +48,8 @@ public class BaragonLoadBalancerDatastore extends AbstractDataStore {
     }
   }
 
-  public Collection<String> getClusters() {
-    return getChildren(LOAD_BALANCER_GROUPS_FORMAT);
+  public Set<String> getLoadBalancerGroups() {
+    return ImmutableSet.copyOf(getChildren(LOAD_BALANCER_GROUPS_FORMAT));
   }
 
   public Collection<BaragonAgentMetadata> getAgentMetadata(String clusterName) {

@@ -1,0 +1,10 @@
+{
+  "name": "zookeeper-2",
+  "chef_environment": "stage",
+  "automatic": {
+    "fqdn": "zookeeper-2.vagrantup.com",
+    "roles": [
+      "zookeeper"
+    ]
+  }
+}

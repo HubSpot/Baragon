@@ -18,6 +18,7 @@ public class StatusResource {
   @Inject
   public StatusResource(StatusManager manager) {
     this.manager = manager;
+
   }
 
   @GET

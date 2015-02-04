@@ -9,7 +9,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
-import com.hubspot.baragon.BaragonBaseModule;
+import com.hubspot.baragon.BaragonDataModule;
 import com.hubspot.baragon.data.BaragonRequestDatastore;
 import com.hubspot.baragon.data.BaragonStateDatastore;
 import com.hubspot.baragon.models.BaragonServiceStatus;
@@ -25,9 +25,9 @@ public class StatusManager {
   @Inject
   public StatusManager(BaragonRequestDatastore requestDatastore,
                        BaragonStateDatastore stateDatastore,
-                       @Named(BaragonBaseModule.BARAGON_SERVICE_LEADER_LATCH) LeaderLatch leaderLatch,
-                       @Named(BaragonBaseModule.BARAGON_SERVICE_WORKER_LAST_START) AtomicLong workerLastStart,
-                       @Named(BaragonBaseModule.BARAGON_ZK_CONNECTION_STATE) AtomicReference<ConnectionState> connectionState) {
+                       @Named(BaragonDataModule.BARAGON_SERVICE_LEADER_LATCH) LeaderLatch leaderLatch,
+                       @Named(BaragonDataModule.BARAGON_SERVICE_WORKER_LAST_START) AtomicLong workerLastStart,
+                       @Named(BaragonDataModule.BARAGON_ZK_CONNECTION_STATE) AtomicReference<ConnectionState> connectionState) {
     this.requestDatastore = requestDatastore;
     this.stateDatastore = stateDatastore;
     this.leaderLatch = leaderLatch;

@@ -10,6 +10,7 @@ import org.hibernate.validator.constraints.NotEmpty;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.base.Optional;
 import com.hubspot.baragon.config.AuthConfiguration;
 import com.hubspot.baragon.config.HttpClientConfiguration;
 import com.hubspot.baragon.config.ZooKeeperConfiguration;
@@ -20,13 +21,22 @@ public class BaragonConfiguration extends Configuration {
 
   @JsonProperty("zookeeper")
   @NotNull
+  @Valid
   private ZooKeeperConfiguration zooKeeperConfiguration;
 
   @JsonProperty("httpClient")
+  @NotNull
+  @Valid
   private HttpClientConfiguration httpClientConfiguration = new HttpClientConfiguration();
 
   @JsonProperty("workerIntervalMs")
-  private long workerIntervalMs = 1000;
+  @Deprecated
+  private Long workerIntervalMs = null;
+
+  @JsonProperty("worker")
+  @NotNull
+  @Valid
+  private BaragonWorkerConfiguration workerConfiguration = new BaragonWorkerConfiguration();
 
   @JsonProperty("agentRequestUriFormat")
   @NotEmpty
@@ -37,6 +47,7 @@ public class BaragonConfiguration extends Configuration {
   private int agentMaxAttempts = 5;
 
   @JsonProperty("auth")
+  @NotNull
   @Valid
   private AuthConfiguration authConfiguration = new AuthConfiguration();
 
@@ -70,11 +81,11 @@ public class BaragonConfiguration extends Configuration {
     this.agentRequestUriFormat = agentRequestUriFormat;
   }
 
-  public long getWorkerIntervalMs() {
-    return workerIntervalMs;
+  public Optional<Long> getWorkerIntervalMs() {
+    return Optional.fromNullable(workerIntervalMs);
   }
 
-  public void setWorkerIntervalMs(long workerIntervalMs) {
+  public void setWorkerIntervalMs(Long workerIntervalMs) {
     this.workerIntervalMs = workerIntervalMs;
   }
 
@@ -108,5 +119,13 @@ public class BaragonConfiguration extends Configuration {
 
   public void setMasterAuthKey(String masterAuthKey) {
     this.masterAuthKey = masterAuthKey;
+  }
+
+  public BaragonWorkerConfiguration getWorkerConfiguration() {
+    return workerConfiguration;
+  }
+
+  public void setWorkerConfiguration(BaragonWorkerConfiguration workerConfiguration) {
+    this.workerConfiguration = workerConfiguration;
   }
 }
