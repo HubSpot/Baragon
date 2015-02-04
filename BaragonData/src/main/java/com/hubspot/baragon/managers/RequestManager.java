@@ -91,6 +91,27 @@ public class RequestManager {
     return loadBalancerServiceIds;
   }
 
+  public void revertBasePath(BaragonRequest request) {
+    Optional<BaragonService> maybeOriginalService = Optional.absent();
+    if (request.getReplaceServiceId().isPresent()) {
+      maybeOriginalService = stateDatastore.getService(request.getReplaceServiceId().get());
+    }
+    if (!maybeOriginalService.isPresent()) {
+      maybeOriginalService = stateDatastore.getService(request.getLoadBalancerService().getServiceId());
+    }
+    // if the request is not in the state datastore (ie. no previous request) clear the base path lock
+    if (!maybeOriginalService.isPresent()) {
+      for (String loadBalancerGroup : maybeOriginalService.get().getLoadBalancerGroups()) {
+        loadBalancerDatastore.clearBasePath(loadBalancerGroup,  maybeOriginalService.get().getServiceBasePath());
+      }
+    }
+
+    // if we changed the base path, revert it to the old one
+    if (maybeOriginalService.isPresent() && request.getReplaceServiceId().isPresent() && maybeOriginalService.get().getServiceId().equals(request.getReplaceServiceId().get())) {
+      lockBasePaths(request.getLoadBalancerService().getLoadBalancerGroups(), request.getLoadBalancerService().getServiceBasePath(), maybeOriginalService.get().getServiceId());
+    }
+  }
+
   public Set<String> getMissingLoadBalancerGroups(BaragonRequest request) {
     final Set<String> groups = new HashSet<>(request.getLoadBalancerService().getLoadBalancerGroups());
 
@@ -100,6 +121,12 @@ public class RequestManager {
   public void lockBasePaths(BaragonRequest request) {
     for (String loadBalancerGroup : request.getLoadBalancerService().getLoadBalancerGroups()) {
       loadBalancerDatastore.setBasePathServiceId(loadBalancerGroup, request.getLoadBalancerService().getServiceBasePath(), request.getLoadBalancerService().getServiceId());
+    }
+  }
+
+  public void lockBasePaths(List<String> loadBalancerGroups, String serviceBasePath, String serviceId) {
+    for (String loadBalancerGroup : loadBalancerGroups) {
+      loadBalancerDatastore.setBasePathServiceId(loadBalancerGroup, serviceBasePath, serviceId);
     }
   }
 
