@@ -82,11 +82,34 @@ public class RequestManager {
     for (String loadBalancerGroup : service.getLoadBalancerGroups()) {
       final Optional<String> maybeServiceId = loadBalancerDatastore.getBasePathServiceId(loadBalancerGroup, service.getServiceBasePath());
       if (maybeServiceId.isPresent() && !maybeServiceId.get().equals(service.getServiceId())) {
-        loadBalancerServiceIds.put(loadBalancerGroup, maybeServiceId.get());
+        if (!request.getReplaceServiceId().isPresent() || (request.getReplaceServiceId().isPresent() && !request.getReplaceServiceId().get().equals(maybeServiceId.get()))) {
+          loadBalancerServiceIds.put(loadBalancerGroup, maybeServiceId.get());
+        }
       }
     }
 
     return loadBalancerServiceIds;
+  }
+
+  public void revertBasePath(BaragonRequest request) {
+    Optional<BaragonService> maybeOriginalService = Optional.absent();
+    if (request.getReplaceServiceId().isPresent()) {
+      maybeOriginalService = stateDatastore.getService(request.getReplaceServiceId().get());
+    }
+    if (!maybeOriginalService.isPresent()) {
+      maybeOriginalService = stateDatastore.getService(request.getLoadBalancerService().getServiceId());
+    }
+    // if the request is not in the state datastore (ie. no previous request) clear the base path lock
+    if (!maybeOriginalService.isPresent()) {
+      for (String loadBalancerGroup : maybeOriginalService.get().getLoadBalancerGroups()) {
+        loadBalancerDatastore.clearBasePath(loadBalancerGroup,  maybeOriginalService.get().getServiceBasePath());
+      }
+    }
+
+    // if we changed the base path, revert it to the old one
+    if (maybeOriginalService.isPresent() && request.getReplaceServiceId().isPresent() && maybeOriginalService.get().getServiceId().equals(request.getReplaceServiceId().get())) {
+      lockBasePaths(request.getLoadBalancerService().getLoadBalancerGroups(), request.getLoadBalancerService().getServiceBasePath(), maybeOriginalService.get().getServiceId());
+    }
   }
 
   public Set<String> getMissingLoadBalancerGroups(BaragonRequest request) {
@@ -98,6 +121,12 @@ public class RequestManager {
   public void lockBasePaths(BaragonRequest request) {
     for (String loadBalancerGroup : request.getLoadBalancerService().getLoadBalancerGroups()) {
       loadBalancerDatastore.setBasePathServiceId(loadBalancerGroup, request.getLoadBalancerService().getServiceBasePath(), request.getLoadBalancerService().getServiceId());
+    }
+  }
+
+  public void lockBasePaths(List<String> loadBalancerGroups, String serviceBasePath, String serviceId) {
+    for (String loadBalancerGroup : loadBalancerGroups) {
+      loadBalancerDatastore.setBasePathServiceId(loadBalancerGroup, serviceBasePath, serviceId);
     }
   }
 
@@ -131,13 +160,24 @@ public class RequestManager {
   }
 
   public synchronized void commitRequest(BaragonRequest request) {
-    final Optional<BaragonService> maybeOriginalService = stateDatastore.getService(request.getLoadBalancerService().getServiceId());
+    Optional<BaragonService> maybeOriginalService = Optional.absent();
+    if (request.getReplaceServiceId().isPresent()) {
+      maybeOriginalService = stateDatastore.getService(request.getReplaceServiceId().get());
+    }
+    if (!maybeOriginalService.isPresent()) {
+      maybeOriginalService = stateDatastore.getService(request.getLoadBalancerService().getServiceId());
+    }
 
     // if we've changed the base path, clear out the old ones
     if (maybeOriginalService.isPresent() && !maybeOriginalService.get().getServiceBasePath().equals(request.getLoadBalancerService().getServiceBasePath())) {
       for (String loadBalancerGroup : maybeOriginalService.get().getLoadBalancerGroups()) {
         loadBalancerDatastore.clearBasePath(loadBalancerGroup, maybeOriginalService.get().getServiceBasePath());
       }
+    }
+
+    // If the service ID has been changed, remove the old service from the state datastore
+    if (maybeOriginalService.isPresent() && !maybeOriginalService.get().getServiceId().equals(request.getLoadBalancerService().getServiceId())) {
+      stateDatastore.removeService(maybeOriginalService.get().getServiceId());
     }
 
     stateDatastore.addService(request.getLoadBalancerService());
