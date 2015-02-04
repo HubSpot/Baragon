@@ -82,7 +82,7 @@ public class RequestManager {
     for (String loadBalancerGroup : service.getLoadBalancerGroups()) {
       final Optional<String> maybeServiceId = loadBalancerDatastore.getBasePathServiceId(loadBalancerGroup, service.getServiceBasePath());
       if (maybeServiceId.isPresent() && !maybeServiceId.get().equals(service.getServiceId())) {
-        if (request.getReplaceServiceId().isPresent() && !request.getReplaceServiceId().get().equals(maybeServiceId.get())) {
+        if (!request.getReplaceServiceId().isPresent() || (request.getReplaceServiceId().isPresent() && !request.getReplaceServiceId().get().equals(maybeServiceId.get()))) {
           loadBalancerServiceIds.put(loadBalancerGroup, maybeServiceId.get());
         }
       }
