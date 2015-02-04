@@ -14,7 +14,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
-import com.hubspot.baragon.BaragonBaseModule;
+import com.hubspot.baragon.BaragonDataModule;
 import com.hubspot.baragon.config.AuthConfiguration;
 import com.hubspot.baragon.config.HttpClientConfiguration;
 import com.hubspot.baragon.config.ZooKeeperConfiguration;
@@ -36,7 +36,7 @@ public class BaragonServiceModule extends AbstractModule {
 
   @Override
   protected void configure() {
-    install(new BaragonBaseModule());
+    install(new BaragonDataModule());
   }
 
   @Provides
@@ -50,13 +50,13 @@ public class BaragonServiceModule extends AbstractModule {
   }
 
   @Provides
-  @Named(BaragonBaseModule.BARAGON_AGENT_REQUEST_URI_FORMAT)
+  @Named(BaragonDataModule.BARAGON_AGENT_REQUEST_URI_FORMAT)
   public String provideAgentUriFormat(BaragonConfiguration configuration) {
     return configuration.getAgentRequestUriFormat();
   }
 
   @Provides
-  @Named(BaragonBaseModule.BARAGON_AGENT_MAX_ATTEMPTS)
+  @Named(BaragonDataModule.BARAGON_AGENT_MAX_ATTEMPTS)
   public Integer provideAgentMaxAttempts(BaragonConfiguration configuration) {
     return configuration.getAgentMaxAttempts();
   }
@@ -81,7 +81,7 @@ public class BaragonServiceModule extends AbstractModule {
 
   @Provides
   @Singleton
-  @Named(BaragonBaseModule.BARAGON_SERVICE_WORKER_LAST_START)
+  @Named(BaragonDataModule.BARAGON_SERVICE_WORKER_LAST_START)
   public AtomicLong providesWorkerLastStartAt() {
     return new AtomicLong();
   }
