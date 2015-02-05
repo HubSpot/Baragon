@@ -4,6 +4,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Collection;
 
 import com.google.common.base.Optional;
 import com.google.common.collect.Maps;
@@ -175,6 +176,20 @@ public class RequestManager {
       }
     }
 
+    //If we have removed a load balancer group, clear the base path for that group
+    if (maybeOriginalService.isPresent()) {
+      Collection<String> removedLbGroups = maybeOriginalService.get().getLoadBalancerGroups();
+      removedLbGroups.removeAll(request.getLoadBalancerService().getLoadBalancerGroups());
+      if (!removedLbGroups.isEmpty()) {
+        try {
+          for (String loadbalancerGroup : removedLbGroups) {
+            loadBalancerDatastore.clearBasePath(loadbalancerGroup, maybeOriginalService.get().getServiceBasePath());
+          }
+        } catch (Exception e) {
+          LOG.info(String.format("Error clearing base path %s", e));
+        }
+      }
+    }
     // If the service ID has been changed, remove the old service from the state datastore
     if (maybeOriginalService.isPresent() && !maybeOriginalService.get().getServiceId().equals(request.getLoadBalancerService().getServiceId())) {
       stateDatastore.removeService(maybeOriginalService.get().getServiceId());
