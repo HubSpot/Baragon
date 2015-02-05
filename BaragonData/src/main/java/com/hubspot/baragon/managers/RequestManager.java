@@ -101,8 +101,8 @@ public class RequestManager {
     }
     // if the request is not in the state datastore (ie. no previous request) clear the base path lock
     if (!maybeOriginalService.isPresent()) {
-      for (String loadBalancerGroup : maybeOriginalService.get().getLoadBalancerGroups()) {
-        loadBalancerDatastore.clearBasePath(loadBalancerGroup,  maybeOriginalService.get().getServiceBasePath());
+      for (String loadBalancerGroup : request.getLoadBalancerService().getLoadBalancerGroups()) {
+        loadBalancerDatastore.clearBasePath(loadBalancerGroup,  request.getLoadBalancerService().getServiceBasePath());
       }
     }
 
