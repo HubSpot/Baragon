@@ -364,6 +364,7 @@ class ValidBasePathServiceIdChange(unittest.TestCase):
 class InvalidRequest(unittest.TestCase):
     def setUp(self):
         self.randomId = 'Request' + str(time.time()).replace('.','')
+        self.randomIdReplace = 'Request' + str(time.time()).replace('.','') + '-invalidreplace'
         self.params = {'authkey': AUTH_KEY}
         self.headers = {'Content-type': 'application/json'}
         self.uri = '{0}/request'.format(BASE_URI)
@@ -378,10 +379,51 @@ class InvalidRequest(unittest.TestCase):
         self.assertEqual(result['loadBalancerState'], 'FAILED')
         self.assertEqual(result['agentResponses']['REVERT'][0]['statusCode'], 200)
 
+    def test_invalid_request_invalid_replace_id(self):
+        sys.stderr.write('Posting {0} and waiting for revert... '.format(self.randomId))
+        options = {'nginxExtraConfigs': ['rewrite /this_is_invalid_yo']}
+        json_data = build_json(self.randomIdReplace, self.randomIdReplace, '/{0}'.format(self.randomIdReplace), UPSTREAM, None, 'someotherservice', options)
+        post_response = requests.post(self.uri,data=json_data, params=self.params, headers=self.headers)
+        self.assertEqual(post_response.status_code, 200)
+        result = get_request_response(self.randomIdReplace)
+        self.assertEqual(result['loadBalancerState'], 'FAILED')
+        self.assertEqual(result['agentResponses']['REVERT'][0]['statusCode'], 200)
+
+
     def tearDown(self):
         sys.stderr.write('Cleaning up... ')
         remove_service(self.randomId, True)
 
+class InvalidRequestWithBasePathChange(unittest.TestCase):
+    def setUp(self):
+        timestamp = str(time.time()).replace('.','')
+        self.randomId = 'Request' + timestamp
+        self.renameId = 'Request' + timestamp + '-rename'
+        self.params = {'authkey': AUTH_KEY}
+        self.headers = {'Content-type': 'application/json'}
+        self.uri = '{0}/request'.format(BASE_URI)
+
+    def test_invalid_request_base_path_change(self):
+        sys.stderr.write('Trying to post {0}... '.format(self.randomId))
+        json_data = build_json(self.randomId, self.randomId, '/{0}'.format(self.randomId), UPSTREAM, None, None, {})
+        post_response = requests.post(self.uri,data=json_data, params=self.params, headers=self.headers)
+        self.assertEqual(post_response.status_code, 200)
+        result = get_request_response(self.randomId)
+        if result['loadBalancerState'] == 'SUCCESS':
+            sys.stderr.write('trying to rename to {0}...'.format(self.renameId))
+            options = {'nginxExtraConfigs': ['rewrite /this_is_invalid_yo']}
+            json_rename_data = build_json(self.renameId, self.renameId, '/{0}'.format(self.randomId), UPSTREAM, None, self.randomId, options)
+            post_rename_response = requests.post(self.uri,data=json_rename_data, params=self.params, headers=self.headers)
+            self.assertEqual(post_rename_response.status_code, 200)
+            rename_result = get_request_response(self.renameId)
+            self.assertEqual(rename_result['loadBalancerState'], 'FAILED')
+            self.assertEqual(rename_result['agentResponses']['REVERT'][0]['statusCode'], 200)
+            self.assertEqual(get_service(self.randomId).json()['service']['serviceBasePath'], '/{0}'.format(self.randomId))
+
+    def tearDown(self):
+        sys.stderr.write('Cleaning up...')
+        remove_service(self.randomId)
+        remove_service(self.renameId, True)
 
 
 def test_main(args):
@@ -408,7 +450,8 @@ def test_main(args):
             BasePathConflict,
             BasePathConflictInvalidReplaceId,
             ValidBasePathChange,
-            InvalidRequest
+            InvalidRequest,
+            InvalidRequestWithBasePathChange
         )
 
 if __name__ == '__main__':
