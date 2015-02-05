@@ -17,7 +17,7 @@ def build_json(requestId, serviceId, basePath, addUpstream, removeUpstream, repl
         'loadBalancerRequestId': requestId,
         'loadBalancerService': {
             'serviceId': serviceId,
-            'owners': ['platform-infrastructure-groups@hubspot.com'],
+            'owners': ['someuser@example.com'],
             'serviceBasePath': basePath,
             'loadBalancerGroups': [LOAD_BALANCER_GROUP],
             'options': options
@@ -30,7 +30,9 @@ def build_json(requestId, serviceId, basePath, addUpstream, removeUpstream, repl
         }]
     else:
         data['addUpstreams'] = []
-    if removeUpstream:
+    if type(removeUpstream) == list:
+        data['removeUpstreams'] = removeUpstream
+    elif removeUpstream:
         data['removeUpstreams'] = [{
             'upstream': removeUpstream,
             'requestId': requestId
@@ -53,6 +55,22 @@ def get_request_response(requestId):
         return response.json()
     except:
         return None
+
+def undo_request(serviceId, rename=False):
+    try:
+        service = get_service(serviceId)
+        service = service.json() if service.status_code != 404 else None
+        if service:
+            params = {'authkey': AUTH_KEY}
+            headers = {'Content-type': 'application/json'}
+            uri = '{0}/request'.format(BASE_URI)
+            json_data = build_json(serviceId + '-revert', serviceId, service['service']['serviceBasePath'], [], service['upstreams'])
+            post_response = requests.post(uri,data=json_data, params=params, headers=headers)
+            post_response.raise_for_status()
+            return get_request_response(serviceId + '-revert')
+    except:
+        if not rename:
+            print "Couldn't revert request for {0}, clean up might have to be done manually".format(serviceId)
 
 def remove_service(serviceId, renamed=False):
     uri = '{0}/state/{1}'.format(BASE_URI, serviceId)
@@ -177,23 +195,42 @@ class ValidRequest(unittest.TestCase):
         else:
             raise Exception('Request failed, result was: {0}'.format(json_data))
 
-    def test_new_base_path_same_service(self):
-        newId = self.randomId + '-2'
-        sys.stderr.write('Trying to post {0}... '.format(self.randomId + '-2'))
-        json_data = build_json(newId, self.randomId, '/{0}'.format(newId), UPSTREAM, None, None, {})
+    def tearDown(self):
+        sys.stderr.write('Cleaning up... ')
+        undo_request(self.randomId)
+        remove_service(self.randomId)
+
+class ValidBasePathChange(unittest.TestCase):
+    def setUp(self):
+        self.randomId = 'Request' + str(time.time()).replace('.','')
+        self.params = {'authkey': AUTH_KEY}
+        self.headers = {'Content-type': 'application/json'}
+        self.uri = '{0}/request'.format(BASE_URI)
+
+    def test_valid_request(self):
+        sys.stderr.write('Trying to post {0}... '.format(self.randomId))
+        json_data = build_json(self.randomId, self.randomId, '/{0}'.format(self.randomId), UPSTREAM, None, None, {})
         post_response = requests.post(self.uri,data=json_data, params=self.params, headers=self.headers)
         self.assertEqual(post_response.status_code, 200)
-        result = get_request_response(newId)
+        result = get_request_response(self.randomId)
         if result['loadBalancerState'] == 'SUCCESS':
-            uri = '{0}/load-balancer/test/base-path/all'.format(BASE_URI)
-            basePaths = requests.get(uri, params=self.params).json()
-            if '/{0}'.format(newId) not in basePaths:
-                return True
-        else:
-            raise Exception('Request failed, result was: {0}'.format(json_data))
+            newId = self.randomId + '-2'
+            sys.stderr.write('Trying to post {0}... '.format(self.randomId + '-2'))
+            json_data = build_json(newId, self.randomId, '/{0}'.format(newId), UPSTREAM, None, None, {})
+            post_response = requests.post(self.uri,data=json_data, params=self.params, headers=self.headers)
+            self.assertEqual(post_response.status_code, 200)
+            result = get_request_response(newId)
+            if result['loadBalancerState'] == 'SUCCESS':
+                uri = '{0}/load-balancer/test/base-path/all'.format(BASE_URI)
+                basePaths = requests.get(uri, params=self.params).json()
+                if '/{0}'.format(newId) not in basePaths:
+                    return True
+            else:
+                raise Exception('Request failed, result was: {0}'.format(json_data))
 
     def tearDown(self):
         sys.stderr.write('Cleaning up... ')
+        undo_request(self.randomId)
         remove_service(self.randomId)
 
 class ValidRequestInvalidReplaceId(unittest.TestCase):
@@ -216,6 +253,7 @@ class ValidRequestInvalidReplaceId(unittest.TestCase):
 
     def tearDown(self):
         sys.stderr.write('Cleaning up... ')
+        undo_request(self.randomId)
         remove_service(self.randomId)
 
 class BasePathConflict(unittest.TestCase):
@@ -244,7 +282,8 @@ class BasePathConflict(unittest.TestCase):
 
     def tearDown(self):
         sys.stderr.write('Cleaning up... ')
-        remove_service(self.randomId)
+        undo_request(self.randomId, True)
+        remove_service(self.randomId, True)
 
 class BasePathConflictInvalidReplaceId(unittest.TestCase):
     def setUp(self):
@@ -272,7 +311,10 @@ class BasePathConflictInvalidReplaceId(unittest.TestCase):
 
     def tearDown(self):
         sys.stderr.write('Cleaning up... ')
+        undo_request(self.randomId)
         remove_service(self.randomId)
+        undo_request(self.randomId + '-conflict', True)
+        remove_service(self.randomId, True)
 
 
 class DeleteServiceId(unittest.TestCase):
@@ -284,7 +326,7 @@ class DeleteServiceId(unittest.TestCase):
 
     def test_delete_service(self):
         sys.stderr.write('Trying to post {0}... '.format(self.randomId))
-        json_data = build_json(self.randomId, self.randomId, '/{0}'.format(self.randomId), UPSTREAM, None, None, {})
+        json_data = build_json(self.randomId, self.randomId, '/{0}'.format(self.randomId), [], None, None, {})
         post_response = requests.post(self.uri,data=json_data, params=self.params, headers=self.headers)
         self.assertEqual(post_response.status_code, 200)
         result = get_request_response(self.randomId)
@@ -294,7 +336,7 @@ class DeleteServiceId(unittest.TestCase):
             response = requests.delete(uri, params=self.params)
             self.assertEqual(response.status_code, 200)
 
-class ValidBasePathChange(unittest.TestCase):
+class ValidBasePathRename(unittest.TestCase):
     def setUp(self):
         timestamp = str(time.time()).replace('.','')
         self.randomId = 'Request' + timestamp
@@ -324,6 +366,8 @@ class ValidBasePathChange(unittest.TestCase):
 
     def tearDown(self):
         sys.stderr.write('Cleaning up...')
+        undo_request(self.randomId, True)
+        undo_request(self.renameId)
         remove_service(self.randomId, True)
         remove_service(self.renameId)
 
@@ -392,6 +436,7 @@ class InvalidRequest(unittest.TestCase):
 
     def tearDown(self):
         sys.stderr.write('Cleaning up... ')
+        undo_request(self.randomId, True)
         remove_service(self.randomId, True)
 
 class InvalidRequestWithBasePathChange(unittest.TestCase):
@@ -422,6 +467,8 @@ class InvalidRequestWithBasePathChange(unittest.TestCase):
 
     def tearDown(self):
         sys.stderr.write('Cleaning up...')
+        undo_request(self.randomId)
+        undo_request(self.renameId, True)
         remove_service(self.randomId)
         remove_service(self.renameId, True)
 
@@ -447,9 +494,10 @@ def test_main(args):
             ValidRequest,
             ValidRequestInvalidReplaceId,
             ValidBasePathServiceIdChange,
+            ValidBasePathChange,
             BasePathConflict,
             BasePathConflictInvalidReplaceId,
-            ValidBasePathChange,
+            ValidBasePathRename,
             InvalidRequest,
             InvalidRequestWithBasePathChange
         )
