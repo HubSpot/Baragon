@@ -16,3 +16,10 @@ target
 .settings
 
 tmp/*
+
+BaragonUI/npm-debug.log
+BaragonUI/node_modules/*
+BaragonUI/bower_components/*
+BaragonUI/brunchlog
+BaragonUI/app/env.coffee
+BaragonUI/.vee
