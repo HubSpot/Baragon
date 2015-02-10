@@ -1,10 +1,8 @@
 Router = require 'router'
 NavView = require 'views/nav'
-GlobalSearchView = require 'views/globalSearch'
 
 class Application
 
-    # Holds `nav`, `globalSearch`, and `current`
     views: {}
 
     globalRefreshInterval: undefined
@@ -22,10 +20,6 @@ class Application
         @views.nav = new NavView
         @views.nav.render()
         $body.prepend @views.nav.$el
-
-        @views.globalSearch = new GlobalSearchView
-        @views.globalSearch.render()
-        $body.append @views.globalSearch.$el
 
         $('.page-loader.fixed').hide()
 

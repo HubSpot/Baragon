@@ -1,0 +1,55 @@
+<h2>Current Services</h2>
+{{#if synced}}
+    <div class="row">
+        <div class="col-md-12 table-staged">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th></th>
+                        <th>ID</th>
+                        <th>Base Path</th>
+                        <th>Groups</th>
+                        <th>Upstreams</th>
+                        <th class="hidden-xs">{{! Actions column }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{#each services}}
+                        <tr data-service-id="{{ service.serviceId }}">
+                            <td>
+                                {{#if active}}
+                                    <span class="glyphicon glyphicon-ok-circle active"></span>
+                                {{else}}
+                                    <span class="glyphicon glyphicon-ban-circle inactive"></span>
+                                {{/if}}
+                            </td>
+                            <td>
+                                <a title="{{ id }}" href="{{appRoot}}/services/{{ id }}">
+                                    {{ id }}
+                                </a>
+                            </td>
+                            <td>{{ basePath }}</td>
+                            <td>{{ loadBalancerGroupsString }}</td>
+                            <td>{{ upstreamsCount }}
+                            <td class="actions-column hidden-xs">
+                                {{#ifGreaterThan upstreamsCount 0}}
+                                    <a data-action="removeUpstreams" title="Remove Upstreams">
+                                        <span class="glyphicon glyphicon-remove-circle"></span>
+                                    </a>
+                                {{/ifGreaterThan}}
+                                <a data-action="delete" title="Delete Service">
+                                    <span class="glyphicon glyphicon-remove"></span>
+                                </a>
+                                <a data-action="viewJSON" title="JSON">
+                                    { }
+                                 </a>
+                            </td>
+                        </tr>
+                    {{/each}}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{{else}}
+    <div class="page-loader centered cushy"></div>
+{{/if}}

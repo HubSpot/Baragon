@@ -33,31 +33,14 @@ class Utils
         json = JSON.stringify objectToSerialise, undefined, 4
 
         closeButton = _.extend _.clone(vex.dialog.buttons.YES), text: 'Close'
-        copyButton =
-            text: "Copy"
-            type: "button"
-            className: "vex-dialog-button-secondary copy-button"
 
         vex.dialog.open
-            buttons:   [closeButton, copyButton]
+            buttons:   [closeButton]
             message:   "<pre>#{ _.escape json }</pre>"
             className: 'vex vex-theme-default json-modal'
 
             afterOpen: ($vexContent) ->
                 $vexContent.parents('.vex').scrollTop 0
-
-                # Dity hack to make ZeroClipboard play along
-                # The Flash element doesn't work if it falls outside the
-                # bounds of the body, even if it's inside the dialog
-                overlayHeight = $vexContent.parents(".vex-overlay").height()
-                $("body").css "min-height", overlayHeight + "px"
-                $button = $vexContent.find ".copy-button"
-                $button.attr "data-clipboard-text", $vexContent.find("pre").html()
-                zeroClipboardClient = new ZeroClipboard $button[0]
-                zeroClipboardClient.on "ready", =>
-                    zeroClipboardClient.on "aftercopy", =>
-                        $button.val "Copied"
-                        setTimeout (-> $button.val "Copy"), 800
 
     # For .horizontal-description-list
     @setupCopyLinks: ($element) =>

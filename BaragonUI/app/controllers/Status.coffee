@@ -1,24 +1,28 @@
 Controller = require './Controller'
 
-State = require '../models/State'
-
 StatusView = require '../views/status'
 
+Status = require '../models/Status'
+WorkerList = require '../models/WorkerList'
+
 class StatusController extends Controller
-    
+
     initialize: ->
         app.showPageLoader()
 
-        @models.state = new State
+        @models.status = new Status
+        @models.workers = new WorkerList
 
-        @models.state.fetch().done =>
-            @setView new StatusView
-                model: @models.state
+        @setView new StatusView
+            model: @models.status
+            options: @models.workers
 
-            app.showView @view
+        app.showView @view
+
+        @refresh()
 
     refresh: ->
-        @models.state.fetch()
-
+        @models.workers.fetch()
+        @models.status.fetch()
 
 module.exports = StatusController

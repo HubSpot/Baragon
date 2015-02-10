@@ -6,7 +6,8 @@ handlebars = require 'handlebars-brunch/node_modules/handlebars'
 # Brunch settings
 exports.config =
     paths:
-        public: path.resolve(__dirname, '../BaragonService/target/generated-resources/assets')
+        #public: path.resolve(__dirname, '../BaragonService/target/generated-resources/assets')
+        public: path.resolve(__dirname, '.')
 
     files:
         javascripts:

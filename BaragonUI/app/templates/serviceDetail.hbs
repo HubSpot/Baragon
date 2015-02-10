@@ -1,0 +1,100 @@
+{{#if synced}}
+    <div class="row detail-header">
+        <div class="col-md-8">
+            <h2>{{ service.id }}</h2>
+        </div>
+        <div class="col-md-4 button-container">
+            <a class="btn btn-default" data-service-id="{{ service.id }}" data-action="viewJSON">
+                JSON
+            </a>
+            <a class="btn btn-warning" data-service-id="{{ service.id }}" data-action="removeUpstreams">
+                Remove Upstreams
+            </a>
+            <a class="btn btn-danger" data-service-id="{{ service.id }}" data-action="delete">
+                Delete
+            </a>
+        </div>
+    </div>
+    <div class="row same-size-row">
+        <div class="col-md-3 same-size-col">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="panel panel-default">
+                        <div class="panel-heading"><h4>Base Path</h4></div>
+                        <div class="panel-body">
+                            {{ service.basePath }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="panel panel-default">
+                        <div class="panel-heading"><h4>Owners</h4></div>
+                        <div class="panel-body">
+                            <ul class="list-group">
+                                {{#each service.service.owners}}
+                                    <li class="list-group-item">{{ this }}</li>
+                                {{/each}}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 same-size-col">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="panel panel-default">
+                        <div class="panel-heading"><h4>Load Balancer Groups</h4></div>
+                        <div class="panel-body">
+                            <ul class="list-group">
+                                {{#each service.service.loadBalancerGroups}}
+                                    <li class="list-group-item">{{ this }}</li>
+                                {{/each}}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 same-size-col">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="panel panel-default">
+                        <div class="panel-heading"><h4>Upstreams</h4></div>
+                        <div class="panel-body">
+                            <ul class="list-group">
+                                {{#each service.upstreams}}
+                                    <div class="panel panel-default">
+                                        <div class="panel-heading"><strong>{{upstream}}</strong></div>
+                                        <div class="panel-body">
+                                            From Request: {{ requestId }} <br>
+                                            Rack ID: {{ rackId }}
+                                        </div>
+                                    </div>
+                                {{/each}}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {{#each service.service.options}}
+        <div class="row">
+            <div class="col-md-12">
+                <div class="panel panel-default">
+                    <div class="panel-heading"><h4>{{@key}}</h4></div>
+                    <div class="panel-body">
+                        {{#each this}}
+                            <code>{{this}}</code><br>
+                        {{/each}}
+                    </div>
+                </div>
+            </div>
+        </div>
+    {{/each}}
+{{else}}
+    <div class="page-loader centered cushy"></div>
+{{/if}}

@@ -1,38 +1,27 @@
 @import colors
 
 .table, table
-    
     tbody
         font-size 13px
-    
     th
         vertical-align top
-
         td
             padding 10px
-    
     tr.flash td
         background rgba(0, 200, 20, .15) !important
 
     th, td
-
         // Regular links
-
         &.actions-column
             white-space nowrap
             text-align right
-
             a
                 margin-left 10px
-
-        // Link buttons
-
         &.actions-column
             padding-top 0
             padding-bottom 0
             padding-right 0
             font-size 0
-            
             [title='JSON'], [data-original-title="JSON"]
                 font-weight 500
 
@@ -76,15 +65,6 @@
         overflow: hidden
         line-height: 18px
 
-    .star
-        float left
-        font-size 15px
-        line-height 18px
-        color #ddd
-
-        &[data-starred="true"]
-            color $linkBlue
-
 .empty-table-message
     text-align center
     border 3px dashed #e7e7e7
@@ -97,7 +77,7 @@
     p:last-child
         margin-bottom 0
 
-table.files-table
-    
-    tr td:first-child span.glyphicon
-        margin-right 1em
+.active
+    color $green
+ .inactive
+    color $orange

@@ -1,7 +1,7 @@
 Model = require './model'
 
-class State extends Model
+class Status extends Model
 
-    url: -> "#{ config.apiRoot }/state"
+    url: -> "#{ config.apiRoot }/status"
 
-module.exports = State
+module.exports = Status

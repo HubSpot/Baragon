@@ -3,26 +3,21 @@ class Controller
     
     # Reference to the primary view being used
     view:     undefined
-    # Subviews that will be used by the primary view
-    subviews: {}
 
-    # Keep track of models and collections
+    # Keep track of models, options, and collections
     models:      {}
     collections: {}
+    options:     {}
 
     constructor: (params) -> @initialize?(params)
-    # Initialize should bootstrap models/controllers and views
+
     initialize: ->
 
-    # `refresh` can be called by `app` for the global refresh or by the
-    # view whenever it requires. It should trigger the necessary fetches
     refresh: ->
 
-    # Set the primary view and listen to its events
     setView: (@view) ->
         @view.on 'refreshrequest', => @refresh()
 
-    # e.g. `myModel.fetch().error @ignore404`
     ignore404: (response) -> app.caughtError() if response.status is 404
 
 module.exports = Controller
