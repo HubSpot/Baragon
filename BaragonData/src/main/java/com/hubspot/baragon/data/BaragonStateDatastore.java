@@ -96,7 +96,9 @@ public class BaragonStateDatastore extends AbstractDataStore {
 
   public void updateStateNode() {
     try {
+      LOG.info("Starting state node update");
       writeToZk(SERVICES_FORMAT, computeAllServiceStates());
+      LOG.info("Finished state node update");
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
