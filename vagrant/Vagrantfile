@@ -33,15 +33,21 @@ Vagrant.configure("2") do |config|
   config.vm.define "agent", autostart: true do |config|
     config.vm.hostname = 'vagrant-baragon-agent'
     config.vm.network :private_network, ip: '192.168.33.21'
-    config.vm.provision "shell", path: "provision-agent.sh"
+    config.vm.provision "shell" do |s|
+      s.path =  "provision-agent.sh"
+      s.args =  "vagrant"
+     end
   end
 
   # Uncomment the following to spin up a second agent for multi-agent testing
-  #config.vm.define "agent", autostart: true do |config|
-  #  config.vm.hostname = 'vagrant-baragon-agent2'
-  #  config.vm.network :private_network, ip: '192.168.33.22'
-  #  config.vm.provision "shell", path: "provision-agent.sh"
-  #end
+  config.vm.define "agent2", autostart: true do |config|
+    config.vm.hostname = 'vagrant-baragon-agent2'
+    config.vm.network :private_network, ip: '192.168.33.22'
+    config.vm.provision "shell" do |s|
+      s.path =  "provision-agent.sh"
+      s.args =  "vagrant2"
+     end
+  end
 
 end
 
