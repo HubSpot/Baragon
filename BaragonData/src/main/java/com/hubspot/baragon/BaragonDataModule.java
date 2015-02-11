@@ -29,7 +29,7 @@ import com.ning.http.client.AsyncHttpClientConfig;
 public class BaragonDataModule extends AbstractModule {
   public static final String BARAGON_AGENT_REQUEST_URI_FORMAT = "baragon.agent.request.uri.format";
   public static final String BARAGON_AGENT_MAX_ATTEMPTS = "baragon.agent.maxAttempts";
-  public static final String BARAGON_AGENT_MAX_REQUEST_TIME = "baragon.agent.maxRequestTime";
+  public static final String BARAGON_AGENT_REQUEST_TIMEOUT_MS = "baragon.agent.requestTimeoutMs";
 
   public static final String BARAGON_SERVICE_HTTP_CLIENT = "baragon.service.http.client";
 

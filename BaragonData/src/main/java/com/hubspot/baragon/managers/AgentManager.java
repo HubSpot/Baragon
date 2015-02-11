@@ -40,7 +40,7 @@ public class AgentManager {
   private final String baragonAgentRequestUriFormat;
   private final Integer baragonAgentMaxAttempts;
   private final Optional<String> baragonAuthKey;
-  private final Long baragonMaxRequestTime;
+  private final Long baragonAgentRequestTimeout;
 
   @Inject
   public AgentManager(BaragonLoadBalancerDatastore loadBalancerDatastore,
@@ -50,7 +50,7 @@ public class AgentManager {
                       @Named(BaragonDataModule.BARAGON_AGENT_REQUEST_URI_FORMAT) String baragonAgentRequestUriFormat,
                       @Named(BaragonDataModule.BARAGON_AGENT_MAX_ATTEMPTS) Integer baragonAgentMaxAttempts,
                       @Named(BaragonDataModule.BARAGON_AUTH_KEY) Optional<String> baragonAuthKey,
-                      @Named(BaragonDataModule.BARAGON_AGENT_MAX_REQUEST_TIME) Long baragonMaxRequestTime) {
+                      @Named(BaragonDataModule.BARAGON_AGENT_REQUEST_TIMEOUT_MS) Long baragonAgentRequestTimeout) {
     this.loadBalancerDatastore = loadBalancerDatastore;
     this.stateDatastore = stateDatastore;
     this.agentResponseDatastore = agentResponseDatastore;
@@ -58,7 +58,7 @@ public class AgentManager {
     this.baragonAgentRequestUriFormat = baragonAgentRequestUriFormat;
     this.baragonAgentMaxAttempts = baragonAgentMaxAttempts;
     this.baragonAuthKey = baragonAuthKey;
-    this.baragonMaxRequestTime = baragonMaxRequestTime;
+    this.baragonAgentRequestTimeout = baragonAgentRequestTimeout;
   }
 
   private AsyncHttpClient.BoundRequestBuilder buildAgentRequest(String url, AgentRequestType requestType) {
@@ -98,7 +98,8 @@ public class AgentManager {
 
       // wait until pending request has completed.
       Optional<Long> maybePendingRequest = agentResponseDatastore.getPendingRequest(requestId, baseUrl);
-      if (maybePendingRequest.isPresent() && !((System.currentTimeMillis() - maybePendingRequest.get()) > baragonMaxRequestTime)) {
+      if (maybePendingRequest.isPresent() && !((System.currentTimeMillis() - maybePendingRequest.get()) > baragonAgentRequestTimeout)) {
+        LOG.info(String.format("Request has been processing for %s ms", (System.currentTimeMillis() - maybePendingRequest.get())));
         continue;
       }
 
@@ -149,7 +150,8 @@ public class AgentManager {
 
       Optional<Long> maybePendingRequestTime = agentResponseDatastore.getPendingRequest(request.getLoadBalancerRequestId(), baseUrl);
       if (maybePendingRequestTime.isPresent()) {
-        if ((System.currentTimeMillis() - maybePendingRequestTime.get()) > baragonMaxRequestTime) {
+        if ((System.currentTimeMillis() - maybePendingRequestTime.get()) > baragonAgentRequestTimeout) {
+          LOG.info(String.format("Request %s reached maximum pending request time", request.getLoadBalancerRequestId()));
           return AgentRequestsStatus.FAILURE;
         } else {
           return AgentRequestsStatus.WAITING;
