@@ -1,24 +1,33 @@
 Controller = require './Controller'
 
-GroupsView = require '../views/groups'
+GroupDetailView = require '../views/groupDetail'
 
-GroupsList = require '../models/GroupsList'
+BasePathsList = require '../models/BasePathsList'
+
+Agents = require '../collections/Agents'
+KnownAgents = require '../collections/KnownAgents'
 
 class GroupDetailController extends Controller
 
-    initialize: (@groupId) ->
+    initialize: ({@groupId}) ->
         app.showPageLoader()
 
-        @models.group = new GroupsList
+        @models.basePaths = new BasePathsList {@groupId}
+        @collections.agents = new Agents [], {@groupId}
+        @collections.knownAgents = new KnownAgents [], {@groupId}
 
-        @setView new GroupsView
-            model: @models.groupslist
+        @setView new GroupDetailView
+            model: @models.basePaths
+            collection: @collections.agents
+            options: @collections.knownAgents
 
         app.showView @view
 
         @refresh()
 
     refresh: ->
-        @models.groupslist.fetch()
+        @models.basePaths.fetch()
+        @collections.knownAgents.fetch()
+        @collections.agents.fetch()
 
 module.exports = GroupDetailController

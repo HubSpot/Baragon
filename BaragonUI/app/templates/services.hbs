@@ -16,11 +16,15 @@
                 <tbody>
                     {{#each services}}
                         <tr data-service-id="{{ service.serviceId }}">
-                            <td>
+                            <td class="icons-column hidden-xs">
                                 {{#if active}}
-                                    <span class="glyphicon glyphicon-ok-circle active"></span>
+                                    {{#ifEqual upstreamsCount 1}}
+                                        <span title="1 Active Upstream" class="glyphicon glyphicon-ok-circle active"></span>
+                                    {{else}}
+                                        <span title="{{upstreamsCount}} Active Upstreams" class="glyphicon glyphicon-ok-circle active"></span>
+                                    {{/ifEqual}}
                                 {{else}}
-                                    <span class="glyphicon glyphicon-ban-circle inactive"></span>
+                                    <span title="No Active Upstreams" class="glyphicon glyphicon-ban-circle inactive"></span>
                                 {{/if}}
                             </td>
                             <td>

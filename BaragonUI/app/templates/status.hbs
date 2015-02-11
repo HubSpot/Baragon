@@ -1,33 +1,56 @@
 {{#if synced}}
     <div class="row">
-        <div class="col-md-6">
-            <h2>Overview</h2>
-            <ul class="list-group">
-                <li class="list-group-item">
-                    <span class="badge">{{ status.pendingRequestCount }}</span>
-                    Pending Requests
-                </li>
-                <li class="list-group-item">
-                    <span class="badge">{{ status.workerLagMs }} ms</span>
-                    Worker Lag
-                </li>
-                <li class="list-group-item">
-                    <span class="progress-value">Global ZK State Node Size {{humanizeFileSize status.globalStateNodeSize}} used of 1 MB limit</span>
-                    <div class="progress">
-                        <span class="progress-bar progress-bar-info progress-bar-striped" style="width: {{roundedPercentage status.globalStateNodeSize 1048576}}%;"></span>
+        <div class="col-md-4">
+            <div class="panel panel-default">
+                <div class="panel-heading"><h2>Overview</h2></div>
+                <div class="panel-body">
+                    <div class="row">
+                        <div class="col-md-9"><h4>Worker Lag (ms)</h4></div>
+                        <div class="col-md-3"><h4><span class="badge">{{ status.workerLagMs }}</h4></div>
                     </div>
-                </li>
-            </ul>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <h4>Global ZK State Node Size</h4>
+                            <span class="progress-value"><strong>{{humanizeFileSize status.globalStateNodeSize}} used of 1 MB limit<strong></span>
+                            <div class="progress">
+                                <span class="progress-bar progress-bar-info progress-bar-striped" style="width: {{roundedPercentage status.globalStateNodeSize 1048576}}%;"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="col-md-6">
-            <h2>BaragonService Workers</h2>
-            <ul class="list-group">
-                {{#each workers}}
-                    <li class="list-group-item">
-                        {{ this }}
-                    </li>
-                {{/each}}
-            </ul>
+        <div class="col-md-4">
+            <div class="panel panel-default">
+                <div class="panel-heading"><h2>Pending Requests</h2></div>
+                <div class="panel-body">
+                    <ul class="list-group">
+                        {{#each queued}}
+                            <li class="list-group-item">
+                                <a title="{{ requestId }}" href="{{appRoot}}/requests/{{ requestId }}">
+                                    {{ requestId }}
+                                </a>
+                            </li>
+                        {{else}}
+                            <div class="empty-table-message"><p>No pending requests</p></div>
+                        {{/each}}
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="panel panel-default">
+                <div class="panel-heading"><h2>BaragonService Workers</h2></div>
+                <div class="panel-body">
+                    <ul class="list-group">
+                        {{#each workers}}
+                            <li class="list-group-item">
+                                {{ this }}
+                            </li>
+                        {{/each}}
+                    </ul>
+                </div>
+            </div>
         </div>
     </div>
 {{else}}

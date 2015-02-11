@@ -48,6 +48,9 @@ Handlebars.registerHelper 'roundedPercentage', (v1, v2) ->
 Handlebars.registerHelper 'quotient', (v1, v2) ->
     return (v1/v2 * 100)
 
-Handlebars.registerHelper 'newLineJoin', (arr) ->
-    return arr.join('\n')
+Handlebars.registerHelper 'timestampFromNow', (timestamp) ->
+    return '' if not timestamp
+    timeObject = moment timestamp
+    "#{timeObject.fromNow()} (#{ timeObject.format 'lll'})"
+
 

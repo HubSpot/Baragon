@@ -1,0 +1,76 @@
+{{#if synced}}
+    <div class="row">
+        <div class="col-md-8">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="panel panel-default">
+                        <div class="panel-heading"><h4>Active Agents</h4></div>
+                        <div class="panel-body">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Domain</th>
+                                        <th>Base Uri</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {{#each agents}}
+                                        <tr data-agent-id="{{ agentId }}">
+                                            <td>{{ agentId }}</td>
+                                            <td>{{ domain }}</td>
+                                            <td>{{ baseAgentUri }}</td>
+                                        </tr>
+                                    {{/each}}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="panel panel-default">
+                        <div class="panel-heading"><h4>All Known Agents</h4></div>
+                        <div class="panel-body">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Domain</th>
+                                        <th>Base Uri</th>
+                                        <th>Joined Cluster</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {{#each knownAgents}}
+                                        <tr data-agent-id="{{ agentId }}">
+                                            <td>{{ agentId }}</td>
+                                            <td>{{ domain }}</td>
+                                            <td>{{ baseAgentUri }}</td>
+                                            <td>{{timestampFromNow lastSeenAt }}</td>
+                                        </tr>
+                                    {{/each}}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="panel panel-default">
+                <div class="panel-heading"><h4>Base Paths</h4></div>
+                <div class="panel-body">
+                    <ul class="list-group">
+                        {{#each basePaths.paths }}
+                            <li class="list-group-item">{{ this }}</li>
+                        {{/each}}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+{{else}}
+    <div class="page-loader centered cushy"></div>
+{{/if}}

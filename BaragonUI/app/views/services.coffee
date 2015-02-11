@@ -23,6 +23,7 @@ class ServicesView extends View
             synced: @collection.synced
 
         @$('.actions-column a[title]').tooltip()
+        @$('.icons-column span[title]').tooltip()
 
     viewJson: (e) ->
         id = $(e.target).parents('tr').data 'service-id'

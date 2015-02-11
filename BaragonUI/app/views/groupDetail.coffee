@@ -1,8 +1,8 @@
 View = require './view'
 
-class StatusView extends View
+class GroupDetailView extends View
 
-    template: require '../templates/status'
+    template: require '../templates/groupDetail'
 
     initialize: (@params) ->
         { @options } = @params
@@ -10,12 +10,13 @@ class StatusView extends View
         @listenTo @options, 'sync', @render
         @listenTo @collection, 'sync', @render
 
+
     render: =>
         @$el.html @template
-            status:  @model.attributes
-            workers: @options.attributes
-            queued: @collection.toJSON()
+            basePaths:  @model.attributes
+            knownAgents: @options.toJSON()
+            agents: @collection.toJSON()
             config: config
-            synced: @model.synced
+            synced: @collection.synced
 
-module.exports = StatusView
+module.exports = GroupDetailView
