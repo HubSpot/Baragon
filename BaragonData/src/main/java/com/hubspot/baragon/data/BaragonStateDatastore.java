@@ -84,14 +84,12 @@ public class BaragonStateDatastore extends AbstractDataStore {
 
   public void removeUpstreams(String serviceId, Collection<UpstreamInfo> upstreams) {
     for (UpstreamInfo upstreamInfo : upstreams) {
-      LOG.info(String.format("Removing %s", upstreamInfo));
       deleteNode(String.format(UPSTREAM_FORMAT, serviceId, sanitizeNodeName(upstreamInfo.getUpstream())));
     }
   }
 
   public void addUpstreams(String serviceId, Collection<UpstreamInfo> upstreams) {
     for (UpstreamInfo upstreamInfo : upstreams) {
-      LOG.info(String.format("Adding %s", upstreamInfo));
       writeToZk(String.format(UPSTREAM_FORMAT, serviceId, sanitizeNodeName(upstreamInfo.getUpstream())), upstreamInfo);
     }
   }
@@ -130,9 +128,7 @@ public class BaragonStateDatastore extends AbstractDataStore {
     }
 
     final Map<String, BaragonService> serviceMap = zkFetcher.fetchDataInParallel(services, new BaragonServiceDeserializer());
-
     final Map<String, Collection<UpstreamInfo>> serviceToUpstreamInfoMap = fetchServiceToUpstreamInfoMap(services);
-
     final Collection<BaragonServiceState> serviceStates = new ArrayList<>(serviceMap.size());
 
     for (final Entry<String, BaragonService> serviceEntry : serviceMap.entrySet()) {
