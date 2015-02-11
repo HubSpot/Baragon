@@ -162,10 +162,8 @@ public class BaragonStateDatastore extends AbstractDataStore {
   private Collection<String> upstreamPaths(Map<String, Collection<String>> serviceToUpstreams) {
     Collection<String> allUpstreamPaths = new ArrayList<>();
     for (Entry<String, Collection<String>> entry : serviceToUpstreams.entrySet()) {
-      String servicePath = ZKPaths.makePath(SERVICES_FORMAT, entry.getKey());
       for (String upstream : entry.getValue()) {
-        String upstreamPath = ZKPaths.makePath(servicePath, upstream);
-        allUpstreamPaths.add(upstreamPath);
+        allUpstreamPaths.add(String.format(UPSTREAM_FORMAT, entry.getKey(), upstream));
       }
     }
     return allUpstreamPaths;
