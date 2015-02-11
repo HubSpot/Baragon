@@ -84,12 +84,14 @@ public class BaragonStateDatastore extends AbstractDataStore {
 
   public void removeUpstreams(String serviceId, Collection<UpstreamInfo> upstreams) {
     for (UpstreamInfo upstreamInfo : upstreams) {
+      LOG.info(String.format("Removing %s", upstreamInfo));
       deleteNode(String.format(UPSTREAM_FORMAT, serviceId, sanitizeNodeName(upstreamInfo.getUpstream())));
     }
   }
 
   public void addUpstreams(String serviceId, Collection<UpstreamInfo> upstreams) {
     for (UpstreamInfo upstreamInfo : upstreams) {
+      LOG.info(String.format("Adding %s", upstreamInfo));
       writeToZk(String.format(UPSTREAM_FORMAT, serviceId, sanitizeNodeName(upstreamInfo.getUpstream())), upstreamInfo);
     }
   }
@@ -128,6 +130,7 @@ public class BaragonStateDatastore extends AbstractDataStore {
     }
 
     final Map<String, BaragonService> serviceMap = zkFetcher.fetchDataInParallel(services, new BaragonServiceDeserializer());
+
     final Map<String, Collection<UpstreamInfo>> serviceToUpstreamInfoMap = fetchServiceToUpstreamInfoMap(services);
 
     final Collection<BaragonServiceState> serviceStates = new ArrayList<>(serviceMap.size());
@@ -143,50 +146,33 @@ public class BaragonStateDatastore extends AbstractDataStore {
   }
 
   private Map<String, Collection<UpstreamInfo>> fetchServiceToUpstreamInfoMap(Collection<String> services) throws Exception {
-    Map<String, String> upstreamToService = fetchUpstreamToServiceMap(services);
-
-    Collection<String> upstreamPaths = new ArrayList<>(upstreamToService.size());
-    for (Entry<String, String> entry : upstreamToService.entrySet()) {
-      String service = entry.getValue();
-      String servicePath = ZKPaths.makePath(SERVICES_FORMAT, service);
-
-      String upstream = entry.getKey();
-      String upstreamPath = ZKPaths.makePath(servicePath, upstream);
-
-      upstreamPaths.add(upstreamPath);
-    }
-
-    Map<String, UpstreamInfo> upstreamToInfo = zkFetcher.fetchDataInParallel(upstreamPaths, new UpstreamInfoDeserializer());
-
+    Map<String, Collection<String>> serviceToUpstreams = zkFetcher.fetchChildrenInParallel(services);
+    Map<String, UpstreamInfo> upstreamToInfo = zkFetcher.fetchDataInParallel(upstreamPaths(serviceToUpstreams), new UpstreamInfoDeserializer());
     Map<String, Collection<UpstreamInfo>> serviceToUpstreamInfo = new HashMap<>(services.size());
-    for (Entry<String, UpstreamInfo> entry : upstreamToInfo.entrySet()) {
-      String upstream = entry.getKey();
-      String service = upstreamToService.get(upstream);
-      Preconditions.checkNotNull(service, String.format("Invalid state for upstream '%s'", upstream));
 
-      if (serviceToUpstreamInfo.containsKey(service)) {
-        serviceToUpstreamInfo.get(service).add(entry.getValue());
-      } else {
-        serviceToUpstreamInfo.put(service, Lists.newArrayList(entry.getValue()));
+    for (Entry<String, Collection<String>> entry : serviceToUpstreams.entrySet()) {
+      for (String upstream : entry.getValue()) {
+        if (serviceToUpstreamInfo.containsKey(entry.getKey())) {
+          serviceToUpstreamInfo.get(entry.getKey()).add(upstreamToInfo.get(upstream));
+        } else {
+          serviceToUpstreamInfo.put(entry.getKey(), Lists.newArrayList(upstreamToInfo.get(upstream)));
+        }
       }
     }
 
     return serviceToUpstreamInfo;
   }
 
-  private Map<String, String> fetchUpstreamToServiceMap(Collection<String> services) throws Exception {
-    Map<String, Collection<String>> serviceToUpstreams = zkFetcher.fetchChildrenInParallel(services);
-
-    Map<String, String> upstreamToService = new HashMap<>();
+  private Collection<String> upstreamPaths(Map<String, Collection<String>> serviceToUpstreams) {
+    Collection<String> allUpstreamPaths = new ArrayList<>();
     for (Entry<String, Collection<String>> entry : serviceToUpstreams.entrySet()) {
-      String service = entry.getKey();
-
+      String servicePath = ZKPaths.makePath(SERVICES_FORMAT, entry.getKey());
       for (String upstream : entry.getValue()) {
-        upstreamToService.put(upstream, service);
+        String upstreamPath = ZKPaths.makePath(servicePath, upstream);
+        allUpstreamPaths.add(upstreamPath);
       }
     }
-
-    return upstreamToService;
+    return allUpstreamPaths;
   }
 
   private class BaragonServiceDeserializer implements Function<byte[], BaragonService> {
