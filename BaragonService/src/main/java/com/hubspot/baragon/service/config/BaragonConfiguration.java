@@ -46,6 +46,10 @@ public class BaragonConfiguration extends Configuration {
   @Min(1)
   private int agentMaxAttempts = 5;
 
+  @JsonProperty("agentRequestTimeoutMs")
+  @Min(10000)
+  private long agentRequestTimeoutMs = 60000;
+
   @JsonProperty("auth")
   @NotNull
   @Valid
@@ -91,6 +95,10 @@ public class BaragonConfiguration extends Configuration {
 
   public int getAgentMaxAttempts() {
     return agentMaxAttempts;
+  }
+
+  public long getAgentRequestTimeoutMs() {
+    return agentRequestTimeoutMs;
   }
 
   public void setAgentMaxAttempts(int agentMaxAttempts) {
