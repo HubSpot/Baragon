@@ -59,6 +59,12 @@ public class BaragonServiceModule extends AbstractModule {
   }
 
   @Provides
+  @Named(BaragonDataModule.BARAGON_AGENT_MAX_REQUEST_TIME)
+  public Long provideAgentMaxRequestTime(BaragonConfiguration configuration) {
+    return configuration.getAgentMaxRequestTime();
+  }
+
+  @Provides
   public AuthConfiguration providesAuthConfiguration(BaragonConfiguration configuration) {
     return configuration.getAuthConfiguration();
   }

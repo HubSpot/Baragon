@@ -61,14 +61,14 @@ public class BaragonAgentResponseDatastore extends AbstractDataStore {
 
   public void setPendingRequestStatus(String requestId, String baseUrl, boolean value) {
     if (value) {
-      createNode(String.format(PENDING_REQUEST_FORMAT, requestId, encodeUrl(baseUrl)));
+      writeToZk(String.format(PENDING_REQUEST_FORMAT, requestId, encodeUrl(baseUrl)), System.currentTimeMillis());
     } else {
       deleteNode(String.format(PENDING_REQUEST_FORMAT, requestId, encodeUrl(baseUrl)));
     }
   }
 
-  public boolean hasPendingRequest(String requestId, String baseUrl) {
-    return nodeExists(String.format(PENDING_REQUEST_FORMAT, requestId, encodeUrl(baseUrl)));
+  public Optional<Long> getPendingRequest(String requestId, String baseUrl) {
+    return readFromZk(String.format(PENDING_REQUEST_FORMAT, requestId, encodeUrl(baseUrl)), Long.class);
   }
 
   public Optional<AgentResponseId> getLastAgentResponseId(String requestId, AgentRequestType requestType, String baseUrl) {

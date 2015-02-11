@@ -40,6 +40,7 @@ public class AgentManager {
   private final String baragonAgentRequestUriFormat;
   private final Integer baragonAgentMaxAttempts;
   private final Optional<String> baragonAuthKey;
+  private final Long baragonMaxRequestTime;
 
   @Inject
   public AgentManager(BaragonLoadBalancerDatastore loadBalancerDatastore,
@@ -48,7 +49,8 @@ public class AgentManager {
                       @Named(BaragonDataModule.BARAGON_SERVICE_HTTP_CLIENT) AsyncHttpClient asyncHttpClient,
                       @Named(BaragonDataModule.BARAGON_AGENT_REQUEST_URI_FORMAT) String baragonAgentRequestUriFormat,
                       @Named(BaragonDataModule.BARAGON_AGENT_MAX_ATTEMPTS) Integer baragonAgentMaxAttempts,
-                      @Named(BaragonDataModule.BARAGON_AUTH_KEY) Optional<String> baragonAuthKey) {
+                      @Named(BaragonDataModule.BARAGON_AUTH_KEY) Optional<String> baragonAuthKey,
+                      @Named(BaragonDataModule.BARAGON_AGENT_MAX_REQUEST_TIME) Long baragonMaxRequestTime) {
     this.loadBalancerDatastore = loadBalancerDatastore;
     this.stateDatastore = stateDatastore;
     this.agentResponseDatastore = agentResponseDatastore;
@@ -56,6 +58,7 @@ public class AgentManager {
     this.baragonAgentRequestUriFormat = baragonAgentRequestUriFormat;
     this.baragonAgentMaxAttempts = baragonAgentMaxAttempts;
     this.baragonAuthKey = baragonAuthKey;
+    this.baragonMaxRequestTime = baragonMaxRequestTime;
   }
 
   private AsyncHttpClient.BoundRequestBuilder buildAgentRequest(String url, AgentRequestType requestType) {
@@ -94,7 +97,8 @@ public class AgentManager {
       final String baseUrl = agentMetadata.getBaseAgentUri();
 
       // wait until pending request has completed.
-      if (agentResponseDatastore.hasPendingRequest(requestId, baseUrl)) {
+      Optional<Long> maybePendingRequest = agentResponseDatastore.getPendingRequest(requestId, baseUrl);
+      if (maybePendingRequest.isPresent() && !((System.currentTimeMillis() - maybePendingRequest.get()) > baragonMaxRequestTime)) {
         continue;
       }
 
@@ -142,9 +146,19 @@ public class AgentManager {
 
     for (BaragonAgentMetadata agentMetadata : agentMetadatas) {
       final String baseUrl = agentMetadata.getBaseAgentUri();
+
+      Optional<Long> maybePendingRequestTime = agentResponseDatastore.getPendingRequest(request.getLoadBalancerRequestId(), baseUrl);
+      if (maybePendingRequestTime.isPresent()) {
+        if ((System.currentTimeMillis() - maybePendingRequestTime.get()) > baragonMaxRequestTime) {
+          return AgentRequestsStatus.FAILURE;
+        } else {
+          return AgentRequestsStatus.WAITING;
+        }
+      }
+
       final Optional<AgentResponseId> maybeAgentResponseId = agentResponseDatastore.getLastAgentResponseId(request.getLoadBalancerRequestId(), requestType, baseUrl);
 
-      if (!maybeAgentResponseId.isPresent() || agentResponseDatastore.hasPendingRequest(request.getLoadBalancerRequestId(), baseUrl)) {
+      if (!maybeAgentResponseId.isPresent()) {
         return AgentRequestsStatus.WAITING;
       }
 
