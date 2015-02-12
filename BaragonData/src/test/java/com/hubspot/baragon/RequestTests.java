@@ -10,6 +10,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 import com.google.common.base.Optional;
 import com.google.common.base.Throwables;
@@ -96,7 +98,9 @@ public class RequestTests {
   @Test
   public void removeNonExistentUpstream(RequestManager requestManager, BaragonRequestWorker requestWorker) {
     final String requestId = "test-125";
-    final BaragonService service = new BaragonService("testservice", Collections.<String>emptyList(), "/test", ImmutableList.of(REAL_LB_GROUP), Collections.<String, Object>emptyMap());
+    Set<String> lbGroup = new HashSet<>();
+    lbGroup.add(REAL_LB_GROUP);
+    final BaragonService service = new BaragonService("testservice", Collections.<String>emptyList(), "/test", lbGroup, Collections.<String, Object>emptyMap());
 
     final UpstreamInfo fakeUpstream = new UpstreamInfo("testhost:8080", Optional.of(requestId), Optional.<String>absent());
 
@@ -120,8 +124,10 @@ public class RequestTests {
   public void addHttpUrlUpstream(RequestManager requestManager, BaragonRequestWorker requestWorker, BaragonStateDatastore stateDatastore) {
     final String requestId = "test-http-url-upstream-1";
     final String serviceId = "httpUrlUpstreamService";
+    Set<String> lbGroup = new HashSet<>();
+    lbGroup.add(REAL_LB_GROUP);
 
-    final BaragonService service = new BaragonService(serviceId, Collections.<String>emptyList(), "/http-url-upstream", ImmutableList.of(REAL_LB_GROUP), Collections.<String, Object>emptyMap());
+    final BaragonService service = new BaragonService(serviceId, Collections.<String>emptyList(), "/http-url-upstream",lbGroup, Collections.<String, Object>emptyMap());
 
     final UpstreamInfo httpUrlUpstream = new UpstreamInfo("http://test.com:8080/foo", Optional.of(requestId), Optional.<String>absent());
 
@@ -144,7 +150,9 @@ public class RequestTests {
   @Test
   public void testNonExistentLoadBalancerGroup(RequestManager requestManager, BaragonRequestWorker requestWorker) {
     final String requestId = "test-126";
-    final BaragonService service = new BaragonService("testservice", Collections.<String>emptyList(), "/test", ImmutableList.of(FAKE_LB_GROUP), Collections.<String, Object>emptyMap());
+    Set<String> lbGroup = new HashSet<>();
+    lbGroup.add(FAKE_LB_GROUP);
+    final BaragonService service = new BaragonService("testservice", Collections.<String>emptyList(), "/test", lbGroup, Collections.<String, Object>emptyMap());
 
     final UpstreamInfo upstream = new UpstreamInfo("testhost:8080", Optional.of(requestId), Optional.<String>absent());
 
@@ -169,7 +177,9 @@ public class RequestTests {
   @Test(expected = RequestAlreadyEnqueuedException.class)
   public void testPreexistingResponse(RequestManager requestManager) throws RequestAlreadyEnqueuedException {
     final String requestId = "test-127";
-    final BaragonService service = new BaragonService("testservice", Collections.<String>emptyList(), "/test", ImmutableList.of(FAKE_LB_GROUP), Collections.<String, Object>emptyMap());
+    Set<String> lbGroup = new HashSet<>();
+    lbGroup.add(FAKE_LB_GROUP);
+    final BaragonService service = new BaragonService("testservice", Collections.<String>emptyList(), "/test", lbGroup, Collections.<String, Object>emptyMap());
 
     final UpstreamInfo upstream = new UpstreamInfo("testhost:8080", Optional.of(requestId), Optional.<String>absent());
 
@@ -182,9 +192,11 @@ public class RequestTests {
   @Test
   public void testBasePathConflicts(RequestManager requestManager, BaragonRequestWorker requestWorker, BaragonLoadBalancerDatastore loadBalancerDatastore) {
     loadBalancerDatastore.setBasePathServiceId(REAL_LB_GROUP, "/foo", "foo-service");
-
     final String requestId = "test-128";
-    final BaragonService service = new BaragonService("testservice", Collections.<String>emptyList(), "/foo", ImmutableList.of(REAL_LB_GROUP), Collections.<String, Object>emptyMap());
+    Set<String> lbGroup = new HashSet<>();
+    lbGroup.add(REAL_LB_GROUP);
+
+    final BaragonService service = new BaragonService("testservice", Collections.<String>emptyList(), "/foo", lbGroup, Collections.<String, Object>emptyMap());
 
     final UpstreamInfo upstream = new UpstreamInfo("testhost:8080", Optional.of(requestId), Optional.<String>absent());
 

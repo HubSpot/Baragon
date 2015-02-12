@@ -55,41 +55,6 @@ Prerequisite: A working ZooKeeper cluster.
 
 Baragon comes with Vagrant boxes for easy local development and integration testing. Ensure Virtualbox and Vagrant is installed on your machine, and then run `vagrant up` inside the `vagrant` folder of the git repo to spin up a Baragon cluster for testing.
 
-###Example Requests Using Vagrant Boxes and Curl
-The Baragon Agent and Baragon Service can be tested using the example curl requests below
+## BaragonService API Docs
 
-- add a config for ‘app1’
-```sh
-curl -H “Content-Type: application/json” --data ‘{
-  “loadBalancerRequestId”: “5”,
-  “loadBalancerService”: {
-    “serviceId”: “app1”,
-    “owners”: [“foo”],
-    ”serviceBasePath”:“/basepath”,
-    “loadBalancerGroups”: [“vagrant”],
-    “options”:{”nginxExtraConfigs”:[“rewrite ^/basepath/(\\+d) /basepath/$1 last;”]},
-  },
-“addUpstreams”: [“1.1.1.1:80”],
-“removeUpstreams”: []
-}’ 192.168.33.20:8080/baragon/v1/request
-```
-
-- remove ‘app1’ from the load balancer
-```sh
-curl -H “Content-Type: application/json” --data ‘{
-  “loadBalancerRequestId”: “5”,
-  “loadBalancerService”: {
-    “serviceId”: “app1”,
-    “owners”: [“foo”],
-    ”serviceBasePath”:“/basepath”,
-    “loadBalancerGroups”: [“vagrant”],
-    “options”:{”nginxExtraConfigs”:[“rewrite ^/basepath/(\\+d) /basepath/$1 last;”]},
-  },
-“addUpstreams”: [],
-“removeUpstreams”: [“1.1.1.1:80”]
-}’ 192.168.33.20:8080/baragon/v1/request
-```
-
-
-
-
+Full documentation on the Baragon Service API can be found [here](docs/baragon_service_api.md)

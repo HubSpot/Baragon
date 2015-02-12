@@ -124,7 +124,7 @@ public class RequestManager {
     }
   }
 
-  public void lockBasePaths(List<String> loadBalancerGroups, String serviceBasePath, String serviceId) {
+  public void lockBasePaths(Set<String> loadBalancerGroups, String serviceBasePath, String serviceId) {
     for (String loadBalancerGroup : loadBalancerGroups) {
       loadBalancerDatastore.setBasePathServiceId(loadBalancerGroup, serviceBasePath, serviceId);
     }
@@ -175,6 +175,20 @@ public class RequestManager {
       }
     }
 
+    //If we have removed a load balancer group, clear the base path for that group
+    if (maybeOriginalService.isPresent()) {
+      Set<String> removedLbGroups = maybeOriginalService.get().getLoadBalancerGroups();
+      removedLbGroups.removeAll(request.getLoadBalancerService().getLoadBalancerGroups());
+      if (!removedLbGroups.isEmpty()) {
+        try {
+          for (String loadbalancerGroup : removedLbGroups) {
+            loadBalancerDatastore.clearBasePath(loadbalancerGroup, maybeOriginalService.get().getServiceBasePath());
+          }
+        } catch (Exception e) {
+          LOG.info(String.format("Error clearing base path %s", e));
+        }
+      }
+    }
     // If the service ID has been changed, remove the old service from the state datastore
     if (maybeOriginalService.isPresent() && !maybeOriginalService.get().getServiceId().equals(request.getLoadBalancerService().getServiceId())) {
       stateDatastore.removeService(maybeOriginalService.get().getServiceId());

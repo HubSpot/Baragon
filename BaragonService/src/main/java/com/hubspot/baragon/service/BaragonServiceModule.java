@@ -59,6 +59,12 @@ public class BaragonServiceModule extends AbstractModule {
   }
 
   @Provides
+  @Named(BaragonDataModule.BARAGON_AGENT_REQUEST_TIMEOUT_MS)
+  public Long provideAgentMaxRequestTime(BaragonConfiguration configuration) {
+    return configuration.getAgentRequestTimeoutMs();
+  }
+
+  @Provides
   public AuthConfiguration providesAuthConfiguration(BaragonConfiguration configuration) {
     return configuration.getAuthConfiguration();
   }

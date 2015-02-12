@@ -3,6 +3,7 @@ package com.hubspot.baragon.models;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
@@ -26,14 +27,14 @@ public class BaragonService {
 
   @NotNull
   @Size(min=1)
-  private final List<String> loadBalancerGroups;
+  private final Set<String> loadBalancerGroups;
 
   private final Map<String, Object> options;
 
   public BaragonService(@JsonProperty("serviceId") String serviceId,
                         @JsonProperty("owners") Collection<String> owners,
                         @JsonProperty("serviceBasePath") String serviceBasePath,
-                        @JsonProperty("loadBalancerGroups") List<String> loadBalancerGroups,
+                        @JsonProperty("loadBalancerGroups") Set<String> loadBalancerGroups,
                         @JsonProperty("options") Map<String, Object> options) {
     this.serviceId = serviceId;
     this.owners = owners;
@@ -54,7 +55,7 @@ public class BaragonService {
     return serviceBasePath;
   }
 
-  public List<String> getLoadBalancerGroups() {
+  public Set<String> getLoadBalancerGroups() {
     return loadBalancerGroups;
   }
 
