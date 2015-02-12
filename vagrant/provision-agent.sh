@@ -41,8 +41,8 @@ zookeeper:
   retryMaxTries: 3
 
 loadBalancerConfig:
-  name: vagrant
-  domain: vagrant.baragon.biz
+  name: $1
+  domain: $1.baragon.biz
   rootPath: /etc/nginx/conf.d
   checkConfigCommand: /usr/sbin/nginx -t
   reloadConfigCommand: /usr/sbin/nginx -s reload
@@ -238,7 +238,7 @@ function start_baragon {
 }
 
 stop_baragon
-install_baragon_config
+install_baragon_config $1
 build_baragon
 install_baragon
 install_nginx
