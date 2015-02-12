@@ -6,7 +6,7 @@ class KnownAgents extends Collection
 
     model: Agent
 
-    url: => "#{ config.apiRoot }/load-balancer/#{@groupId}/known-agents"
+    url: => "#{ config.apiRoot }/load-balancer/#{@groupId}/known-agents?authkey=#{ config.authKey }"
 
     initialize: (models, {@groupId}) =>
 

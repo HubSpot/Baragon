@@ -2,7 +2,7 @@ Model = require './model'
 
 class Service extends Model
 
-    url: -> "#{ config.apiRoot }/state/#{ @serviceId }"
+    url: -> "#{ config.apiRoot }/state/#{ @serviceId }?authkey=#{ config.authKey }"
 
     deleteTemplate: require '../templates/vex/serviceRemove'
     removeUpstreamsTemplate: require '../templates/vex/removeUpstreams'
@@ -41,7 +41,7 @@ class Service extends Model
                     removeUpstreams: @attributes.upstreams
                 }
                 $.ajax
-                    url: "#{ config.apiRoot }/request"
+                    url: "#{ config.apiRoot }/request?authkey=#{ config.authKey }"
                     type: "post"
                     contentType: "application/json"
                     data: JSON.stringify(serviceData)

@@ -18,7 +18,13 @@ $ ->
         # prompt the user for it and refresh
         vex.dialog.prompt
             message: apiRootPromptTemplate()
-            callback: (value) =>
-                if value
-                    localStorage.setItem "apiRootOverride", value
+            input: """
+                <input name="apiroot" type="text" placeholder="http://localhost/baragon/v2" required />
+                <input name="authkey" type="text" placeholder="AuthKey" />
+            """
+            callback: (data) =>
+                if data.apiroot
+                    localStorage.setItem "apiRootOverride", data.apiroot
+                if data.authkey
+                    localStorage.setItem "authKeyOverride", data.authkey
                 window.location = window.location.href

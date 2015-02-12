@@ -6,7 +6,7 @@ class Agents extends Collection
 
     model: Agent
 
-    url: => "#{ config.apiRoot }/load-balancer/#{@groupId}/agents"
+    url: => "#{ config.apiRoot }/load-balancer/#{@groupId}/agents?authkey=#{ config.authKey }"
 
     initialize: (models, {@groupId}) =>
 

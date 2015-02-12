@@ -6,7 +6,7 @@ class Services extends Collection
 
     model: Service
 
-    url: => "#{ config.apiRoot }/state"
+    url: => "#{ config.apiRoot }/state?authkey=#{ config.authKey }"
 
     initialize: (models) =>
 
