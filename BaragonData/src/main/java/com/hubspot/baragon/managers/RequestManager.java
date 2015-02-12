@@ -4,7 +4,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.Collection;
 
 import com.google.common.base.Optional;
 import com.google.common.collect.Maps;
@@ -125,7 +124,7 @@ public class RequestManager {
     }
   }
 
-  public void lockBasePaths(List<String> loadBalancerGroups, String serviceBasePath, String serviceId) {
+  public void lockBasePaths(Set<String> loadBalancerGroups, String serviceBasePath, String serviceId) {
     for (String loadBalancerGroup : loadBalancerGroups) {
       loadBalancerDatastore.setBasePathServiceId(loadBalancerGroup, serviceBasePath, serviceId);
     }
@@ -178,7 +177,7 @@ public class RequestManager {
 
     //If we have removed a load balancer group, clear the base path for that group
     if (maybeOriginalService.isPresent()) {
-      Collection<String> removedLbGroups = maybeOriginalService.get().getLoadBalancerGroups();
+      Set<String> removedLbGroups = maybeOriginalService.get().getLoadBalancerGroups();
       removedLbGroups.removeAll(request.getLoadBalancerService().getLoadBalancerGroups());
       if (!removedLbGroups.isEmpty()) {
         try {
