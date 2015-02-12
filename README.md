@@ -37,6 +37,27 @@ BaragonService will then fan out this change to all affected BaragonAgentService
 - `CANCELED`: request was cancelled (rolled back) on all agents
 - `UNKNOWN`: unknown.
 
+## Resources
+
+* `/auth` - 
+* `/keys` - 
+* `/keys/{key}` - 
+* `/keys` - 
+* `/load-balancer` - Array of currently configured Baragon clusters
+* `/load-balancer/{clusterName}/hosts` - Array of URLs for Baragon agents
+* `/load-balancer/{clusterName}/agents` - Array of all known Baragon agent objects
+* `/load-balancer/{clusterName}/known-agents` - Array of recently seen Baragon agent objects
+* `/load-balancer/{clusterName}/known-agents/{agentId}` - 
+* `/load-balancer/{clusterName}/base-path/all` - 
+* `/load-balancer/{clusterName}/base-path` - 
+* `/load-balancer/{clusterName}/base-path` - 
+* `/request` - Array of currently pending requests
+* `/request/{requestId}` - 
+* `/state` - Master list of services and upstreams
+* `/state/{serviceId}` - Supports `GET` and `DELETE`
+* `/status` - Show full status of this load balancer cluster
+* `/workers` - List members of this Baragon server cluster
+
 ## Setup
 
 Prerequisite: A working ZooKeeper cluster.
