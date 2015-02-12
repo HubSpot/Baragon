@@ -15,5 +15,5 @@ This script will automatically test a number of request scenarios for a Baragon 
 | -k --key      | Baragon Service auth key                                      | None                         |
 | -m --master   | Baragon Service master auth key                               | None                         |
 | --upstream    | Default upstream to use in requests                           | example.com:80               |
-| -l -lbGroup   | Load balancer group to use for testing                        | vagrant                      |
+| -l --lbGroup  | Load balancer group to use for testing                        | vagrant                      |
 | -s --service  | Only run tests on BAragonService (no interaction with agents) | false                        |
