@@ -2,6 +2,10 @@ package com.hubspot.baragon.agent.lbs;
 
 import java.io.StringWriter;
 import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.HashSet;
 
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
@@ -12,24 +16,28 @@ import com.hubspot.baragon.agent.BaragonAgentServiceModule;
 import com.hubspot.baragon.agent.config.LoadBalancerConfiguration;
 import com.hubspot.baragon.agent.models.LbConfigTemplate;
 import com.hubspot.baragon.models.BaragonConfigFile;
+import com.hubspot.baragon.models.BaragonService;
 import com.hubspot.baragon.models.ServiceContext;
 
 @Singleton
 public class LbConfigGenerator {
   private final LoadBalancerConfiguration loadBalancerConfiguration;
-  private final Collection<LbConfigTemplate> templates;
+  private final Map<String, List<LbConfigTemplate>> templates;
   
   @Inject
   public LbConfigGenerator(LoadBalancerConfiguration loadBalancerConfiguration,
-                           @Named(BaragonAgentServiceModule.AGENT_TEMPLATES) Collection<LbConfigTemplate> templates) {
+                           @Named(BaragonAgentServiceModule.AGENT_TEMPLATES) Map<String, List<LbConfigTemplate>> templates) {
     this.loadBalancerConfiguration = loadBalancerConfiguration;
     this.templates = templates;
   }
 
   public Collection<BaragonConfigFile> generateConfigsForProject(ServiceContext snapshot) {
-    final Collection<BaragonConfigFile> files = Lists.newArrayListWithCapacity(templates.size());
+    final Collection<BaragonConfigFile> files = Lists.newArrayList();
+    String templateName = snapshot.getService().getTemplate() != null ? snapshot.getService().getTemplate() : "default";
 
-    for (LbConfigTemplate template : templates) {
+    List<LbConfigTemplate> matchingTemplates = templates.get(templateName);
+
+    for (LbConfigTemplate template : matchingTemplates) {
       final String filename = String.format(template.getFilename(), snapshot.getService().getServiceId());
 
       final StringWriter sw = new StringWriter();
@@ -45,12 +53,18 @@ public class LbConfigGenerator {
     return files;
   }
 
-  public Collection<String> getConfigPathsForProject(String serviceId) {
-    final Collection<String> paths = Lists.newArrayListWithCapacity(templates.size());
+  public Set<String> getConfigPathsForProject(BaragonService service) {
+    final Set<String> paths = new HashSet<>();
 
-    for (LbConfigTemplate template : templates) {
-      final String filename = String.format(template.getFilename(), serviceId);
-      paths.add(String.format("%s/%s", loadBalancerConfiguration.getRootPath(), filename));
+    String templateName = service.getTemplate() != null ? service.getTemplate() : "default";
+
+    List<LbConfigTemplate> matchingTemplates = templates.get(templateName);
+
+    for (LbConfigTemplate template : matchingTemplates) {
+      final String filename = String.format(template.getFilename(), service.getServiceId());
+      if (!paths.contains(filename)) {
+        paths.add(String.format("%s/%s", loadBalancerConfiguration.getRootPath(), filename));
+      }
     }
 
     return paths;

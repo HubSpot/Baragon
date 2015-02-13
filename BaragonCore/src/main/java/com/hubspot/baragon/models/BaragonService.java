@@ -31,16 +31,24 @@ public class BaragonService {
 
   private final Map<String, Object> options;
 
+  private final String template;
+
   public BaragonService(@JsonProperty("serviceId") String serviceId,
                         @JsonProperty("owners") Collection<String> owners,
                         @JsonProperty("serviceBasePath") String serviceBasePath,
                         @JsonProperty("loadBalancerGroups") Set<String> loadBalancerGroups,
-                        @JsonProperty("options") Map<String, Object> options) {
+                        @JsonProperty("options") Map<String, Object> options,
+                        @JsonProperty("template") String template) {
     this.serviceId = serviceId;
     this.owners = owners;
     this.serviceBasePath = serviceBasePath;
     this.loadBalancerGroups = loadBalancerGroups;
     this.options = options;
+    this.template = template != null ? template : "default";
+  }
+
+  public BaragonService(String serviceId, Collection<String> owners, String serviceBasePath, Set<String> loadBalancerGroups, Map<String, Object> options) {
+    this(serviceId, owners, serviceBasePath, loadBalancerGroups, options, "default");
   }
 
   public String getServiceId() {
@@ -63,6 +71,10 @@ public class BaragonService {
     return options;
   }
 
+  public String getTemplate() {
+    return template;
+  }
+
   @Override
   public String toString() {
     return "BaragonService [" +
@@ -71,6 +83,7 @@ public class BaragonService {
         ", serviceBasePath='" + serviceBasePath + '\'' +
         ", loadBalancerGroups=" + loadBalancerGroups +
         ", options=" + options +
+        ", template=" + template +
         ']';
   }
 
@@ -88,6 +101,7 @@ public class BaragonService {
     if (serviceBasePath != null ? !serviceBasePath.equals(service.serviceBasePath) : service.serviceBasePath != null)
       return false;
     if (serviceId != null ? !serviceId.equals(service.serviceId) : service.serviceId != null) return false;
+    if (template != null ? !template.equals(service.template) : service.template != null) return false;
 
     return true;
   }
