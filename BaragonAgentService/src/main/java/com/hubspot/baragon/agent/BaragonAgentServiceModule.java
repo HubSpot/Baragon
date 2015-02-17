@@ -70,7 +70,11 @@ public class BaragonAgentServiceModule extends AbstractModule {
       }
       if (templateConfiguration.getExtraTemplates() != null) {
         for (Map.Entry<String, String> entry : templateConfiguration.getExtraTemplates().entrySet()) {
-          templates.put(entry.getKey(), Lists.newArrayList(new LbConfigTemplate(templateConfiguration.getFilename(), handlebars.compileInline(entry.getValue()))));
+          if (templates.containsKey(entry.getKey())) {
+            templates.get(entry.getKey()).add(new LbConfigTemplate(templateConfiguration.getFilename(), handlebars.compileInline(entry.getValue())));
+          } else {
+            templates.put(entry.getKey(), Lists.newArrayList(new LbConfigTemplate(templateConfiguration.getFilename(), handlebars.compileInline(entry.getValue()))));
+          }
         }
       }
     }
