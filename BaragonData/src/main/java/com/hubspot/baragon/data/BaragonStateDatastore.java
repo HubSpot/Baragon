@@ -113,8 +113,10 @@ public class BaragonStateDatastore extends AbstractDataStore {
     try {
       curatorFramework.getData().storingStatIn(stat).forPath(SERVICES_FORMAT);
       return stat.getDataLength();
-    } catch (Exception e) {
+    } catch (KeeperException.NoNodeException nne) {
       return 0;
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
     }
   }
 

@@ -95,11 +95,7 @@ public class BaragonRequestDatastore extends AbstractDataStore {
   }
 
   public int getQueuedRequestCount() {
-    try {
-      return getChildren(REQUEST_QUEUE_FORMAT).size();
-    } catch (Exception e) {
-      return 0;
-    }
+    return getChildren(REQUEST_QUEUE_FORMAT).size();
   }
 
   public void removeQueuedRequest(QueuedRequestId queuedRequestId) {
