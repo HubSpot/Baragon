@@ -11,7 +11,7 @@ Vagrant.configure("2") do |config|
   end
 
   config.vm.synced_folder "../", "/baragon", type: "nfs"
-  config.vm.box = "baragon-develop"
+  config.vm.box = "baragon-develop-0.1.5"
   config.vm.box_url = "https://vagrantcloud.com/ssalinas/boxes/baragon-develop/versions/0.1.5/providers/virtualbox.box"
 
   config.vm.provider :virtualbox do |vb|
@@ -64,10 +64,18 @@ Vagrant.configure("2") do |config|
     end
     build.vm.provision :chef_solo do |chef|
       chef.log_level = :info
-      chef.run_list = ["java"]
-      chef.json = {:java => {:install_flavor => "oracle", :jdk_version => 7, :oracle => {:accept_oracle_download_terms => true}, :set_default => true}}
+      chef.run_list = ["baragon::common"]
+      chef.json = {
+        :java => {
+          :install_flavor => "oracle",
+          :jdk_version => 7,
+          :oracle => {:accept_oracle_download_terms => true},
+          :set_default => true
+        },
+        :baragon => {:mocking => true}
+      }
     end
-    build.vm.provision :shell, inline: "sudo apt-get -y install maven zookeeper zookeeperd zookeeper-bin nginx"
+    build.vm.provision :shell, inline: "sudo apt-get -y install zookeeper zookeeperd zookeeper-bin nginx"
     build.vm.provision "shell", path: "configure-nginx.sh"
   end
 end

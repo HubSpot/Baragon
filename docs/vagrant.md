@@ -40,7 +40,7 @@ During the installation your local machine hosts file is configured with the VM 
 
 - `service` : Runs BaragonService / zookeeper
 - `agent` : Runs a BaragonAgent in the `vagrant` load balancer group
-- `agent{x}` : Runs a BaragonAgent in the `vagrant{x}` load balancer group, where x can be form 1 to 5
+- `agent{x}` : Runs a BaragonAgent in the `vagrant{x}` load balancer group, where x can be from 2 to 5
 - `base_image` : Provisioned with Java, Nginx, and Zookeeper. All other VMs start from this image
 
 ## Baragon base box
@@ -53,7 +53,7 @@ To publish a new Baragon base box (i.e. for new versions of Mesos):
 
 1. Provision the `base_image` Vagrant role: `vagrant up base_image`. This will take 10-15 minutes.
 2. Verify Nginx, ZK are running
-3. Export the box: `vagrant publish base_image --output baragon-develop-X.Y.Z` (where X.Y.Z is the current version). This will take a few minutes.
+3. Export the box: `vagrant package base_image --output baragon-develop-X.Y.Z` (where X.Y.Z is the current version). This will take a few minutes.
 4. Upload the newly created `baragon-develop-X.Y.Z` to a CDN. The file should be ~2 GB, so this might take awhile.
 5. Go to Vagrant Cloud and publish a new box, pointing to the URL of the file you just uploaded
 6. Update the `Vagrantfile` to point to this new URL.
