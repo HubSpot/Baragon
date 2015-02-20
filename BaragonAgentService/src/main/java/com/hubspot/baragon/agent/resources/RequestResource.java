@@ -124,7 +124,7 @@ public class RequestResource {
       }
 
       try {
-        configHelper.apply(update, maybeOldService, true);
+        configHelper.apply(update, request.getReplaceServiceId(), true);
       } catch (Exception e) {
         return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
       }
@@ -182,7 +182,7 @@ public class RequestResource {
       LOG.info(String.format("Reverting to %s", update));
       
       try {
-        configHelper.apply(update, Optional.<BaragonService>absent(), false);
+        configHelper.apply(update, Optional.<String>absent(), false);
       } catch (Exception e) {
         return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
       }

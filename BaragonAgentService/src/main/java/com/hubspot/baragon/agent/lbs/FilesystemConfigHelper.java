@@ -53,17 +53,18 @@ public class FilesystemConfigHelper {
     }
   }
 
-  public void apply(ServiceContext context, Optional<BaragonService> maybeOldService,boolean revertOnFailure) throws InvalidConfigException, LbAdapterExecuteException, IOException {
+  public void apply(ServiceContext context,Optional<String> replaceServiceId, boolean revertOnFailure) throws InvalidConfigException, LbAdapterExecuteException, IOException {
     final String serviceId = context.getService().getServiceId();
     final String oldServiceId;
-    if (maybeOldService.isPresent()) {
-      oldServiceId = maybeOldService.get().getServiceId();
+    if (replaceServiceId.isPresent()) {
+      oldServiceId = replaceServiceId.get();
     } else {
       oldServiceId = serviceId;
     }
 
     LOG.info(String.format("Going to apply %s: %s", serviceId, Joiner.on(", ").join(context.getUpstreams())));
     final boolean oldServiceExists = configsExist(oldServiceId);
+    final boolean previousConfigsExist = configsExist(serviceId);
 
     if (configGenerator.generateConfigsForProject(context).equals(readConfigs(oldServiceId))) {
       LOG.info("    Configs are unchanged, skipping apply");
@@ -71,8 +72,11 @@ public class FilesystemConfigHelper {
     }
 
     // Backup configs
-    if (oldServiceExists && revertOnFailure) {
-      backupConfigs(oldServiceId);
+    if (revertOnFailure) {
+      backupConfigs(serviceId);
+      if (oldServiceExists) {
+        backupConfigs(oldServiceId);
+      }
     }
 
     // Write & check the configs
@@ -94,6 +98,9 @@ public class FilesystemConfigHelper {
       // Restore configs
       if (revertOnFailure) {
         if (oldServiceExists) {
+          restoreConfigs(oldServiceId);
+        }
+        if (previousConfigsExist) {
           restoreConfigs(serviceId);
         } else {
           remove(serviceId, false);
