@@ -16,7 +16,7 @@ public class BaragonResponse {
   private final Optional<Map<String, Collection<AgentResponse>>> agentResponses;
 
   public static BaragonResponse failure(String requestId, String message) {
-    return new BaragonResponse(requestId, BaragonRequestState.FAILED, Optional.of(message), Optional.<Map<String, Collection<AgentResponse>>>absent());
+    return new BaragonResponse(requestId, BaragonRequestState.FAILED, Optional.fromNullable(message), Optional.<Map<String, Collection<AgentResponse>>>absent());
   }
 
   public static BaragonResponse requestDoesNotExist(String requestId) {
