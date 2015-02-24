@@ -168,7 +168,7 @@ public class RequestTests {
 
       requestWorker.run();
 
-      assertResponseStateExists(requestManager, requestId, BaragonRequestState.INVALID_REQUEST_NOOP);
+      assertResponseStateExists(requestManager, requestId, BaragonRequestState.FAILED);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -212,7 +212,7 @@ public class RequestTests {
 
       requestWorker.run();
 
-      assertResponseStateExists(requestManager, requestId, BaragonRequestState.INVALID_REQUEST_NOOP);
+      assertResponseStateExists(requestManager, requestId, BaragonRequestState.FAILED);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
