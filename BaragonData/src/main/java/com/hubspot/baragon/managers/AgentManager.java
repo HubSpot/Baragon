@@ -93,7 +93,7 @@ public class AgentManager {
 
     final String requestId = request.getLoadBalancerRequestId();
 
-    for (final BaragonAgentMetadata agentMetadata : loadBalancerDatastore.getAgentMetadata(loadBalancerGroupsToUpdate)) {
+    for (final BaragonAgentMetadata agentMetadata : getAgents(loadBalancerGroupsToUpdate)) {
       final String baseUrl = agentMetadata.getBaseAgentUri();
 
       // wait until pending request has completed.
@@ -141,11 +141,9 @@ public class AgentManager {
   }
 
   public AgentRequestsStatus getRequestsStatus(BaragonRequest request, AgentRequestType requestType) {
-    final Collection<BaragonAgentMetadata> agentMetadatas = loadBalancerDatastore.getAgentMetadata(request.getLoadBalancerService().getLoadBalancerGroups());
-
     boolean success = true;
 
-    for (BaragonAgentMetadata agentMetadata : agentMetadatas) {
+    for (BaragonAgentMetadata agentMetadata : getAgents(request.getLoadBalancerService().getLoadBalancerGroups())) {
       final String baseUrl = agentMetadata.getBaseAgentUri();
 
       Optional<Long> maybePendingRequestTime = agentResponseDatastore.getPendingRequest(request.getLoadBalancerRequestId(), baseUrl);
@@ -178,5 +176,13 @@ public class AgentManager {
 
   public Map<String, Collection<AgentResponse>> getAgentResponses(String requestId) {
     return agentResponseDatastore.getLastResponses(requestId);
+  }
+
+  public Collection<BaragonAgentMetadata> getAgents(Set<String> loadBalancerGroups) {
+    return loadBalancerDatastore.getAgentMetadata(loadBalancerGroups);
+  }
+
+  public boolean hasNoAgents(String loadBalancerGroup) {
+    return loadBalancerDatastore.getAgentMetadata(loadBalancerGroup).isEmpty();
   }
 }
