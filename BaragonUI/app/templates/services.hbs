@@ -36,14 +36,16 @@
                             <td>{{ loadBalancerGroupsString }}</td>
                             <td>{{ upstreamsCount }}
                             <td class="actions-column hidden-xs">
-                                {{#ifGreaterThan upstreamsCount 0}}
-                                    <a data-action="removeUpstreams" title="Remove Upstreams">
-                                        <span class="glyphicon glyphicon-remove-circle"></span>
+                                {{#unless ../config.readOnly}}
+                                    {{#ifGreaterThan upstreamsCount 0}}
+                                        <a data-action="removeUpstreams" title="Remove Upstreams">
+                                            <span class="glyphicon glyphicon-remove-circle"></span>
+                                        </a>
+                                    {{/ifGreaterThan}}
+                                    <a data-action="delete" title="Delete Service">
+                                        <span class="glyphicon glyphicon-remove"></span>
                                     </a>
-                                {{/ifGreaterThan}}
-                                <a data-action="delete" title="Delete Service">
-                                    <span class="glyphicon glyphicon-remove"></span>
-                                </a>
+                                {{/unless}}
                                 <a data-action="viewJSON" title="JSON">
                                     { }
                                  </a>
