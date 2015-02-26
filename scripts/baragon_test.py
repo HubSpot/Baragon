@@ -276,7 +276,7 @@ class BasePathConflict(unittest.TestCase):
             response = requests.post(self.uri,data=conflict_json_data, params=self.params, headers=self.headers)
             self.assertEqual(response.status_code, 200)
             result = get_request_response(newId)
-            self.assertEqual(result['loadBalancerState'], 'INVALID_REQUEST_NOOP')
+            self.assertEqual(result['loadBalancerState'], 'FAILED')
         else:
             raise Exception('Request failed, result was: {0}'.format(json_data))
 
@@ -305,7 +305,7 @@ class BasePathConflictInvalidReplaceId(unittest.TestCase):
             response = requests.post(self.uri,data=conflict_json_data, params=self.params, headers=self.headers)
             self.assertEqual(response.status_code, 200)
             result = get_request_response(newId)
-            self.assertEqual(result['loadBalancerState'], 'INVALID_REQUEST_NOOP')
+            self.assertEqual(result['loadBalancerState'], 'FAILED')
         else:
             raise Exception('Request failed, result was: {0}'.format(json_data))
 

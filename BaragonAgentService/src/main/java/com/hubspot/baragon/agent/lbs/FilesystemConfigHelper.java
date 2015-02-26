@@ -64,6 +64,7 @@ public class FilesystemConfigHelper {
 
     LOG.info(String.format("Going to apply %s: %s", service.getServiceId(), Joiner.on(", ").join(context.getUpstreams())));
     final boolean oldServiceExists = configsExist(oldService);
+    final boolean previousConfigsExist = configsExist(service);
 
     if (configGenerator.generateConfigsForProject(context).equals(readConfigs(oldService))) {
       LOG.info("    Configs are unchanged, skipping apply");
@@ -71,8 +72,11 @@ public class FilesystemConfigHelper {
     }
 
     // Backup configs
-    if (oldServiceExists && revertOnFailure) {
-      backupConfigs(oldService);
+    if (revertOnFailure) {
+      backupConfigs(service);
+      if (oldServiceExists) {
+        backupConfigs(oldService);
+      }
     }
 
     // Write & check the configs
@@ -94,6 +98,9 @@ public class FilesystemConfigHelper {
       // Restore configs
       if (revertOnFailure) {
         if (oldServiceExists) {
+          restoreConfigs(oldService);
+        }
+        if (previousConfigsExist) {
           restoreConfigs(service);
         } else {
           remove(service, false);
