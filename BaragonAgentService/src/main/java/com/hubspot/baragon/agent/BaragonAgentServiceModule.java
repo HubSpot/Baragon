@@ -68,8 +68,8 @@ public class BaragonAgentServiceModule extends AbstractModule {
       } else {
         templates.put("default", Lists.newArrayList(new LbConfigTemplate(templateConfiguration.getFilename(), handlebars.compileInline(templateConfiguration.getDefaultTemplate()))));
       }
-      if (templateConfiguration.getExtraTemplates() != null) {
-        for (Map.Entry<String, String> entry : templateConfiguration.getExtraTemplates().entrySet()) {
+      if (templateConfiguration.getNamedTemplates() != null) {
+        for (Map.Entry<String, String> entry : templateConfiguration.getNamedTemplates().entrySet()) {
           if (templates.containsKey(entry.getKey())) {
             templates.get(entry.getKey()).add(new LbConfigTemplate(templateConfiguration.getFilename(), handlebars.compileInline(entry.getValue())));
           } else {

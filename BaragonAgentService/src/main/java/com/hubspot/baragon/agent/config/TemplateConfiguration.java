@@ -16,7 +16,7 @@ public class TemplateConfiguration {
   @JsonProperty("template")
   private String defaultTemplate;
 
-  @JsonProperty("extraTemplates")
+  @JsonProperty("namedTemplates")
   private Map<String, String> extraTemplates;
 
   public String getFilename() {
@@ -35,7 +35,7 @@ public class TemplateConfiguration {
     this.defaultTemplate = template;
   }
 
-  public Map<String, String> getExtraTemplates() {
+  public Map<String, String> getNamedTemplates() {
     return extraTemplates;
   }
 
