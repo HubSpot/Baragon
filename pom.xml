@@ -58,7 +58,7 @@
     <module>BaragonService</module>
     <module>BaragonAgentService</module>
     <module>BaragonClient</module>
-  <module>BaragonWatcher</module>
+    <module>BaragonWatcher</module>
 </modules>
 
 <build>
