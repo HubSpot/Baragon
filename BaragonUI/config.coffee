@@ -41,13 +41,9 @@ exports.config =
             staticRoot: "#{ @config.server.base }/static"
             appRoot: "#{ @config.server.base }/ui"
             apiRoot: ''
-            slaveHttpPort: 5051
+            readOnly: true
             title: 'Baragon (local dev)'
             navColor: ''
-            defaultCpus: 1
-            defaultMemory: 128
-            hideNewDeployButton: "false"
-            hideNewRequestButton: "false"
 
         compiledTemplate = handlebars.compile(indexTemplate)(templateData)
         fs.writeFileSync destination, compiledTemplate
