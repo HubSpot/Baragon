@@ -24,7 +24,6 @@ public class BaragonWatcherModule extends AbstractModule {
 
   @Baragon
   @Provides
-  @Singleton
   public CuratorFramework provideCurator(ZooKeeperConfiguration config) {
     CuratorFramework client = CuratorFrameworkFactory.newClient(
             config.getQuorum(),
