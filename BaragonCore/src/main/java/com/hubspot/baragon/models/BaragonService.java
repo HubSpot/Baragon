@@ -113,6 +113,7 @@ public class BaragonService {
     result = 31 * result + (serviceBasePath != null ? serviceBasePath.hashCode() : 0);
     result = 31 * result + (loadBalancerGroups != null ? loadBalancerGroups.hashCode() : 0);
     result = 31 * result + (options != null ? options.hashCode() : 0);
+    result = 31 * result + (template != null ? template.hashCode() : 0);
     return result;
   }
 }
