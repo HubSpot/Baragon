@@ -40,7 +40,7 @@
                             </td>
                             <td>{{ upstreamsCount }}
                             <td class="actions-column hidden-xs">
-                                {{#unless ../config.readOnly}}
+                                {{#if ../config.allowEdit}}
                                     {{#ifGreaterThan upstreamsCount 0}}
                                         <a data-action="removeUpstreams" title="Remove Upstreams">
                                             <span class="glyphicon glyphicon-remove-circle"></span>
@@ -49,7 +49,7 @@
                                     <a data-action="delete" title="Delete Service">
                                         <span class="glyphicon glyphicon-remove"></span>
                                     </a>
-                                {{/unless}}
+                                {{/if}}
                                 <a data-action="viewJSON" title="JSON">
                                     { }
                                  </a>

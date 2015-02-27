@@ -7,14 +7,14 @@
             <a class="btn btn-default" data-service-id="{{ service.id }}" data-action="viewJSON">
                 JSON
             </a>
-            {{#unless config.readOnly}}
+            {{#if config.allowEdit}}
                 <a class="btn btn-warning" data-service-id="{{ service.id }}" data-action="removeUpstreams">
                     Remove Upstreams
                 </a>
                 <a class="btn btn-danger" data-service-id="{{ service.id }}" data-action="delete">
                     Delete
                 </a>
-            {{/unless}}
+            {{/if}}
         </div>
     </div>
     <div class="row same-size-row">

@@ -25,14 +25,14 @@ public class UIConfiguration {
   @JsonProperty
   private String baseUrl;
 
-  private boolean readOnly = true;
+  private boolean allowEdit = false;
 
-  public boolean isReadOnly() {
-    return readOnly;
+  public boolean allowEdit() {
+    return allowEdit;
   }
 
-  public void setReadOnly(boolean readOnly) {
-    this.readOnly = readOnly;
+  public void setAllowEdit(boolean allowEdit) {
+    this.allowEdit = allowEdit;
   }
 
   public String getTitle() {
