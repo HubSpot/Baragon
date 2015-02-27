@@ -1,0 +1,36 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.hubspot</groupId>
+        <artifactId>Baragon</artifactId>
+        <version>0.1.5-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>BaragonWatcher</artifactId>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.hubspot</groupId>
+            <artifactId>BaragonCore</artifactId>
+            <version>0.1.5-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>com.hubspot</groupId>
+            <artifactId>Ringleader</artifactId>
+            <version>0.1.1</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.inject</groupId>
+            <artifactId>guice</artifactId>
+            <version>3.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.inject.extensions</groupId>
+            <artifactId>guice-multibindings</artifactId>
+            <version>3.0</version>
+        </dependency>
+    </dependencies>
+
+</project>
