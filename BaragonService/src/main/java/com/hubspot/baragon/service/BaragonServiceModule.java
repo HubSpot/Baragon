@@ -31,6 +31,8 @@ public class BaragonServiceModule extends AbstractModule {
 
   public static final String BARAGON_MASTER_AUTH_KEY = "baragon.master.auth.key";
 
+  public static final String BARAGON_URI_BASE = "_baragon_uri_base";
+
   @Override
   protected void configure() {
     install(new BaragonDataModule());
@@ -116,5 +118,12 @@ public class BaragonServiceModule extends AbstractModule {
   @Named(BARAGON_MASTER_AUTH_KEY)
   public String providesMasterAuthKey(BaragonConfiguration configuration) {
     return configuration.getMasterAuthKey();
+  }
+
+  @Provides
+  @Named(BARAGON_URI_BASE)
+  String getSingularityUriBase(final BaragonConfiguration configuration) {
+    final String singularityUiPrefix = configuration.getUiConfiguration().getBaseUrl().or(((SimpleServerFactory) configuration.getServerFactory()).getApplicationContextPath());
+    return (singularityUiPrefix.endsWith("/")) ?  singularityUiPrefix.substring(0, singularityUiPrefix.length() - 1) : singularityUiPrefix;
   }
 }

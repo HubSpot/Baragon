@@ -12,7 +12,6 @@ class Service extends Model
 
     parse: (data) ->
         data.id = data.service.serviceId
-        data.loadBalancerGroupsString = data.service.loadBalancerGroups.join()
         data.loadBalancerGroups = data.service.loadBalancerGroups
         data.basePath = data.service.serviceBasePath
         data.upstreamsCount = data.upstreams.length

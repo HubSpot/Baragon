@@ -33,7 +33,11 @@
                                 </a>
                             </td>
                             <td>{{ basePath }}</td>
-                            <td>{{ loadBalancerGroupsString }}</td>
+                            <td>
+                                {{#each loadBalancerGroups }}
+                                    <a title="{{ this }}" href="{{appRoot}}/groups/{{ this }}">{{ this }}</a>
+                                {{/each}}
+                            </td>
                             <td>{{ upstreamsCount }}
                             <td class="actions-column hidden-xs">
                                 {{#unless ../config.readOnly}}

@@ -42,7 +42,7 @@ public class LoadBalancerResource {
   public Collection<String> getClusters() {
     return loadBalancerDatastore.getLoadBalancerGroups();
   }
-  
+
   @GET
   @Path("/{clusterName}/hosts")
   @Deprecated

@@ -18,8 +18,8 @@
                                     {{#each agents}}
                                         <tr data-agent-id="{{ agentId }}">
                                             <td>{{ agentId }}</td>
-                                            <td>{{ domain }}</td>
-                                            <td>{{ baseAgentUri }}</td>
+                                            <td><a href="http://{{domain}}">{{ domain }}</a></td>
+                                            <td><a href="{{ baseAgentUri }}/status">{{ baseAgentUri }}</a></td>
                                         </tr>
                                     {{/each}}
                                 </tbody>
@@ -46,8 +46,8 @@
                                     {{#each knownAgents}}
                                         <tr data-agent-id="{{ agentId }}">
                                             <td>{{ agentId }}</td>
-                                            <td>{{ domain }}</td>
-                                            <td>{{ baseAgentUri }}</td>
+                                            <td><a href="http://{{domain}}">{{ domain }}</a></td>
+                                            <td><a href="{{ baseAgentUri }}/status">{{ baseAgentUri }}</a></td>
                                             <td>{{timestampFromNow lastSeenAt }}</td>
                                         </tr>
                                     {{/each}}

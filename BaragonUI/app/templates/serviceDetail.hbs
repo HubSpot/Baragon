@@ -24,7 +24,9 @@
                     <div class="panel panel-default">
                         <div class="panel-heading"><h4>Base Path</h4></div>
                         <div class="panel-body">
-                            {{ service.basePath }}
+                            <a data-service-id="{{ service.id }}" data-action="viewJSON">
+                                {{ service.basePath }}
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -52,7 +54,11 @@
                         <div class="panel-body">
                             <ul class="list-group">
                                 {{#each service.service.loadBalancerGroups}}
-                                    <li class="list-group-item">{{ this }}</li>
+                                    <li class="list-group-item">
+                                        <a title="{{ this }}" href="{{appRoot}}/groups/{{ this }}">
+                                            {{ this }}
+                                        </a>
+                                    </li>
                                 {{/each}}
                             </ul>
                         </div>
@@ -71,8 +77,8 @@
                                     <div class="panel panel-default">
                                         <div class="panel-heading"><strong>{{upstream}}</strong></div>
                                         <div class="panel-body">
-                                            From Request: {{ requestId }} <br>
-                                            Rack ID: {{ rackId }}
+                                            <strong>From Request:</strong> {{ requestId }} <br>
+                                            <strong>Rack ID:</strong> {{ rackId }}
                                         </div>
                                     </div>
                                 {{/each}}

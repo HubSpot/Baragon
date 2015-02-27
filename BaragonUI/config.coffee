@@ -6,8 +6,7 @@ handlebars = require 'handlebars-brunch/node_modules/handlebars'
 # Brunch settings
 exports.config =
     paths:
-        #public: path.resolve(__dirname, '../BaragonService/target/generated-resources/assets')
-        public: path.resolve(__dirname, '.')
+        public: path.resolve(__dirname, '../BaragonService/target/generated-resources/assets')
 
     files:
         javascripts:
@@ -24,7 +23,7 @@ exports.config =
             joinTo: 'static/js/app.js'
 
     server:
-        base: '/baragon'
+        base: process.env.BARAGON_BASE_URI ? '/baragon'
 
 
     # When running BaragonUI via brunch server we need to make an index.html for it
@@ -38,12 +37,12 @@ exports.config =
         indexTemplate = fs.readFileSync templatePath, 'utf-8'
 
         templateData =
-            staticRoot: "#{ @config.server.base }/static"
+            staticRoot: process.env.BARAGON_STATIC_URI ? "#{ @config.server.base }/static"
             appRoot: "#{ @config.server.base }/ui"
-            apiRoot: ''
-            readOnly: true
-            title: 'Baragon (local dev)'
-            navColor: ''
+            apiRoot: process.env.BARAGON_API_URI ? ''
+            readOnly: process.env.BARAGON_READ_ONLY ? true
+            title: process.env.BARAGON_TITLE ? 'Baragon (local dev)'
+            navColor: process.env.BARAGON_NAV_COLOR ? ''
 
         compiledTemplate = handlebars.compile(indexTemplate)(templateData)
         fs.writeFileSync destination, compiledTemplate
