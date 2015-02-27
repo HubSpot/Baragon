@@ -5,6 +5,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import io.dropwizard.views.View;
 
 import com.hubspot.baragon.service.config.BaragonConfiguration;
+import com.google.common.base.Optional;
 
 public class IndexView extends View {
 
@@ -14,6 +15,7 @@ public class IndexView extends View {
   private final String apiRoot;
   private final String navColor;
   private final Boolean readOnly;
+  private final Optional<String> authKey;
 
   private final String title;
 
@@ -30,6 +32,7 @@ public class IndexView extends View {
     this.apiRoot = String.format("%s", baragonUriBase);
     this.title = configuration.getUiConfiguration().getTitle();
     this.readOnly = configuration.getUiConfiguration().isReadOnly();
+    this.authKey = configuration.getAuthConfiguration().getKey();
 
     this.navColor = configuration.getUiConfiguration().getNavColor();
   }
@@ -58,11 +61,16 @@ public class IndexView extends View {
     return navColor;
   }
 
+  public Optional<String> getAuthKey() {
+    return authKey;
+  }
+
   @Override
   public String toString() {
     return "IndexView [appRoot=" + appRoot +
       ", staticRoot=" + staticRoot +
       ", apiRoot=" + apiRoot +
+      ", authKey=" + authKey +
       ", navColor=" + navColor + ", readOnly=" + readOnly +
       ", title=" + title +
       "]";

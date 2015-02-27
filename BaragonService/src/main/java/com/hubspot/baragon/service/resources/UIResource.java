@@ -2,6 +2,7 @@ package com.hubspot.baragon.service.resources;
 
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
+import com.hubspot.baragon.auth.NoAuth;
 import com.hubspot.baragon.service.BaragonServiceModule;
 import com.hubspot.baragon.service.config.BaragonConfiguration;
 import com.hubspot.baragon.service.views.IndexView;
@@ -30,6 +31,7 @@ public class UIResource {
     this.baragonUriBase = baragonUriBase;
   }
 
+  @NoAuth
   @GET
   @Produces(MediaType.TEXT_HTML)
   public IndexView getIndex() {

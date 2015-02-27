@@ -40,6 +40,7 @@ exports.config =
             staticRoot: process.env.BARAGON_STATIC_URI ? "#{ @config.server.base }/static"
             appRoot: "#{ @config.server.base }/ui"
             apiRoot: process.env.BARAGON_API_URI ? ''
+            authKey: ''
             readOnly: process.env.BARAGON_READ_ONLY ? true
             title: process.env.BARAGON_TITLE ? 'Baragon (local dev)'
             navColor: process.env.BARAGON_NAV_COLOR ? ''
