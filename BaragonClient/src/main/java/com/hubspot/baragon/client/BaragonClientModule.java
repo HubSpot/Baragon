@@ -47,8 +47,6 @@ public class BaragonClientModule extends AbstractModule {
 
   @Override
   protected void configure() {
-    ObjectMapper objectMapper = new ObjectMapper();
-
     HttpClient httpClient = new NingHttpClient(HttpConfig.newBuilder()
             .setObjectMapper(buildObjectMapper())
             .build());

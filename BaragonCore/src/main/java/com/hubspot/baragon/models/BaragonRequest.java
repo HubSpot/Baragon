@@ -105,6 +105,7 @@ public class BaragonRequest {
     if (!loadBalancerRequestId.equals(request.loadBalancerRequestId)) return false;
     if (!loadBalancerService.equals(request.loadBalancerService)) return false;
     if (!removeUpstreams.equals(request.removeUpstreams)) return false;
+    if (!replaceServiceId.equals(request.replaceServiceId)) return false;
 
     return true;
   }
@@ -115,6 +116,7 @@ public class BaragonRequest {
     result = 31 * result + loadBalancerService.hashCode();
     result = 31 * result + addUpstreams.hashCode();
     result = 31 * result + removeUpstreams.hashCode();
+    result = 31 * result + replaceServiceId.hashCode();
     return result;
   }
 }

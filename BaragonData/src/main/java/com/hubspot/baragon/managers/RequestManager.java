@@ -134,7 +134,12 @@ public class RequestManager {
     final Optional<BaragonResponse> maybePreexistingResponse = getResponse(request.getLoadBalancerRequestId());
 
     if (maybePreexistingResponse.isPresent()) {
-      throw new RequestAlreadyEnqueuedException(request.getLoadBalancerRequestId(), maybePreexistingResponse.get());
+      Optional<BaragonRequest> maybePreexistingRequest = requestDatastore.getRequest(request.getLoadBalancerRequestId());
+      if (maybePreexistingRequest.isPresent() && !maybePreexistingRequest.get().equals(request)) {
+        throw new RequestAlreadyEnqueuedException(request.getLoadBalancerRequestId(), maybePreexistingResponse.get(), String.format("Request %s is already enqueued with different parameters", request.getLoadBalancerRequestId()));
+      } else {
+        return maybePreexistingResponse.get();
+      }
     }
 
     requestDatastore.addRequest(request);

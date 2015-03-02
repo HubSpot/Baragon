@@ -38,9 +38,12 @@ public class StatusManager {
   public BaragonServiceStatus getServiceStatus() {
     final ConnectionState currentConnectionState = connectionState.get();
     final String connectionStateString = currentConnectionState == null ? "UNKNOWN" : currentConnectionState.name();
-    final int globalStateNodeSize = stateDatastore.getGlobalStateSize();
     final long workerLagMs = System.currentTimeMillis() - workerLastStart.get();
-
-    return new BaragonServiceStatus(leaderLatch.hasLeadership(), requestDatastore.getQueuedRequestCount(), workerLagMs, connectionStateString, globalStateNodeSize);
+    if (connectionStateString == "CONNECTED" || connectionStateString == "RECONNECTED") {
+      final int globalStateNodeSize = stateDatastore.getGlobalStateSize();
+      return new BaragonServiceStatus(leaderLatch.hasLeadership(), requestDatastore.getQueuedRequestCount(), workerLagMs, connectionStateString, globalStateNodeSize);
+    } else {
+      return new BaragonServiceStatus(leaderLatch.hasLeadership(), 0, workerLagMs, connectionStateString, 0);
+    }
   }
 }
