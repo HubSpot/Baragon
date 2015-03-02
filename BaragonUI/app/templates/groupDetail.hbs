@@ -40,6 +40,7 @@
                                         <th>Domain</th>
                                         <th>Base Uri</th>
                                         <th>Joined Cluster</th>
+                                        <th class="hidden-xs">{{! Actions column }}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -49,6 +50,11 @@
                                             <td><a href="http://{{domain}}">{{ domain }}</a></td>
                                             <td><a href="{{ baseAgentUri }}/status">{{ baseAgentUri }}</a></td>
                                             <td>{{timestampFromNow lastSeenAt }}</td>
+                                            <td>
+                                                <a data-action="remove" title="Remove Known-Agent">
+                                                    <span class="glyphicon glyphicon-remove"></span>
+                                                </a>
+                                            </td>
                                         </tr>
                                     {{/each}}
                                 </tbody>
