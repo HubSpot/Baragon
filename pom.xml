@@ -23,7 +23,7 @@
 
 <groupId>com.hubspot</groupId>
 <artifactId>Baragon</artifactId>
-<version>0.1.5-SNAPSHOT</version>
+<version>0.1.6-SNAPSHOT</version>
 <packaging>pom</packaging>
 
 <repositories>
@@ -58,6 +58,7 @@
     <module>BaragonService</module>
     <module>BaragonAgentService</module>
     <module>BaragonClient</module>
+    <module>BaragonWatcher</module>
 </modules>
 
 <build>
