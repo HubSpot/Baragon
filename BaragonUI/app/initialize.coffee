@@ -9,10 +9,10 @@ require 'handlebarsHelpers'
 
 # Initialize the app on DOMContentReady
 $ ->
-    if config.apiRoot and config.authKey
+    if config.apiRoot and (config.authKey or not config.authEnabled)
         app.initialize()
     else
-        if not config.apiRoot and not config.authKEy
+        if not config.apiRoot and (not config.authKey and config.authEnabled)
             template = require './templates/vex/apiRootAuthKeyPrompt'
             input =  """
                     <input name="apiroot" type="text" placeholder="ApiRoot" required />
@@ -23,13 +23,13 @@ $ ->
             input =  """
                     <input name="apiroot" type="text" placeholder="ApiRoot" required />
                 """
-        else if not config.authKey
+        else if (not config.authKey and config.authEnabled)
             template = require './templates/vex/authKeyPrompt'
             input =  """
                     <input name="authkey" type="password" placeholder="AuthKey" required />
                 """
 
-        if not config.apiRoot
+        if template and input
             vex.dialog.prompt
                 message: template()
                 input: input

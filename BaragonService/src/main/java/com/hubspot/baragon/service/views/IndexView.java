@@ -15,8 +15,6 @@ public class IndexView extends View {
   private final String navColor;
   private final Boolean allowEdit;
   private final boolean authEnabled;
-  private final String authKey;
-
   private final String title;
 
   public IndexView(String baragonUriBase, String appRoot, BaragonConfiguration configuration) {
@@ -32,7 +30,6 @@ public class IndexView extends View {
     this.title = configuration.getUiConfiguration().getTitle();
     this.allowEdit = configuration.getUiConfiguration().allowEdit();
     this.authEnabled = configuration.getAuthConfiguration().isEnabled();
-    this.authKey = configuration.getAuthConfiguration().getKey().isPresent() ? configuration.getAuthConfiguration().getKey().get() : "";
     this.navColor = configuration.getUiConfiguration().getNavColor();
   }
 
@@ -64,16 +61,12 @@ public class IndexView extends View {
     return navColor;
   }
 
-  public String getAuthKey() {
-    return authKey;
-  }
-
   @Override
   public String toString() {
     return "IndexView [appRoot=" + appRoot +
       ", staticRoot=" + staticRoot +
       ", apiRoot=" + apiRoot +
-      ", authKey=" + authKey +
+      ", authKey=" + authEnabled +
       ", navColor=" + navColor +
       ", readOnly=" + allowEdit +
       ", title=" + title +
