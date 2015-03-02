@@ -10,11 +10,11 @@ import com.google.common.base.Optional;
 public class IndexView extends View {
 
   private final String appRoot;
-  private final String apiDocs;
   private final String staticRoot;
   private final String apiRoot;
   private final String navColor;
   private final Boolean allowEdit;
+  private final boolean authEnabled;
   private final String authKey;
 
   private final String title;
@@ -28,10 +28,10 @@ public class IndexView extends View {
 
     this.appRoot = (rawAppRoot.endsWith("/")) ? rawAppRoot.substring(0, rawAppRoot.length() - 1) : rawAppRoot;
     this.staticRoot = String.format("%s/static", baragonUriBase);
-    this.apiDocs = String.format("%s/api-docs", baragonUriBase);
     this.apiRoot = String.format("%s", baragonUriBase);
     this.title = configuration.getUiConfiguration().getTitle();
     this.allowEdit = configuration.getUiConfiguration().allowEdit();
+    this.authEnabled = configuration.getAuthConfiguration().isEnabled();
     this.authKey = configuration.getAuthConfiguration().getKey().isPresent() ? configuration.getAuthConfiguration().getKey().get() : "";
     this.navColor = configuration.getUiConfiguration().getNavColor();
   }
@@ -44,10 +44,6 @@ public class IndexView extends View {
     return staticRoot;
   }
 
-  public String getApiDocs() {
-    return apiDocs;
-  }
-
   public String getApiRoot() {
     return apiRoot;
   }
@@ -58,6 +54,10 @@ public class IndexView extends View {
 
   public boolean getAllowEdit() {
     return allowEdit;
+  }
+
+  public boolean getAuthEnabled() {
+    return authEnabled;
   }
 
   public String getNavColor() {

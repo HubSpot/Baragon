@@ -27,12 +27,22 @@ public class UIConfiguration {
 
   private boolean allowEdit = false;
 
+  private boolean authEnabled = false;
+
   public boolean allowEdit() {
     return allowEdit;
   }
 
   public void setAllowEdit(boolean allowEdit) {
     this.allowEdit = allowEdit;
+  }
+
+  public boolean authEnabled() {
+    return authEnabled;
+  }
+
+  public void setAuthEnabled(boolean authEnabled) {
+    this.authEnabled = authEnabled;
   }
 
   public String getTitle() {
