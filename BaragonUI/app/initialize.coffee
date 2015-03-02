@@ -16,7 +16,7 @@ $ ->
             template = require './templates/vex/apiRootAuthKeyPrompt'
             input =  """
                     <input name="apiroot" type="text" placeholder="ApiRoot" required />
-                    <input name="authkey" type="text" placeholder="AuthKey" required/>
+                    <input name="authkey" type="password" placeholder="AuthKey" required/>
                 """
         else if not config.apiRoot
             template = require './templates/vex/apiRootPrompt'
@@ -26,7 +26,7 @@ $ ->
         else if not config.authKey
             template = require './templates/vex/authKeyPrompt'
             input =  """
-                    <input name="authkey" type="text" placeholder="AuthKey" required />
+                    <input name="authkey" type="password" placeholder="AuthKey" required />
                 """
 
         if not config.apiRoot
