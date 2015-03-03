@@ -1,19 +1,26 @@
 package com.hubspot.baragon.service;
 
+import com.hubspot.baragon.config.ElbConfiguration;
+import com.hubspot.baragon.service.listeners.AbstractLatchListener;
+import com.hubspot.baragon.service.listeners.ElbSyncWorkerListener;
+import com.hubspot.baragon.service.listeners.RequestWorkerListener;
 import io.dropwizard.jetty.HttpConnectorFactory;
 import io.dropwizard.server.SimpleServerFactory;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.curator.framework.recipes.leader.LeaderLatch;
 
 import com.google.common.base.Strings;
+import com.google.common.base.Optional;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
+import com.google.inject.multibindings.Multibinder;
 import com.hubspot.baragon.BaragonDataModule;
 import com.hubspot.baragon.config.AuthConfiguration;
 import com.hubspot.baragon.config.HttpClientConfiguration;
@@ -21,10 +28,11 @@ import com.hubspot.baragon.config.ZooKeeperConfiguration;
 import com.hubspot.baragon.data.BaragonWorkerDatastore;
 import com.hubspot.baragon.service.config.BaragonConfiguration;
 import com.hubspot.baragon.utils.JavaUtils;
-
+import org.apache.curator.framework.recipes.leader.LeaderLatchListener;
 
 public class BaragonServiceModule extends AbstractModule {
   public static final String BARAGON_SERVICE_SCHEDULED_EXECUTOR = "baragon.service.scheduledExecutor";
+  public static final String BARAGON_SERVICE_EXECUTOR = "baragon.service.executor";
 
   public static final String BARAGON_SERVICE_HTTP_PORT = "baragon.service.http.port";
   public static final String BARAGON_SERVICE_HOSTNAME = "baragon.service.hostname";
@@ -34,6 +42,10 @@ public class BaragonServiceModule extends AbstractModule {
   @Override
   protected void configure() {
     install(new BaragonDataModule());
+
+    Multibinder<AbstractLatchListener> latchBinder = Multibinder.newSetBinder(binder(), AbstractLatchListener.class);
+    latchBinder.addBinding().to(RequestWorkerListener.class);
+    latchBinder.addBinding().to(ElbSyncWorkerListener.class);
   }
 
   @Provides
@@ -70,10 +82,22 @@ public class BaragonServiceModule extends AbstractModule {
   }
 
   @Provides
+  public ElbConfiguration providesElbConfiguration(BaragonConfiguration configuration) {
+    return configuration.getElbConfiguration();
+  }
+
+  @Provides
   @Singleton
   @Named(BARAGON_SERVICE_SCHEDULED_EXECUTOR)
   public ScheduledExecutorService providesScheduledExecutor() {
     return Executors.newScheduledThreadPool(1);
+  }
+
+  @Provides
+  @Singleton
+  @Named(BARAGON_SERVICE_EXECUTOR)
+  public ExecutorService providesExecutor() {
+    return Executors.newSingleThreadExecutor();
   }
 
   @Provides
@@ -117,4 +141,5 @@ public class BaragonServiceModule extends AbstractModule {
   public String providesMasterAuthKey(BaragonConfiguration configuration) {
     return configuration.getMasterAuthKey();
   }
+
 }

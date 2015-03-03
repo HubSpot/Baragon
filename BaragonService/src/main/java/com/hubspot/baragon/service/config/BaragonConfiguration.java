@@ -14,6 +14,7 @@ import com.google.common.base.Optional;
 import com.hubspot.baragon.config.AuthConfiguration;
 import com.hubspot.baragon.config.HttpClientConfiguration;
 import com.hubspot.baragon.config.ZooKeeperConfiguration;
+import com.hubspot.baragon.config.ElbConfiguration;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class BaragonConfiguration extends Configuration {
@@ -60,6 +61,9 @@ public class BaragonConfiguration extends Configuration {
 
   @JsonProperty("masterAuthKey")
   private String masterAuthKey;
+
+  @JsonProperty("elb")
+  private ElbConfiguration elb;
 
   public ZooKeeperConfiguration getZooKeeperConfiguration() {
     return zooKeeperConfiguration;
@@ -136,4 +140,13 @@ public class BaragonConfiguration extends Configuration {
   public void setWorkerConfiguration(BaragonWorkerConfiguration workerConfiguration) {
     this.workerConfiguration = workerConfiguration;
   }
+
+  public ElbConfiguration getElbConfiguration() {
+    return elb;
+  }
+
+  public void setElbConfiguration(ElbConfiguration elb) {
+    this.elb = elb;
+  }
+
 }

@@ -1,13 +1,17 @@
 package com.hubspot.baragon.agent;
 
-import com.hubspot.baragon.data.BaragonKnownAgentsDatastore;
 import io.dropwizard.jetty.HttpConnectorFactory;
 import io.dropwizard.server.SimpleServerFactory;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.net.URL;
+import java.net.URLConnection;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 
 import org.apache.curator.framework.recipes.leader.LeaderLatch;
 
@@ -38,6 +42,7 @@ public class BaragonAgentServiceModule extends AbstractModule {
   public static final String AGENT_TEMPLATES = "baragon.agent.templates";
   public static final String AGENT_MOST_RECENT_REQUEST_ID = "baragon.agent.mostRecentRequestId";
   public static final String AGENT_LOCK_TIMEOUT_MS = "baragon.agent.lock.timeoutMs";
+  public static final String AGENT_INSTANCE_ID = "baragon.agent.instanceid";
 
   @Override
   protected void configure() {
@@ -104,7 +109,7 @@ public class BaragonAgentServiceModule extends AbstractModule {
     final String baseAgentUri = String.format(config.getBaseUrlTemplate(), hostname, httpPort, appRoot);
     final String agentId = String.format("%s:%s", hostname, httpPort);
 
-    return new BaragonAgentMetadata(baseAgentUri, agentId, domain);
+    return new BaragonAgentMetadata(baseAgentUri, agentId, domain, config.getElbConfiguration());
   }
 
   @Provides
@@ -134,5 +139,22 @@ public class BaragonAgentServiceModule extends AbstractModule {
   @Named(AGENT_MOST_RECENT_REQUEST_ID)
   public AtomicReference<String> providesMostRecentRequestId() {
     return new AtomicReference<>();
+  }
+
+  private String getInstanceId() {
+    try {
+      String instanceId = null;
+      String inputLine;
+      URL ec2MetaData = new URL("http://169.254.169.254/latest/meta-data/instance-id");
+      URLConnection ec2Conn = ec2MetaData.openConnection();
+      BufferedReader in = new BufferedReader(new InputStreamReader(ec2Conn.getInputStream()));
+      while ((inputLine = in.readLine()) != null) {
+        instanceId = inputLine;
+      }
+      in.close();
+      return instanceId;
+    } catch (IOException e) {
+      return "";
+    }
   }
 }
