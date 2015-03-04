@@ -40,7 +40,7 @@ public class ElbSyncWorkerListener extends AbstractLatchListener {
       elbWorkerFuture.cancel(false);
     }
 
-    elbWorkerFuture = executorService.scheduleAtFixedRate(elbWorker, config.getElbConfiguration().getInitialDelayMs(), config.getElbConfiguration().getIntervalMs(), TimeUnit.MILLISECONDS);
+    elbWorkerFuture = executorService.scheduleAtFixedRate(elbWorker, config.getElbConfiguration().getInitialDelaySeconds(), config.getElbConfiguration().getIntervalSeconds(), TimeUnit.SECONDS);
   }
 
   @Override

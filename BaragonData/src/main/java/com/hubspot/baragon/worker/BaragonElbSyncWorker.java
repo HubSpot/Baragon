@@ -5,18 +5,20 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import com.amazonaws.AmazonClientException;
 import com.amazonaws.services.elasticloadbalancing.model.DeregisterInstancesFromLoadBalancerRequest;
 import com.amazonaws.services.elasticloadbalancing.model.Instance;
 import com.amazonaws.services.elasticloadbalancing.model.LoadBalancerDescription;
 import com.amazonaws.services.elasticloadbalancing.AmazonElasticLoadBalancingClient;
 import com.amazonaws.services.elasticloadbalancing.model.RegisterInstancesWithLoadBalancerRequest;
 import com.google.inject.name.Named;
-import com.hubspot.baragon.BaragonDataModule;
-import com.hubspot.baragon.data.BaragonLoadBalancerDatastore;
-import com.hubspot.baragon.models.BaragonAgentMetadata;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.google.inject.Inject;
+
+import com.hubspot.baragon.BaragonDataModule;
+import com.hubspot.baragon.data.BaragonLoadBalancerDatastore;
+import com.hubspot.baragon.models.BaragonAgentMetadata;
 
 public class BaragonElbSyncWorker implements Runnable {
   private static final Logger LOG = LoggerFactory.getLogger(BaragonElbSyncWorker.class);
@@ -33,9 +35,16 @@ public class BaragonElbSyncWorker implements Runnable {
 
   @Override
   public void run() {
-    LOG.info("Starting ELB sync");
-    Collection<LoadBalancerDescription> elbs = elbClient.describeLoadBalancers().getLoadBalancerDescriptions();
-    Collection<BaragonAgentMetadata> agents = loadBalancerDatastore.getAgentMetadata(loadBalancerDatastore.getLoadBalancerGroups());
+    Collection<BaragonAgentMetadata> agents;
+    Collection<LoadBalancerDescription> elbs;
+    try {
+      LOG.info("Starting ELB sync");
+      agents = loadBalancerDatastore.getAgentMetadata(loadBalancerDatastore.getLoadBalancerGroups());
+      elbs = elbClient.describeLoadBalancers().getLoadBalancerDescriptions();
+    } catch (AmazonClientException e) {
+      LOG.info(String.format("Could not retrieve elb information due to error %s", e));
+      return;
+    }
     LOG.info("Registering new instances...");
     registerNewInstances(elbs, agents);
     LOG.info("Deregistering old instances...");
@@ -44,14 +53,16 @@ public class BaragonElbSyncWorker implements Runnable {
 
   private void registerNewInstances(Collection<LoadBalancerDescription> elbs, Collection<BaragonAgentMetadata> agents) {
     for (RegisterInstancesWithLoadBalancerRequest request : registerRequests(elbs, agents)) {
-      elbClient.registerInstancesWithLoadBalancer(request);
-      LOG.info(String.format("Registered instances %s with ELB %s", request.getInstances(), request.getLoadBalancerName()));
+      try {
+        elbClient.registerInstancesWithLoadBalancer(request);
+        LOG.info(String.format("Registered instances %s with ELB %s", request.getInstances(), request.getLoadBalancerName()));
+      } catch (AmazonClientException e) {
+        LOG.info("Could not register %s with elb %s due to error %s", request.getInstances(), request.getLoadBalancerName(), e);
+      }
     }
   }
 
   private Collection<RegisterInstancesWithLoadBalancerRequest> registerRequests(Collection<LoadBalancerDescription> elbs, Collection<BaragonAgentMetadata> agents) {
-    LOG.info(elbs.toString());
-    LOG.info(agents.toString());
     Collection<RegisterInstancesWithLoadBalancerRequest> requests = Collections.emptyList();
     for (BaragonAgentMetadata agent : agents) {
       if (agent.getElbConfiguration().isPresent()) {
@@ -80,8 +91,12 @@ public class BaragonElbSyncWorker implements Runnable {
 
   private void deregisterOldInstances(Collection<LoadBalancerDescription> elbs, Collection<BaragonAgentMetadata> agents) {
     for (DeregisterInstancesFromLoadBalancerRequest request : deregisterRequests(elbs, agents)) {
-      elbClient.deregisterInstancesFromLoadBalancer(request);
-      LOG.info(String.format("Deregistered instances %s from ELB %s", request.getInstances(), request.getLoadBalancerName()));
+      try {
+        elbClient.deregisterInstancesFromLoadBalancer(request);
+        LOG.info(String.format("Deregistered instances %s from ELB %s", request.getInstances(), request.getLoadBalancerName()));
+      } catch (AmazonClientException e) {
+        LOG.info("Could not deregister %s from elb %s due to error %s", request.getInstances(), request.getLoadBalancerName(), e);
+      }
     }
   }
 

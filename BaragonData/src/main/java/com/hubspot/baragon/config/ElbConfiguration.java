@@ -16,11 +16,11 @@ public class ElbConfiguration {
   @JsonProperty("awsAccessKeySecret")
   private String awsAccessKeySecret;
 
-  @Min(5000)
-  private int intervalMs = 10000;
+  @Min(60)
+  private int intervalSeconds = 120;
 
   @Min(0)
-  private int initialDelayMs = 0;
+  private int initialDelaySeconds = 0;
 
   public boolean isEnabled() {
     return enabled;
@@ -46,20 +46,20 @@ public class ElbConfiguration {
     this.awsAccessKeySecret = awsAccessKeySecret;
   }
 
-  public int getIntervalMs() {
-    return intervalMs;
+  public int getIntervalSeconds() {
+    return intervalSeconds;
   }
 
-  public void setIntervalMs(int intervalMs) {
-    this.intervalMs = intervalMs;
+  public void setIntervalSeconds(int intervalSeconds) {
+    this.intervalSeconds = intervalSeconds;
   }
 
-  public int getInitialDelayMs() {
-    return initialDelayMs;
+  public int getInitialDelaySeconds() {
+    return initialDelaySeconds;
   }
 
-  public void setInitialDelayMs(int initialDelayMs) {
-    this.initialDelayMs = initialDelayMs;
+  public void setInitialDelaySeconds(int initialDelaySeconds) {
+    this.initialDelaySeconds = initialDelaySeconds;
   }
 
 }

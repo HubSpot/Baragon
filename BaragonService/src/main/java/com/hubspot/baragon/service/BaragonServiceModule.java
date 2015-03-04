@@ -90,7 +90,7 @@ public class BaragonServiceModule extends AbstractModule {
   @Singleton
   @Named(BARAGON_SERVICE_SCHEDULED_EXECUTOR)
   public ScheduledExecutorService providesScheduledExecutor() {
-    return Executors.newScheduledThreadPool(1);
+    return Executors.newScheduledThreadPool(2);
   }
 
   @Provides
