@@ -138,36 +138,24 @@ class Service(unittest.TestCase):
         self.assertEqual(type(response.json()), list)
 
     def test_cluster_agents(self):
-        uri = '{0}/load-balancer'.format(BASE_URI)
-        response = requests.get(uri, params=self.params)
-        self.assertEqual(response.status_code, 200)
-        cluster = response.json()[0]
-        uri = '{0}/load-balancer/{1}/agents'.format(BASE_URI, cluster)
+        uri = '{0}/load-balancer/{1}/agents'.format(BASE_URI, LOAD_BALANCER_GROUP)
         response = requests.get(uri, params=self.params)
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.json()[0].has_key('baseAgentUri'))
 
     def test_cluster_known_agents(self):
-        uri = '{0}/load-balancer'.format(BASE_URI)
-        response = requests.get(uri, params=self.params)
-        self.assertEqual(response.status_code, 200)
-        cluster = response.json()[0]
-        uri = '{0}/load-balancer/{1}/known-agents'.format(BASE_URI, cluster)
+        uri = '{0}/load-balancer/{1}/known-agents'.format(BASE_URI, LOAD_BALANCER_GROUP)
         response = requests.get(uri, params=self.params)
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.json()[0].has_key('baseAgentUri'))
 
     def test_cluster_base_paths(self):
-        uri = '{0}/load-balancer'.format(BASE_URI)
-        response = requests.get(uri, params=self.params)
-        self.assertEqual(response.status_code, 200)
-        cluster = response.json()[0]
-        uri = '{0}/load-balancer/{1}/base-path/all'.format(BASE_URI, cluster)
+        uri = '{0}/load-balancer/{1}/base-path/all'.format(BASE_URI, LOAD_BALANCER_GROUP)
         response = requests.get(uri, params=self.params)
         self.assertEqual(response.status_code, 200)
         self.assertTrue(type(response.json()), list)
         basePath = response.json()[0]
-        uri = '{0}/load-balancer/{1}/base-path'.format(BASE_URI, cluster)
+        uri = '{0}/load-balancer/{1}/base-path'.format(BASE_URI, LOAD_BALANCER_GROUP)
         response = requests.get(uri, params={'authkey': AUTH_KEY, 'basePath': basePath})
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.json().has_key('serviceId'))
