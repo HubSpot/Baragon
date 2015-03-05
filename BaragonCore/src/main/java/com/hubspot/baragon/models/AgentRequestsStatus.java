@@ -4,5 +4,6 @@ public enum AgentRequestsStatus {
   WAITING,
   SUCCESS,
   FAILURE,
-  RETRY
+  RETRY,
+  INVALID_REQUEST_NOOP
 }

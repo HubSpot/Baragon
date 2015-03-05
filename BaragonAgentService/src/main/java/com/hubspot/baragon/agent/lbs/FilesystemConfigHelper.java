@@ -17,6 +17,7 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.hubspot.baragon.exceptions.InvalidConfigException;
 import com.hubspot.baragon.exceptions.LbAdapterExecuteException;
+import com.hubspot.baragon.exceptions.MissingTemplateException;
 import com.hubspot.baragon.models.BaragonConfigFile;
 import com.hubspot.baragon.models.BaragonService;
 import com.hubspot.baragon.models.ServiceContext;
@@ -53,7 +54,7 @@ public class FilesystemConfigHelper {
     }
   }
 
-  public void apply(ServiceContext context, Optional<BaragonService> maybeOldService, boolean revertOnFailure) throws InvalidConfigException, LbAdapterExecuteException, IOException {
+  public void apply(ServiceContext context, Optional<BaragonService> maybeOldService, boolean revertOnFailure) throws InvalidConfigException, LbAdapterExecuteException, IOException, MissingTemplateException {
     final BaragonService service = context.getService();
     final BaragonService oldService;
     if (maybeOldService.isPresent()) {
@@ -66,7 +67,9 @@ public class FilesystemConfigHelper {
     final boolean oldServiceExists = configsExist(oldService);
     final boolean previousConfigsExist = configsExist(service);
 
-    if (configGenerator.generateConfigsForProject(context).equals(readConfigs(oldService))) {
+    Collection<BaragonConfigFile> newConfigs = configGenerator.generateConfigsForProject(context);
+
+    if (newConfigs.equals(readConfigs(oldService))) {
       LOG.info("    Configs are unchanged, skipping apply");
       return;
     }
@@ -82,7 +85,7 @@ public class FilesystemConfigHelper {
     // Write & check the configs
     try {
       if (context.isPresent()) {
-        writeConfigs(configGenerator.generateConfigsForProject(context));
+        writeConfigs(newConfigs);
         //If the new service id for this base path is different, remove the configs for the old service id
         if (oldServiceExists && !oldService.getServiceId().equals(service.getServiceId())) {
           remove(oldService, false);

@@ -34,7 +34,7 @@ public class LbConfigGenerator {
     this.templates = templates;
   }
 
-  public Collection<BaragonConfigFile> generateConfigsForProject(ServiceContext snapshot) {
+  public Collection<BaragonConfigFile> generateConfigsForProject(ServiceContext snapshot) throws MissingTemplateException {
     final Collection<BaragonConfigFile> files = Lists.newArrayList();
     String templateName = snapshot.getService().getTemplate() != null ? snapshot.getService().getTemplate() : "default";
 
@@ -54,7 +54,7 @@ public class LbConfigGenerator {
         files.add(new BaragonConfigFile(String.format("%s/%s", loadBalancerConfiguration.getRootPath(), filename), sw.toString()));
       }
     } else {
-      Throwables.propagate(new MissingTemplateException(String.format("Template %s could not be found", templateName)));
+      throw new MissingTemplateException(String.format("MissingTemplateException : Template %s could not be found", templateName));
     }
 
     return files;

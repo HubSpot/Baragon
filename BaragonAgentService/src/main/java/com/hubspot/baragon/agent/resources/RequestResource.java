@@ -34,6 +34,7 @@ import com.hubspot.baragon.models.BaragonRequest;
 import com.hubspot.baragon.models.BaragonService;
 import com.hubspot.baragon.models.ServiceContext;
 import com.hubspot.baragon.models.UpstreamInfo;
+import com.hubspot.baragon.exceptions.MissingTemplateException;
 
 @Path("/request/{requestId}")
 @Produces(MediaType.APPLICATION_JSON)
@@ -95,7 +96,6 @@ public class RequestResource {
 
       if (!request.getLoadBalancerService().getLoadBalancerGroups().contains(loadBalancerConfiguration.getName())) {
         // this service has been deleted or moved off this load balancer -- delete the config
-
         update = new ServiceContext(request.getLoadBalancerService(), Collections.<UpstreamInfo>emptyList(), System.currentTimeMillis(), false);
       } else {
         // Apply request
@@ -183,6 +183,11 @@ public class RequestResource {
       
       try {
         configHelper.apply(update, Optional.<BaragonService>absent(), false);
+      } catch (MissingTemplateException e) {
+        // If this service previously didn't exist, no config was written, doesn't matter that we can't find the template
+        if (!maybeOldService.isPresent() || !maybeOldService.get().getLoadBalancerGroups().contains(loadBalancerConfiguration.getName())) {
+          return Response.ok().build();
+        }
       } catch (Exception e) {
         return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
       }

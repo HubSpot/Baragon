@@ -1,8 +1,10 @@
 package com.hubspot.baragon.worker;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -105,6 +107,8 @@ public class BaragonRequestWorker implements Runnable {
             }
           case RETRY:
             return InternalRequestStates.SEND_APPLY_REQUESTS;
+          case INVALID_REQUEST_NOOP:
+            return InternalRequestStates.INVALID_REQUEST_NOOP;
           default:
             return InternalRequestStates.CHECK_APPLY_RESPONSES;
         }

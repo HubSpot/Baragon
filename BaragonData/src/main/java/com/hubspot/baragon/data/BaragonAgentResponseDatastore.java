@@ -102,6 +102,10 @@ public class BaragonAgentResponseDatastore extends AbstractDataStore {
     return responses;
   }
 
+  public Optional<AgentResponse> getAgentResponse(String requestId, AgentRequestType requestType, AgentResponseId agentResponseId, String baseUrl) {
+    return readFromZk(String.format(AGENT_RESPONSE_FORMAT, requestId, requestType, encodeUrl(baseUrl), agentResponseId.getId()), AgentResponse.class);
+  }
+
   public Optional<AgentResponse> getAgentResponse(String requestId, AgentRequestId agentRequestId, AgentResponseId agentResponseId) {
     return readFromZk(String.format(AGENT_RESPONSE_FORMAT, requestId, agentRequestId.getType(), encodeUrl(agentRequestId.getBaseUrl()), agentResponseId.getId()), AgentResponse.class);
   }
