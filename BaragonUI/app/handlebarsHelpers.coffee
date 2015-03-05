@@ -31,7 +31,6 @@ Handlebars.registerHelper 'humanizeFileSize', (fileSize) ->
     else
         return "#{ fileSize } B"
 
-
 Handlebars.registerHelper 'debug', (variable) ->
     console.dir(variable)
 
@@ -46,4 +45,8 @@ Handlebars.registerHelper 'timestampFromNow', (timestamp) ->
     timeObject = moment timestamp
     "#{timeObject.fromNow()} (#{ timeObject.format 'lll'})"
 
+Handlebars.registerHelper 'parseAgent', (urlString) ->
+    return urlString.replace("http://", "").split("/", 2)[0]
 
+Handlebars.registerHelper 'parseStatusUrl', (urlString) ->
+    return urlString.replace(/request\/.*/,"status")

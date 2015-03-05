@@ -1,0 +1,77 @@
+{{#if synced}}
+    <div class="row detail-header">
+        <div class="col-md-10">
+            <h3>{{ request.loadBalancerRequestId }}</h3>
+        </div>
+        <div class="col-md-2 button-container">
+            <a class="btn btn-default" data-service-id="{{ request.loadBalancerRequestId }}" data-action="viewJSON">
+                JSON
+            </a>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel panel-default">
+                <div class="panel-heading"><h4>Load Balancer State: {{ request.loadBalancerState }}</h4></div>
+                <div class="panel-body">
+                    <strong>Message:</strong>
+                    <p>{{ request.message }}</p>
+                </div>
+            <div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel panel-default">
+                <div class="panel-heading"><h4>Agent Responses</h4></div>
+                <div class="panel-body">
+                    <ul class="list-group">
+                        <li class="list-group-item">
+                            {{#each request.agentResponses}}
+                                <h4>{{ @key }}</h4>
+                                <ul class="list-group">
+                                    {{#each this}}
+                                        <li class="list-group-item">
+                                            <div class="row">
+                                                <div class="col-md-4">
+                                                    <strong>Agent: </strong>
+                                                    <a href="{{parseStatusUrl url}}">{{parseAgent url}}</a>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <strong>Attempt: </strong>
+                                                    {{ attempt }}
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <strong>Status Code: </strong>
+                                                    {{ statusCode }}
+                                                </div>
+                                            </div>
+                                            {{#if content}}
+                                                <div class="row">
+                                                    <div class="col-md-12">
+                                                        <strong>Message: </strong>
+                                                        {{ content }}
+                                                    </div>
+                                                </div>
+                                            {{/if}}
+                                            {{#if exception}}
+                                                <div class="row">
+                                                    <div class="col-md-12">
+                                                        <strong>Exception: </strong>
+                                                        {{ exception }}
+                                                    </div>
+                                                </div>
+                                            {{/if}}
+                                        </li>
+                                    {{/each}}
+                                </ul>
+                            {{/each}}
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+{{else}}
+    <div class="page-loader centered cushy"></div>
+{{/if}}

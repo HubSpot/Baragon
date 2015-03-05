@@ -3,6 +3,7 @@ ServicesController    = require 'controllers/Services'
 ServiceDetailController    = require 'controllers/ServiceDetail'
 GroupsController    = require 'controllers/Groups'
 GroupDetailController    = require 'controllers/GroupDetail'
+RequestController = require 'controllers/Request'
 NotFoundController = require 'controllers/NotFound'
 
 class Router extends Backbone.Router
@@ -15,6 +16,8 @@ class Router extends Backbone.Router
 
         'groups(/)':               'groups'
         'groups/:groupId(/)':      'groupDetail'
+
+        'requests/:requestId(/)':  'request'
 
         '*anything':               'notFound'
 
@@ -32,6 +35,9 @@ class Router extends Backbone.Router
 
     groupDetail: (groupId) ->
         app.bootstrapController new GroupDetailController {groupId}
+
+    request: (requestId) ->
+        app.bootstrapController new RequestController {requestId}
 
     notFound: ->
         app.bootstrapController new NotFoundController
