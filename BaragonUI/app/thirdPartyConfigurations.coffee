@@ -1,5 +1,6 @@
 # Set Vex default className
 vex.defaultOptions.className = 'vex-theme-default'
+vex.defaultOptions.contentCSS = {width: '50%'}
 
 # Time out requests within 10 seconds
 $.ajaxSetup
