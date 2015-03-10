@@ -91,9 +91,11 @@
                 <div class="panel panel-default">
                     <div class="panel-heading"><h4>{{@key}}</h4></div>
                     <div class="panel-body">
-                        {{#each this}}
-                            <code>{{this}}</code><br>
-                        {{/each}}
+                        <pre>
+                            {{#each this}}
+    {{this}}
+                            {{/each}}
+                        </pre>
                     </div>
                 </div>
             </div>
