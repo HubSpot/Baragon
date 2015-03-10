@@ -145,4 +145,11 @@ class Utils
             $el.on       'shrink', shrink
         , 100
 
+    @splitArray:(arr, size) =>
+        arr2 = arr.slice(0)
+        arrays = []
+        while (arr2.length > 0)
+            arrays.push(arr2.splice(0, size))
+        return arrays
+
 module.exports = Utils

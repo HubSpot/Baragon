@@ -1,9 +1,12 @@
 {{#if synced}}
     <div class="row detail-header">
-        <div class="col-md-8">
-            <h2>{{ service.id }}</h2>
+        <div class="col-md-6">
+            <h3>{{ service.id }}</h3>
         </div>
-        <div class="col-md-4 button-container">
+        <div class="col-md-4">
+            <h3>{{ service.basePath }}</h3>
+        </div>
+        <div class="col-md-2 button-container">
             <a class="btn btn-default" data-service-id="{{ service.id }}" data-action="viewJSON">
                 JSON
             </a>
@@ -17,43 +20,33 @@
             {{/if}}
         </div>
     </div>
-    <div class="row same-size-row">
-        <div class="col-md-3 same-size-col">
-            <div class="row">
-                <div class="col-md-12">
-                    <div class="panel panel-default">
-                        <div class="panel-heading"><h4>Base Path</h4></div>
-                        <div class="panel-body">
-                            <a data-service-id="{{ service.id }}" data-action="viewJSON">
-                                {{ service.basePath }}
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-md-12">
-                    <div class="panel panel-default">
-                        <div class="panel-heading"><h4>Owners</h4></div>
-                        <div class="panel-body">
+    <div class="row">
+        <div class="col-md-6">
+            <div class="panel panel-default">
+                <div class="panel-heading"><h4>Owners</h4></div>
+                <div class="panel-body">
+                    {{#each service.splitOwners}}
+                        <div class="col-md-6">
                             <ul class="list-group">
-                                {{#each service.service.owners}}
-                                    <li class="list-group-item">{{ this }}</li>
+                                {{#each this}}
+                                    <li class="list-group-item">
+                                        {{ this }}
+                                    </li>
                                 {{/each}}
                             </ul>
                         </div>
-                    </div>
+                    {{/each}}
                 </div>
             </div>
         </div>
-        <div class="col-md-3 same-size-col">
-            <div class="row">
-                <div class="col-md-12">
-                    <div class="panel panel-default">
-                        <div class="panel-heading"><h4>Load Balancer Groups</h4></div>
-                        <div class="panel-body">
+        <div class="col-md-6">
+          <div class="panel panel-default">
+                <div class="panel-heading"><h4>Load Balancer Groups</h4></div>
+                <div class="panel-body">
+                    {{#each service.splitLbGroups}}
+                        <div class="col-md-6">
                             <ul class="list-group">
-                                {{#each service.service.loadBalancerGroups}}
+                                {{#each this}}
                                     <li class="list-group-item">
                                         <a title="{{ this }}" href="{{appRoot}}/groups/{{ this }}">
                                             {{ this }}
@@ -62,29 +55,32 @@
                                 {{/each}}
                             </ul>
                         </div>
-                    </div>
+                    {{/each}}
                 </div>
             </div>
         </div>
-        <div class="col-md-6 same-size-col">
-            <div class="row">
-                <div class="col-md-12">
-                    <div class="panel panel-default">
-                        <div class="panel-heading"><h4>Upstreams</h4></div>
-                        <div class="panel-body">
-                            <ul class="list-group">
-                                {{#each service.upstreams}}
-                                    <div class="panel panel-default">
-                                        <div class="panel-heading"><strong>{{upstream}}</strong></div>
-                                        <div class="panel-body">
-                                            <strong>From Request:</strong> {{ requestId }} <br>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+          <div class="panel panel-default">
+                <div class="panel-heading"><h4>Upstreams</h4></div>
+                <div class="panel-body">
+                    {{#each service.splitUpstreams}}
+                        <div class="col-md-6">
+                            {{#each this}}
+                                <div class="list-group">
+                                    <a href="{{appRoot}}/requests/{{requestId}}" class="list-group-item">
+                                        <h4 class="list-group-item-heading">{{upstream}}</h4>
+                                        <p class="list-group-item-text">
+                                            <strong>From Request:</strong> {{ requestId }}
+                                            <br>
                                             <strong>Rack ID:</strong> {{ rackId }}
-                                        </div>
-                                    </div>
-                                {{/each}}
-                            </ul>
+                                        </p>
+                                    </a>
+                                </div>
+                            {{/each}}
                         </div>
-                    </div>
+                    {{/each}}
                 </div>
             </div>
         </div>

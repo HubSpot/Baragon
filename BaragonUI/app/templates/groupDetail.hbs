@@ -1,79 +1,71 @@
 {{#if synced}}
     <div class="row">
-        <div class="col-md-8">
-            <div class="row">
-                <div class="col-md-12">
-                    <div class="panel panel-default">
-                        <div class="panel-heading"><h4>Active Agents</h4></div>
-                        <div class="panel-body">
-                            <table class="table table-striped">
-                                <thead>
-                                    <tr>
-                                        <th>ID</th>
-                                        <th>Domain</th>
-                                        <th>Base Uri</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {{#each agents}}
-                                        <tr data-agent-id="{{ agentId }}">
-                                            <td>{{ agentId }}</td>
-                                            <td><a href="http://{{domain}}">{{ domain }}</a></td>
-                                            <td><a href="{{ baseAgentUri }}/status">{{ baseAgentUri }}</a></td>
-                                        </tr>
-                                    {{/each}}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-md-12">
-                    <div class="panel panel-default">
-                        <div class="panel-heading"><h4>All Known Agents</h4></div>
-                        <div class="panel-body">
-                            <table class="table table-striped">
-                                <thead>
-                                    <tr>
-                                        <th>ID</th>
-                                        <th>Domain</th>
-                                        <th>Base Uri</th>
-                                        <th>Joined Cluster</th>
-                                        <th class="hidden-xs">{{! Actions column }}</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {{#each knownAgents}}
-                                        <tr data-agent-id="{{ agentId }}">
-                                            <td>{{ agentId }}</td>
-                                            <td><a href="http://{{domain}}">{{ domain }}</a></td>
-                                            <td><a href="{{ baseAgentUri }}/status">{{ baseAgentUri }}</a></td>
-                                            <td>{{timestampFromNow lastSeenAt }}</td>
-                                            <td>
-                                                <a data-action="remove" title="Remove Known-Agent">
-                                                    <span class="glyphicon glyphicon-remove"></span>
-                                                </a>
-                                            </td>
-                                        </tr>
-                                    {{/each}}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
+        <div class="col-md-12">
+            <h4>Active Agents</h4>
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Domain</th>
+                        <th>Base Uri</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{#each agents}}
+                        <tr data-agent-id="{{ agentId }}">
+                            <td>{{ agentId }}</td>
+                            <td><a href="http://{{domain}}">{{ domain }}</a></td>
+                            <td><a href="{{ baseAgentUri }}/status">{{ baseAgentUri }}</a></td>
+                        </tr>
+                    {{/each}}
+                </tbody>
+            </table>
         </div>
-        <div class="col-md-4">
-            <div class="panel panel-default">
-                <div class="panel-heading"><h4>Base Paths</h4></div>
-                <div class="panel-body">
-                    <ul class="list-group">
-                        {{#each basePaths.paths }}
-                            <li class="list-group-item">{{ this }}</li>
-                        {{/each}}
-                    </ul>
-                </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <h4>All Known Agents</h4>
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Domain</th>
+                        <th>Base Uri</th>
+                        <th>Joined Cluster</th>
+                        <th class="hidden-xs">{{! Actions column }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{#each knownAgents}}
+                        <tr data-agent-id="{{ agentId }}">
+                            <td>{{ agentId }}</td>
+                            <td><a href="http://{{domain}}">{{ domain }}</a></td>
+                            <td><a href="{{ baseAgentUri }}/status">{{ baseAgentUri }}</a></td>
+                            <td>{{timestampFromNow lastSeenAt }}</td>
+                            <td>
+                                <a data-action="remove" title="Remove Known-Agent">
+                                    <span class="glyphicon glyphicon-remove"></span>
+                                </a>
+                            </td>
+                        </tr>
+                    {{/each}}
+                </tbody>
+            </table>
+        </div>
+        <div class="row">
+            <div class="col-md-12">
+                <h4>Base Paths</h4>
+                {{#each basePaths.splitPaths}}
+                    <div class="col-md-3">
+                        <ul class="list-group">
+                            {{#each this}}
+                                <li class="list-group-item">
+                                    {{ this }}
+                                </li>
+                            {{/each}}
+                        </ul>
+                    </div>
+                {{/each}}
             </div>
         </div>
     </div>

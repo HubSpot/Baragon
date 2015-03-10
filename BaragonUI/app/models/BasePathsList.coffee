@@ -9,6 +9,7 @@ class BasePathsList extends Model
     parse: (data) =>
         newData = {}
         newData.paths = data
+        newData.splitPaths = utils.splitArray(data, Math.ceil(data.length/4))
         newData
 
 module.exports = BasePathsList

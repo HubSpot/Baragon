@@ -13,7 +13,10 @@ class Service extends Model
     parse: (data) ->
         data.id = data.service.serviceId
         data.loadBalancerGroups = data.service.loadBalancerGroups
+        data.splitLbGroups = utils.splitArray(data.service.loadBalancerGroups.sort(), Math.ceil(data.service.loadBalancerGroups.length/2))
+        data.splitOwners = utils.splitArray(data.service.owners.sort(), Math.ceil(data.service.owners.length/2))
         data.basePath = data.service.serviceBasePath
+        data.splitUpstreams = utils.splitArray(data.upstreams, Math.ceil(data.upstreams.length/2))
         data.upstreamsCount = data.upstreams.length
         if data.upstreamsCount > 0
             data.active = true
