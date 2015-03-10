@@ -91,6 +91,7 @@
         <version>${java.abi}</version>
         <configuration>
           <createDependencyReducedPom>true</createDependencyReducedPom>
+          <finalName>${baragon.jar.name.format}</finalName>
           <filters>
             <filter>
               <artifact>*:*</artifact>

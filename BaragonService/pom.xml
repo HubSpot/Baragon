@@ -12,7 +12,6 @@
 
     <properties>
         <dropwizard.serviceClass>com.hubspot.baragon.service.BaragonService</dropwizard.serviceClass>
-        <baragon.jar.name.format>${project.artifactId}-${project.version}</baragon.jar.name.format>
     </properties>
 
 	<dependencies>
