@@ -197,6 +197,7 @@ public class AgentManager {
 
   public boolean hasNoAgents(String loadBalancerGroup) {
     return loadBalancerDatastore.getAgentMetadata(loadBalancerGroup).isEmpty();
+  }
 
   public boolean hasMissingTemplate(Optional<AgentResponse> maybeLastResponse) {
     return maybeLastResponse.isPresent() && maybeLastResponse.get().getContent().isPresent() && maybeLastResponse.get().getContent().get().contains("MissingTemplateException");
