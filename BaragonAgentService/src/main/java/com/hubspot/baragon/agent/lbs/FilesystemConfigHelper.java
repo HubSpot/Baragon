@@ -17,6 +17,7 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.hubspot.baragon.exceptions.InvalidConfigException;
 import com.hubspot.baragon.exceptions.LbAdapterExecuteException;
+import com.hubspot.baragon.exceptions.MissingTemplateException;
 import com.hubspot.baragon.models.BaragonConfigFile;
 import com.hubspot.baragon.models.BaragonService;
 import com.hubspot.baragon.models.ServiceContext;
@@ -36,15 +37,15 @@ public class FilesystemConfigHelper {
     this.adapter = adapter;
   }
 
-  public void remove(String serviceId, boolean reloadConfigs) throws LbAdapterExecuteException, IOException {
-    for (String filename : configGenerator.getConfigPathsForProject(serviceId)) {
+  public void remove(BaragonService service, boolean reloadConfigs) throws LbAdapterExecuteException, IOException {
+    for (String filename : configGenerator.getConfigPathsForProject(service)) {
       File file = new File(filename);
       if (!file.exists()) {
         continue;
       }
 
       if (!file.delete()) {
-        throw new RuntimeException("Failed to remove " + filename + " for " + serviceId);
+        throw new RuntimeException("Failed to remove " + filename + " for " + service.getServiceId());
       }
     }
 
@@ -53,57 +54,54 @@ public class FilesystemConfigHelper {
     }
   }
 
-  public void apply(ServiceContext context,Optional<String> replaceServiceId, boolean revertOnFailure) throws InvalidConfigException, LbAdapterExecuteException, IOException {
-    final String serviceId = context.getService().getServiceId();
-    final String oldServiceId;
-    if (replaceServiceId.isPresent()) {
-      oldServiceId = replaceServiceId.get();
-    } else {
-      oldServiceId = serviceId;
-    }
+  public void apply(ServiceContext context, Optional<BaragonService> maybeOldService, boolean revertOnFailure) throws InvalidConfigException, LbAdapterExecuteException, IOException, MissingTemplateException {
+    final BaragonService service = context.getService();
+    final BaragonService oldService = maybeOldService.or(service);
 
-    LOG.info(String.format("Going to apply %s: %s", serviceId, Joiner.on(", ").join(context.getUpstreams())));
-    final boolean oldServiceExists = configsExist(oldServiceId);
-    final boolean previousConfigsExist = configsExist(serviceId);
+    LOG.info(String.format("Going to apply %s: %s", service.getServiceId(), Joiner.on(", ").join(context.getUpstreams())));
+    final boolean oldServiceExists = configsExist(oldService);
+    final boolean previousConfigsExist = configsExist(service);
 
-    if (configGenerator.generateConfigsForProject(context).equals(readConfigs(oldServiceId))) {
+    Collection<BaragonConfigFile> newConfigs = configGenerator.generateConfigsForProject(context);
+
+    if (newConfigs.equals(readConfigs(oldService))) {
       LOG.info("    Configs are unchanged, skipping apply");
       return;
     }
 
     // Backup configs
     if (revertOnFailure) {
-      backupConfigs(serviceId);
+      backupConfigs(service);
       if (oldServiceExists) {
-        backupConfigs(oldServiceId);
+        backupConfigs(oldService);
       }
     }
 
     // Write & check the configs
     try {
       if (context.isPresent()) {
-        writeConfigs(configGenerator.generateConfigsForProject(context));
+        writeConfigs(newConfigs);
         //If the new service id for this base path is different, remove the configs for the old service id
-        if (oldServiceExists && !oldServiceId.equals(serviceId)) {
-          remove(oldServiceId, false);
+        if (oldServiceExists && !oldService.getServiceId().equals(service.getServiceId())) {
+          remove(oldService, false);
         }
       } else {
-        remove(serviceId, false);
+        remove(service, false);
       }
 
       adapter.checkConfigs();
     } catch (Exception e) {
-      LOG.error("Caught exception while writing configs for " + serviceId + ", reverting to backups!", e);
+      LOG.error("Caught exception while writing configs for " + service.getServiceId() + ", reverting to backups!", e);
 
       // Restore configs
       if (revertOnFailure) {
-        if (oldServiceExists) {
-          restoreConfigs(oldServiceId);
+        if (oldServiceExists && !oldService.equals(service)) {
+          restoreConfigs(oldService);
         }
         if (previousConfigsExist) {
-          restoreConfigs(serviceId);
+          restoreConfigs(service);
         } else {
-          remove(serviceId, false);
+          remove(service, false);
         }
       }
 
@@ -113,7 +111,7 @@ public class FilesystemConfigHelper {
     // Load the new configs
     adapter.reloadConfigs();
 
-    removeBackupConfigs(oldServiceId);
+    removeBackupConfigs(oldService);
   }
 
   private void writeConfigs(Collection<BaragonConfigFile> files) {
@@ -127,10 +125,10 @@ public class FilesystemConfigHelper {
     }
   }
 
-  private Collection<BaragonConfigFile> readConfigs(String serviceId) {
+  private Collection<BaragonConfigFile> readConfigs(BaragonService service) {
     final Collection<BaragonConfigFile> configs = new ArrayList<>();
 
-    for (String filename : configGenerator.getConfigPathsForProject(serviceId)) {
+    for (String filename : configGenerator.getConfigPathsForProject(service)) {
       File file = new File(filename);
       if (!file.exists()) {
         continue;
@@ -146,8 +144,8 @@ public class FilesystemConfigHelper {
     return configs;
   }
 
-  private void backupConfigs(String serviceId) {
-    for (String filename : configGenerator.getConfigPathsForProject(serviceId)) {
+  private void backupConfigs(BaragonService service) {
+    for (String filename : configGenerator.getConfigPathsForProject(service)) {
       try {
         File src = new File(filename);
         if (!src.exists()) {
@@ -162,8 +160,8 @@ public class FilesystemConfigHelper {
     }
   }
 
-  private void removeBackupConfigs(String serviceId) {
-    for (String filename : configGenerator.getConfigPathsForProject(serviceId)) {
+  private void removeBackupConfigs(BaragonService service) {
+    for (String filename : configGenerator.getConfigPathsForProject(service)) {
       File file = new File(filename + BACKUP_FILENAME_SUFFIX);
       if (!file.exists()) {
         continue;
@@ -171,8 +169,8 @@ public class FilesystemConfigHelper {
     }
   }
 
-  private boolean configsExist(String serviceId) {
-    for (String filename : configGenerator.getConfigPathsForProject(serviceId)) {
+  private boolean configsExist(BaragonService service) {
+    for (String filename : configGenerator.getConfigPathsForProject(service)) {
       if (!new File(filename).exists()) {
         return false;
       }
@@ -181,8 +179,8 @@ public class FilesystemConfigHelper {
     return true;
   }
 
-  private void restoreConfigs(String serviceId) {
-    for (String filename : configGenerator.getConfigPathsForProject(serviceId)) {
+  private void restoreConfigs(BaragonService service) {
+    for (String filename : configGenerator.getConfigPathsForProject(service)) {
       try {
         File src = new File(filename + BACKUP_FILENAME_SUFFIX);
         if (!src.exists()) {

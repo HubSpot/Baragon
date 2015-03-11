@@ -1,11 +1,14 @@
 package com.hubspot.baragon.worker;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
+import com.hubspot.baragon.models.BaragonAgentMetadata;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -85,6 +88,13 @@ public class BaragonRequestWorker implements Runnable {
           return InternalRequestStates.FAILED_REVERTED;
         }
 
+        for (String loadBalancerGroup : request.getLoadBalancerService().getLoadBalancerGroups()) {
+          if (agentManager.hasNoAgents(loadBalancerGroup)) {
+            requestManager.setRequestMessage(request.getLoadBalancerRequestId(), String.format("Invalid request due to no agents present for group: %s", loadBalancerGroup));
+            return InternalRequestStates.INVALID_REQUEST_NOOP;
+          }
+        }
+
         requestManager.lockBasePaths(request);
 
         return InternalRequestStates.SEND_APPLY_REQUESTS;
@@ -105,6 +115,9 @@ public class BaragonRequestWorker implements Runnable {
             }
           case RETRY:
             return InternalRequestStates.SEND_APPLY_REQUESTS;
+          case INVALID_REQUEST_NOOP:
+            requestManager.revertBasePath(request);
+            return InternalRequestStates.INVALID_REQUEST_NOOP;
           default:
             return InternalRequestStates.CHECK_APPLY_RESPONSES;
         }

@@ -4,7 +4,6 @@ import io.dropwizard.jetty.HttpConnectorFactory;
 import io.dropwizard.server.SimpleServerFactory;
 
 import java.io.IOException;
-import java.util.Collection;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -12,6 +11,9 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 
 import org.apache.curator.framework.recipes.leader.LeaderLatch;
 
@@ -43,6 +45,7 @@ public class BaragonAgentServiceModule extends AbstractModule {
   public static final String AGENT_MOST_RECENT_REQUEST_ID = "baragon.agent.mostRecentRequestId";
   public static final String AGENT_LOCK_TIMEOUT_MS = "baragon.agent.lock.timeoutMs";
   public static final String AGENT_INSTANCE_ID = "baragon.agent.instanceid";
+  public static final String DEFAULT_TEMPLATE_NAME = "default";
 
   @Override
   protected void configure() {
@@ -63,12 +66,24 @@ public class BaragonAgentServiceModule extends AbstractModule {
   @Provides
   @Singleton
   @Named(AGENT_TEMPLATES)
-  public Collection<LbConfigTemplate> providesTemplates(Handlebars handlebars,
-                                                BaragonAgentConfiguration configuration) throws Exception {
-    Collection<LbConfigTemplate> templates = Lists.newArrayListWithCapacity(configuration.getTemplates().size());
+  public Map<String, List<LbConfigTemplate>> providesAgentTemplates(Handlebars handlebars, BaragonAgentConfiguration configuration) throws Exception {
+    Map<String, List<LbConfigTemplate>> templates = new HashMap<>();
 
     for (TemplateConfiguration templateConfiguration : configuration.getTemplates()) {
-      templates.add(new LbConfigTemplate(templateConfiguration.getFilename(), handlebars.compileInline(templateConfiguration.getTemplate())));
+      if (templates.containsKey(DEFAULT_TEMPLATE_NAME)) {
+        templates.get(DEFAULT_TEMPLATE_NAME).add(new LbConfigTemplate(templateConfiguration.getFilename(), handlebars.compileInline(templateConfiguration.getDefaultTemplate())));
+      } else {
+        templates.put(DEFAULT_TEMPLATE_NAME, Lists.newArrayList(new LbConfigTemplate(templateConfiguration.getFilename(), handlebars.compileInline(templateConfiguration.getDefaultTemplate()))));
+      }
+      if (templateConfiguration.getNamedTemplates() != null) {
+        for (Map.Entry<String, String> entry : templateConfiguration.getNamedTemplates().entrySet()) {
+          if (templates.containsKey(entry.getKey())) {
+            templates.get(entry.getKey()).add(new LbConfigTemplate(templateConfiguration.getFilename(), handlebars.compileInline(entry.getValue())));
+          } else {
+            templates.put(entry.getKey(), Lists.newArrayList(new LbConfigTemplate(templateConfiguration.getFilename(), handlebars.compileInline(entry.getValue()))));
+          }
+        }
+      }
     }
 
     return templates;
