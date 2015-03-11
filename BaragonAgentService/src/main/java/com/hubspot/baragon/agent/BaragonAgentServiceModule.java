@@ -39,6 +39,7 @@ public class BaragonAgentServiceModule extends AbstractModule {
   public static final String AGENT_TEMPLATES = "baragon.agent.templates";
   public static final String AGENT_MOST_RECENT_REQUEST_ID = "baragon.agent.mostRecentRequestId";
   public static final String AGENT_LOCK_TIMEOUT_MS = "baragon.agent.lock.timeoutMs";
+  public static final String DEFAULT_TEMPLATE_NAME = "default";
 
   @Override
   protected void configure() {
@@ -63,10 +64,10 @@ public class BaragonAgentServiceModule extends AbstractModule {
     Map<String, List<LbConfigTemplate>> templates = new HashMap<>();
 
     for (TemplateConfiguration templateConfiguration : configuration.getTemplates()) {
-      if (templates.containsKey("default")) {
-        templates.get("default").add(new LbConfigTemplate(templateConfiguration.getFilename(), handlebars.compileInline(templateConfiguration.getDefaultTemplate())));
+      if (templates.containsKey(DEFAULT_TEMPLATE_NAME)) {
+        templates.get(DEFAULT_TEMPLATE_NAME).add(new LbConfigTemplate(templateConfiguration.getFilename(), handlebars.compileInline(templateConfiguration.getDefaultTemplate())));
       } else {
-        templates.put("default", Lists.newArrayList(new LbConfigTemplate(templateConfiguration.getFilename(), handlebars.compileInline(templateConfiguration.getDefaultTemplate()))));
+        templates.put(DEFAULT_TEMPLATE_NAME, Lists.newArrayList(new LbConfigTemplate(templateConfiguration.getFilename(), handlebars.compileInline(templateConfiguration.getDefaultTemplate()))));
       }
       if (templateConfiguration.getNamedTemplates() != null) {
         for (Map.Entry<String, String> entry : templateConfiguration.getNamedTemplates().entrySet()) {

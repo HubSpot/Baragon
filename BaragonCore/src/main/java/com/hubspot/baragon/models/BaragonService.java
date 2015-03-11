@@ -1,7 +1,6 @@
 package com.hubspot.baragon.models;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -32,7 +31,7 @@ public class BaragonService {
 
   private final Map<String, Object> options;
 
-  private final Optional<String> template;
+  private final Optional<String> templateName;
 
   public BaragonService(@JsonProperty("serviceId") String serviceId,
                         @JsonProperty("owners") Collection<String> owners,
@@ -45,7 +44,7 @@ public class BaragonService {
     this.serviceBasePath = serviceBasePath;
     this.loadBalancerGroups = loadBalancerGroups;
     this.options = options;
-    this.template = template;
+    this.templateName = template;
   }
 
   public BaragonService(String serviceId, Collection<String> owners, String serviceBasePath, Set<String> loadBalancerGroups, Map<String, Object> options) {
@@ -72,8 +71,8 @@ public class BaragonService {
     return options;
   }
 
-  public Optional<String> getTemplate() {
-    return template;
+  public Optional<String> getTemplateName() {
+    return templateName;
   }
 
   @Override
@@ -84,7 +83,7 @@ public class BaragonService {
         ", serviceBasePath='" + serviceBasePath + '\'' +
         ", loadBalancerGroups=" + loadBalancerGroups +
         ", options=" + options +
-        ", template=" + template +
+        ", template=" + templateName +
         ']';
   }
 
@@ -102,7 +101,7 @@ public class BaragonService {
     if (serviceBasePath != null ? !serviceBasePath.equals(service.serviceBasePath) : service.serviceBasePath != null)
       return false;
     if (serviceId != null ? !serviceId.equals(service.serviceId) : service.serviceId != null) return false;
-    if (template != null ? !template.equals(service.template) : service.template != null) return false;
+    if (templateName != null ? !templateName.equals(service.templateName) : service.templateName != null) return false;
 
     return true;
   }
@@ -114,7 +113,7 @@ public class BaragonService {
     result = 31 * result + (serviceBasePath != null ? serviceBasePath.hashCode() : 0);
     result = 31 * result + (loadBalancerGroups != null ? loadBalancerGroups.hashCode() : 0);
     result = 31 * result + (options != null ? options.hashCode() : 0);
-    result = 31 * result + (template != null ? template.hashCode() : 0);
+    result = 31 * result + (templateName != null ? templateName.hashCode() : 0);
     return result;
   }
 }
