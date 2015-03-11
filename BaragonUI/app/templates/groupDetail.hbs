@@ -43,9 +43,11 @@
                             <td><a href="{{ baseAgentUri }}/status">{{ baseAgentUri }}</a></td>
                             <td>{{timestampFromNow lastSeenAt }}</td>
                             <td>
-                                <a data-action="remove" title="Remove Known-Agent">
-                                    <span class="glyphicon glyphicon-remove"></span>
-                                </a>
+                                {{#if config.allowEdit}}
+                                    <a data-action="remove" title="Remove Known-Agent">
+                                        <span class="glyphicon glyphicon-remove"></span>
+                                    </a>
+                                {{/if}}
                             </td>
                         </tr>
                     {{/each}}
