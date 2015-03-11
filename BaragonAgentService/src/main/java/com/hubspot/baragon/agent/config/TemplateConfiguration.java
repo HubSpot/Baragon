@@ -1,5 +1,7 @@
 package com.hubspot.baragon.agent.config;
 
+import java.util.Map;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.hibernate.validator.constraints.NotEmpty;
@@ -14,7 +16,10 @@ public class TemplateConfiguration {
 
   @NotNull
   @JsonProperty("template")
-  private String template;
+  private String defaultTemplate;
+
+  @JsonProperty("namedTemplates")
+  private Map<String, String> extraTemplates;
 
   public String getFilename() {
     return filename;
@@ -24,11 +29,16 @@ public class TemplateConfiguration {
     this.filename = filename;
   }
 
-  public String getTemplate() {
-    return template;
+  public String getDefaultTemplate() {
+    return defaultTemplate;
   }
 
   public void setTemplate(String template) {
-    this.template = template;
+    this.defaultTemplate = template;
   }
+
+  public Map<String, String> getNamedTemplates() {
+    return extraTemplates;
+  }
+
 }

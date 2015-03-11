@@ -3,6 +3,8 @@ package com.hubspot.baragon.managers;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
+import java.util.List;
+import java.util.ArrayList;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -93,7 +95,7 @@ public class AgentManager {
 
     final String requestId = request.getLoadBalancerRequestId();
 
-    for (final BaragonAgentMetadata agentMetadata : loadBalancerDatastore.getAgentMetadata(loadBalancerGroupsToUpdate)) {
+    for (final BaragonAgentMetadata agentMetadata : getAgents(loadBalancerGroupsToUpdate)) {
       final String baseUrl = agentMetadata.getBaseAgentUri();
 
       // wait until pending request has completed.
@@ -141,11 +143,10 @@ public class AgentManager {
   }
 
   public AgentRequestsStatus getRequestsStatus(BaragonRequest request, AgentRequestType requestType) {
-    final Collection<BaragonAgentMetadata> agentMetadatas = loadBalancerDatastore.getAgentMetadata(request.getLoadBalancerService().getLoadBalancerGroups());
-
     boolean success = true;
+    List<Boolean> missingTemplateExceptions = new ArrayList<>();
 
-    for (BaragonAgentMetadata agentMetadata : agentMetadatas) {
+    for (BaragonAgentMetadata agentMetadata : getAgents(request.getLoadBalancerService().getLoadBalancerGroups())) {
       final String baseUrl = agentMetadata.getBaseAgentUri();
 
       Optional<Long> maybePendingRequestTime = agentResponseDatastore.getPendingRequest(request.getLoadBalancerRequestId(), baseUrl);
@@ -164,13 +165,23 @@ public class AgentManager {
         return AgentRequestsStatus.WAITING;
       }
 
-      final AgentResponseId agentResponseId = maybeAgentResponseId.get();
+      Optional<AgentResponse> maybeLastResponse = agentResponseDatastore.getAgentResponse(request.getLoadBalancerRequestId(), requestType, maybeAgentResponseId.get(), baseUrl);
+      boolean missingTemplate = hasMissingTemplate(maybeLastResponse);
+      missingTemplateExceptions.add(missingTemplate);
 
-      if ((agentResponseId.getAttempt() < baragonAgentMaxAttempts - 1) && !agentResponseId.isSuccess()) {
-        return AgentRequestsStatus.RETRY;
-      } else {
-        success = success && agentResponseId.isSuccess();
+      if (!missingTemplate) {
+        final AgentResponseId agentResponseId = maybeAgentResponseId.get();
+
+        if ((agentResponseId.getAttempt() < baragonAgentMaxAttempts - 1) && !agentResponseId.isSuccess()) {
+          return AgentRequestsStatus.RETRY;
+        } else {
+          success = success && agentResponseId.isSuccess();
+        }
       }
+    }
+
+    if (allTrue(missingTemplateExceptions)) {
+      return AgentRequestsStatus.INVALID_REQUEST_NOOP;
     }
 
     return success ? AgentRequestsStatus.SUCCESS : AgentRequestsStatus.FAILURE;
@@ -178,5 +189,26 @@ public class AgentManager {
 
   public Map<String, Collection<AgentResponse>> getAgentResponses(String requestId) {
     return agentResponseDatastore.getLastResponses(requestId);
+  }
+
+  public Collection<BaragonAgentMetadata> getAgents(Set<String> loadBalancerGroups) {
+    return loadBalancerDatastore.getAgentMetadata(loadBalancerGroups);
+  }
+
+  public boolean hasNoAgents(String loadBalancerGroup) {
+    return loadBalancerDatastore.getAgentMetadata(loadBalancerGroup).isEmpty();
+  }
+
+  public boolean hasMissingTemplate(Optional<AgentResponse> maybeLastResponse) {
+    return maybeLastResponse.isPresent() && maybeLastResponse.get().getContent().isPresent() && maybeLastResponse.get().getContent().get().contains("MissingTemplateException");
+  }
+
+  public boolean allTrue(List<Boolean> array) {
+    for (boolean b : array) {
+      if (!b) {
+        return false;
+      }
+    }
+    return true;
   }
 }

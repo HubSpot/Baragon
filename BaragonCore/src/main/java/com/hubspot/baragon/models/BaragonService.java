@@ -1,10 +1,10 @@
 package com.hubspot.baragon.models;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.google.common.base.Optional;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
@@ -31,16 +31,24 @@ public class BaragonService {
 
   private final Map<String, Object> options;
 
+  private final Optional<String> templateName;
+
   public BaragonService(@JsonProperty("serviceId") String serviceId,
                         @JsonProperty("owners") Collection<String> owners,
                         @JsonProperty("serviceBasePath") String serviceBasePath,
                         @JsonProperty("loadBalancerGroups") Set<String> loadBalancerGroups,
-                        @JsonProperty("options") Map<String, Object> options) {
+                        @JsonProperty("options") Map<String, Object> options,
+                        @JsonProperty("templateName") Optional<String> templateName) {
     this.serviceId = serviceId;
     this.owners = owners;
     this.serviceBasePath = serviceBasePath;
     this.loadBalancerGroups = loadBalancerGroups;
     this.options = options;
+    this.templateName = templateName;
+  }
+
+  public BaragonService(String serviceId, Collection<String> owners, String serviceBasePath, Set<String> loadBalancerGroups, Map<String, Object> options) {
+    this(serviceId, owners, serviceBasePath, loadBalancerGroups, options, Optional.<String>absent());
   }
 
   public String getServiceId() {
@@ -63,6 +71,10 @@ public class BaragonService {
     return options;
   }
 
+  public Optional<String> getTemplateName() {
+    return templateName;
+  }
+
   @Override
   public String toString() {
     return "BaragonService [" +
@@ -71,6 +83,7 @@ public class BaragonService {
         ", serviceBasePath='" + serviceBasePath + '\'' +
         ", loadBalancerGroups=" + loadBalancerGroups +
         ", options=" + options +
+        ", templateName=" + templateName +
         ']';
   }
 
@@ -88,6 +101,7 @@ public class BaragonService {
     if (serviceBasePath != null ? !serviceBasePath.equals(service.serviceBasePath) : service.serviceBasePath != null)
       return false;
     if (serviceId != null ? !serviceId.equals(service.serviceId) : service.serviceId != null) return false;
+    if (templateName != null ? !templateName.equals(service.templateName) : service.templateName != null) return false;
 
     return true;
   }
@@ -99,6 +113,7 @@ public class BaragonService {
     result = 31 * result + (serviceBasePath != null ? serviceBasePath.hashCode() : 0);
     result = 31 * result + (loadBalancerGroups != null ? loadBalancerGroups.hashCode() : 0);
     result = 31 * result + (options != null ? options.hashCode() : 0);
+    result = 31 * result + (templateName != null ? templateName.hashCode() : 0);
     return result;
   }
 }

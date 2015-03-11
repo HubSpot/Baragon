@@ -12,7 +12,7 @@ MASTER_AUTH_KEY = ''
 LOAD_BALANCER_GROUP = 'vagrant'
 UPSTREAM = 'example.com:80'
 
-def build_json(requestId, serviceId, basePath, addUpstream, removeUpstream, replace=None, options={}):
+def build_json(requestId, serviceId, basePath, addUpstream, removeUpstream, replace=None, options={}, template=None):
     data = {
         'loadBalancerRequestId': requestId,
         'loadBalancerService': {
@@ -20,7 +20,8 @@ def build_json(requestId, serviceId, basePath, addUpstream, removeUpstream, repl
             'owners': ['someuser@example.com'],
             'serviceBasePath': basePath,
             'loadBalancerGroups': [LOAD_BALANCER_GROUP],
-            'options': options
+            'options': options,
+            'templateName': template
         }
     }
     if addUpstream:
@@ -126,10 +127,11 @@ class Service(unittest.TestCase):
         self.assertEqual(type(response.json()), list)
 
     def test_auth(self):
-        uri = '{0}/auth/keys'.format(BASE_URI)
-        response = requests.get(uri, params={'authkey': MASTER_AUTH_KEY})
-        self.assertEqual(response.status_code, 200)
-        self.assertTrue(response.json()[0].has_key('value'))
+        if MASTER_AUTH_KEY and AUTH_KEY:
+            uri = '{0}/auth/keys'.format(BASE_URI)
+            response = requests.get(uri, params={'authkey': MASTER_AUTH_KEY})
+            self.assertEqual(response.status_code, 200)
+            self.assertTrue(response.json()[0].has_key('value'))
 
     def test_load_balancers(self):
         uri = '{0}/load-balancer'.format(BASE_URI)
@@ -138,36 +140,24 @@ class Service(unittest.TestCase):
         self.assertEqual(type(response.json()), list)
 
     def test_cluster_agents(self):
-        uri = '{0}/load-balancer'.format(BASE_URI)
-        response = requests.get(uri, params=self.params)
-        self.assertEqual(response.status_code, 200)
-        cluster = response.json()[0]
-        uri = '{0}/load-balancer/{1}/agents'.format(BASE_URI, cluster)
+        uri = '{0}/load-balancer/{1}/agents'.format(BASE_URI, LOAD_BALANCER_GROUP)
         response = requests.get(uri, params=self.params)
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.json()[0].has_key('baseAgentUri'))
 
     def test_cluster_known_agents(self):
-        uri = '{0}/load-balancer'.format(BASE_URI)
-        response = requests.get(uri, params=self.params)
-        self.assertEqual(response.status_code, 200)
-        cluster = response.json()[0]
-        uri = '{0}/load-balancer/{1}/known-agents'.format(BASE_URI, cluster)
+        uri = '{0}/load-balancer/{1}/known-agents'.format(BASE_URI, LOAD_BALANCER_GROUP)
         response = requests.get(uri, params=self.params)
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.json()[0].has_key('baseAgentUri'))
 
     def test_cluster_base_paths(self):
-        uri = '{0}/load-balancer'.format(BASE_URI)
-        response = requests.get(uri, params=self.params)
-        self.assertEqual(response.status_code, 200)
-        cluster = response.json()[0]
-        uri = '{0}/load-balancer/{1}/base-path/all'.format(BASE_URI, cluster)
+        uri = '{0}/load-balancer/{1}/base-path/all'.format(BASE_URI, LOAD_BALANCER_GROUP)
         response = requests.get(uri, params=self.params)
         self.assertEqual(response.status_code, 200)
         self.assertTrue(type(response.json()), list)
         basePath = response.json()[0]
-        uri = '{0}/load-balancer/{1}/base-path'.format(BASE_URI, cluster)
+        uri = '{0}/load-balancer/{1}/base-path'.format(BASE_URI, LOAD_BALANCER_GROUP)
         response = requests.get(uri, params={'authkey': AUTH_KEY, 'basePath': basePath})
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.json().has_key('serviceId'))
@@ -472,6 +462,25 @@ class InvalidRequestWithBasePathChange(unittest.TestCase):
         remove_service(self.randomId)
         remove_service(self.renameId, True)
 
+class InvalidTemplateName(unittest.TestCase):
+    def setUp(self):
+        self.randomId = 'Request' + str(time.time()).replace('.','')
+        self.params = {'authkey': AUTH_KEY}
+        self.headers = {'Content-type': 'application/json'}
+        self.uri = '{0}/request'.format(BASE_URI)
+
+    def test_invalid_template_name(self):
+        sys.stderr.write('Posting {0} and waiting for revert... '.format(self.randomId))
+        json_data = build_json(self.randomId, self.randomId, '/{0}'.format(self.randomId), UPSTREAM, None, None, None, 'invalidtemplatename')
+        post_response = requests.post(self.uri,data=json_data, params=self.params, headers=self.headers)
+        self.assertEqual(post_response.status_code, 200)
+        result = get_request_response(self.randomId)
+        self.assertEqual(result['loadBalancerState'], 'INVALID_REQUEST_NOOP')
+
+    def tearDown(self):
+        sys.stderr.write('Cleaning up...')
+        undo_request(self.randomId, True)
+        remove_service(self.randomId, True)
 
 def test_main(args):
     global BASE_URI
@@ -499,7 +508,8 @@ def test_main(args):
             BasePathConflictInvalidReplaceId,
             ValidBasePathRename,
             InvalidRequest,
-            InvalidRequestWithBasePathChange
+            InvalidRequestWithBasePathChange,
+            InvalidTemplateName
         )
 
 if __name__ == '__main__':
