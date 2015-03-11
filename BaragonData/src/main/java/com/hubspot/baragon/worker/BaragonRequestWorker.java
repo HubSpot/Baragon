@@ -8,6 +8,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
+import com.hubspot.baragon.models.BaragonAgentMetadata;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -85,6 +86,13 @@ public class BaragonRequestWorker implements Runnable {
         if (!missingGroups.isEmpty()) {
           requestManager.setRequestMessage(request.getLoadBalancerRequestId(), String.format("Invalid request due to non-existent load balancer groups: %s", missingGroups));
           return InternalRequestStates.FAILED_REVERTED;
+        }
+
+        for (String loadBalancerGroup : request.getLoadBalancerService().getLoadBalancerGroups()) {
+          if (agentManager.hasNoAgents(loadBalancerGroup)) {
+            requestManager.setRequestMessage(request.getLoadBalancerRequestId(), String.format("Invalid request due to no agents present for group: %s", loadBalancerGroup));
+            return InternalRequestStates.INVALID_REQUEST_NOOP;
+          }
         }
 
         requestManager.lockBasePaths(request);
