@@ -38,13 +38,13 @@ public class BaragonService {
                         @JsonProperty("serviceBasePath") String serviceBasePath,
                         @JsonProperty("loadBalancerGroups") Set<String> loadBalancerGroups,
                         @JsonProperty("options") Map<String, Object> options,
-                        @JsonProperty("template") Optional<String> template) {
+                        @JsonProperty("templateName") Optional<String> templateName) {
     this.serviceId = serviceId;
     this.owners = owners;
     this.serviceBasePath = serviceBasePath;
     this.loadBalancerGroups = loadBalancerGroups;
     this.options = options;
-    this.templateName = template;
+    this.templateName = templateName;
   }
 
   public BaragonService(String serviceId, Collection<String> owners, String serviceBasePath, Set<String> loadBalancerGroups, Map<String, Object> options) {
