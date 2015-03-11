@@ -1,8 +1,10 @@
 package com.hubspot.baragon.worker;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -76,14 +78,14 @@ public class BaragonRequestWorker implements Runnable {
 
         if (!conflicts.isEmpty()) {
           requestManager.setRequestMessage(request.getLoadBalancerRequestId(), String.format("Invalid request due to base path conflicts: %s", conflicts));
-          return InternalRequestStates.INVALID_REQUEST_NOOP;
+          return InternalRequestStates.FAILED_REVERTED;
         }
 
         final Set<String> missingGroups = requestManager.getMissingLoadBalancerGroups(request);
 
         if (!missingGroups.isEmpty()) {
           requestManager.setRequestMessage(request.getLoadBalancerRequestId(), String.format("Invalid request due to non-existent load balancer groups: %s", missingGroups));
-          return InternalRequestStates.INVALID_REQUEST_NOOP;
+          return InternalRequestStates.FAILED_REVERTED;
         }
 
         for (String loadBalancerGroup : request.getLoadBalancerService().getLoadBalancerGroups()) {
@@ -113,6 +115,9 @@ public class BaragonRequestWorker implements Runnable {
             }
           case RETRY:
             return InternalRequestStates.SEND_APPLY_REQUESTS;
+          case INVALID_REQUEST_NOOP:
+            requestManager.revertBasePath(request);
+            return InternalRequestStates.INVALID_REQUEST_NOOP;
           default:
             return InternalRequestStates.CHECK_APPLY_RESPONSES;
         }

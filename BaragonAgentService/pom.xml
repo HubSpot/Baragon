@@ -5,7 +5,7 @@
 <parent>
     <groupId>com.hubspot</groupId>
     <artifactId>Baragon</artifactId>
-    <version>0.1.5-SNAPSHOT</version>
+    <version>0.1.6-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
 </parent>
 
@@ -24,7 +24,7 @@
     <dependency>
         <groupId>com.hubspot</groupId>
         <artifactId>BaragonData</artifactId>
-        <version>0.1.5-SNAPSHOT</version>
+        <version>0.1.6-SNAPSHOT</version>
     </dependency>
     <dependency>
         <groupId>com.github.jknack</groupId>
@@ -91,6 +91,7 @@
         <version>${java.abi}</version>
         <configuration>
           <createDependencyReducedPom>true</createDependencyReducedPom>
+          <finalName>${baragon.jar.name.format}</finalName>
           <filters>
             <filter>
               <artifact>*:*</artifact>

@@ -29,11 +29,11 @@ import com.hubspot.baragon.agent.config.TestingConfiguration;
 import com.hubspot.baragon.agent.lbs.FilesystemConfigHelper;
 import com.hubspot.baragon.data.BaragonRequestDatastore;
 import com.hubspot.baragon.data.BaragonStateDatastore;
-import com.hubspot.baragon.data.BaragonLoadBalancerDatastore;
 import com.hubspot.baragon.models.BaragonRequest;
 import com.hubspot.baragon.models.BaragonService;
 import com.hubspot.baragon.models.ServiceContext;
 import com.hubspot.baragon.models.UpstreamInfo;
+import com.hubspot.baragon.exceptions.MissingTemplateException;
 
 @Path("/request/{requestId}")
 @Produces(MediaType.APPLICATION_JSON)
@@ -95,7 +95,6 @@ public class RequestResource {
 
       if (!request.getLoadBalancerService().getLoadBalancerGroups().contains(loadBalancerConfiguration.getName())) {
         // this service has been deleted or moved off this load balancer -- delete the config
-
         update = new ServiceContext(request.getLoadBalancerService(), Collections.<UpstreamInfo>emptyList(), System.currentTimeMillis(), false);
       } else {
         // Apply request
@@ -124,7 +123,7 @@ public class RequestResource {
       }
 
       try {
-        configHelper.apply(update, request.getReplaceServiceId(), true);
+        configHelper.apply(update, maybeOldService, true);
       } catch (Exception e) {
         return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
       }
@@ -182,7 +181,14 @@ public class RequestResource {
       LOG.info(String.format("Reverting to %s", update));
       
       try {
-        configHelper.apply(update, Optional.<String>absent(), false);
+        configHelper.apply(update, Optional.<BaragonService>absent(), false);
+      } catch (MissingTemplateException e) {
+        // For reverts, if this service previously didn't exist, no config was written for a MissingTemplateException, doesn't matter that we can't find the template
+        if (!maybeOldService.isPresent() || !maybeOldService.get().getLoadBalancerGroups().contains(loadBalancerConfiguration.getName())) {
+          return Response.ok().build();
+        } else {
+          throw e;
+        }
       } catch (Exception e) {
         return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
       }
