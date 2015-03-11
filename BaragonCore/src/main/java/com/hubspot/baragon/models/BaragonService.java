@@ -83,7 +83,7 @@ public class BaragonService {
         ", serviceBasePath='" + serviceBasePath + '\'' +
         ", loadBalancerGroups=" + loadBalancerGroups +
         ", options=" + options +
-        ", template=" + templateName +
+        ", templateName=" + templateName +
         ']';
   }
 
