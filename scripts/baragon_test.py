@@ -21,7 +21,7 @@ def build_json(requestId, serviceId, basePath, addUpstream, removeUpstream, repl
             'serviceBasePath': basePath,
             'loadBalancerGroups': [LOAD_BALANCER_GROUP],
             'options': options,
-            'template': template
+            'templateName': template
         }
     }
     if addUpstream:
