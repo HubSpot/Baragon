@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.google.common.base.Optional;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
@@ -31,24 +32,24 @@ public class BaragonService {
 
   private final Map<String, Object> options;
 
-  private final String template;
+  private final Optional<String> template;
 
   public BaragonService(@JsonProperty("serviceId") String serviceId,
                         @JsonProperty("owners") Collection<String> owners,
                         @JsonProperty("serviceBasePath") String serviceBasePath,
                         @JsonProperty("loadBalancerGroups") Set<String> loadBalancerGroups,
                         @JsonProperty("options") Map<String, Object> options,
-                        @JsonProperty("template") String template) {
+                        @JsonProperty("template") Optional<String> template) {
     this.serviceId = serviceId;
     this.owners = owners;
     this.serviceBasePath = serviceBasePath;
     this.loadBalancerGroups = loadBalancerGroups;
     this.options = options;
-    this.template = template != null ? template : "default";
+    this.template = template;
   }
 
   public BaragonService(String serviceId, Collection<String> owners, String serviceBasePath, Set<String> loadBalancerGroups, Map<String, Object> options) {
-    this(serviceId, owners, serviceBasePath, loadBalancerGroups, options, "default");
+    this(serviceId, owners, serviceBasePath, loadBalancerGroups, options, Optional.<String>absent());
   }
 
   public String getServiceId() {
@@ -71,7 +72,7 @@ public class BaragonService {
     return options;
   }
 
-  public String getTemplate() {
+  public Optional<String> getTemplate() {
     return template;
   }
 

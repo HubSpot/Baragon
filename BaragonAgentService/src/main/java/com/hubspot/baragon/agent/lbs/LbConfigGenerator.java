@@ -36,7 +36,7 @@ public class LbConfigGenerator {
 
   public Collection<BaragonConfigFile> generateConfigsForProject(ServiceContext snapshot) throws MissingTemplateException {
     final Collection<BaragonConfigFile> files = Lists.newArrayList();
-    String templateName = snapshot.getService().getTemplate() != null ? snapshot.getService().getTemplate() : "default";
+    String templateName = snapshot.getService().getTemplate().or("default");
 
     List<LbConfigTemplate> matchingTemplates = templates.get(templateName);
 

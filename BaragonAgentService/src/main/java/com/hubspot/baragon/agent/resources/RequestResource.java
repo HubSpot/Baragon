@@ -184,9 +184,11 @@ public class RequestResource {
       try {
         configHelper.apply(update, Optional.<BaragonService>absent(), false);
       } catch (MissingTemplateException e) {
-        // If this service previously didn't exist, no config was written, doesn't matter that we can't find the template
+        // For reverts, if this service previously didn't exist, no config was written for a MissingTemplateException, doesn't matter that we can't find the template
         if (!maybeOldService.isPresent() || !maybeOldService.get().getLoadBalancerGroups().contains(loadBalancerConfiguration.getName())) {
           return Response.ok().build();
+        } else {
+          throw e;
         }
       } catch (Exception e) {
         return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();

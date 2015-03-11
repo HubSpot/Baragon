@@ -56,12 +56,7 @@ public class FilesystemConfigHelper {
 
   public void apply(ServiceContext context, Optional<BaragonService> maybeOldService, boolean revertOnFailure) throws InvalidConfigException, LbAdapterExecuteException, IOException, MissingTemplateException {
     final BaragonService service = context.getService();
-    final BaragonService oldService;
-    if (maybeOldService.isPresent()) {
-      oldService = maybeOldService.get();
-    } else {
-      oldService = service;
-    }
+    final BaragonService oldService = maybeOldService.or(service);
 
     LOG.info(String.format("Going to apply %s: %s", service.getServiceId(), Joiner.on(", ").join(context.getUpstreams())));
     final boolean oldServiceExists = configsExist(oldService);
@@ -100,7 +95,7 @@ public class FilesystemConfigHelper {
 
       // Restore configs
       if (revertOnFailure) {
-        if (oldServiceExists) {
+        if (oldServiceExists && !oldService.equals(service)) {
           restoreConfigs(oldService);
         }
         if (previousConfigsExist) {
