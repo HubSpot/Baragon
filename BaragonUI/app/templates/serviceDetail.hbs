@@ -69,14 +69,23 @@
                         <div class="col-md-6">
                             {{#each this}}
                                 <div class="list-group">
-                                    <a href="{{appRoot}}/requests/{{requestId}}" class="list-group-item">
-                                        <h4 class="list-group-item-heading">{{upstream}}</h4>
-                                        <p class="list-group-item-text">
-                                            <strong>From Request:</strong> {{ requestId }}
-                                            <br>
-                                            <strong>Rack ID:</strong> {{ rackId }}
-                                        </p>
-                                    </a>
+                                    <div class="col-md-11">
+                                        <a href="{{appRoot}}/requests/{{requestId}}" class="list-group-item">
+                                            <h4 class="list-group-item-heading">{{upstream}}</h4>
+                                            <p class="list-group-item-text">
+                                                <strong>From Request:</strong> {{ requestId }}
+                                                <br>
+                                                <strong>Rack ID:</strong> {{ rackId }}
+                                            </p>
+                                        </a>
+                                    </div>
+                                    {{#if ../config.allowEdit}}
+                                        <div class="col-md-1">
+                                            <a class="btn btn-danger" data-upstream="{{ upstream }}" data-action="removeUpstream">
+                                                <span class="glyphicon glyphicon-remove"></span>
+                                            </a>
+                                        </div>
+                                    {{/if}}
                                 </div>
                             {{/each}}
                         </div>

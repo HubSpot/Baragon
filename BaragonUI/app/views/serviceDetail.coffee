@@ -14,6 +14,7 @@ class ServiceDetailView extends View
             'click [data-action="viewJSON"]':        'viewJson'
             'click [data-action="delete"]':          'deleteService'
             'click [data-action="removeUpstreams"]': 'removeUpstreams'
+            'click [data-action="removeUpstream"]': 'removeUpstream'
 
     render: =>
         @$el.html @template
@@ -31,5 +32,11 @@ class ServiceDetailView extends View
     removeUpstreams: (e) ->
         @model.promptRemoveUpstreams =>
             @model.promptRemoveUpstreamsSuccess => @trigger 'refreshrequest'
+
+    removeUpstream: (e) ->
+        upstream = $(e.target).data 'upstream'
+        @model.promptRemoveUpstream(upstream, =>
+            @model.promptRemoveUpstreamsSuccess => @trigger 'refreshrequest'
+        )
 
 module.exports = ServiceDetailView
