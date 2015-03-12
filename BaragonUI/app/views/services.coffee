@@ -37,6 +37,7 @@ class ServicesView extends View
         @filterCollection()
         @$('#servicesTable').html @tableTemplate
            services: @currentServices
+           config: config
 
     filterCollection: =>
         services = _.pluck @collection.models, "attributes"

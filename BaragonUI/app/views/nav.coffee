@@ -19,7 +19,7 @@ class NavView extends View
         if not fragment
             fragment = 'status'
 
-        @$el.html @template {fragment, title: config.title}
+        @$el.html @template {fragment, title: config.title, config: config}
 
     enableEdit: ->
         input =  """
@@ -30,14 +30,15 @@ class NavView extends View
             input: input
             callback: (data) =>
                 if data.authkey
-                    $.get("#{ config.apiRoot }/allowuiwrite?uiAuthKey=#{data.authkey}", (data, status) =>
-                        console.dir(data)
+                    $.get("#{ config.apiRoot }/allowuiwrite?uiAuthKey=#{data.authkey}&authkey=#{config.authKey}", (data, status) =>
                         if data == 'allowed'
-                            config.allowEdit = true
+                            window.config.allowEdit = true
                             vex.dialog.alert 'Authorized!'
                         else
+                            window.config.allowEdit = false
                             vex.dialog.alert 'Not a valid key!'
                     )
+                    Backbone.history.loadUrl(Backbone.history.fragment)
 
 
 
