@@ -39,4 +39,3 @@ $ ->
                     if data.authkey
                         localStorage.setItem "authKeyOverride", data.authkey
                     window.location = window.location.href
-

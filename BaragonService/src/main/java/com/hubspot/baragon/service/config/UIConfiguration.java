@@ -27,6 +27,9 @@ public class UIConfiguration {
 
   private boolean allowEdit = false;
 
+  @JsonProperty
+  private Optional<String> allowEditKey = Optional.absent();
+
   public boolean allowEdit() {
     return allowEdit;
   }
@@ -59,4 +62,11 @@ public class UIConfiguration {
     this.navColor = navColor;
   }
 
+  public Optional<String> getAllowEditKey() {
+    return allowEditKey;
+  }
+
+  public void setAllowEditKey(Optional<String> allowEditKey) {
+    this.allowEditKey = allowEditKey;
+  }
 }
