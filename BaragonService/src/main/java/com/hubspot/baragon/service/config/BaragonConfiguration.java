@@ -61,6 +61,12 @@ public class BaragonConfiguration extends Configuration {
   @JsonProperty("masterAuthKey")
   private String masterAuthKey;
 
+  @JsonProperty("ui")
+  @Valid
+  private UIConfiguration uiConfiguration = new UIConfiguration();
+
+  private boolean enableCorsFilter = false;
+
   public ZooKeeperConfiguration getZooKeeperConfiguration() {
     return zooKeeperConfiguration;
   }
@@ -135,5 +141,17 @@ public class BaragonConfiguration extends Configuration {
 
   public void setWorkerConfiguration(BaragonWorkerConfiguration workerConfiguration) {
     this.workerConfiguration = workerConfiguration;
+  }
+
+  public UIConfiguration getUiConfiguration() {
+    return uiConfiguration;
+  }
+
+  public void setUiConfiguration(UIConfiguration uiConfiguration) {
+    this.uiConfiguration = uiConfiguration;
+  }
+
+  public boolean isEnableCorsFilter() {
+    return enableCorsFilter;
   }
 }

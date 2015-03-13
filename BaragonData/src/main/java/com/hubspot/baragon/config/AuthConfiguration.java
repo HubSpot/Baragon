@@ -12,6 +12,9 @@ public class AuthConfiguration {
   @JsonProperty("enabled")
   private boolean enabled = false;
 
+  @JsonProperty("uiWriteEnabled")
+  private boolean uiWriteEnabled = false;
+
   public boolean isEnabled() {
     return enabled;
   }
@@ -26,5 +29,13 @@ public class AuthConfiguration {
 
   public void setKey(String key) {
     this.key = key;
+  }
+
+  public boolean isUiWriteEnabled() {
+    return uiWriteEnabled;
+  }
+
+  public void setUiWriteEnabled(boolean uiWriteEnabled) {
+    this.uiWriteEnabled = uiWriteEnabled;
   }
 }

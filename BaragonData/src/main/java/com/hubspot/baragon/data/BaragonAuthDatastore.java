@@ -54,4 +54,8 @@ public class BaragonAuthDatastore extends AbstractDataStore {
 
     return keyMap;
   }
+
+  public Optional<BaragonAuthKey> getAuthKeyInfo(String key) {
+    return readFromZk(String.format(AUTH_KEY_PATH, key), BaragonAuthKey.class);
+  }
 }
