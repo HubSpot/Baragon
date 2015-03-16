@@ -28,13 +28,21 @@ public class BaragonServiceState {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
 
     BaragonServiceState that = (BaragonServiceState) o;
 
-    if (!service.equals(that.service)) return false;
-    if (!upstreams.equals(that.upstreams)) return false;
+    if (!service.equals(that.service)) {
+      return false;
+    }
+    if (!upstreams.equals(that.upstreams)) {
+      return false;
+    }
 
     return true;
   }

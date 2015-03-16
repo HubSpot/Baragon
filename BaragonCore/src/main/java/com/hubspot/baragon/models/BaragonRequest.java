@@ -113,17 +113,33 @@ public class BaragonRequest {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
 
     BaragonRequest request = (BaragonRequest) o;
 
-    if (!addUpstreams.equals(request.addUpstreams)) return false;
-    if (!loadBalancerRequestId.equals(request.loadBalancerRequestId)) return false;
-    if (!loadBalancerService.equals(request.loadBalancerService)) return false;
-    if (!removeUpstreams.equals(request.removeUpstreams)) return false;
-    if (!replaceServiceId.equals(request.replaceServiceId)) return false;
-    if (!action.equals(request.action)) return false;
+    if (!addUpstreams.equals(request.addUpstreams)) {
+      return false;
+    }
+    if (!loadBalancerRequestId.equals(request.loadBalancerRequestId)) {
+      return false;
+    }
+    if (!loadBalancerService.equals(request.loadBalancerService)) {
+      return false;
+    }
+    if (!removeUpstreams.equals(request.removeUpstreams)) {
+      return false;
+    }
+    if (!replaceServiceId.equals(request.replaceServiceId)) {
+      return false;
+    }
+    if (!action.equals(request.getAction())) {
+      return false;
+    }
 
     return true;
   }

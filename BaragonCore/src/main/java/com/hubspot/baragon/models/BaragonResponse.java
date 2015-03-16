@@ -66,15 +66,27 @@ public class BaragonResponse {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
 
     BaragonResponse that = (BaragonResponse) o;
 
-    if (!agentResponses.equals(that.agentResponses)) return false;
-    if (!loadBalancerRequestId.equals(that.loadBalancerRequestId)) return false;
-    if (loadBalancerState != that.loadBalancerState) return false;
-    if (!message.equals(that.message)) return false;
+    if (!agentResponses.equals(that.agentResponses)) {
+      return false;
+    }
+    if (!loadBalancerRequestId.equals(that.loadBalancerRequestId)) {
+      return false;
+    }
+    if (loadBalancerState != that.loadBalancerState) {
+      return false;
+    }
+    if (!message.equals(that.message)) {
+      return false;
+    }
 
     return true;
   }

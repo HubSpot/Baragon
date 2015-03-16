@@ -82,7 +82,7 @@ public class BaragonAgentServiceModule extends AbstractModule {
 
     return templates;
   }
-  
+
   @Provides
   public LoadBalancerConfiguration provideLoadBalancerInfo(BaragonAgentConfiguration configuration) {
     return configuration.getLoadBalancerConfiguration();

@@ -46,15 +46,27 @@ public class BaragonAuthKey {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
 
     BaragonAuthKey that = (BaragonAuthKey) o;
 
-    if (createdAt != that.createdAt) return false;
-    if (!expiredAt.equals(that.expiredAt)) return false;
-    if (!owner.equals(that.owner)) return false;
-    if (!value.equals(that.value)) return false;
+    if (createdAt != that.createdAt) {
+      return false;
+    }
+    if (!expiredAt.equals(that.expiredAt)) {
+      return false;
+    }
+    if (!owner.equals(that.owner)) {
+      return false;
+    }
+    if (!value.equals(that.value)) {
+      return false;
+    }
 
     return true;
   }

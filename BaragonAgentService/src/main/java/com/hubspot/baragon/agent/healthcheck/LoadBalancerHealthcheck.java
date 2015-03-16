@@ -13,7 +13,7 @@ public class LoadBalancerHealthcheck extends InjectableHealthCheck {
   private static final Logger LOG = LoggerFactory.getLogger(LoadBalancerHealthcheck.class);
 
   private final LocalLbAdapter adapter;
-  
+
   @Inject
   public LoadBalancerHealthcheck(LocalLbAdapter adapter) {
     this.adapter = adapter;

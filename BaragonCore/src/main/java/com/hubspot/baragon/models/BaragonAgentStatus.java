@@ -55,18 +55,34 @@ public class BaragonAgentStatus {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
 
     BaragonAgentStatus that = (BaragonAgentStatus) o;
 
-    if (leader != that.leader) return false;
-    if (validConfigs != that.validConfigs) return false;
-    if (!errorMessage.equals(that.errorMessage)) return false;
-    if (!group.equals(that.group)) return false;
-    if (mostRecentRequestId != null ? !mostRecentRequestId.equals(that.mostRecentRequestId) : that.mostRecentRequestId != null)
+    if (leader != that.leader) {
       return false;
-    if (!zookeeperState.equals(that.zookeeperState)) return false;
+    }
+    if (validConfigs != that.validConfigs) {
+      return false;
+    }
+    if (!errorMessage.equals(that.errorMessage)) {
+      return false;
+    }
+    if (!group.equals(that.group)) {
+      return false;
+    }
+    if (mostRecentRequestId != null ? !mostRecentRequestId.equals(that.mostRecentRequestId) : that.mostRecentRequestId != null) {
+      return false;
+    }
+
+    if (!zookeeperState.equals(that.zookeeperState)) {
+      return false;
+    }
 
     return true;
   }

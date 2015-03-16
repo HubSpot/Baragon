@@ -60,11 +60,6 @@ public class AgentResponse {
     return AgentRequestsStatus.FAILURE;
   }
 
-  @JsonIgnore
-  public boolean isSuccess() {
-    return !exception.isPresent() && statusCode.isPresent() && statusCode.get() >= 200 & statusCode.get() < 300;
-  }
-
   @Override
   public String toString() {
     return "AgentResponse [" +
@@ -78,16 +73,30 @@ public class AgentResponse {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
 
     AgentResponse that = (AgentResponse) o;
 
-    if (attempt != that.attempt) return false;
-    if (!content.equals(that.content)) return false;
-    if (!exception.equals(that.exception)) return false;
-    if (!statusCode.equals(that.statusCode)) return false;
-    if (!url.equals(that.url)) return false;
+    if (attempt != that.attempt) {
+      return false;
+    }
+    if (!content.equals(that.content)) {
+      return false;
+    }
+    if (!exception.equals(that.exception)) {
+      return false;
+    }
+    if (!statusCode.equals(that.statusCode)) {
+      return false;
+    }
+    if (!url.equals(that.url)) {
+      return false;
+    }
 
     return true;
   }

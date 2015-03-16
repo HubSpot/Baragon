@@ -52,14 +52,24 @@ public class BaragonAgentMetadata {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
 
     BaragonAgentMetadata metadata = (BaragonAgentMetadata) o;
 
-    if (agentId != null ? !agentId.equals(metadata.agentId) : metadata.agentId != null) return false;
-    if (!baseAgentUri.equals(metadata.baseAgentUri)) return false;
-    if (!domain.equals(metadata.domain)) return false;
+    if (agentId != null ? !agentId.equals(metadata.agentId) : metadata.agentId != null) {
+      return false;
+    }
+    if (!baseAgentUri.equals(metadata.baseAgentUri)) {
+      return false;
+    }
+    if (!domain.equals(metadata.domain)) {
+      return false;
+    }
 
     return true;
   }

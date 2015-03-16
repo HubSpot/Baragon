@@ -24,7 +24,7 @@ public class RequestResource {
   private static final Logger LOG = LoggerFactory.getLogger(RequestResource.class);
 
   private final RequestManager requestManager;
-  
+
   @Inject
   public RequestResource(RequestManager requestManager) {
     this.requestManager = requestManager;

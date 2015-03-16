@@ -42,6 +42,42 @@ public class AgentResponseId {
   }
 
   @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    AgentResponseId that = (AgentResponseId) o;
+
+    if (attempt != that.attempt) {
+      return false;
+    }
+    if (exception != that.exception) {
+      return false;
+    }
+    if (statusCode != that.statusCode) {
+      return false;
+    }
+    if (!id.equals(that.id)) {
+      return false;
+    }
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = id.hashCode();
+    result = 31 * result + statusCode;
+    result = 31 * result + (exception ? 1 : 0);
+    result = 31 * result + attempt;
+    return result;
+  }
+
+  @Override
   public String toString() {
     return Objects.toStringHelper(this)
         .add("statusCode", statusCode)
