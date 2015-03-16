@@ -169,6 +169,7 @@ public class RequestManager {
     RequestAction action = request.getAction().or(RequestAction.UPDATE);
     Optional<BaragonService> maybeOriginalService = getOriginalService(request);
 
+    LOG.info(action.toString());
     switch(action) {
       case UPDATE:
       case REVERT:
@@ -176,12 +177,16 @@ public class RequestManager {
         clearBasePathsFromUnusedLbs(request, maybeOriginalService);
         removeOldService(request, maybeOriginalService);
         updateStateDatastore(request);
+        clearBasePathsWithNoUpstreams(request);
+        break;
       case DELETE:
         clearChangedBasePaths(request, maybeOriginalService);
         clearBasePathsFromUnusedLbs(request, maybeOriginalService);
-        removeOldService(request, maybeOriginalService);
         deleteRemovedServices(request);
-      case RELOAD:
+        clearBasePathsWithNoUpstreams(request);
+        break;
+      default:
+        LOG.debug(String.format("No updates to commit for request action %s", action));
         break;
     }
   }
@@ -202,6 +207,7 @@ public class RequestManager {
     if (request.getReplaceServiceId().isPresent() && stateDatastore.getService(request.getReplaceServiceId().get()).isPresent()) {
       stateDatastore.removeService(request.getReplaceServiceId().get());
     }
+    stateDatastore.updateStateNode();
   }
 
   private void updateStateDatastore(BaragonRequest request) {

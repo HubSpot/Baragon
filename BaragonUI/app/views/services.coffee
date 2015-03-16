@@ -63,7 +63,8 @@ class ServicesView extends View
     deleteService: (e) ->
         id = $(e.target).parents('tr').data 'service-id'
         serviceModel = new Service {serviceId: id}
-        serviceModel.promptDelete => @trigger 'refreshrequest'
+        serviceModel.promptDelete =>
+            serviceModel.promptDeleteSuccess => @trigger 'refreshrequest'
 
     removeUpstreams: (e) ->
         id = $(e.target).parents('tr').data 'service-id'

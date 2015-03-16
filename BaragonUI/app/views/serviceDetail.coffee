@@ -27,7 +27,8 @@ class ServiceDetailView extends View
 
     deleteService: (e) ->
         @model.promptDelete =>
-            app.router.navigate 'services', trigger: true
+            @model.promptDeleteSuccess =>
+                app.router.navigate 'services', trigger: true
 
     removeUpstreams: (e) ->
         @model.promptRemoveUpstreams =>

@@ -5,6 +5,7 @@ class Service extends Model
     url: -> "#{ config.apiRoot }/state/#{ @serviceId }?authkey=#{ config.authKey }"
 
     deleteTemplate: require '../templates/vex/serviceRemove'
+    deleteSuccessTemplate: require '../templates/vex/serviceRemoveSuccess'
     removeUpstreamsTemplate: require '../templates/vex/removeUpstreams'
     removeUpstreamTemplate: require '../templates/vex/removeUpstream'
     removeUpstreamsSuccessTemplate: require '../templates/vex/removeUpstreamsSuccess'
@@ -29,6 +30,9 @@ class Service extends Model
         $.ajax
             url: @url()
             type: "DELETE"
+            success: (data) =>
+                console.dir(data)
+                @set('request', data.loadBalancerRequestId)
 
     undo: =>
         this.fetch({
@@ -91,6 +95,17 @@ class Service extends Model
                 return if data is false
                 @delete().done callback
 
+    promptDeleteSuccess: (callback) =>
+        vex.dialog.confirm
+            message: @deleteSuccessTemplate {request: @get('request'), config: config}
+            buttons: [
+                $.extend {}, vex.dialog.buttons.YES,
+                    text: 'OK',
+                    className: 'vex-dialog-button-primary vex-dialog-button-primary-remove'
+            ]
+            callback: (data) =>
+                return
+
     promptRemoveUpstreams: (callback) =>
         vex.dialog.confirm
             message: @removeUpstreamsTemplate {@serviceId}
@@ -106,7 +121,7 @@ class Service extends Model
 
     promptRemoveUpstreamsSuccess: (callback) =>
         vex.dialog.confirm
-            message: @removeUpstreamsSuccessTemplate {request: @get('request')}
+            message: @removeUpstreamsSuccessTemplate {request: @get('request') config: config}
             buttons: [
                 $.extend {}, vex.dialog.buttons.YES,
                     text: 'OK',
