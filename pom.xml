@@ -29,7 +29,7 @@
     </developers>
 
     <properties>
-        <project.jdk7.home>${env.JAVA7_HOME}</project.jdk7.home>
+        <project.jdk7.home>${env.JAVA_HOME}</project.jdk7.home>
         <project.build.targetJdk>1.7</project.build.targetJdk>
         <basepom.check.skip-license>true</basepom.check.skip-license>
 
