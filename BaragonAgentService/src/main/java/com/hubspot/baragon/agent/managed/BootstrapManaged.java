@@ -27,14 +27,14 @@ import com.hubspot.baragon.utils.JavaUtils;
 
 public class BootstrapManaged implements Managed {
   private static final Logger LOG = LoggerFactory.getLogger(BootstrapManaged.class);
-  
+
   private final LoadBalancerConfiguration loadBalancerConfiguration;
   private final FilesystemConfigHelper configHelper;
   private final BaragonStateDatastore stateDatastore;
   private final LeaderLatch leaderLatch;
   private final BaragonKnownAgentsDatastore knownAgentsDatastore;
   private final BaragonAgentMetadata baragonAgentMetadata;
-  
+
   @Inject
   public BootstrapManaged(BaragonStateDatastore stateDatastore,
                           BaragonKnownAgentsDatastore knownAgentsDatastore,

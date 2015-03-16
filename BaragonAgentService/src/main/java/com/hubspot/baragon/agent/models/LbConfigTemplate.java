@@ -35,13 +35,21 @@ public class LbConfigTemplate {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
 
     LbConfigTemplate that = (LbConfigTemplate) o;
 
-    if (!filename.equals(that.filename)) return false;
-    if (!template.equals(that.template)) return false;
+    if (!filename.equals(that.filename)) {
+      return false;
+    }
+    if (!template.equals(that.template)) {
+      return false;
+    }
 
     return true;
   }

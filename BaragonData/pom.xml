@@ -97,11 +97,6 @@
     </dependency>
 
     <dependency>
-      <groupId>javax.validation</groupId>
-      <artifactId>validation-api</artifactId>
-    </dependency>
-
-    <dependency>
       <groupId>com.ning</groupId>
       <artifactId>async-http-client</artifactId>
     </dependency>
