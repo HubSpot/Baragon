@@ -282,10 +282,9 @@
                         <artifactId>jline</artifactId>
                         <groupId>jline</groupId>
                     </exclusion>
-                    <!-- Replaced by io.netty:netty; clashes with ning async-http-client -->
                     <exclusion>
-                        <groupId>org.jboss.netty</groupId>
                         <artifactId>netty</artifactId>
+                        <groupId>io.netty</groupId>
                     </exclusion>
                 </exclusions>
             </dependency>
