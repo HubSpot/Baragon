@@ -21,12 +21,13 @@ import com.hubspot.baragon.models.BaragonService;
 import com.hubspot.baragon.models.InternalRequestStates;
 import com.hubspot.baragon.models.InternalStatesMap;
 import com.hubspot.baragon.models.QueuedRequestId;
+import com.hubspot.baragon.models.RequestAction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Singleton
 public class RequestManager {
-  private static final Logger LOG = LoggerFactory.getLogger(BaragonStateDatastore.class);
+  private static final Logger LOG = LoggerFactory.getLogger(RequestManager.class);
   private final BaragonRequestDatastore requestDatastore;
   private final BaragonLoadBalancerDatastore loadBalancerDatastore;
   private final BaragonStateDatastore stateDatastore;
@@ -165,6 +166,27 @@ public class RequestManager {
   }
 
   public synchronized void commitRequest(BaragonRequest request) {
+    RequestAction action = request.getAction().or(RequestAction.UPDATE);
+    Optional<BaragonService> maybeOriginalService = getOriginalService(request);
+
+    switch(action) {
+      case UPDATE:
+      case REVERT:
+        clearChangedBasePaths(request, maybeOriginalService);
+        clearBasePathsFromUnusedLbs(request, maybeOriginalService);
+        removeOldService(request, maybeOriginalService);
+        updateStateDatastore(request);
+      case DELETE:
+        clearChangedBasePaths(request, maybeOriginalService);
+        clearBasePathsFromUnusedLbs(request, maybeOriginalService);
+        removeOldService(request, maybeOriginalService);
+        deleteRemovedServices(request);
+      case RELOAD:
+        break;
+    }
+  }
+
+  private Optional<BaragonService> getOriginalService(BaragonRequest request) {
     Optional<BaragonService> maybeOriginalService = Optional.absent();
     if (request.getReplaceServiceId().isPresent()) {
       maybeOriginalService = stateDatastore.getService(request.getReplaceServiceId().get());
@@ -172,15 +194,50 @@ public class RequestManager {
     if (!maybeOriginalService.isPresent()) {
       maybeOriginalService = stateDatastore.getService(request.getLoadBalancerService().getServiceId());
     }
+    return maybeOriginalService;
+  }
 
-    // if we've changed the base path, clear out the old ones
+  private void deleteRemovedServices(BaragonRequest request) {
+    stateDatastore.removeService(request.getLoadBalancerService().getServiceId());
+    if (request.getReplaceServiceId().isPresent() && stateDatastore.getService(request.getReplaceServiceId().get()).isPresent()) {
+      stateDatastore.removeService(request.getReplaceServiceId().get());
+    }
+  }
+
+  private void updateStateDatastore(BaragonRequest request) {
+    stateDatastore.addService(request.getLoadBalancerService());
+    stateDatastore.removeUpstreams(request.getLoadBalancerService().getServiceId(), request.getRemoveUpstreams());
+    stateDatastore.addUpstreams(request.getLoadBalancerService().getServiceId(), request.getAddUpstreams());
+    stateDatastore.updateStateNode();
+  }
+
+  private void removeOldService(BaragonRequest request, Optional<BaragonService> maybeOriginalService) {
+    if (maybeOriginalService.isPresent() && !maybeOriginalService.get().getServiceId().equals(request.getLoadBalancerService().getServiceId())) {
+      stateDatastore.removeService(maybeOriginalService.get().getServiceId());
+    }
+  }
+
+  private void clearBasePathsWithNoUpstreams(BaragonRequest request) {
+    try {
+      if (stateDatastore.getUpstreamsMap(request.getLoadBalancerService().getServiceId()).isEmpty()) {
+        for (String loadbalancerGroup : request.getLoadBalancerService().getLoadBalancerGroups()) {
+          loadBalancerDatastore.clearBasePath(loadbalancerGroup, request.getLoadBalancerService().getServiceBasePath());
+        }
+      }
+    } catch (Exception e) {
+      LOG.info(String.format("Error clearing base path %s", e));
+    }
+  }
+
+  private void clearChangedBasePaths(BaragonRequest request, Optional<BaragonService> maybeOriginalService) {
     if (maybeOriginalService.isPresent() && !maybeOriginalService.get().getServiceBasePath().equals(request.getLoadBalancerService().getServiceBasePath())) {
       for (String loadBalancerGroup : maybeOriginalService.get().getLoadBalancerGroups()) {
         loadBalancerDatastore.clearBasePath(loadBalancerGroup, maybeOriginalService.get().getServiceBasePath());
       }
     }
+  }
 
-    //If we have removed a load balancer group, clear the base path for that group
+  private void clearBasePathsFromUnusedLbs(BaragonRequest request, Optional<BaragonService> maybeOriginalService) {
     if (maybeOriginalService.isPresent()) {
       Set<String> removedLbGroups = maybeOriginalService.get().getLoadBalancerGroups();
       removedLbGroups.removeAll(request.getLoadBalancerService().getLoadBalancerGroups());
@@ -193,26 +250,6 @@ public class RequestManager {
           LOG.info(String.format("Error clearing base path %s", e));
         }
       }
-    }
-    // If the service ID has been changed, remove the old service from the state datastore
-    if (maybeOriginalService.isPresent() && !maybeOriginalService.get().getServiceId().equals(request.getLoadBalancerService().getServiceId())) {
-      stateDatastore.removeService(maybeOriginalService.get().getServiceId());
-    }
-
-    stateDatastore.addService(request.getLoadBalancerService());
-    stateDatastore.removeUpstreams(request.getLoadBalancerService().getServiceId(), request.getRemoveUpstreams());
-    stateDatastore.addUpstreams(request.getLoadBalancerService().getServiceId(), request.getAddUpstreams());
-    stateDatastore.updateStateNode();
-
-    // if there are no remaining upstreams, clear the base path
-    try {
-      if (stateDatastore.getUpstreamsMap(request.getLoadBalancerService().getServiceId()).isEmpty()) {
-        for (String loadbalancerGroup : request.getLoadBalancerService().getLoadBalancerGroups()) {
-          loadBalancerDatastore.clearBasePath(loadbalancerGroup, request.getLoadBalancerService().getServiceBasePath());
-        }
-      }
-    } catch (Exception e) {
-      LOG.info(String.format("Error clearing base path %s", e));
     }
   }
 }

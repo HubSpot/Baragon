@@ -54,6 +54,11 @@ public class FilesystemConfigHelper {
     }
   }
 
+  public void checkAndReload() throws InvalidConfigException, LbAdapterExecuteException, IOException {
+    adapter.checkConfigs();
+    adapter.reloadConfigs();
+  }
+
   public void apply(ServiceContext context, Optional<BaragonService> maybeOldService, boolean revertOnFailure) throws InvalidConfigException, LbAdapterExecuteException, IOException, MissingTemplateException {
     final BaragonService service = context.getService();
     final BaragonService oldService = maybeOldService.or(service);
@@ -112,6 +117,35 @@ public class FilesystemConfigHelper {
     adapter.reloadConfigs();
 
     removeBackupConfigs(oldService);
+  }
+
+  public void delete(BaragonService service, Optional<BaragonService> maybeOldService) throws InvalidConfigException, LbAdapterExecuteException, IOException, MissingTemplateException {
+    final boolean oldServiceExists = (maybeOldService.isPresent() && configsExist(maybeOldService.get()));
+    final boolean previousConfigsExist = configsExist(service);
+     try {
+      if (previousConfigsExist) {
+        backupConfigs(service);
+        remove(service, false);
+      }
+      if (oldServiceExists) {
+        backupConfigs(maybeOldService.get());
+        remove(maybeOldService.get(), false);
+      }
+       adapter.checkConfigs();
+    } catch (Exception e) {
+      LOG.error("Caught exception while deleting configs for " + service.getServiceId() + ", reverting to backups!", e);
+      if (oldServiceExists && !maybeOldService.get().equals(service)) {
+        restoreConfigs(maybeOldService.get());
+      }
+      if (previousConfigsExist) {
+        restoreConfigs(service);
+      } else {
+        remove(service, false);
+      }
+
+      throw Throwables.propagate(e);
+    }
+    adapter.reloadConfigs();
   }
 
   private void writeConfigs(Collection<BaragonConfigFile> files) {

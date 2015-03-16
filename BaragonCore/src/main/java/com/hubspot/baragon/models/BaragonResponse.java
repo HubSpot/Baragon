@@ -23,6 +23,10 @@ public class BaragonResponse {
     return new BaragonResponse(requestId, BaragonRequestState.CANCELED, Optional.<String>of(String.format("Request %s does not exist", requestId)), Optional.<Map<String, Collection<AgentResponse>>>absent());
   }
 
+  public static BaragonResponse serviceNotFound(String requestId, String serviceId) {
+    return new BaragonResponse(requestId, BaragonRequestState.INVALID_REQUEST_NOOP, Optional.<String>of(String.format("Service %s not found", serviceId)), Optional.<Map<String, Collection<AgentResponse>>>absent());
+  }
+
   @JsonCreator
   public BaragonResponse(@JsonProperty("loadBalancerRequestId") String loadBalancerRequestId,
                          @JsonProperty("loadBalancerState") BaragonRequestState loadBalancerState,

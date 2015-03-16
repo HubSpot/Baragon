@@ -1,23 +1,28 @@
 package com.hubspot.baragon.managers;
 
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 import com.google.common.base.Optional;
 import com.google.common.base.Throwables;
 import com.google.inject.Inject;
-import com.hubspot.baragon.data.BaragonLoadBalancerDatastore;
 import com.hubspot.baragon.data.BaragonStateDatastore;
+import com.hubspot.baragon.models.BaragonRequest;
+import com.hubspot.baragon.models.BaragonResponse;
 import com.hubspot.baragon.models.BaragonService;
 import com.hubspot.baragon.models.BaragonServiceState;
+import com.hubspot.baragon.models.RequestAction;
+import com.hubspot.baragon.models.UpstreamInfo;
 
 public class ServiceManager {
   private final BaragonStateDatastore stateDatastore;
-  private final BaragonLoadBalancerDatastore loadBalancerDatastore;
+  private final RequestManager requestManager;
 
   @Inject
-  public ServiceManager(BaragonStateDatastore stateDatastore, BaragonLoadBalancerDatastore loadBalancerDatastore) {
+  public ServiceManager(BaragonStateDatastore stateDatastore, RequestManager requestManager) {
     this.stateDatastore = stateDatastore;
-    this.loadBalancerDatastore = loadBalancerDatastore;
+    this.requestManager = requestManager;
   }
 
   public Collection<BaragonServiceState> getAllServices() {
@@ -38,24 +43,41 @@ public class ServiceManager {
     }
   }
 
-  public Optional<BaragonServiceState> removeService(String serviceId) {
-    final Optional<BaragonService> maybeServiceInfo = stateDatastore.getService(serviceId);
-
-    if (!maybeServiceInfo.isPresent()) {
-      return Optional.absent();
+  public BaragonResponse enqueueReloadServiceConfigs(String serviceId) {
+    String requestId = String.format("%s-%s-%s", serviceId, System.currentTimeMillis(), "RELOAD");
+    Optional<BaragonService> maybeService = stateDatastore.getService(serviceId);
+    if (maybeService.isPresent()) {
+      try {
+        return requestManager.enqueueRequest(buildReloadRequest(maybeService.get(), requestId));
+      } catch (Exception e) {
+        return BaragonResponse.failure(requestId, e.getMessage());
+      }
+    } else {
+      return BaragonResponse.serviceNotFound(requestId, serviceId);
     }
+  }
 
-    stateDatastore.removeService(serviceId);
-    for (String loadBalancerGroup : maybeServiceInfo.get().getLoadBalancerGroups()) {
-      loadBalancerDatastore.clearBasePath(loadBalancerGroup, maybeServiceInfo.get().getServiceBasePath());
+  public BaragonResponse enqueueRemoveService(String serviceId) {
+    String requestId = String.format("%s-%s-%s", serviceId, System.currentTimeMillis(), "DELETE");
+    Optional<BaragonService> maybeService = stateDatastore.getService(serviceId);
+    if (maybeService.isPresent()) {
+      try {
+        return requestManager.enqueueRequest(buildRemoveRequest(maybeService.get(), requestId));
+      } catch (Exception e) {
+        return BaragonResponse.failure(requestId, e.getMessage());
+      }
+    } else {
+      return BaragonResponse.serviceNotFound(requestId, serviceId);
     }
+  }
 
-    stateDatastore.updateStateNode();
+  private BaragonRequest buildRemoveRequest(BaragonService service, String requestId) {
+      List<UpstreamInfo> empty = Collections.emptyList();
+      return new BaragonRequest(requestId, service, empty, empty, Optional.<String>absent(), Optional.of(RequestAction.DELETE));
+  }
 
-    try {
-      return Optional.of(new BaragonServiceState(maybeServiceInfo.get(), stateDatastore.getUpstreamsMap(serviceId).values()));
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
-    }
+  private BaragonRequest buildReloadRequest(BaragonService service, String requestId) {
+    List<UpstreamInfo> empty = Collections.emptyList();
+    return new BaragonRequest(requestId, service, empty, empty, Optional.<String>absent(), Optional.of(RequestAction.RELOAD));
   }
 }

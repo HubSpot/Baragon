@@ -6,6 +6,7 @@ import java.util.Set;
 import java.util.List;
 import java.util.ArrayList;
 
+import com.hubspot.baragon.models.RequestAction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -144,6 +145,7 @@ public class AgentManager {
 
   public AgentRequestsStatus getRequestsStatus(BaragonRequest request, AgentRequestType requestType) {
     boolean success = true;
+    RequestAction action = request.getAction().or(RequestAction.UPDATE);
     List<Boolean> missingTemplateExceptions = new ArrayList<>();
 
     for (BaragonAgentMetadata agentMetadata : getAgents(request.getLoadBalancerService().getLoadBalancerGroups())) {
@@ -182,9 +184,11 @@ public class AgentManager {
 
     if (allTrue(missingTemplateExceptions)) {
       return AgentRequestsStatus.INVALID_REQUEST_NOOP;
+    } else if (success) {
+      return AgentRequestsStatus.SUCCESS;
+    } else {
+      return action.equals(RequestAction.RELOAD) ? AgentRequestsStatus.INVALID_REQUEST_NOOP : AgentRequestsStatus.FAILURE;
     }
-
-    return success ? AgentRequestsStatus.SUCCESS : AgentRequestsStatus.FAILURE;
   }
 
   public Map<String, Collection<AgentResponse>> getAgentResponses(String requestId) {

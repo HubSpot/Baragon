@@ -29,17 +29,29 @@ public class BaragonRequest {
 
   private final Optional<String> replaceServiceId;
 
+  private final Optional<RequestAction> action;
+
   @JsonCreator
   public BaragonRequest(@JsonProperty("loadBalancerRequestId") String loadBalancerRequestId,
                         @JsonProperty("loadBalancerService") BaragonService loadBalancerService,
                         @JsonProperty("addUpstreams") List<UpstreamInfo> addUpstreams,
                         @JsonProperty("removeUpstreams") List<UpstreamInfo> removeUpstreams,
-                        @JsonProperty("replaceServiceId") Optional<String> replaceServiceId) {
+                        @JsonProperty("replaceServiceId") Optional<String> replaceServiceId,
+                        @JsonProperty("action") Optional<RequestAction> action) {
     this.loadBalancerRequestId = loadBalancerRequestId;
     this.loadBalancerService = loadBalancerService;
     this.addUpstreams = addRequestId(addUpstreams, loadBalancerRequestId);
     this.removeUpstreams = addRequestId(removeUpstreams, loadBalancerRequestId);
     this.replaceServiceId = replaceServiceId;
+    this.action = action;
+  }
+
+  public BaragonRequest(String loadBalancerRequestId, BaragonService loadBalancerService, List<UpstreamInfo> addUpstreams, List<UpstreamInfo> removeUpstreams) {
+    this(loadBalancerRequestId, loadBalancerService, addUpstreams, removeUpstreams, Optional.<String>absent(), Optional.of(RequestAction.UPDATE));
+  }
+
+  public BaragonRequest(String loadBalancerRequestId, BaragonService loadBalancerService, List<UpstreamInfo> addUpstreams, List<UpstreamInfo> removeUpstreams, Optional<String> replaceServiceId) {
+    this(loadBalancerRequestId, loadBalancerService, addUpstreams, removeUpstreams, replaceServiceId, Optional.of(RequestAction.UPDATE));
   }
 
   public String getLoadBalancerRequestId() {
@@ -60,6 +72,10 @@ public class BaragonRequest {
 
   public Optional<String> getReplaceServiceId() {
     return replaceServiceId;
+  }
+
+  public Optional<RequestAction> getAction() {
+    return action;
   }
 
   private List<UpstreamInfo> addRequestId(List<UpstreamInfo> upstreams, String requestId) {
@@ -91,6 +107,7 @@ public class BaragonRequest {
         ", addUpstreams=" + addUpstreams +
         ", removeUpstreams=" + removeUpstreams +
         ", replaceServiceId=" + replaceServiceId +
+        ", action=" + action +
         ']';
   }
 
@@ -106,6 +123,7 @@ public class BaragonRequest {
     if (!loadBalancerService.equals(request.loadBalancerService)) return false;
     if (!removeUpstreams.equals(request.removeUpstreams)) return false;
     if (!replaceServiceId.equals(request.replaceServiceId)) return false;
+    if (!action.equals(request.action)) return false;
 
     return true;
   }
@@ -117,6 +135,7 @@ public class BaragonRequest {
     result = 31 * result + addUpstreams.hashCode();
     result = 31 * result + removeUpstreams.hashCode();
     result = 31 * result + replaceServiceId.hashCode();
+    result = 31 * result + action.hashCode();
     return result;
   }
 }
