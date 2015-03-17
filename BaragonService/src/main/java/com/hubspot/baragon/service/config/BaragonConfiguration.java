@@ -65,6 +65,7 @@ public class BaragonConfiguration extends Configuration {
   @Valid
   private UIConfiguration uiConfiguration = new UIConfiguration();
 
+  @JsonProperty("enableCorsFilter")
   private boolean enableCorsFilter = false;
 
   public ZooKeeperConfiguration getZooKeeperConfiguration() {

@@ -43,13 +43,13 @@ EOF
 
 function build_baragon {
   cd /baragon
-  sudo -u vagrant HOME=/home/vagrant mvn clean package
+  sudo -u vagrant HOME='/home/vagrant' mvn clean package
 }
 
 function install_baragon {
   mkdir -p /var/log/baragon
   mkdir -p /usr/local/baragon/bin
-  cp /baragon/BaragonService/target/BaragonService-*-SNAPSHOT.jar /usr/local/baragon/bin/baragon_service.jar
+  cp /baragon/BaragonService/target/BaragonService-*-SNAPSHOT-shaded.jar /usr/local/baragon/bin/baragon_service.jar
 
   cat > /etc/init/baragon_service.conf <<EOF
 #!upstart

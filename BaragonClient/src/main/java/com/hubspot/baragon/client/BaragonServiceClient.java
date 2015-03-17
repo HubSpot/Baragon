@@ -15,12 +15,18 @@ import org.slf4j.LoggerFactory;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.hubspot.baragon.models.BaragonAgentMetadata;
+import com.hubspot.baragon.models.BaragonRequest;
+import com.hubspot.baragon.models.BaragonResponse;
+import com.hubspot.baragon.models.BaragonService;
+import com.hubspot.baragon.models.BaragonServiceState;
+import com.hubspot.baragon.models.BaragonServiceStatus;
+import com.hubspot.baragon.models.QueuedRequestId;
 import com.hubspot.horizon.HttpClient;
 import com.hubspot.horizon.HttpRequest;
 import com.hubspot.horizon.HttpRequest.Method;
 import com.hubspot.horizon.HttpResponse;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.hubspot.baragon.models.*;
 
 public class BaragonServiceClient {
 
@@ -207,7 +213,7 @@ public class BaragonServiceClient {
 
 
   // BaragonService overall status
-  
+
   public Optional<BaragonServiceStatus> getBaragonServiceStatus(String hostname) {
     final String uri = String.format(STATUS_FORMAT, hostname, contextPath);
     return getSingle(uri, "status", "", BaragonServiceStatus.class);
