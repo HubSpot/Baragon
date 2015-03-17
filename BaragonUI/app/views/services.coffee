@@ -17,7 +17,7 @@ class ServicesView extends View
             'click [data-action="viewJSON"]':        'viewJson'
             'click [data-action="delete"]':          'deleteService'
             'click [data-action="removeUpstreams"]': 'removeUpstreams'
-            'click [data-action="relaod"]':          'reload'
+            'click [data-action="reload"]':          'reload'
             'change input[type="search"]':           'searchChange'
             'keyup input[type="search"]':            'serachChange'
             'input input[type="search"]':            'searchChange'

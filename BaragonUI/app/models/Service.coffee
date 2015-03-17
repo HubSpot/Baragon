@@ -155,7 +155,7 @@ class Service extends Model
 
     promptRemoveUpstreamsSuccess: (callback) =>
         vex.dialog.confirm
-            message: @removeUpstreamsSuccessTemplate {request: @get('request') config: config}
+            message: @removeUpstreamsSuccessTemplate {request: @get('request'), config: config}
             buttons: [
                 $.extend {}, vex.dialog.buttons.YES,
                     text: 'OK',
