@@ -169,7 +169,6 @@ public class RequestManager {
     RequestAction action = request.getAction().or(RequestAction.UPDATE);
     Optional<BaragonService> maybeOriginalService = getOriginalService(request);
 
-    LOG.info(action.toString());
     switch(action) {
       case UPDATE:
       case REVERT:
