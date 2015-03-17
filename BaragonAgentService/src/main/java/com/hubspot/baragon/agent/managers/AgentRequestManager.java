@@ -30,8 +30,8 @@ import com.hubspot.baragon.agent.BaragonAgentServiceModule;
 import com.hubspot.baragon.exceptions.MissingTemplateException;
 
 @Singleton
-public class RequestManager {
-  private static final Logger LOG = LoggerFactory.getLogger(RequestManager.class);
+public class AgentRequestManager {
+  private static final Logger LOG = LoggerFactory.getLogger(AgentRequestManager.class);
   private final FilesystemConfigHelper configHelper;
   private final BaragonStateDatastore stateDatastore;
   private final BaragonRequestDatastore requestDatastore;
@@ -43,7 +43,7 @@ public class RequestManager {
   private final long agentLockTimeoutMs;
 
   @Inject
-  public RequestManager(BaragonStateDatastore stateDatastore,
+  public AgentRequestManager(BaragonStateDatastore stateDatastore,
                         BaragonRequestDatastore requestDatastore,
                         FilesystemConfigHelper configHelper,
                         Optional<TestingConfiguration> maybeTestingConfiguration,

@@ -10,7 +10,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import com.google.common.base.Optional;
-import com.hubspot.baragon.agent.managers.RequestManager;
+import com.hubspot.baragon.agent.managers.AgentRequestManager;
 import com.hubspot.baragon.models.RequestAction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,21 +23,21 @@ import com.google.inject.Inject;
 public class RequestResource {
   private static final Logger LOG = LoggerFactory.getLogger(RequestResource.class);
 
-  private final RequestManager requestManager;
+  private final AgentRequestManager agentRequestManager;
 
   @Inject
-  public RequestResource(RequestManager requestManager) {
-    this.requestManager = requestManager;
+  public RequestResource(AgentRequestManager agentRequestManager) {
+    this.agentRequestManager = agentRequestManager;
   }
 
   @POST
   public Response apply(@PathParam("requestId") String requestId) throws InterruptedException {
-    return requestManager.processRequest(requestId, Optional.<RequestAction>absent());
+    return agentRequestManager.processRequest(requestId, Optional.<RequestAction>absent());
   }
 
   @DELETE
   public Response revert(@PathParam("requestId") String requestId) throws InterruptedException {
-    return requestManager.processRequest(requestId, Optional.of(RequestAction.REVERT));
+    return agentRequestManager.processRequest(requestId, Optional.of(RequestAction.REVERT));
   }
 
 }
