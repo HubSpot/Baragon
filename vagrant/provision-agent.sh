@@ -178,7 +178,7 @@ function build_baragon {
 function install_baragon {
   mkdir -p /var/log/baragon
   mkdir -p /usr/local/baragon/bin
-  cp /baragon/BaragonAgentService/target/BaragonAgentService-*-SNAPSHOT.jar /usr/local/baragon/bin/baragon_agent.jar
+  cp /baragon/BaragonAgentService/target/BaragonAgentService-*-SNAPSHOT-shaded.jar /usr/local/baragon/bin/baragon_agent.jar
 
   cat > /etc/init/baragon_agent.conf <<EOF
 #!upstart
