@@ -91,6 +91,7 @@ public class AgentRequestManager {
       LOG.error(String.format("Caught exception while %sING for reqeust %s", action, requestId), e);
       return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(String.format("Caught exception while %sING for reqeust %s: %s", action, requestId, e.getMessage())).build();
     } finally {
+      LOG.info(String.format("Done processing %s request: %s", action, requestId));
       agentLock.unlock();
     }
   }
@@ -110,16 +111,8 @@ public class AgentRequestManager {
   }
 
   private Response apply(BaragonRequest request, Optional<BaragonService> maybeOldService) throws Exception {
-    final ServiceContext update;
-    if (!request.getLoadBalancerService().getLoadBalancerGroups().contains(loadBalancerConfiguration.getName())) {
-      // this service has been deleted or moved off this load balancer -- delete the config
-      update = new ServiceContext(request.getLoadBalancerService(), Collections.<UpstreamInfo>emptyList(), System.currentTimeMillis(), false);
-    } else {
-      // Apply request
-      update = getApplyContext(request);
-    }
+    final ServiceContext update = getApplyContext(request);
     triggerTesting();
-
     try {
       configHelper.apply(update, maybeOldService, true);
     } catch (Exception e) {
@@ -131,8 +124,7 @@ public class AgentRequestManager {
 
   private Response revert(BaragonRequest request, Optional<BaragonService> maybeOldService) throws Exception {
     final ServiceContext update;
-    if (!maybeOldService.isPresent() || !maybeOldService.get().getLoadBalancerGroups().contains(loadBalancerConfiguration.getName())) {
-      // this service previously didn't exist, or wasnt on this load balancer -- remove the config
+    if (movedOffLoadBalancer(maybeOldService)) {
       update = new ServiceContext(request.getLoadBalancerService(), Collections.<UpstreamInfo>emptyList(), System.currentTimeMillis(), false);
     } else {
       update = new ServiceContext(maybeOldService.get(), stateDatastore.getUpstreamsMap(maybeOldService.get().getServiceId()).values(), System.currentTimeMillis(), true);
@@ -144,8 +136,7 @@ public class AgentRequestManager {
     try {
       configHelper.apply(update, Optional.<BaragonService>absent(), false);
     } catch (MissingTemplateException e) {
-      // For reverts, if this service previously didn't exist, no config was written for a MissingTemplateException, doesn't matter that we can't find the template
-      if (!maybeOldService.isPresent() || !maybeOldService.get().getLoadBalancerGroups().contains(loadBalancerConfiguration.getName())) {
+      if (serviceDidNotPreviouslyExist(maybeOldService)) {
         return Response.ok().build();
       } else {
         throw e;
@@ -157,19 +148,35 @@ public class AgentRequestManager {
     return Response.ok().build();
   }
 
-  private ServiceContext getApplyContext(BaragonRequest request) throws Exception{
-    final Map<String, UpstreamInfo> upstreamsMap = new HashMap<>();
-    upstreamsMap.putAll(stateDatastore.getUpstreamsMap(request.getLoadBalancerService().getServiceId()));
+  private ServiceContext getApplyContext(BaragonRequest request) throws Exception {
+    if (movedOffLoadBalancer(request)) {
+      return new ServiceContext(request.getLoadBalancerService(), Collections.<UpstreamInfo>emptyList(), System.currentTimeMillis(), false);
+    } else {
+      final Map<String, UpstreamInfo> upstreamsMap = new HashMap<>();
+      upstreamsMap.putAll(stateDatastore.getUpstreamsMap(request.getLoadBalancerService().getServiceId()));
 
-    for (UpstreamInfo removeUpstreamInfo : request.getRemoveUpstreams()) {
-      upstreamsMap.remove(removeUpstreamInfo.getUpstream());
+      for (UpstreamInfo removeUpstreamInfo : request.getRemoveUpstreams()) {
+        upstreamsMap.remove(removeUpstreamInfo.getUpstream());
+      }
+
+      for (UpstreamInfo addUpstreamInfo : request.getAddUpstreams()) {
+        upstreamsMap.put(addUpstreamInfo.getUpstream(), addUpstreamInfo);
+      }
+
+      return new ServiceContext(request.getLoadBalancerService(), upstreamsMap.values(), System.currentTimeMillis(), true);
     }
+  }
 
-    for (UpstreamInfo addUpstreamInfo : request.getAddUpstreams()) {
-      upstreamsMap.put(addUpstreamInfo.getUpstream(), addUpstreamInfo);
-    }
+  private boolean movedOffLoadBalancer(Optional<BaragonService> maybeOldService) {
+    return (!maybeOldService.isPresent() || !maybeOldService.get().getLoadBalancerGroups().contains(loadBalancerConfiguration.getName()));
+  }
 
-    return new ServiceContext(request.getLoadBalancerService(), upstreamsMap.values(), System.currentTimeMillis(), true);
+  private boolean movedOffLoadBalancer(BaragonRequest request) {
+    return (!request.getLoadBalancerService().getLoadBalancerGroups().contains(loadBalancerConfiguration.getName()));
+  }
+
+  private boolean serviceDidNotPreviouslyExist(Optional<BaragonService> maybeOldService) {
+    return (!maybeOldService.isPresent() || !maybeOldService.get().getLoadBalancerGroups().contains(loadBalancerConfiguration.getName()));
   }
 
   private Optional<BaragonService> getOldService(BaragonRequest request) {

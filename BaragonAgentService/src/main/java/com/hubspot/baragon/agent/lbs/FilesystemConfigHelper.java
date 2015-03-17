@@ -113,7 +113,6 @@ public class FilesystemConfigHelper {
       throw Throwables.propagate(e);
     }
 
-    // Load the new configs
     adapter.reloadConfigs();
 
     removeBackupConfigs(oldService);
@@ -127,7 +126,7 @@ public class FilesystemConfigHelper {
         backupConfigs(service);
         remove(service, false);
       }
-      if (oldServiceExists) {
+      if (oldServiceExists && !maybeOldService.get().equals(service)) {
         backupConfigs(maybeOldService.get());
         remove(maybeOldService.get(), false);
       }
@@ -144,7 +143,7 @@ public class FilesystemConfigHelper {
       }
 
       throw Throwables.propagate(e);
-    }
+     }
     adapter.reloadConfigs();
   }
 
