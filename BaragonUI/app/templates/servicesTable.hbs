@@ -28,9 +28,9 @@
                         {{ id }}
                     </a>
                 </td>
-                <td>{{ basePath }}</td>
+                <td>{{ service.serviceBasePath }}</td>
                 <td>
-                    {{#each loadBalancerGroups }}
+                    {{#each service.loadBalancerGroups }}
                         <a title="{{ this }}" href="{{appRoot}}/groups/{{ this }}">{{ this }}</a>
                     {{/each}}
                 </td>

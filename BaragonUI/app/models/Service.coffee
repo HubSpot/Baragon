@@ -14,14 +14,12 @@ class Service extends Model
 
     initialize: ({ @serviceId }) ->
 
+    ignoreAttributes: ['splitLbGroups', 'splitOwners', 'splitUpstreams']
+
     parse: (data) ->
         data.id = data.service.serviceId
-        data.loadBalancerGroups = data.service.loadBalancerGroups
         data.splitLbGroups = utils.splitArray(data.service.loadBalancerGroups.sort(), Math.ceil(data.service.loadBalancerGroups.length/2))
-        data.owners = data.service.owners
         data.splitOwners = utils.splitArray(data.service.owners.sort(), Math.ceil(data.service.owners.length/2))
-        data.basePath = data.service.serviceBasePath
-        data.options = data.service.options
         data.splitUpstreams = utils.splitArray(data.upstreams, Math.ceil(data.upstreams.length/2))
         data.upstreamsCount = data.upstreams.length
         if data.upstreamsCount > 0
@@ -38,10 +36,9 @@ class Service extends Model
 
     reload: =>
         $.ajax
-            url: "#{@url()}/reload"
+            url: "#{ config.apiRoot }/state/#{ @serviceId }/reload?authkey=#{ config.authKey }"
             type: "PUT"
             success: (data) =>
-                console.dir(data)
                 @set('request', data.loadBalancerRequestId)
 
     undo: =>
