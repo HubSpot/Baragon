@@ -58,6 +58,13 @@ public class BaragonAgentConfiguration extends Configuration {
   @Valid
   private AuthConfiguration authConfiguration = new AuthConfiguration();
 
+  @JsonProperty("enableCorsFilter")
+  private boolean enableCorsFilter = false;
+
+  public boolean isEnableCorsFilter() {
+    return enableCorsFilter;
+  }
+
   public AuthConfiguration getAuthConfiguration() {
     return authConfiguration;
   }
