@@ -6,6 +6,8 @@ class Service extends Model
 
     deleteTemplate: require '../templates/vex/serviceRemove'
     deleteSuccessTemplate: require '../templates/vex/serviceRemoveSuccess'
+    reloadTemplate: require '../templates/vex/serviceReload'
+    reloadSuccessTemplate: require '../templates/vex/serviceReloadSuccess'
     removeUpstreamsTemplate: require '../templates/vex/removeUpstreams'
     removeUpstreamTemplate: require '../templates/vex/removeUpstream'
     removeUpstreamsSuccessTemplate: require '../templates/vex/removeUpstreamsSuccess'
@@ -30,6 +32,14 @@ class Service extends Model
         $.ajax
             url: @url()
             type: "DELETE"
+            success: (data) =>
+                console.dir(data)
+                @set('request', data.loadBalancerRequestId)
+
+    reload: =>
+        $.ajax
+            url: "#{@url()}/reload"
+            type: "PUT"
             success: (data) =>
                 console.dir(data)
                 @set('request', data.loadBalancerRequestId)
@@ -98,6 +108,30 @@ class Service extends Model
     promptDeleteSuccess: (callback) =>
         vex.dialog.confirm
             message: @deleteSuccessTemplate {request: @get('request'), config: config}
+            buttons: [
+                $.extend {}, vex.dialog.buttons.YES,
+                    text: 'OK',
+                    className: 'vex-dialog-button-primary vex-dialog-button-primary-remove'
+            ]
+            callback: (data) =>
+                return
+
+    promptReloadConfigs: (callback) =>
+        vex.dialog.confirm
+            message: @reloadTemplate {@serviceId}
+            buttons: [
+                $.extend {}, vex.dialog.buttons.YES,
+                    text: 'RELOAD',
+                    className: 'vex-dialog-button-primary vex-dialog-button-primary-remove'
+                vex.dialog.buttons.NO
+            ]
+            callback: (data) =>
+                return if data is false
+                @reload().done callback
+
+    promptReloadConfigsSuccess: (callback) =>
+        vex.dialog.confirm
+            message: @reloadSuccessTemplate {request: @get('request'), config: config}
             buttons: [
                 $.extend {}, vex.dialog.buttons.YES,
                     text: 'OK',

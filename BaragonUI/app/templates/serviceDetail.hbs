@@ -11,6 +11,9 @@
                 JSON
             </a>
             {{#if config.allowEdit}}
+                <a class="btn btn-primary" data-service-id="{{ service.id }}" data-action="reload">
+                    Reload Configs
+                </a>
                 <a class="btn btn-warning" data-service-id="{{ service.id }}" data-action="removeUpstreams">
                     Remove Upstreams
                 </a>

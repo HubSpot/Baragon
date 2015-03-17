@@ -17,6 +17,7 @@ class ServicesView extends View
             'click [data-action="viewJSON"]':        'viewJson'
             'click [data-action="delete"]':          'deleteService'
             'click [data-action="removeUpstreams"]': 'removeUpstreams'
+            'click [data-action="relaod"]':          'reload'
             'change input[type="search"]':           'searchChange'
             'keyup input[type="search"]':            'serachChange'
             'input input[type="search"]':            'searchChange'
@@ -71,6 +72,13 @@ class ServicesView extends View
         serviceModel = new Service {serviceId: id}
         serviceModel.promptRemoveUpstreams =>
             serviceModel.promptRemoveUpstreamsSuccess => @trigger 'refreshrequest'
+
+    reload: (e) ->
+        id = $(e.target).parents('tr').data 'service-id'
+        serviceModel = new Service {serviceId: id}
+        serviceModel.promptReloadConfigs =>
+            serviceModel.promptReloadConfigsSuccess => @trigger 'refreshrequest'
+
 
     searchChange: (event) =>
         return unless @ is app.views.current
