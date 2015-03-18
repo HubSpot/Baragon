@@ -59,6 +59,32 @@ public class FilesystemConfigHelper {
     adapter.reloadConfigs();
   }
 
+  public void bootstrapApply(ServiceContext context) throws MissingTemplateException, IOException, LbAdapterExecuteException {
+    final BaragonService service = context.getService();
+    final boolean previousConfigsExist = configsExist(service);
+
+    Collection<BaragonConfigFile> newConfigs = configGenerator.generateConfigsForProject(context);
+    if (previousConfigsExist && newConfigs.equals(readConfigs(service))) {
+      LOG.info("    Configs are unchanged, skipping apply");
+      return;
+    }
+    backupConfigs(service);
+    try {
+      if (context.isPresent()) {
+        writeConfigs(newConfigs);
+      } else {
+        remove(service, false);
+      }
+    }  catch (Exception e) {
+      LOG.error("Caught exception while writing configs for " + service.getServiceId() + ", reverting to backups!", e);
+      if (previousConfigsExist) {
+        restoreConfigs(service);
+      } else {
+        remove(service, false);
+      }
+    }
+  }
+
   public void apply(ServiceContext context, Optional<BaragonService> maybeOldService, boolean revertOnFailure) throws InvalidConfigException, LbAdapterExecuteException, IOException, MissingTemplateException {
     final BaragonService service = context.getService();
     final BaragonService oldService = maybeOldService.or(service);
