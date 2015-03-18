@@ -1,14 +1,5 @@
 package com.hubspot.baragon.agent.managed;
 
-import com.google.common.base.Optional;
-import com.hubspot.baragon.agent.lbs.BootstrapFileChecker;
-import com.hubspot.baragon.data.BaragonKnownAgentsDatastore;
-import com.hubspot.baragon.models.BaragonAgentMetadata;
-import com.hubspot.baragon.models.BaragonConfigFile;
-import com.hubspot.baragon.models.BaragonService;
-import com.hubspot.baragon.models.ServiceContext;
-import io.dropwizard.lifecycle.Managed;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -23,15 +14,22 @@ import org.apache.curator.framework.recipes.leader.LeaderLatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.base.Stopwatch;
-import com.google.inject.Inject;
-import com.google.inject.name.Named;
+import com.google.common.base.Optional;
+import com.hubspot.baragon.agent.lbs.BootstrapFileChecker;
+import com.hubspot.baragon.data.BaragonKnownAgentsDatastore;
+import com.hubspot.baragon.models.BaragonAgentMetadata;
+import com.hubspot.baragon.models.BaragonConfigFile;
+import com.hubspot.baragon.models.ServiceContext;
 import com.hubspot.baragon.agent.BaragonAgentServiceModule;
 import com.hubspot.baragon.agent.config.LoadBalancerConfiguration;
 import com.hubspot.baragon.agent.lbs.FilesystemConfigHelper;
 import com.hubspot.baragon.data.BaragonStateDatastore;
 import com.hubspot.baragon.models.BaragonKnownAgentMetadata;
 import com.hubspot.baragon.models.BaragonServiceState;
+import io.dropwizard.lifecycle.Managed;
+import com.google.common.base.Stopwatch;
+import com.google.inject.Inject;
+import com.google.inject.name.Named;
 
 public class BootstrapManaged implements Managed {
   private static final Logger LOG = LoggerFactory.getLogger(BootstrapManaged.class);
