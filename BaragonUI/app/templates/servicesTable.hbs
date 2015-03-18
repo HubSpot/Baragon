@@ -37,10 +37,10 @@
                 <td>{{ upstreamsCount }}
                 <td class="actions-column hidden-xs">
                     {{#if ../config.allowEdit}}
-                        <a data-action="reload" title="Reload Configs">
-                            <span class="glyphicon glyphicon-refresh"></span>
-                        </a>
                         {{#ifGreaterThan upstreamsCount 0}}
+                            <a data-action="reload" title="Reload Configs">
+                                <span class="glyphicon glyphicon-refresh"></span>
+                            </a>
                             <a data-action="removeUpstreams" title="Remove Upstreams">
                                 <span class="glyphicon glyphicon-remove-circle"></span>
                             </a>
