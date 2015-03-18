@@ -1,10 +1,12 @@
 package com.hubspot.baragon.agent.managed;
 
 import com.google.common.base.Optional;
-import com.hubspot.baragon.agent.lbs.BootstrapApplyExecutor;
+import com.hubspot.baragon.agent.lbs.BootstrapFileChecker;
 import com.hubspot.baragon.data.BaragonKnownAgentsDatastore;
 import com.hubspot.baragon.models.BaragonAgentMetadata;
+import com.hubspot.baragon.models.BaragonConfigFile;
 import com.hubspot.baragon.models.BaragonService;
+import com.hubspot.baragon.models.ServiceContext;
 import io.dropwizard.lifecycle.Managed;
 
 import java.util.ArrayList;
@@ -16,6 +18,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.curator.framework.recipes.leader.LeaderLatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -63,20 +66,25 @@ public class BootstrapManaged implements Managed {
 
     final Collection<String> services = stateDatastore.getServices();
     ExecutorService executorService = Executors.newFixedThreadPool(services.size());
-    List<Callable<BaragonService>> todo = new ArrayList<>(services.size());
+    List<Callable<Optional<Pair<ServiceContext, Collection<BaragonConfigFile>>>>> todo = new ArrayList<>(services.size());
 
     LOG.info("Going to apply {} services...", services.size());
 
     for (BaragonServiceState serviceState : stateDatastore.getGlobalState()) {
-      todo.add(new BootstrapApplyExecutor(loadBalancerConfiguration, configHelper, serviceState, now));
+      todo.add(new BootstrapFileChecker(loadBalancerConfiguration, configHelper, serviceState, now));
     }
     try {
-      List<Future<BaragonService>> applied = executorService.invokeAll(todo);
-      LOG.info("Applied configs for services:");
-      for (Future<BaragonService> serviceFuture : applied) {
-        LOG.info(serviceFuture.get().toString());
+      List<Future<Optional<Pair<ServiceContext, Collection<BaragonConfigFile>>>>> applied = executorService.invokeAll(todo);
+      for (Future<Optional<Pair<ServiceContext, Collection<BaragonConfigFile>>>> serviceFuture : applied) {
+        Optional<Pair<ServiceContext, Collection<BaragonConfigFile>>> maybeToApply = serviceFuture.get();
+        if (maybeToApply.isPresent()) {
+          try {
+            configHelper.bootstrapApply(maybeToApply.get().getKey(), maybeToApply.get().getValue());
+          } catch (Exception e) {
+            LOG.error(String.format("Caught exception while applying %s", maybeToApply.get().getKey().getService().getServiceId()), e);
+          }
+        }
       }
-      LOG.info("Validating and reloading configs");
       configHelper.checkAndReload();
     } catch (Exception e) {
       LOG.error(String.format("Caught exception while applying and parsing configs"), e);
