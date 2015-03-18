@@ -50,9 +50,9 @@ class Service extends Model
                     loadBalancerRequestId: requestId
                     loadBalancerService:
                         serviceId: @id
-                        owners: if @attributes.owners then @attributes.owners else []
-                        serviceBasePath: @attributes.basePath
-                        loadBalancerGroups: @attributes.loadBalancerGroups
+                        owners: if @attributes.service.owners then @attributes.service.owners else []
+                        serviceBasePath: @attributes.service.serviceBasePath
+                        loadBalancerGroups: @attributes.service.loadBalancerGroups
                     addUpstreams: []
                     removeUpstreams: @attributes.upstreams
                 }
@@ -72,9 +72,9 @@ class Service extends Model
                     loadBalancerRequestId: requestId
                     loadBalancerService:
                         serviceId: @id
-                        owners: if @attributes.owners then @attributes.owners else []
-                        serviceBasePath: @attributes.basePath
-                        loadBalancerGroups: @attributes.loadBalancerGroups
+                        owners: if @attributes.service.owners then @attributes.service.owners else []
+                        serviceBasePath: @attributes.service.serviceBasePath
+                        loadBalancerGroups: @attributes.service.loadBalancerGroups
                         options: @attributes.options
                     addUpstreams: []
                     removeUpstreams: [{upstream: upstream, request: requestId}]
