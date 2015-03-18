@@ -1,5 +1,6 @@
 package com.hubspot.baragon.managers;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -71,9 +72,11 @@ public class ServiceManager {
     }
   }
 
-  private BaragonRequest buildRemoveRequest(BaragonService service, String requestId) {
-      List<UpstreamInfo> empty = Collections.emptyList();
-      return new BaragonRequest(requestId, service, empty, empty, Optional.<String>absent(), Optional.of(RequestAction.DELETE));
+  private BaragonRequest buildRemoveRequest(BaragonService service, String requestId) throws Exception {
+    List<UpstreamInfo> empty = Collections.emptyList();
+    List<UpstreamInfo> remove;
+    remove =  new ArrayList<>(stateDatastore.getUpstreamsMap(service.getServiceId()).values());
+    return new BaragonRequest(requestId, service, empty, remove, Optional.<String>absent(), Optional.of(RequestAction.DELETE));
   }
 
   private BaragonRequest buildReloadRequest(BaragonService service, String requestId) {
