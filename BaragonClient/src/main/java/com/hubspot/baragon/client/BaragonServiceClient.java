@@ -213,7 +213,7 @@ public class BaragonServiceClient {
     LOG.info("Successfully put {} in {}ms", type, System.currentTimeMillis() - start);
     return response;
   }
-  
+
   private <T> Optional<T> put(String uri, String type, String id, Map<String, String> queryParams, Optional<Class<T>> clazz) {
     LOG.info("Deleting {} {} from {}", type, id, uri);
     final long start = System.currentTimeMillis();
