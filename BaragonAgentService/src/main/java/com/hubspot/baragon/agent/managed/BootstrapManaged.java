@@ -79,7 +79,7 @@ public class BootstrapManaged implements Managed {
           try {
             configHelper.bootstrapApply(maybeToApply.get().getKey(), maybeToApply.get().getValue());
           } catch (Exception e) {
-            LOG.error(String.format("Caught exception while applying %s", maybeToApply.get().getKey().getService().getServiceId()), e);
+            LOG.error(String.format("Caught exception while applying %s during bootstrap", maybeToApply.get().getKey().getService().getServiceId()), e);
           }
         }
       }
