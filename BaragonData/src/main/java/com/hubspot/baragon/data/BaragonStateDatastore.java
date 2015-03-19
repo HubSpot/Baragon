@@ -1,5 +1,6 @@
 package com.hubspot.baragon.data;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -79,7 +80,7 @@ public class BaragonStateDatastore extends AbstractDataStore {
       upstreamPaths.add(String.format(UPSTREAM_FORMAT, serviceId, upstreamNode));
     }
 
-    return Maps.uniqueIndex(zkFetcher.fetchDataInParallel(upstreamPaths, new UpstreamInfoDeserializer()).values(), new UpstreamKeyFunction());
+    return Maps.uniqueIndex(zkFetcher.fetchDataInParallel(upstreamPaths, new BaragonDeserializer<>(objectMapper, UpstreamInfo.class)).values(), new UpstreamKeyFunction());
   }
 
   public void removeUpstreams(String serviceId, Collection<UpstreamInfo> upstreams) {
@@ -127,7 +128,7 @@ public class BaragonStateDatastore extends AbstractDataStore {
       services.add(ZKPaths.makePath(SERVICES_FORMAT, service));
     }
 
-    final Map<String, BaragonService> serviceMap = zkFetcher.fetchDataInParallel(services, new BaragonServiceDeserializer());
+    final Map<String, BaragonService> serviceMap = zkFetcher.fetchDataInParallel(services, new BaragonDeserializer<>(objectMapper, BaragonService.class));
     final Map<String, Collection<UpstreamInfo>> serviceToUpstreamInfoMap = fetchServiceToUpstreamInfoMap(services);
     final Collection<BaragonServiceState> serviceStates = new ArrayList<>(serviceMap.size());
 
@@ -143,7 +144,8 @@ public class BaragonStateDatastore extends AbstractDataStore {
 
   private Map<String, Collection<UpstreamInfo>> fetchServiceToUpstreamInfoMap(Collection<String> services) throws Exception {
     Map<String, Collection<String>> serviceToUpstreams = zkFetcher.fetchChildrenInParallel(services);
-    Map<String, UpstreamInfo> upstreamToInfo = zkFetcher.fetchDataInParallel(upstreamPaths(serviceToUpstreams), new UpstreamInfoDeserializer());
+    Map<String, UpstreamInfo> upstreamToInfo = zkFetcher.fetchDataInParallel(upstreamPaths(serviceToUpstreams), new BaragonDeserializer<>(objectMapper, UpstreamInfo.class));
+
     Map<String, Collection<UpstreamInfo>> serviceToUpstreamInfo = new HashMap<>(services.size());
 
     for (Entry<String, Collection<String>> entry : serviceToUpstreams.entrySet()) {
@@ -169,21 +171,26 @@ public class BaragonStateDatastore extends AbstractDataStore {
     return allUpstreamPaths;
   }
 
-  private class BaragonServiceDeserializer implements Function<byte[], BaragonService> {
+  public static class BaragonDeserializer<T> implements Function<byte[], T> {
+    private final Class<T> clazz;
+    private final ObjectMapper objectMapper;
+
+    public BaragonDeserializer(ObjectMapper objectMapper, Class<T> clazz) {
+      this.clazz = clazz;
+      this.objectMapper = objectMapper;
+    }
+
     @Override
-    public BaragonService apply(byte[] data) {
-      return deserialize(data, BaragonService.class);
+    public T apply(byte[] input) {
+      try {
+        return objectMapper.readValue(input, clazz);
+      } catch (IOException e) {
+        throw Throwables.propagate(e);
+      }
     }
   }
 
-  private class UpstreamInfoDeserializer implements Function<byte[], UpstreamInfo> {
-    @Override
-    public UpstreamInfo apply(byte[] input) {
-      return deserialize(input, UpstreamInfo.class);
-    }
-  }
-
-  private class UpstreamKeyFunction implements Function<UpstreamInfo, String> {
+  private static class UpstreamKeyFunction implements Function<UpstreamInfo, String> {
     @Override
     public String apply(UpstreamInfo input) {
       return input.getUpstream();

@@ -50,7 +50,7 @@ public class RequestResource {
   private final Optional<TestingConfiguration> maybeTestingConfiguration;
   private final Random random;
   private final LoadBalancerConfiguration loadBalancerConfiguration;
-  
+
   @Inject
   public RequestResource(BaragonStateDatastore stateDatastore,
                          BaragonRequestDatastore requestDatastore,
@@ -179,7 +179,7 @@ public class RequestResource {
       }
 
       LOG.info(String.format("Reverting to %s", update));
-      
+
       try {
         configHelper.apply(update, Optional.<BaragonService>absent(), false);
       } catch (MissingTemplateException e) {

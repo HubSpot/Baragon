@@ -7,6 +7,7 @@ import io.dropwizard.setup.Environment;
 import com.google.inject.Stage;
 import com.hubspot.baragon.agent.config.BaragonAgentConfiguration;
 import com.hubspot.baragon.auth.BaragonAuthBundle;
+import com.hubspot.baragon.agent.bundles.CorsBundle;
 import com.hubspot.dropwizard.guice.GuiceBundle;
 
 public class BaragonAgentService extends Application<BaragonAgentConfiguration> {
@@ -19,6 +20,7 @@ public class BaragonAgentService extends Application<BaragonAgentConfiguration> 
         .setConfigClass(BaragonAgentConfiguration.class)
         .build(Stage.DEVELOPMENT);
 
+    bootstrap.addBundle(new CorsBundle());
     bootstrap.addBundle(guiceBundle);
     bootstrap.addBundle(new BaragonAuthBundle());
   }

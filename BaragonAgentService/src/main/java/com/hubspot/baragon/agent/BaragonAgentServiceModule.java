@@ -88,7 +88,7 @@ public class BaragonAgentServiceModule extends AbstractModule {
 
     return templates;
   }
-  
+
   @Provides
   public LoadBalancerConfiguration provideLoadBalancerInfo(BaragonAgentConfiguration configuration) {
     return configuration.getLoadBalancerConfiguration();
@@ -162,7 +162,7 @@ public class BaragonAgentServiceModule extends AbstractModule {
       String inputLine;
       URL ec2MetaData = new URL("http://169.254.169.254/latest/meta-data/instance-id");
       URLConnection ec2Conn = ec2MetaData.openConnection();
-      BufferedReader in = new BufferedReader(new InputStreamReader(ec2Conn.getInputStream()));
+      BufferedReader in = new BufferedReader(new InputStreamReader(ec2Conn.getInputStream(), "UTF-8"));
       while ((inputLine = in.readLine()) != null) {
         instanceId = inputLine;
       }

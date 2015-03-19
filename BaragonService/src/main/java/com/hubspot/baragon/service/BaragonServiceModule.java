@@ -15,7 +15,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.apache.curator.framework.recipes.leader.LeaderLatch;
 
 import com.google.common.base.Strings;
-import com.google.common.base.Optional;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
@@ -28,7 +27,6 @@ import com.hubspot.baragon.config.ZooKeeperConfiguration;
 import com.hubspot.baragon.data.BaragonWorkerDatastore;
 import com.hubspot.baragon.service.config.BaragonConfiguration;
 import com.hubspot.baragon.utils.JavaUtils;
-import org.apache.curator.framework.recipes.leader.LeaderLatchListener;
 
 public class BaragonServiceModule extends AbstractModule {
   public static final String BARAGON_SERVICE_SCHEDULED_EXECUTOR = "baragon.service.scheduledExecutor";
@@ -38,6 +36,8 @@ public class BaragonServiceModule extends AbstractModule {
   public static final String BARAGON_SERVICE_HOSTNAME = "baragon.service.hostname";
 
   public static final String BARAGON_MASTER_AUTH_KEY = "baragon.master.auth.key";
+
+  public static final String BARAGON_URI_BASE = "_baragon_uri_base";
 
   @Override
   protected void configure() {
@@ -142,4 +142,10 @@ public class BaragonServiceModule extends AbstractModule {
     return configuration.getMasterAuthKey();
   }
 
+  @Provides
+  @Named(BARAGON_URI_BASE)
+  String getSingularityUriBase(final BaragonConfiguration configuration) {
+    final String singularityUiPrefix = configuration.getUiConfiguration().getBaseUrl().or(((SimpleServerFactory) configuration.getServerFactory()).getApplicationContextPath());
+    return (singularityUiPrefix.endsWith("/")) ?  singularityUiPrefix.substring(0, singularityUiPrefix.length() - 1) : singularityUiPrefix;
+  }
 }

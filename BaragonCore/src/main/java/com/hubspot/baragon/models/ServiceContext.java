@@ -44,15 +44,27 @@ public class ServiceContext {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
 
     ServiceContext that = (ServiceContext) o;
 
-    if (present != that.present) return false;
-    if (!service.equals(that.service)) return false;
-    if (!timestamp.equals(that.timestamp)) return false;
-    if (!upstreams.equals(that.upstreams)) return false;
+    if (present != that.present) {
+      return false;
+    }
+    if (!service.equals(that.service)) {
+      return false;
+    }
+    if (!timestamp.equals(that.timestamp)) {
+      return false;
+    }
+    if (!upstreams.equals(that.upstreams)) {
+      return false;
+    }
 
     return true;
   }

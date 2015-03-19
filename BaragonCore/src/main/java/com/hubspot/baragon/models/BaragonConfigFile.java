@@ -33,13 +33,21 @@ public class BaragonConfigFile {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
 
     BaragonConfigFile that = (BaragonConfigFile) o;
 
-    if (!content.equals(that.content)) return false;
-    if (!fullPath.equals(that.fullPath)) return false;
+    if (!content.equals(that.content)) {
+      return false;
+    }
+    if (!fullPath.equals(that.fullPath)) {
+      return false;
+    }
 
     return true;
   }

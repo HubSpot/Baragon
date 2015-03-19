@@ -39,7 +39,7 @@ public class BaragonWatcherModule extends AbstractModule {
   @Baragon
   @Provides
   @Singleton
-  public PersistentWatcher provideWatcher(final @Baragon Provider<CuratorFramework> curatorProvider) {
+  public PersistentWatcher provideWatcher(@Baragon final Provider<CuratorFramework> curatorProvider) {
     return new WatcherFactory(new Supplier<CuratorFramework>() {
 
       @Override

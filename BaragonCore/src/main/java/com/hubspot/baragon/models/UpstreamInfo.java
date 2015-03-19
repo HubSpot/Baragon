@@ -44,14 +44,24 @@ public class UpstreamInfo {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
 
     UpstreamInfo that = (UpstreamInfo) o;
 
-    if (!rackId.equals(that.rackId)) return false;
-    if (!requestId.equals(that.requestId)) return false;
-    if (!upstream.equals(that.upstream)) return false;
+    if (!rackId.equals(that.rackId)) {
+      return false;
+    }
+    if (!requestId.equals(that.requestId)) {
+      return false;
+    }
+    if (!upstream.equals(that.upstream)) {
+      return false;
+    }
 
     return true;
   }

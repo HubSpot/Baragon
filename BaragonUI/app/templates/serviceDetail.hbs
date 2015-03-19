@@ -1,0 +1,115 @@
+{{#if synced}}
+    <div class="row detail-header">
+        <div class="col-md-5">
+            <h3>{{ service.id }}</h3>
+        </div>
+        <div class="col-md-3">
+            <h3>{{ service.basePath }}</h3>
+        </div>
+        <div class="col-md-4 button-container">
+            <a class="btn btn-default" data-service-id="{{ service.id }}" data-action="viewJSON">
+                JSON
+            </a>
+            {{#if config.allowEdit}}
+                <a class="btn btn-warning" data-service-id="{{ service.id }}" data-action="removeUpstreams">
+                    Remove Upstreams
+                </a>
+                <a class="btn btn-danger" data-service-id="{{ service.id }}" data-action="delete">
+                    Delete
+                </a>
+            {{/if}}
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-6">
+            <div class="panel panel-default">
+                <div class="panel-heading"><h4>Owners</h4></div>
+                <div class="panel-body">
+                    {{#each service.splitOwners}}
+                        <div class="col-md-6">
+                            <ul class="list-group">
+                                {{#each this}}
+                                    <li class="list-group-item">
+                                        {{ this }}
+                                    </li>
+                                {{/each}}
+                            </ul>
+                        </div>
+                    {{/each}}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+          <div class="panel panel-default">
+                <div class="panel-heading"><h4>Load Balancer Groups</h4></div>
+                <div class="panel-body">
+                    {{#each service.splitLbGroups}}
+                        <div class="col-md-6">
+                            <ul class="list-group">
+                                {{#each this}}
+                                    <li class="list-group-item">
+                                        <a title="{{ this }}" href="{{appRoot}}/groups/{{ this }}">
+                                            {{ this }}
+                                        </a>
+                                    </li>
+                                {{/each}}
+                            </ul>
+                        </div>
+                    {{/each}}
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+          <div class="panel panel-default">
+                <div class="panel-heading"><h4>Upstreams</h4></div>
+                <div class="panel-body">
+                    {{#each service.splitUpstreams}}
+                        <div class="col-md-6">
+                            {{#each this}}
+                                <div class="list-group">
+                                    <div class="col-md-11">
+                                        <a href="{{appRoot}}/requests/{{requestId}}" class="list-group-item">
+                                            <h4 class="list-group-item-heading">{{upstream}}</h4>
+                                            <p class="list-group-item-text">
+                                                <strong>From Request:</strong> {{ requestId }}
+                                                <br>
+                                                <strong>Rack ID:</strong> {{ rackId }}
+                                            </p>
+                                        </a>
+                                    </div>
+                                    {{#if ../../config.allowEdit}}
+                                        <div class="col-md-1">
+                                            <a class="btn btn-danger" data-upstream="{{ upstream }}" data-action="removeUpstream">
+                                                <span class="glyphicon glyphicon-remove"></span>
+                                            </a>
+                                        </div>
+                                    {{/if}}
+                                </div>
+                            {{/each}}
+                        </div>
+                    {{/each}}
+                </div>
+            </div>
+        </div>
+    </div>
+    {{#each service.service.options}}
+        <div class="row">
+            <div class="col-md-12">
+                <div class="panel panel-default">
+                    <div class="panel-heading"><h4>{{@key}}</h4></div>
+                    <div class="panel-body">
+                        <pre>
+                            {{#each this}}
+    {{this}}
+                            {{/each}}
+                        </pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {{/each}}
+{{else}}
+    <div class="page-loader centered cushy"></div>
+{{/if}}

@@ -1,0 +1,89 @@
+@import nib
+
+html
+    height 100%
+
+    body
+        overflow-y auto
+        min-height 100%
+
+a
+    cursor pointer
+
+a.disabled
+    cursor none
+    pointer-events none
+    color #999
+
+a.disabled:hover
+    background-color transparent
+
+.link-spacer
+    opacity 0.2
+    padding 0px 5px
+
+.subtle
+    opacity 0.5
+
+// Overrides
+
+.vex-loading-spinner
+    top 45% !important
+
+.messenger-message
+    background #fff !important
+
+.btn[disabled]
+    opacity: .25
+
+.page-header
+    margin-top 20px
+    margin-bottom 10px
+
+    h1, h2, h3
+        margin 0
+
+.row
+    margin-bottom 1em
+
+#nav-user-name
+    cursor default
+
+table th
+    text-align left
+
+#page, .navbar .container-fluid
+    max-width 1500px
+
+#page
+    padding 0 20px 50px 20px
+
+.page-header small
+    margin-left 1em
+
+code
+    border 1px solid rgba(0, 0, 0, .075)
+    background rgba(0, 0, 0, .05)
+    color rgba(0, 0, 0, .75)
+
+.flash-background
+    background: #fbfbfb
+
+    .page-header
+        background: rgba(0, 123, 255, .1)
+
+.btn-group, .btn-group .btn
+    -webkit-user-select none
+    -moz-user-select none
+    -ms-user-select none
+
+.messenger-message p:last-child
+    margin-bottom 0
+
+// Fix for FF
+@-moz-document url-prefix()
+    fieldset
+        display table-cell
+
+.container
+    height 100%

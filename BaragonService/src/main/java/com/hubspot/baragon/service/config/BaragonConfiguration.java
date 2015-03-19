@@ -65,6 +65,13 @@ public class BaragonConfiguration extends Configuration {
   @JsonProperty("elb")
   private ElbConfiguration elb;
 
+  @JsonProperty("ui")
+  @Valid
+  private UIConfiguration uiConfiguration = new UIConfiguration();
+
+  @JsonProperty("enableCorsFilter")
+  private boolean enableCorsFilter = false;
+
   public ZooKeeperConfiguration getZooKeeperConfiguration() {
     return zooKeeperConfiguration;
   }
@@ -149,4 +156,15 @@ public class BaragonConfiguration extends Configuration {
     this.elb = elb;
   }
 
+  public UIConfiguration getUiConfiguration() {
+    return uiConfiguration;
+  }
+
+  public void setUiConfiguration(UIConfiguration uiConfiguration) {
+    this.uiConfiguration = uiConfiguration;
+  }
+
+  public boolean isEnableCorsFilter() {
+    return enableCorsFilter;
+  }
 }

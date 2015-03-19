@@ -70,6 +70,13 @@ public class BaragonAgentConfiguration extends Configuration {
     this.elbConfiguration = elbConfiguration;
   }
 
+  @JsonProperty("enableCorsFilter")
+  private boolean enableCorsFilter = false;
+
+  public boolean isEnableCorsFilter() {
+    return enableCorsFilter;
+  }
+
   public AuthConfiguration getAuthConfiguration() {
     return authConfiguration;
   }

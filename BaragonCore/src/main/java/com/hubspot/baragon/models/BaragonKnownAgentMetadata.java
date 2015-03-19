@@ -31,13 +31,21 @@ public class BaragonKnownAgentMetadata extends BaragonAgentMetadata {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    if (!super.equals(o)) return false;
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    if (!super.equals(o)) {
+      return false;
+    }
 
     BaragonKnownAgentMetadata that = (BaragonKnownAgentMetadata) o;
 
-    if (lastSeenAt != that.lastSeenAt) return false;
+    if (lastSeenAt != that.lastSeenAt) {
+      return false;
+    }
 
     return true;
   }
