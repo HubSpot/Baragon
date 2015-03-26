@@ -66,13 +66,14 @@ public class BootstrapManaged implements Managed {
     ExecutorService executorService = Executors.newFixedThreadPool(services.size());
     List<Callable<Optional<Pair<ServiceContext, Collection<BaragonConfigFile>>>>> todo = new ArrayList<>(services.size());
 
-    LOG.info("Going to apply {} services...", services.size());
-
     for (BaragonServiceState serviceState : stateDatastore.getGlobalState()) {
       if (!(serviceState.getService().getLoadBalancerGroups() == null) && serviceState.getService().getLoadBalancerGroups().contains(loadBalancerConfiguration.getName())) {
         todo.add(new BootstrapFileChecker(configHelper, serviceState, now));
       }
     }
+
+    LOG.info("Going to apply {} services...", todo.size());
+
     try {
       List<Future<Optional<Pair<ServiceContext, Collection<BaragonConfigFile>>>>> applied = executorService.invokeAll(todo);
       for (Future<Optional<Pair<ServiceContext, Collection<BaragonConfigFile>>>> serviceFuture : applied) {
@@ -90,8 +91,7 @@ public class BootstrapManaged implements Managed {
       LOG.error(String.format("Caught exception while applying and parsing configs"), e);
     }
 
-
-    LOG.info("Applied {} services in {}ms", services.size(), stopwatch.elapsed(TimeUnit.MILLISECONDS));
+    LOG.info("Applied {} services in {}ms", todo.size(), stopwatch.elapsed(TimeUnit.MILLISECONDS));
   }
 
   @Override
