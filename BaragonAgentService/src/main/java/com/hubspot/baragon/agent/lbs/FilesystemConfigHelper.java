@@ -63,11 +63,20 @@ public class FilesystemConfigHelper {
     final BaragonService service = context.getService();
     final boolean previousConfigsExist = configsExist(service);
     Collection<BaragonConfigFile> newConfigs = configGenerator.generateConfigsForProject(context);
-    if (previousConfigsExist && newConfigs.equals(readConfigs(service))) {
+    if (previousConfigsExist && configsMatch(newConfigs, readConfigs(service))) {
       return Optional.absent();
     } else {
       return Optional.of(newConfigs);
     }
+  }
+
+  public boolean configsMatch(Collection<BaragonConfigFile> newConfigs, Collection<BaragonConfigFile> currentConfigs) {
+    for (BaragonConfigFile file : newConfigs) {
+      if (!currentConfigs.contains(file)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   public void bootstrapApply(ServiceContext context, Collection<BaragonConfigFile> newConfigs) throws InvalidConfigException, LbAdapterExecuteException, IOException, MissingTemplateException {
@@ -100,7 +109,7 @@ public class FilesystemConfigHelper {
 
     Collection<BaragonConfigFile> newConfigs = configGenerator.generateConfigsForProject(context);
 
-    if (newConfigs.equals(readConfigs(oldService))) {
+    if (configsMatch(newConfigs, readConfigs(oldService))) {
       LOG.info("    Configs are unchanged, skipping apply");
       return;
     }
