@@ -69,7 +69,9 @@ public class BootstrapManaged implements Managed {
     LOG.info("Going to apply {} services...", services.size());
 
     for (BaragonServiceState serviceState : stateDatastore.getGlobalState()) {
-      todo.add(new BootstrapFileChecker(loadBalancerConfiguration, configHelper, serviceState, now));
+      if (!(serviceState.getService().getLoadBalancerGroups() == null) && serviceState.getService().getLoadBalancerGroups().contains(loadBalancerConfiguration.getName())) {
+        todo.add(new BootstrapFileChecker(configHelper, serviceState, now));
+      }
     }
     try {
       List<Future<Optional<Pair<ServiceContext, Collection<BaragonConfigFile>>>>> applied = executorService.invokeAll(todo);
