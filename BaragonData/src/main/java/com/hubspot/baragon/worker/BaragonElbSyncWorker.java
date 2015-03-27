@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
 
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.services.elasticloadbalancing.model.DeregisterInstancesFromLoadBalancerRequest;
@@ -26,16 +27,21 @@ public class BaragonElbSyncWorker implements Runnable {
 
   private final AmazonElasticLoadBalancingClient elbClient;
   private final BaragonLoadBalancerDatastore loadBalancerDatastore;
+  private final AtomicLong workerLastStartAt;
 
   @Inject
   public BaragonElbSyncWorker(BaragonLoadBalancerDatastore loadBalancerDatastore,
-                              @Named(BaragonDataModule.BARAGON_AWS_ELB_CLIENT) AmazonElasticLoadBalancingClient elbClient) {
+                              @Named(BaragonDataModule.BARAGON_AWS_ELB_CLIENT) AmazonElasticLoadBalancingClient elbClient,
+                              @Named(BaragonDataModule.BARAGON_ELB_WORKER_LAST_START) AtomicLong workerLastStartAt) {
     this.elbClient = elbClient;
     this.loadBalancerDatastore = loadBalancerDatastore;
+    this.workerLastStartAt = workerLastStartAt;
   }
 
   @Override
   public void run() {
+    workerLastStartAt.set(System.currentTimeMillis());
+
     Collection<BaragonAgentMetadata> agents;
     Collection<LoadBalancerDescription> elbs;
     try {

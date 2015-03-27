@@ -37,6 +37,7 @@ public class BaragonDataModule extends AbstractModule {
   public static final String BARAGON_SERVICE_HTTP_CLIENT = "baragon.service.http.client";
 
   public static final String BARAGON_SERVICE_WORKER_LAST_START = "baragon.service.worker.lastStartedAt";
+  public static final String BARAGON_ELB_WORKER_LAST_START = "baragon.service.elb.lastStartedAt";
 
   public static final String BARAGON_AUTH_KEY_MAP = "baragon.auth.keyMap";
 
