@@ -22,6 +22,9 @@ public class ElbConfiguration {
   @Min(0)
   private int initialDelaySeconds = 0;
 
+  @JsonProperty("removeLastHealthy")
+  private boolean removeLastHealthy = false;
+
   public boolean isEnabled() {
     return enabled;
   }
@@ -62,4 +65,11 @@ public class ElbConfiguration {
     this.initialDelaySeconds = initialDelaySeconds;
   }
 
+  public boolean canRemoveLastHealthy() {
+    return removeLastHealthy;
+  }
+
+  public void setRemoveLastHealthy(boolean removeLastHealthy) {
+    this.removeLastHealthy = removeLastHealthy;
+  }
 }

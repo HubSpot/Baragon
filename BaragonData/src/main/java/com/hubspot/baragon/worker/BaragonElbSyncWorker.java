@@ -1,5 +1,6 @@
 package com.hubspot.baragon.worker;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Arrays;
 import java.util.Collections;
@@ -9,11 +10,15 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.services.elasticloadbalancing.model.DeregisterInstancesFromLoadBalancerRequest;
+import com.amazonaws.services.elasticloadbalancing.model.DescribeInstanceHealthRequest;
+import com.amazonaws.services.elasticloadbalancing.model.DescribeInstanceHealthResult;
 import com.amazonaws.services.elasticloadbalancing.model.Instance;
+import com.amazonaws.services.elasticloadbalancing.model.InstanceState;
 import com.amazonaws.services.elasticloadbalancing.model.LoadBalancerDescription;
 import com.amazonaws.services.elasticloadbalancing.AmazonElasticLoadBalancingClient;
 import com.amazonaws.services.elasticloadbalancing.model.RegisterInstancesWithLoadBalancerRequest;
 import com.google.inject.name.Named;
+import com.hubspot.baragon.config.ElbConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.google.inject.Inject;
@@ -26,14 +31,17 @@ public class BaragonElbSyncWorker implements Runnable {
   private static final Logger LOG = LoggerFactory.getLogger(BaragonElbSyncWorker.class);
 
   private final AmazonElasticLoadBalancingClient elbClient;
+  private final ElbConfiguration configuration;
   private final BaragonLoadBalancerDatastore loadBalancerDatastore;
   private final AtomicLong workerLastStartAt;
 
   @Inject
   public BaragonElbSyncWorker(BaragonLoadBalancerDatastore loadBalancerDatastore,
+                              ElbConfiguration configuration,
                               @Named(BaragonDataModule.BARAGON_AWS_ELB_CLIENT) AmazonElasticLoadBalancingClient elbClient,
                               @Named(BaragonDataModule.BARAGON_ELB_WORKER_LAST_START) AtomicLong workerLastStartAt) {
     this.elbClient = elbClient;
+    this.configuration = configuration;
     this.loadBalancerDatastore = loadBalancerDatastore;
     this.workerLastStartAt = workerLastStartAt;
   }
@@ -99,7 +107,11 @@ public class BaragonElbSyncWorker implements Runnable {
   private void deregisterOldInstances(Collection<LoadBalancerDescription> elbs, Collection<BaragonAgentMetadata> agents) {
     for (DeregisterInstancesFromLoadBalancerRequest request : deregisterRequests(elbs, agents)) {
       try {
-        elbClient.deregisterInstancesFromLoadBalancer(request);
+        if (configuration.canRemoveLastHealthy() || !isLastHealthyInstance(request)) {
+          elbClient.deregisterInstancesFromLoadBalancer(request);
+        } else {
+          LOG.info(String.format("Will not deregister %s because it is the last health instance!", request.getInstances()));
+        }
         LOG.info(String.format("Deregistered instances %s from ELB %s", request.getInstances(), request.getLoadBalancerName()));
       } catch (AmazonClientException e) {
         LOG.info("Could not deregister %s from elb %s due to error %s", request.getInstances(), request.getLoadBalancerName(), e);
@@ -114,7 +126,9 @@ public class BaragonElbSyncWorker implements Runnable {
     for (LoadBalancerDescription elb : elbs) {
       for (Instance instance : elb.getInstances()) {
         if (elbNames.contains(elb.getLoadBalancerName()) && !agentInstances.contains(instance.getInstanceId())) {
-          requests.add(new DeregisterInstancesFromLoadBalancerRequest(elb.getLoadBalancerName(),Arrays.asList(instance)));
+          List<Instance> instanceList = new ArrayList<>(1);
+          instanceList.add(instance);
+          requests.add(new DeregisterInstancesFromLoadBalancerRequest(elb.getLoadBalancerName(),instanceList));
           LOG.info(String.format("Will deregister instance %s from ELB %s", instance.getInstanceId(), elb.getLoadBalancerName()));
         }
       }
@@ -140,5 +154,21 @@ public class BaragonElbSyncWorker implements Runnable {
       }
     }
     return names;
+  }
+
+  private boolean isLastHealthyInstance(DeregisterInstancesFromLoadBalancerRequest request) {
+    DescribeInstanceHealthRequest describeRequest = new DescribeInstanceHealthRequest(request.getLoadBalancerName());
+    DescribeInstanceHealthResult result = elbClient.describeInstanceHealth(describeRequest);
+    boolean instanceIsHealthy = false;
+    int healthyCount = 0;
+    for (InstanceState instanceState : result.getInstanceStates()) {
+      if (instanceState.getState().equals("InService")) {
+        healthyCount++;
+        if (instanceState.getInstanceId().equals(request.getInstances().get(0).getInstanceId())) { //Will only ever be one instance per request
+          instanceIsHealthy = true;
+        }
+      }
+    }
+    return (instanceIsHealthy && healthyCount == 1);
   }
 }
