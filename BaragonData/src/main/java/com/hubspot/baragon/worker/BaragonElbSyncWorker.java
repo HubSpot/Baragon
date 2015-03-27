@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.services.elasticloadbalancing.model.DeregisterInstancesFromLoadBalancerRequest;
@@ -102,10 +103,11 @@ public class BaragonElbSyncWorker implements Runnable {
 
   private Collection<DeregisterInstancesFromLoadBalancerRequest> deregisterRequests(Collection<LoadBalancerDescription> elbs, Collection<BaragonAgentMetadata> agents) {
     List<String> agentInstances = agentInstanceIds(agents);
+    Set<String> elbNames = agentElbNames(agents);
     Collection<DeregisterInstancesFromLoadBalancerRequest> requests = Collections.emptyList();
     for (LoadBalancerDescription elb : elbs) {
       for (Instance instance : elb.getInstances()) {
-        if (!agentInstances.contains(instance.getInstanceId())) {
+        if (elbNames.contains(elb.getLoadBalancerName()) && !agentInstances.contains(instance.getInstanceId())) {
           requests.add(new DeregisterInstancesFromLoadBalancerRequest(elb.getLoadBalancerName(),Arrays.asList(instance)));
           LOG.info(String.format("Will deregister instance %s from ELB %s", instance.getInstanceId(), elb.getLoadBalancerName()));
         }
@@ -122,5 +124,15 @@ public class BaragonElbSyncWorker implements Runnable {
       }
     }
     return instanceIds;
+  }
+
+  private Set<String> agentElbNames(Collection<BaragonAgentMetadata> agents) {
+    Set<String> names = Collections.emptySet();
+    for (BaragonAgentMetadata agent : agents) {
+      if (agent.getElbConfiguration().isPresent()) {
+        names.addAll(agent.getElbConfiguration().get().getElbNames());
+      }
+    }
+    return names;
   }
 }
