@@ -54,6 +54,51 @@ public class FilesystemConfigHelper {
     }
   }
 
+  public void checkAndReload() throws InvalidConfigException, LbAdapterExecuteException, IOException {
+    adapter.checkConfigs();
+    adapter.reloadConfigs();
+  }
+
+  public Optional<Collection<BaragonConfigFile>> configsToApply(ServiceContext context) throws MissingTemplateException {
+    final BaragonService service = context.getService();
+    final boolean previousConfigsExist = configsExist(service);
+    Collection<BaragonConfigFile> newConfigs = configGenerator.generateConfigsForProject(context);
+    if (previousConfigsExist && configsMatch(newConfigs, readConfigs(service))) {
+      return Optional.absent();
+    } else {
+      return Optional.of(newConfigs);
+    }
+  }
+
+  public boolean configsMatch(Collection<BaragonConfigFile> newConfigs, Collection<BaragonConfigFile> currentConfigs) {
+    for (BaragonConfigFile file : newConfigs) {
+      if (!currentConfigs.contains(file)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  public void bootstrapApply(ServiceContext context, Collection<BaragonConfigFile> newConfigs) throws InvalidConfigException, LbAdapterExecuteException, IOException, MissingTemplateException {
+    final BaragonService service = context.getService();
+    final boolean previousConfigsExist = configsExist(service);
+    LOG.info(String.format("Going to apply %s: %s", service.getServiceId(), Joiner.on(", ").join(context.getUpstreams())));
+    backupConfigs(service);
+    try {
+      writeConfigs(newConfigs);
+      adapter.checkConfigs();
+    } catch (Exception e) {
+      LOG.error(String.format("Caught exception while writing configs for %s, reverting to backups!", service.getServiceId()), e);
+      if (previousConfigsExist) {
+        restoreConfigs(service);
+      } else {
+        remove(service, false);
+      }
+      throw Throwables.propagate(e);
+    }
+    LOG.info(String.format("Apply finished for %s", service.getServiceId()));
+  }
+
   public void apply(ServiceContext context, Optional<BaragonService> maybeOldService, boolean revertOnFailure) throws InvalidConfigException, LbAdapterExecuteException, IOException, MissingTemplateException {
     final BaragonService service = context.getService();
     final BaragonService oldService = maybeOldService.or(service);
@@ -64,7 +109,7 @@ public class FilesystemConfigHelper {
 
     Collection<BaragonConfigFile> newConfigs = configGenerator.generateConfigsForProject(context);
 
-    if (newConfigs.equals(readConfigs(oldService))) {
+    if (configsMatch(newConfigs, readConfigs(oldService))) {
       LOG.info("    Configs are unchanged, skipping apply");
       return;
     }
