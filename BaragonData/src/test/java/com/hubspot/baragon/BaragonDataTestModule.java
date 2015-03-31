@@ -2,9 +2,6 @@ package com.hubspot.baragon;
 
 import java.util.concurrent.atomic.AtomicLong;
 
-import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.services.elasticloadbalancing.AmazonElasticLoadBalancingClient;
-import com.hubspot.baragon.config.ElbConfiguration;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.retry.RetryOneTime;

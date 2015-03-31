@@ -6,7 +6,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Objects;
 import com.google.common.base.Optional;
 import com.hubspot.baragon.exceptions.InvalidAgentMetadataStringException;
-import com.hubspot.baragon.config.AgentElbConfiguration;
 
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
@@ -18,7 +17,7 @@ public class BaragonAgentMetadata {
   private final String baseAgentUri;
   private final Optional<String> domain;
   private final String agentId;
-  private final Optional<AgentElbConfiguration> elbConfiguration;
+  private final Optional<String> instanceId;
 
   @JsonCreator
   public static BaragonAgentMetadata fromString(String value) {
@@ -28,18 +27,18 @@ public class BaragonAgentMetadata {
       throw new InvalidAgentMetadataStringException(value);
     }
 
-    return new BaragonAgentMetadata(value, matcher.group(1), Optional.<String>absent(), Optional.<AgentElbConfiguration>absent());
+    return new BaragonAgentMetadata(value, matcher.group(1), Optional.<String>absent(), Optional.<String>absent());
   }
 
   @JsonCreator
   public BaragonAgentMetadata(@JsonProperty("baseAgentUri") String baseAgentUri,
                               @JsonProperty("agentId") String agentId,
                               @JsonProperty("domain") Optional<String> domain,
-                              @JsonProperty("elbConfig") Optional<AgentElbConfiguration> elbConfiguration) {
+                              @JsonProperty("instanceId") Optional<String> instanceId) {
     this.baseAgentUri = baseAgentUri;
     this.domain = domain;
     this.agentId = agentId;
-    this.elbConfiguration = elbConfiguration;
+    this.instanceId = instanceId;
   }
 
   public String getBaseAgentUri() {
@@ -54,8 +53,8 @@ public class BaragonAgentMetadata {
     return agentId;
   }
 
-  public Optional<AgentElbConfiguration> getElbConfiguration() {
-    return elbConfiguration;
+  public Optional<String> getInstanceId() {
+    return instanceId;
   }
 
   @Override
@@ -78,6 +77,9 @@ public class BaragonAgentMetadata {
     if (!domain.equals(metadata.domain)) {
       return false;
     }
+    if (!instanceId.equals(metadata.instanceId)) {
+      return false;
+    }
 
     return true;
   }
@@ -87,7 +89,7 @@ public class BaragonAgentMetadata {
     int result = baseAgentUri.hashCode();
     result = 31 * result + domain.hashCode();
     result = 31 * result + (agentId != null ? agentId.hashCode() : 0);
-    result = 31 * result + (elbConfiguration != null ? elbConfiguration.hashCode() : 0);
+    result = 31 * result + (instanceId != null ? instanceId.hashCode() : 0);
     return result;
   }
 
@@ -97,7 +99,7 @@ public class BaragonAgentMetadata {
             .add("baseAgentUri", baseAgentUri)
             .add("domain", domain)
             .add("agentId", agentId)
-            .add("elbConfig", elbConfiguration)
+            .add("instanceId", instanceId)
             .toString();
   }
 }

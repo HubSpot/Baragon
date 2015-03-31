@@ -1,5 +1,6 @@
 package com.hubspot.baragon.service;
 
+import com.google.common.base.Optional;
 import com.hubspot.baragon.config.ElbConfiguration;
 import com.hubspot.baragon.service.listeners.AbstractLatchListener;
 import com.hubspot.baragon.service.listeners.ElbSyncWorkerListener;
@@ -82,7 +83,7 @@ public class BaragonServiceModule extends AbstractModule {
   }
 
   @Provides
-  public ElbConfiguration providesElbConfiguration(BaragonConfiguration configuration) {
+  public Optional<ElbConfiguration> providesElbConfiguration(BaragonConfiguration configuration) {
     return configuration.getElbConfiguration();
   }
 
@@ -104,6 +105,13 @@ public class BaragonServiceModule extends AbstractModule {
   @Singleton
   @Named(BaragonDataModule.BARAGON_SERVICE_WORKER_LAST_START)
   public AtomicLong providesWorkerLastStartAt() {
+    return new AtomicLong();
+  }
+
+  @Provides
+  @Singleton
+  @Named(BaragonDataModule.BARAGON_ELB_WORKER_LAST_START)
+  public AtomicLong providesElbWorkerLastStartAt() {
     return new AtomicLong();
   }
 

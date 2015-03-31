@@ -5,23 +5,22 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Objects;
 import com.google.common.base.Optional;
-import com.hubspot.baragon.config.AgentElbConfiguration;
 
 @JsonIgnoreProperties( ignoreUnknown = true )
 public class BaragonKnownAgentMetadata extends BaragonAgentMetadata {
   private final long lastSeenAt;
 
   public static BaragonKnownAgentMetadata fromAgentMetadata(BaragonAgentMetadata agentMetadata, long firstSeenAt) {
-    return new BaragonKnownAgentMetadata(agentMetadata.getBaseAgentUri(), agentMetadata.getAgentId(), agentMetadata.getDomain(), agentMetadata.getElbConfiguration(), firstSeenAt);
+    return new BaragonKnownAgentMetadata(agentMetadata.getBaseAgentUri(), agentMetadata.getAgentId(), agentMetadata.getDomain(), agentMetadata.getInstanceId(), firstSeenAt);
   }
 
   @JsonCreator
   public BaragonKnownAgentMetadata(@JsonProperty("baseAgentUri") String baseAgentUri,
                                    @JsonProperty("agentId") String agentId,
                                    @JsonProperty("domain") Optional<String> domain,
-                                   @JsonProperty("elbConfig") Optional<AgentElbConfiguration> elbConfiguration,
+                                   @JsonProperty("elbConfig") Optional<String> instanceId,
                                    @JsonProperty("lastSeenAt") long lastSeenAt) {
-    super(baseAgentUri, agentId, domain, elbConfiguration);
+    super(baseAgentUri, agentId, domain, instanceId);
     this.lastSeenAt = lastSeenAt;
   }
 

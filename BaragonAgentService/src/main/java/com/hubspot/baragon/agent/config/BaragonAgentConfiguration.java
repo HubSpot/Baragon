@@ -1,6 +1,5 @@
 package com.hubspot.baragon.agent.config;
 
-import com.hubspot.baragon.config.AgentElbConfiguration;
 import io.dropwizard.Configuration;
 
 import java.util.Collections;
@@ -58,17 +57,6 @@ public class BaragonAgentConfiguration extends Configuration {
   @JsonProperty("auth")
   @Valid
   private AuthConfiguration authConfiguration = new AuthConfiguration();
-
-  @JsonProperty("elb")
-  private Optional<AgentElbConfiguration> elbConfiguration;
-
-  public Optional<AgentElbConfiguration> getElbConfiguration() {
-    return elbConfiguration;
-  }
-
-  public void setElbConfiguration(Optional<AgentElbConfiguration> elbConfiguration) {
-    this.elbConfiguration = elbConfiguration;
-  }
 
   @JsonProperty("enableCorsFilter")
   private boolean enableCorsFilter = false;

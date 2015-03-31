@@ -54,7 +54,7 @@ public class RequestTests {
   @After
   public void clearBasePaths(BaragonLoadBalancerDatastore loadBalancerDatastore) {
     LOG.debug("Clearing base paths...");
-    for (String loadBalancerGroup : loadBalancerDatastore.getLoadBalancerGroups()) {
+    for (String loadBalancerGroup : loadBalancerDatastore.getLoadBalancerGroupNames()) {
       for (String basePath : loadBalancerDatastore.getBasePaths(loadBalancerGroup)) {
         LOG.debug(String.format("  Clearing %s on %s", basePath, loadBalancerGroup));
         loadBalancerDatastore.clearBasePath(loadBalancerGroup, basePath);

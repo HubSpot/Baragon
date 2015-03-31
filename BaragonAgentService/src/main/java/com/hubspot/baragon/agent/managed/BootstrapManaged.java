@@ -2,7 +2,9 @@ package com.hubspot.baragon.agent.managed;
 
 import com.google.common.base.Optional;
 import com.hubspot.baragon.data.BaragonKnownAgentsDatastore;
+import com.hubspot.baragon.data.BaragonLoadBalancerDatastore;
 import com.hubspot.baragon.models.BaragonAgentMetadata;
+import com.hubspot.baragon.models.BaragonGroup;
 import com.hubspot.baragon.models.BaragonService;
 import io.dropwizard.lifecycle.Managed;
 
@@ -31,6 +33,7 @@ public class BootstrapManaged implements Managed {
   private final LoadBalancerConfiguration loadBalancerConfiguration;
   private final FilesystemConfigHelper configHelper;
   private final BaragonStateDatastore stateDatastore;
+  private final BaragonLoadBalancerDatastore loadBalancerDatastore;
   private final LeaderLatch leaderLatch;
   private final BaragonKnownAgentsDatastore knownAgentsDatastore;
   private final BaragonAgentMetadata baragonAgentMetadata;
@@ -38,6 +41,7 @@ public class BootstrapManaged implements Managed {
   @Inject
   public BootstrapManaged(BaragonStateDatastore stateDatastore,
                           BaragonKnownAgentsDatastore knownAgentsDatastore,
+                          BaragonLoadBalancerDatastore loadBalancerDatastore,
                           LoadBalancerConfiguration loadBalancerConfiguration,
                           FilesystemConfigHelper configHelper,
                           @Named(BaragonAgentServiceModule.AGENT_LEADER_LATCH) LeaderLatch leaderLatch,
@@ -47,6 +51,7 @@ public class BootstrapManaged implements Managed {
     this.stateDatastore = stateDatastore;
     this.leaderLatch = leaderLatch;
     this.knownAgentsDatastore = knownAgentsDatastore;
+    this.loadBalancerDatastore = loadBalancerDatastore;
     this.baragonAgentMetadata = baragonAgentMetadata;
   }
 
@@ -83,6 +88,9 @@ public class BootstrapManaged implements Managed {
 
     LOG.info("Starting leader latch...");
     leaderLatch.start();
+
+    LOG.info("Updating BaragonGroup information...");
+    loadBalancerDatastore.updateGroupInfo(loadBalancerConfiguration.getName(), loadBalancerConfiguration.getDomain());
 
     LOG.info("Adding to known-agents...");
     knownAgentsDatastore.addKnownAgent(loadBalancerConfiguration.getName(), BaragonKnownAgentMetadata.fromAgentMetadata(baragonAgentMetadata, System.currentTimeMillis()));

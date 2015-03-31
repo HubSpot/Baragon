@@ -115,7 +115,7 @@ public class RequestManager {
   public Set<String> getMissingLoadBalancerGroups(BaragonRequest request) {
     final Set<String> groups = new HashSet<>(request.getLoadBalancerService().getLoadBalancerGroups());
 
-    return Sets.difference(groups, loadBalancerDatastore.getLoadBalancerGroups());
+    return Sets.difference(groups, loadBalancerDatastore.getLoadBalancerGroupNames());
   }
 
   public void lockBasePaths(BaragonRequest request) {

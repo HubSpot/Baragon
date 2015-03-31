@@ -1,10 +1,10 @@
 package com.hubspot.baragon.service.listeners;
 
+import com.google.common.base.Optional;
 import com.google.inject.Inject;
+import com.hubspot.baragon.config.ElbConfiguration;
 import com.hubspot.baragon.service.BaragonServiceModule;
-import com.hubspot.baragon.service.config.BaragonConfiguration;
 import com.hubspot.baragon.worker.BaragonElbSyncWorker;
-import org.apache.curator.framework.recipes.leader.LeaderLatchListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,13 +19,13 @@ public class ElbSyncWorkerListener extends AbstractLatchListener {
 
   private final ScheduledExecutorService executorService;
   private final BaragonElbSyncWorker elbWorker;
-  private final BaragonConfiguration config;
+  private final Optional<ElbConfiguration> config;
 
   private ScheduledFuture<?> elbWorkerFuture = null;
 
   @Inject
   public ElbSyncWorkerListener(@Named(BaragonServiceModule.BARAGON_SERVICE_SCHEDULED_EXECUTOR) ScheduledExecutorService executorService,
-                               BaragonConfiguration config,
+                               Optional<ElbConfiguration> config,
                                BaragonElbSyncWorker elbWorker) {
     this.executorService = executorService;
     this.config = config;
@@ -40,7 +40,7 @@ public class ElbSyncWorkerListener extends AbstractLatchListener {
       elbWorkerFuture.cancel(false);
     }
 
-    elbWorkerFuture = executorService.scheduleAtFixedRate(elbWorker, config.getElbConfiguration().getInitialDelaySeconds(), config.getElbConfiguration().getIntervalSeconds(), TimeUnit.SECONDS);
+    elbWorkerFuture = executorService.scheduleAtFixedRate(elbWorker, config.get().getInitialDelaySeconds(), config.get().getIntervalSeconds(), TimeUnit.SECONDS);
   }
 
   @Override
@@ -51,6 +51,6 @@ public class ElbSyncWorkerListener extends AbstractLatchListener {
 
   @Override
   public boolean isEnabled() {
-    return (config.getElbConfiguration() != null && config.getElbConfiguration().isEnabled());
+    return (config.isPresent() && config.get().isEnabled());
   }
 }

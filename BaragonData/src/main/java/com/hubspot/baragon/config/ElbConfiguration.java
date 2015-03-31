@@ -4,15 +4,18 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import javax.validation.constraints.Min;
+import javax.validation.constraints.NotNull;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ElbConfiguration {
   @JsonProperty("enabled")
   private boolean enabled = false;
 
+  @NotNull
   @JsonProperty("awsAccessKeyId")
   private String awsAccessKeyId;
 
+  @NotNull
   @JsonProperty("awsAccessKeySecret")
   private String awsAccessKeySecret;
 

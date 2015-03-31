@@ -1,6 +1,7 @@
 package com.hubspot.baragon;
 
 import com.hubspot.baragon.models.BaragonAgentMetadata;
+import com.hubspot.baragon.utils.ZkParallelFetcher;
 import org.apache.curator.framework.CuratorFramework;
 
 import java.util.Collection;
@@ -29,12 +30,12 @@ public class BaragonLoadBalancerTestDatastore extends BaragonLoadBalancerDatasto
   }
 
   @Override
-  public Set<String> getLoadBalancerGroups() {
+  public Set<String> getLoadBalancerGroupNames() {
     if (loadBalancerGroupsOverride.isPresent()) {
       return loadBalancerGroupsOverride.get();
     }
 
-    return super.getLoadBalancerGroups();
+    return super.getLoadBalancerGroupNames();
   }
 
   @Override

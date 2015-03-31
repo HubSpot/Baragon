@@ -131,9 +131,9 @@ public class BaragonDataModule extends AbstractModule {
 
   @Provides
   @Named(BARAGON_AWS_ELB_CLIENT)
-  public AmazonElasticLoadBalancingClient providesAwsElbClient(ElbConfiguration configuration) {
-    if (configuration != null && configuration.getAwsAccessKeyId() != null && configuration.getAwsAccessKeySecret() != null) {
-      return new AmazonElasticLoadBalancingClient(new BasicAWSCredentials(configuration.getAwsAccessKeyId(), configuration.getAwsAccessKeySecret()));
+  public AmazonElasticLoadBalancingClient providesAwsElbClient(Optional<ElbConfiguration> configuration) {
+    if (configuration.isPresent() && configuration.get().getAwsAccessKeyId() != null && configuration.get().getAwsAccessKeySecret() != null) {
+      return new AmazonElasticLoadBalancingClient(new BasicAWSCredentials(configuration.get().getAwsAccessKeyId(), configuration.get().getAwsAccessKeySecret()));
     } else {
       return new AmazonElasticLoadBalancingClient();
     }

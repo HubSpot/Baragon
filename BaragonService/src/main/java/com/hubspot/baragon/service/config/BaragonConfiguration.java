@@ -63,7 +63,7 @@ public class BaragonConfiguration extends Configuration {
   private String masterAuthKey;
 
   @JsonProperty("elb")
-  private ElbConfiguration elb;
+  private Optional<ElbConfiguration> elb = Optional.absent();
 
   @JsonProperty("ui")
   @Valid
@@ -148,11 +148,11 @@ public class BaragonConfiguration extends Configuration {
     this.workerConfiguration = workerConfiguration;
   }
 
-  public ElbConfiguration getElbConfiguration() {
+  public Optional<ElbConfiguration> getElbConfiguration() {
     return elb;
   }
 
-  public void setElbConfiguration(ElbConfiguration elb) {
+  public void setElbConfiguration(Optional<ElbConfiguration> elb) {
     this.elb = elb;
   }
 

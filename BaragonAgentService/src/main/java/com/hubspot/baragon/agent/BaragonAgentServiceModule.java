@@ -124,7 +124,24 @@ public class BaragonAgentServiceModule extends AbstractModule {
     final String baseAgentUri = String.format(config.getBaseUrlTemplate(), hostname, httpPort, appRoot);
     final String agentId = String.format("%s:%s", hostname, httpPort);
 
-    return new BaragonAgentMetadata(baseAgentUri, agentId, domain, config.getElbConfiguration());
+    return new BaragonAgentMetadata(baseAgentUri, agentId, domain, getInstanceId());
+  }
+
+  private Optional<String> getInstanceId() {
+    try {
+      String instanceId = null;
+      String inputLine;
+      URL ec2MetaData = new URL("http://169.254.169.254/latest/meta-data/instance-id");
+      URLConnection ec2Conn = ec2MetaData.openConnection();
+      BufferedReader in = new BufferedReader(new InputStreamReader(ec2Conn.getInputStream(), "UTF-8"));
+      while ((inputLine = in.readLine()) != null) {
+        instanceId = inputLine;
+      }
+      in.close();
+      return Optional.fromNullable(instanceId);
+    } catch (IOException e) {
+      return Optional.absent();
+    }
   }
 
   @Provides
@@ -156,20 +173,4 @@ public class BaragonAgentServiceModule extends AbstractModule {
     return new AtomicReference<>();
   }
 
-  private String getInstanceId() {
-    try {
-      String instanceId = null;
-      String inputLine;
-      URL ec2MetaData = new URL("http://169.254.169.254/latest/meta-data/instance-id");
-      URLConnection ec2Conn = ec2MetaData.openConnection();
-      BufferedReader in = new BufferedReader(new InputStreamReader(ec2Conn.getInputStream(), "UTF-8"));
-      while ((inputLine = in.readLine()) != null) {
-        instanceId = inputLine;
-      }
-      in.close();
-      return instanceId;
-    } catch (IOException e) {
-      return "";
-    }
-  }
 }
