@@ -2,12 +2,9 @@ package com.hubspot.baragon.data;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Set;
 
 import com.hubspot.baragon.models.BaragonGroup;
-import com.hubspot.baragon.models.BaragonKnownAgentMetadata;
-import com.hubspot.baragon.utils.ZkParallelFetcher;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.leader.LeaderLatch;
 import org.apache.zookeeper.KeeperException;
@@ -69,7 +66,14 @@ public class BaragonLoadBalancerDatastore extends AbstractDataStore {
   }
 
   public Optional<BaragonGroup> getLoadBalancerGroup(String name) {
-    return readFromZk(String.format(LOAD_BALANCER_GROUP_FORMAT, name), BaragonGroup.class);
+    try {
+      return readFromZk(String.format(LOAD_BALANCER_GROUP_FORMAT, name), BaragonGroup.class);
+    } catch (RuntimeException e) {
+      if (e.getMessage().contains("No content")) {
+        return Optional.absent();
+      }
+      throw Throwables.propagate(e);
+    }
   }
 
   public BaragonGroup addSourceToGroup(String name, String source) {
