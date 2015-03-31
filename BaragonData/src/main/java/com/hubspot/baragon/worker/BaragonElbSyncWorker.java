@@ -199,7 +199,7 @@ public class BaragonElbSyncWorker implements Runnable {
     }
     return (instanceIsHealthy && healthyCount == 1);
   }
-  
+
   private boolean isKnownAgent(BaragonGroup group, Instance instance) {
     Collection<BaragonKnownAgentMetadata> knownAgents = knownAgentsDatastore.getKnownAgentsMetadata(group.getName());
     boolean isKnown = false;
