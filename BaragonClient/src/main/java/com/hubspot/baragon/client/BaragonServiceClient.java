@@ -38,12 +38,15 @@ public class BaragonServiceClient {
   private static final String LOAD_BALANCER_BASE_PATH_FORMAT = LOAD_BALANCER_FORMAT + "/%s/base-path";
   private static final String LOAD_BALANCER_ALL_BASE_PATHS_FORMAT = LOAD_BALANCER_BASE_PATH_FORMAT + "/all";
   private static final String LOAD_BALANCER_AGENTS_FORMAT = LOAD_BALANCER_FORMAT + "/%s/agents";
+  private static final String LOAD_BALANCER_KNOWN_AGENTS_FORMAT = LOAD_BALANCER_FORMAT + "/%s/known-agents";
+  private static final String LOAD_BALANCER_DELETE_KNOWN_AGENT_FORMAT = LOAD_BALANCER_KNOWN_AGENTS_FORMAT + "/%s";
 
   private static final String REQUEST_FORMAT = "http://%s/%s/request";
   private static final String REQUEST_ID_FORMAT = REQUEST_FORMAT + "/%s";
 
   private static final String STATE_FORMAT = "http://%s/%s/state";
   private static final String STATE_SERVICE_ID_FORMAT = STATE_FORMAT + "/%s";
+  private static final String STATE_RELOAD_FORMAT = STATE_SERVICE_ID_FORMAT + "/reload";
 
   private static final String STATUS_FORMAT = "http://%s/%s/status";
 
@@ -207,10 +210,30 @@ public class BaragonServiceClient {
 
     HttpResponse response = httpClient.execute(request.build());
     checkResponse(type, response);
-    LOG.info("Successfully posted {} in {}ms", type, System.currentTimeMillis() - start);
+    LOG.info("Successfully put {} in {}ms", type, System.currentTimeMillis() - start);
     return response;
   }
 
+  private <T> Optional<T> put(String uri, String type, String id, Map<String, String> queryParams, Optional<Class<T>> clazz) {
+    LOG.info("Deleting {} {} from {}", type, id, uri);
+    final long start = System.currentTimeMillis();
+    HttpRequest.Builder request = buildRequest(uri, queryParams).setMethod(Method.PUT);
+    HttpResponse response = httpClient.execute(request.build());
+
+    if (response.getStatusCode() == 404) {
+      LOG.info("{} ({}) was not found", type, id);
+      return Optional.absent();
+    }
+
+    checkResponse(type, response);
+    LOG.info("Deleted {} ({}) from Baragon in %sms", type, id, System.currentTimeMillis() - start);
+
+    if (clazz.isPresent()) {
+      return Optional.of(response.getAs(clazz.get()));
+    }
+
+    return Optional.absent();
+  }
 
   // BaragonService overall status
 
@@ -236,9 +259,14 @@ public class BaragonServiceClient {
     return getSingle(uri, "service state", serviceId, BaragonServiceState.class);
   }
 
-  public void deleteService(String serviceId) {
+  public Optional<BaragonResponse> deleteService(String serviceId) {
     final String uri = String.format(STATE_SERVICE_ID_FORMAT, getHost(), contextPath, serviceId);
-    delete(uri, "service state", serviceId, Collections.<String, String>emptyMap());
+    return delete(uri, "service state", serviceId, Collections.<String, String>emptyMap(), Optional.of(BaragonResponse.class));
+  }
+
+  public Optional<BaragonResponse> reloadServiceConfigs(String serviceId){
+    final String uri = String.format(STATE_RELOAD_FORMAT, getHost(), contextPath, serviceId);
+    return put(uri, "service reload", serviceId, Collections.<String, String>emptyMap(), Optional.of(BaragonResponse.class));
   }
 
 
@@ -260,6 +288,16 @@ public class BaragonServiceClient {
   public Collection<BaragonAgentMetadata> getLoadBalancerGroupAgentMetadata(String loadBalancerGroupName) {
     final String requestUri = String.format(LOAD_BALANCER_AGENTS_FORMAT, getHost(), contextPath, loadBalancerGroupName);
     return getCollection(requestUri, "load balancer agent metadata", BARAGON_AGENTS_COLLECTION);
+  }
+
+  public Collection<BaragonAgentMetadata> getLoadBalancerGroupKnownAgentMetadata(String loadBalancerGroupName) {
+    final String requestUri = String.format(LOAD_BALANCER_KNOWN_AGENTS_FORMAT, getHost(), contextPath, loadBalancerGroupName);
+    return getCollection(requestUri, "load balancer known agent metadata", BARAGON_AGENTS_COLLECTION);
+  }
+
+  public void deleteLoadBalancerGroupKnownAgent(String loadBalancerGroupName, String agentId) {
+    final String requestUri = String.format(LOAD_BALANCER_DELETE_KNOWN_AGENT_FORMAT, getHost(), contextPath, loadBalancerGroupName, agentId);
+    delete(requestUri, "known agent", agentId, Collections.<String, String>emptyMap());
   }
 
 

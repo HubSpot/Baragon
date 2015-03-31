@@ -19,6 +19,7 @@ tmp/*
 
 BaragonUI/npm-debug.log
 BaragonUI/node_modules/*
+BaragonUI/node/*
 BaragonUI/bower_components/*
 BaragonUI/brunchlog
 BaragonUI/app/env.coffee

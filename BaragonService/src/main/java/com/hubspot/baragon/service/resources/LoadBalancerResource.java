@@ -21,6 +21,7 @@ import com.hubspot.baragon.data.BaragonStateDatastore;
 import com.hubspot.baragon.models.BaragonAgentMetadata;
 import com.hubspot.baragon.models.BaragonGroup;
 import com.hubspot.baragon.models.BaragonKnownAgentMetadata;
+import com.hubspot.baragon.models.BaragonResponse;
 import com.hubspot.baragon.models.BaragonService;
 
 @Path("/load-balancer")

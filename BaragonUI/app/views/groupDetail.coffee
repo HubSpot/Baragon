@@ -5,6 +5,7 @@ Agent = require '../models/Agent'
 class GroupDetailView extends View
 
     template: require '../templates/groupDetail'
+    removeBasePathTemplate: require '../templates/vex/basePathRemove'
 
     initialize: (@params) ->
         { @options, @groupId } = @params
@@ -14,7 +15,8 @@ class GroupDetailView extends View
 
     events: =>
         _.extend super,
-            'click [data-action="remove"]': 'removeKnownAgent'
+            'click [data-action="remove"]':         'removeKnownAgent'
+            'click [data-action="removeBasePath"]': 'removeBasePath'
 
     render: =>
         @$el.html @template
@@ -29,5 +31,25 @@ class GroupDetailView extends View
         group = @options.groupId
         agentModel = new Agent {agentId: id, groupId: group}
         agentModel.promptRemoveKnown => @trigger 'refreshrequest'
+
+    removeBasePath: (e) ->
+        basePath = $(e.target).data 'base-path'
+        group = @options.groupId
+        vex.dialog.confirm
+            message: @removeBasePathTemplate {basePath: basePath, group: group}
+            buttons: [
+                $.extend {}, vex.dialog.buttons.YES,
+                    text: 'REMOVE',
+                    className: 'vex-dialog-button-primary vex-dialog-button-primary-remove'
+                vex.dialog.buttons.NO
+            ]
+            callback: (data) =>
+                return if data is false
+                @removeRequest(group, basePath).done @trigger 'refreshrequest'
+
+    removeRequest: (group, basePath) ->
+        $.ajax
+            url: "#{ config.apiRoot }/load-balancer/#{group}/base-path?#{$.param({authkey: config.authKey, basePath: basePath})}"
+            type: "DELETE"
 
 module.exports = GroupDetailView

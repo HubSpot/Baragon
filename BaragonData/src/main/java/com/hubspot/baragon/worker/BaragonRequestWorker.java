@@ -9,6 +9,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
 import com.hubspot.baragon.models.BaragonAgentMetadata;
+import com.hubspot.baragon.models.RequestAction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -6,6 +6,8 @@ class BasePathsList extends Model
 
     initialize: ({ @groupId }) ->
 
+    ignoreAttributes: ['splitPaths']
+
     parse: (data) =>
         newData = {}
         newData.paths = data

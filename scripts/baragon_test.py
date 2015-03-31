@@ -324,7 +324,8 @@ class DeleteServiceId(unittest.TestCase):
             sys.stderr.write('deleting service... ')
             uri = '{0}/state/{1}'.format(BASE_URI, self.randomId)
             response = requests.delete(uri, params=self.params)
-            self.assertEqual(response.status_code, 200)
+            result = get_request_response(response.json()['loadBalancerRequestId'])
+            self.assertEqual(result['loadBalancerState'], 'SUCCESS')
 
 class ValidBasePathRename(unittest.TestCase):
     def setUp(self):
