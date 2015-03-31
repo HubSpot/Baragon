@@ -28,6 +28,9 @@ public class ElbConfiguration {
   @JsonProperty("removeLastHealthy")
   private boolean removeLastHealthy = false;
 
+  @JsonProperty("removeKnownAgent")
+  private boolean removeKnownAgent = false;
+
   public boolean isEnabled() {
     return enabled;
   }
@@ -74,5 +77,13 @@ public class ElbConfiguration {
 
   public void setRemoveLastHealthy(boolean removeLastHealthy) {
     this.removeLastHealthy = removeLastHealthy;
+  }
+
+  public boolean canRemoveKnownAgent() {
+    return removeKnownAgent;
+  }
+
+  public void setRemoveKnownAgent(boolean removeKnownAgent) {
+    this.removeKnownAgent = removeKnownAgent;
   }
 }

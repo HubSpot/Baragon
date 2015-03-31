@@ -21,7 +21,9 @@ import com.amazonaws.services.elasticloadbalancing.model.RegisterInstancesWithLo
 import com.google.common.base.Optional;
 import com.google.inject.name.Named;
 import com.hubspot.baragon.config.ElbConfiguration;
+import com.hubspot.baragon.data.BaragonKnownAgentsDatastore;
 import com.hubspot.baragon.models.BaragonGroup;
+import com.hubspot.baragon.models.BaragonKnownAgentMetadata;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.google.inject.Inject;
@@ -36,16 +38,19 @@ public class BaragonElbSyncWorker implements Runnable {
   private final AmazonElasticLoadBalancingClient elbClient;
   private final Optional<ElbConfiguration> configuration;
   private final BaragonLoadBalancerDatastore loadBalancerDatastore;
+  private final BaragonKnownAgentsDatastore knownAgentsDatastore;
   private final AtomicLong workerLastStartAt;
 
   @Inject
   public BaragonElbSyncWorker(BaragonLoadBalancerDatastore loadBalancerDatastore,
+                              BaragonKnownAgentsDatastore knownAgentsDatastore,
                               Optional<ElbConfiguration> configuration,
                               @Named(BaragonDataModule.BARAGON_AWS_ELB_CLIENT) AmazonElasticLoadBalancingClient elbClient,
                               @Named(BaragonDataModule.BARAGON_ELB_WORKER_LAST_START) AtomicLong workerLastStartAt) {
     this.elbClient = elbClient;
     this.configuration = configuration;
     this.loadBalancerDatastore = loadBalancerDatastore;
+    this.knownAgentsDatastore = knownAgentsDatastore;
     this.workerLastStartAt = workerLastStartAt;
   }
 
@@ -155,7 +160,7 @@ public class BaragonElbSyncWorker implements Runnable {
     for (LoadBalancerDescription elb : elbs) {
       if (group.getSources().contains(elb.getLoadBalancerName())) {
         for (Instance instance : elb.getInstances()) {
-          if (!agentInstances.contains(instance.getInstanceId())) {
+          if (!agentInstances.contains(instance.getInstanceId()) && (!isKnownAgent(group, instance) || configuration.get().canRemoveKnownAgent())) {
             List<Instance> instanceList = new ArrayList<>(1);
             instanceList.add(instance);
             requests.add(new DeregisterInstancesFromLoadBalancerRequest(elb.getLoadBalancerName(), instanceList));
@@ -193,5 +198,16 @@ public class BaragonElbSyncWorker implements Runnable {
       }
     }
     return (instanceIsHealthy && healthyCount == 1);
+  }
+  
+  private boolean isKnownAgent(BaragonGroup group, Instance instance) {
+    Collection<BaragonKnownAgentMetadata> knownAgents = knownAgentsDatastore.getKnownAgentsMetadata(group.getName());
+    boolean isKnown = false;
+    for (BaragonKnownAgentMetadata agent : knownAgents) {
+      if (agent.getInstanceId().isPresent() && agent.getInstanceId().get().equals(instance.getInstanceId())) {
+        isKnown = true;
+      }
+    }
+    return isKnown;
   }
 }
