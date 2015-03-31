@@ -1,5 +1,6 @@
 package com.hubspot.baragon.agent;
 
+import com.hubspot.baragon.config.ElbConfiguration;
 import io.dropwizard.jetty.HttpConnectorFactory;
 import io.dropwizard.server.SimpleServerFactory;
 
@@ -157,6 +158,11 @@ public class BaragonAgentServiceModule extends AbstractModule {
   @Singleton
   public Optional<TestingConfiguration> providesTestingConfiguration(BaragonAgentConfiguration configuration) {
     return Optional.fromNullable(configuration.getTestingConfiguration());
+  }
+
+  @Provides
+  public Optional<ElbConfiguration> providesElbConfiguration() {
+    return Optional.absent();
   }
 
   @Provides
