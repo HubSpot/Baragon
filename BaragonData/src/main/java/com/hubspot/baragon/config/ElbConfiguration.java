@@ -32,7 +32,7 @@ public class ElbConfiguration {
   private boolean removeKnownAgentEnabled = false;
 
   @JsonProperty("deregisterEnabled")
-  private boolean deregisterEnabled;
+  private boolean deregisterEnabled = false;
 
   public boolean isEnabled() {
     return enabled;
