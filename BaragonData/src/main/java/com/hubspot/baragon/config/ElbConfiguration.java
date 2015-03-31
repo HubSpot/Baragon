@@ -25,11 +25,14 @@ public class ElbConfiguration {
   @Min(0)
   private int initialDelaySeconds = 0;
 
-  @JsonProperty("removeLastHealthy")
-  private boolean removeLastHealthy = false;
+  @JsonProperty("removeLastHealthyEnabled")
+  private boolean removeLastHealthyEnabled = false;
 
-  @JsonProperty("removeKnownAgent")
-  private boolean removeKnownAgent = false;
+  @JsonProperty("removeKnownAgentEnabled")
+  private boolean removeKnownAgentEnabled = false;
+
+  @JsonProperty("deregisterEnabled")
+  private boolean deregisterEnabled;
 
   public boolean isEnabled() {
     return enabled;
@@ -71,19 +74,27 @@ public class ElbConfiguration {
     this.initialDelaySeconds = initialDelaySeconds;
   }
 
-  public boolean canRemoveLastHealthy() {
-    return removeLastHealthy;
+  public boolean isRemoveLastHealthyEnabled() {
+    return removeLastHealthyEnabled;
   }
 
-  public void setRemoveLastHealthy(boolean removeLastHealthy) {
-    this.removeLastHealthy = removeLastHealthy;
+  public void setRemoveLastHealthyEnabled(boolean removeLastHealthyEnabled) {
+    this.removeLastHealthyEnabled = removeLastHealthyEnabled;
   }
 
-  public boolean canRemoveKnownAgent() {
-    return removeKnownAgent;
+  public boolean isRemoveKnownAgentEnabled() {
+    return removeKnownAgentEnabled;
   }
 
-  public void setRemoveKnownAgent(boolean removeKnownAgent) {
-    this.removeKnownAgent = removeKnownAgent;
+  public void setRemoveKnownAgentEnabled(boolean removeKnownAgentEnabled) {
+    this.removeKnownAgentEnabled = removeKnownAgentEnabled;
+  }
+
+  public boolean isDeregisterEnabled() {
+    return deregisterEnabled;
+  }
+
+  public void setDeregisterEnabled(boolean deregisterEnabled) {
+    this.deregisterEnabled = deregisterEnabled;
   }
 }

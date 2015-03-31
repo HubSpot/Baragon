@@ -2,10 +2,8 @@ package com.hubspot.baragon.worker;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
-import java.util.Set;
+import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicLong;
 
 import com.amazonaws.AmazonClientException;
@@ -58,7 +56,7 @@ public class BaragonElbSyncWorker implements Runnable {
   public void run() {
     workerLastStartAt.set(System.currentTimeMillis());
 
-    Collection<LoadBalancerDescription> elbs;
+    List<LoadBalancerDescription> elbs;
     Collection<BaragonGroup> groups;
     try {
       LOG.info("Starting ELB sync");
@@ -66,12 +64,12 @@ public class BaragonElbSyncWorker implements Runnable {
       for (BaragonGroup group : groups) {
         if (!group.getSources().isEmpty()) {
           elbs = elbsForGroup(group);
-          LOG.info(elbs.toString());
           LOG.info(String.format("Registering new instances for group %s...", group.getName()));
           registerNewInstances(elbs, group);
-          LOG.info(String.format("Deregistering old instances for group %s...", group.getName()));
-          deregisterOldInstances(elbs, group);
-          LOG.info(elbs.toString());
+          if (configuration.get().isDeregisterEnabled()) {
+            LOG.info(String.format("Deregistering old instances for group %s...", group.getName()));
+            deregisterOldInstances(elbs, group);
+          }
         } else {
           LOG.info(String.format("No traffic sources present for group: %s", group.getName()));
         }
@@ -81,12 +79,12 @@ public class BaragonElbSyncWorker implements Runnable {
     }
   }
 
-  private Collection<LoadBalancerDescription> elbsForGroup(BaragonGroup group) {
+  private List<LoadBalancerDescription> elbsForGroup(BaragonGroup group) {
     DescribeLoadBalancersRequest request = new DescribeLoadBalancersRequest(new ArrayList<>(group.getSources()));
     return elbClient.describeLoadBalancers(request).getLoadBalancerDescriptions();
   }
 
-  private void registerNewInstances(Collection<LoadBalancerDescription> elbs, BaragonGroup group) {
+  private void registerNewInstances(List<LoadBalancerDescription> elbs, BaragonGroup group) {
     Collection<BaragonAgentMetadata> agents = loadBalancerDatastore.getAgentMetadata(group.getName());
     for (RegisterInstancesWithLoadBalancerRequest request : registerRequests(group, agents, elbs)) {
       try {
@@ -98,8 +96,8 @@ public class BaragonElbSyncWorker implements Runnable {
     }
   }
 
-  private Collection<RegisterInstancesWithLoadBalancerRequest> registerRequests(BaragonGroup group, Collection<BaragonAgentMetadata> agents, Collection<LoadBalancerDescription> elbs) {
-    Collection<RegisterInstancesWithLoadBalancerRequest> requests = Collections.emptyList();
+  private List<RegisterInstancesWithLoadBalancerRequest> registerRequests(BaragonGroup group, Collection<BaragonAgentMetadata> agents, List<LoadBalancerDescription> elbs) {
+    List<RegisterInstancesWithLoadBalancerRequest> requests = new ArrayList<>();
     for (BaragonAgentMetadata agent : agents) {
       try {
         for (String elbName : group.getSources()) {
@@ -122,7 +120,7 @@ public class BaragonElbSyncWorker implements Runnable {
     return requests;
   }
 
-  private boolean isRegistered(String instanceId, String elbName, Collection<LoadBalancerDescription> elbs) {
+  private boolean isRegistered(String instanceId, String elbName, List<LoadBalancerDescription> elbs) {
     for (LoadBalancerDescription elb : elbs) {
       for (Instance instance : elb.getInstances()) {
         if (instanceId.equals(instance.getInstanceId()) && elbName.equals(elb.getLoadBalancerName())) {
@@ -133,13 +131,13 @@ public class BaragonElbSyncWorker implements Runnable {
     return false;
   }
 
-  private void deregisterOldInstances(Collection<LoadBalancerDescription> elbs, BaragonGroup group) {
+  private void deregisterOldInstances(List<LoadBalancerDescription> elbs, BaragonGroup group) {
     Collection<BaragonAgentMetadata> agents = loadBalancerDatastore.getAgentMetadata(group.getName());
     try {
-      Collection<DeregisterInstancesFromLoadBalancerRequest> requests = deregisterRequests(group, agents, elbs);
+      List<DeregisterInstancesFromLoadBalancerRequest> requests = deregisterRequests(group, agents, elbs);
       for (DeregisterInstancesFromLoadBalancerRequest request : requests) {
         try {
-          if (configuration.get().canRemoveLastHealthy() || !isLastHealthyInstance(request)) {
+          if (configuration.get().isRemoveLastHealthyEnabled() || !isLastHealthyInstance(request)) {
             elbClient.deregisterInstancesFromLoadBalancer(request);
           } else {
             LOG.info(String.format("Will not deregister %s because it is the last healthy instance!", request.getInstances()));
@@ -154,13 +152,13 @@ public class BaragonElbSyncWorker implements Runnable {
     }
   }
 
-  private Collection<DeregisterInstancesFromLoadBalancerRequest> deregisterRequests(BaragonGroup group, Collection<BaragonAgentMetadata> agents, Collection<LoadBalancerDescription> elbs) {
+  private List<DeregisterInstancesFromLoadBalancerRequest> deregisterRequests(BaragonGroup group, Collection<BaragonAgentMetadata> agents, List<LoadBalancerDescription> elbs) {
     List<String> agentInstances = agentInstanceIds(agents);
-    Collection<DeregisterInstancesFromLoadBalancerRequest> requests = Collections.emptyList();
+    List<DeregisterInstancesFromLoadBalancerRequest> requests = new ArrayList<>();
     for (LoadBalancerDescription elb : elbs) {
       if (group.getSources().contains(elb.getLoadBalancerName())) {
         for (Instance instance : elb.getInstances()) {
-          if (!agentInstances.contains(instance.getInstanceId()) && (!isKnownAgent(group, instance) || configuration.get().canRemoveKnownAgent())) {
+          if (!agentInstances.contains(instance.getInstanceId()) && (!isKnownAgent(group, instance) || configuration.get().isRemoveKnownAgentEnabled())) {
             List<Instance> instanceList = new ArrayList<>(1);
             instanceList.add(instance);
             requests.add(new DeregisterInstancesFromLoadBalancerRequest(elb.getLoadBalancerName(), instanceList));
@@ -173,7 +171,7 @@ public class BaragonElbSyncWorker implements Runnable {
   }
 
   private List<String> agentInstanceIds(Collection<BaragonAgentMetadata> agents) {
-    List<String> instanceIds = Collections.emptyList();
+    List<String> instanceIds = new ArrayList<>();
     for (BaragonAgentMetadata agent : agents) {
       if (agent.getInstanceId().isPresent()) {
         instanceIds.add(agent.getInstanceId().get());
