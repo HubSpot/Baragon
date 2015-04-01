@@ -3,17 +3,25 @@ package com.hubspot.baragon.service.resources;
 import java.util.Arrays;
 import java.util.List;
 
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.services.elasticloadbalancing.AmazonElasticLoadBalancingClient;
+import com.amazonaws.services.elasticloadbalancing.model.DeregisterInstancesFromLoadBalancerRequest;
+import com.amazonaws.services.elasticloadbalancing.model.DeregisterInstancesFromLoadBalancerResult;
 import com.amazonaws.services.elasticloadbalancing.model.DescribeLoadBalancersRequest;
 import com.amazonaws.services.elasticloadbalancing.model.DescribeLoadBalancersResult;
+import com.amazonaws.services.elasticloadbalancing.model.Instance;
 import com.amazonaws.services.elasticloadbalancing.model.LoadBalancerDescription;
+import com.amazonaws.services.elasticloadbalancing.model.RegisterInstancesWithLoadBalancerRequest;
+import com.amazonaws.services.elasticloadbalancing.model.RegisterInstancesWithLoadBalancerResult;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
@@ -41,7 +49,7 @@ public class ElbResource {
     if (config.isPresent()) {
       return elbClient.describeLoadBalancers().getLoadBalancerDescriptions();
     } else {
-      throw new BaragonWebException("ElbSync is not currently enabled");
+      throw new BaragonWebException("ElbSync and related actions are not currently enabled");
     }
   }
 
@@ -62,7 +70,29 @@ public class ElbResource {
       }
       throw new BaragonNotFoundException(String.format("ELB with name %s not found", elbName));
     } else {
-      throw new BaragonWebException("ElbSync is not currently enabled");
+      throw new BaragonWebException("EElbSync and related actions are not currently enabled");
+    }
+  }
+
+  @POST
+  @Path("/{elbName}/update")
+  public RegisterInstancesWithLoadBalancerResult addToElb(@PathParam("elbName") String elbName, @QueryParam("instanceId") String instanceId) {
+    if (config.isPresent()) {
+      RegisterInstancesWithLoadBalancerRequest request = new RegisterInstancesWithLoadBalancerRequest(elbName, Arrays.asList(new Instance(instanceId)));
+      return elbClient.registerInstancesWithLoadBalancer(request);
+    } else {
+      throw new BaragonWebException("ElbSync and related actions are not currently enabled");
+    }
+  }
+
+  @DELETE
+  @Path("/{elbName}/update")
+  public DeregisterInstancesFromLoadBalancerResult removeFromElb(@PathParam("elbName") String elbName, @QueryParam("instanceId") String instanceId) {
+    if (config.isPresent()) {
+      DeregisterInstancesFromLoadBalancerRequest request = new DeregisterInstancesFromLoadBalancerRequest(elbName, Arrays.asList(new Instance(instanceId)));
+      return elbClient.deregisterInstancesFromLoadBalancer(request);
+    } else {
+      throw new BaragonWebException("ElbSync and related actions are not currently enabled");
     }
   }
 }
