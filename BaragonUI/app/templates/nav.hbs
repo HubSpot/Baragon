@@ -23,6 +23,11 @@
                 <li {{#ifEqual fragment "groups"}}class="active"{{/ifEqual}}>
                     <a href="{{appRoot}}/groups">Groups</a>
                 </li>
+                {{#if config.elbEnabled}}
+                    <li {{#ifEqual fragment "elbs"}}class="active"{{/ifEqual}}>
+                        <a href="{{appRoot}}/elbs">Elbs</a>
+                    </li>
+                {{/if}}
             </ul>
             {{#unless config.allowEdit}}
                 <ul class="nav navbar-nav navbar-right">

@@ -16,6 +16,7 @@ public class IndexView extends View {
   private final Boolean allowEdit;
   private final boolean authEnabled;
   private final String title;
+  private final boolean elbEnabled;
 
   public IndexView(String baragonUriBase, String appRoot, BaragonConfiguration configuration) {
     super("index.mustache");
@@ -31,6 +32,7 @@ public class IndexView extends View {
     this.allowEdit = configuration.getUiConfiguration().allowEdit();
     this.authEnabled = configuration.getAuthConfiguration().isEnabled();
     this.navColor = configuration.getUiConfiguration().getNavColor();
+    this.elbEnabled = configuration.getElbConfiguration().isPresent();
   }
 
   public String getAppRoot() {
@@ -61,6 +63,10 @@ public class IndexView extends View {
     return navColor;
   }
 
+  public boolean getElbEnabled() {
+    return elbEnabled;
+  }
+
   @Override
   public String toString() {
     return "IndexView [appRoot=" + appRoot +
@@ -70,6 +76,7 @@ public class IndexView extends View {
       ", navColor=" + navColor +
       ", readOnly=" + allowEdit +
       ", title=" + title +
+      ", elbEnabled" + elbEnabled +
       "]";
   }
 

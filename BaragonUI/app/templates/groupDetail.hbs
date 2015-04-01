@@ -1,12 +1,58 @@
 {{#if synced}}
+    {{#if group.name }}
+        <div class="row">
+            <div class="col-md-4">
+                <h3>Group: {{ group.name }}</h3>
+            </div>
+            <div class="col-md-4">
+                <h3>Domain: <a href="http://{{ group.domain }}">{{ group.domain }}<a/></h3>
+            </div>
+        </div>
+    {{/if}}
+    {{#if group.sources}}
+        <div class="row">
+            <div class="col-md-12">
+                <h4>Traffic Sources</h4>
+                {{#each group.splitSources}}
+                    <div class="col-md-3">
+                        <ul class="list-group">
+                            {{#each this}}
+                                <li class="list-group-item">
+                                    {{#if ../../config.allowEdit}}
+                                        <a data-action="removeSource" title="Remove Traffic Source">
+                                            <span class="glyphicon glyphicon-remove" data-source="{{this}}"></span>
+                                        </a>
+                                        {{this}}
+                                    {{else}}
+                                        {{this}}
+                                    {{/if}}
+                                </li>
+                            {{/each}}
+                        </ul>
+                    </div>
+                {{/each}}
+                {{#if config.allowEdit }}
+                    <a class="btn btn-primary" data-action="addSource" title="Add Traffic Source">+ Add Traffic Source</a>
+                {{/if}}
+            </div>
+        </div>
+    {{else}}
+        {{#if config.allowEdit }}
+            <h4>Traffic Sources</h4>
+            <div class="row">
+                <div class="col-md-12">
+                    <a class="btn btn-primary" data-action="addSource" title="Add Traffic Source">+ Add Traffic Source</a>
+                </div>
+            </div>
+        {{/if}}
+    {{/if}}
     <div class="row">
-        <div class="col-md-12">
+        <div class="col-md-5">
             <h4>Active Agents</h4>
             <table class="table table-striped">
                 <thead>
                     <tr>
                         <th>ID</th>
-                        <th>Domain</th>
                         <th>Base Uri</th>
                     </tr>
                 </thead>
@@ -14,22 +60,18 @@
                     {{#each agents}}
                         <tr data-agent-id="{{ agentId }}">
                             <td>{{ agentId }}</td>
-                            <td><a href="http://{{domain}}">{{ domain }}</a></td>
                             <td><a href="{{ baseAgentUri }}/status">{{ baseAgentUri }}</a></td>
                         </tr>
                     {{/each}}
                 </tbody>
             </table>
         </div>
-    </div>
-    <div class="row">
-        <div class="col-md-12">
+        <div class="col-md-7">
             <h4>All Known Agents</h4>
             <table class="table table-striped">
                 <thead>
                     <tr>
                         <th>ID</th>
-                        <th>Domain</th>
                         <th>Base Uri</th>
                         <th>Joined Cluster</th>
                         <th class="hidden-xs">{{! Actions column }}</th>
@@ -39,7 +81,6 @@
                     {{#each knownAgents}}
                         <tr data-agent-id="{{ agentId }}">
                             <td>{{ agentId }}</td>
-                            <td><a href="http://{{domain}}">{{ domain }}</a></td>
                             <td><a href="{{ baseAgentUri }}/status">{{ baseAgentUri }}</a></td>
                             <td>{{timestampFromNow lastSeenAt }}</td>
                             <td>
@@ -54,26 +95,30 @@
                 </tbody>
             </table>
         </div>
-        <div class="row">
-            <div class="col-md-12">
-                <h4>Base Paths</h4>
-                {{#each basePaths.splitPaths}}
-                    <div class="col-md-3">
-                        <ul class="list-group">
-                            {{#each this}}
-                                <li class="list-group-item">
-                                    {{#if ../../config.allowEdit}}
-                                        <a data-action="removeBasePath" title="Remove Base Path Lock">
-                                            <span class="glyphicon glyphicon-remove" data-base-path="{{this}}"></span>
-                                        </a>
-                                    {{/if}}
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <h4>Base Paths</h4>
+            {{#each basePaths.splitPaths}}
+                <div class="col-md-3">
+                    <ul class="list-group">
+                        {{#each this}}
+                            <li class="list-group-item">
+                                {{#if ../../config.allowEdit}}
+                                    <a data-action="removeBasePath" title="Remove Base Path Lock">
+                                        <span class="glyphicon glyphicon-remove" data-base-path="{{this}}"></span>
+                                    </a>
+                                {{/if}}
+                                {{#if ../../group.domain }}
+                                    <a target="_blank" href="http://{{ ../../../group.domain }}{{ this }}">{{ this }}</a>
+                                {{else}}
                                     {{ this }}
-                                </li>
-                            {{/each}}
-                        </ul>
-                    </div>
-                {{/each}}
-            </div>
+                                {{/if}}
+                            </li>
+                        {{/each}}
+                    </ul>
+                </div>
+            {{/each}}
         </div>
     </div>
 {{else}}
