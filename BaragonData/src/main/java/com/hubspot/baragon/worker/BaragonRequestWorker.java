@@ -108,6 +108,7 @@ public class BaragonRequestWorker implements Runnable {
             return InternalRequestStates.FAILED_SEND_REVERT_REQUESTS;
           case SUCCESS:
             try {
+              requestManager.setRequestMessage(request.getLoadBalancerRequestId(), String.format("%s request succeeded! Added upstreams: %s, Removed upstreams: %s", InternalStatesMap.getRequestType(currentState), request.getAddUpstreams(), request.getRemoveUpstreams()));
               requestManager.commitRequest(request);
               return InternalRequestStates.COMPLETED;
             } catch (Exception e) {
