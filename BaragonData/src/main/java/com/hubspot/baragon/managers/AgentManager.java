@@ -180,8 +180,8 @@ public class AgentManager {
       }
     }
 
-    if (allTrue(missingTemplateExceptions)) {
-      return AgentRequestsStatus.INVALID_REQUEST_NOOP;
+    if (!missingTemplateExceptions.isEmpty() && allTrue(missingTemplateExceptions)) {
+      return AgentRequestsStatus.FAILURE;
     }
 
     return success ? AgentRequestsStatus.SUCCESS : AgentRequestsStatus.FAILURE;
