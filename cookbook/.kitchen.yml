@@ -20,6 +20,7 @@ platforms:
 suites:
   - name: remotezk
     run_list:
+      - recipe[apt]
       - recipe[java]
       - recipe[baragon::server]
       - recipe[nginx]
