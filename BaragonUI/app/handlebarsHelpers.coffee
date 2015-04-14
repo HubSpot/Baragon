@@ -50,3 +50,6 @@ Handlebars.registerHelper 'parseAgent', (urlString) ->
 
 Handlebars.registerHelper 'parseStatusUrl', (urlString) ->
     return urlString.replace(/request\/.*/,"status")
+
+Handlebars.registerHelper 'jsonStringify', (object) ->
+    return JSON.stringify object, undefined, 4
