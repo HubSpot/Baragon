@@ -61,7 +61,6 @@ templates:
       {{else}}
       #   No owners!
       {{/if}}
-
       {{#if upstreams}}
       {{#if service.options.nginxExtraConfigs}}
       # BEGIN CUSTOM NGINX CONFIGS
@@ -69,7 +68,6 @@ templates:
       {{/each}}
       # END CUSTOM NGINX CONFIGS
       {{/if}}
-
       location {{{service.options.nginxLocationModifier}}} {{{service.serviceBasePath}}} {
           proxy_pass_header Server;
           proxy_set_header Host \$http_host;
@@ -84,7 +82,6 @@ templates:
           {{/if}}
           proxy_connect_timeout {{firstOf service.options.nginxProxyConnectTimeout 55}};
           proxy_read_timeout {{firstOf service.options.nginxProxyReadTimeout 60}};
-
           {{#if service.options.nginxExtraLocationConfigs}}
           # BEGIN CUSTOM NGINX LOCATION CONFIGS
           {{#each service.options.nginxExtraLocationConfigs}}{{{.}}}
@@ -112,7 +109,6 @@ templates:
           {{else}}
           #   No owners!
           {{/if}}
-
           # This is a blank template for writing custom configuration
           # BEGIN CUSTOM PROXY CONFIG
           {{#each service.options.proxyConfig}}{{{.}}}
@@ -131,7 +127,6 @@ templates:
       {{else}}
       #   No owners!
       {{/if}}
-
       {{#if upstreams}}
       upstream baragon_{{{service.serviceId}}} {
           {{#each upstreams}}server {{{upstream}}};  # {{{requestId}}}
@@ -162,7 +157,6 @@ templates:
           {{else}}
           #   No owners!
           {{/if}}
-
           # This is a blank template for writing custom configuration
           # BEGIN CUSTOM UPSTREAM CONFIG
           {{#each service.options.upstreamConfig}}{{{.}}}

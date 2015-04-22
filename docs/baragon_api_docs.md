@@ -4,12 +4,12 @@ BaragonService API
 <a id="top"></a>
 Listed below are the various endpoints for BaragonService along with example request payloads (where applicable) and responses. All example requests are pointed at the baragon vagrants, and all request examples are written in python.
 
-| [State](#state) | [Workers](#workers) | [Status](#status) | [Requests](#requests) | [Auth](#auth)  | [Load Balancer](#load-balancer) |
+| [State](#state) | [Workers](#workers) | [Status](#status) | [Requests](#requests) | [Auth](#auth)  | [Load Balancer](#load-balancer) | [Agent API](#agent) |
 <a id="state"></a>
 #State
 ##GET `/state`
 
-Returns the current list of services that Baragon is keeping track of.
+Returns the current list of services that Baragon is keeping track of. Returns a collection of `BaragonServiceState` objects
 
 ###Example Request
 ```python
@@ -56,7 +56,7 @@ requests.get("192.168.33.20:8080/baragon/v2/state")
 
 ##GET `/state/{serviceId}`
 
-Returns the details for a specific service ID.
+Returns the details for a specific service ID (`BaragonServiceState` object).
 
 ###Example Request
 ```python
@@ -85,7 +85,7 @@ requests.get("192.168.33.20:8080/baragon/v2/state/test1")
 
 ##DELETE `/state/{serviceId}`
 
-Removes the service from the current state and clears any associated base paths.
+Removes the service from the current state and clears any associated base paths. Returns a `BaragonServiceState` object of the deleted service.
 
 ###Example Request
 ```python
@@ -114,10 +114,10 @@ requests.delete("192.168.33.20:8080/baragon/v2/state/test1")
 
 <a id="workers"></a>
 #Workers
-| [Top](#top) | [State](#state) | [Workers](#workers) | [Status](#status) | [Requests](#requests) | [Auth](#auth)  | [Load Balancer](#load-balancer) |
+| [Top](#top) | [State](#state) | [Workers](#workers) | [Status](#status) | [Requests](#requests) | [Auth](#auth)  | [Load Balancer](#load-balancer) | [Agent API](#agent) |
 ##GET `/workers`
 
-Returns the addresses of the currently active baragon workers
+Returns a list of the addresses of the currently active baragon workers.
 
 ###Example Request
 ```python
@@ -131,10 +131,10 @@ requests.get("192.168.33.20:8080/baragon/v2/workers")
 
 <a id="status"></a>
 #Status
-| [Top](#top) | [State](#state) | [Workers](#workers) | [Status](#status) | [Requests](#requests) | [Auth](#auth)  | [Load Balancer](#load-balancer) |
+| [Top](#top) | [State](#state) | [Workers](#workers) | [Status](#status) | [Requests](#requests) | [Auth](#auth)  | [Load Balancer](#load-balancer) | [Agent API](#agent) |
 ##GET `/status`
 
-Returns the current BaragonService status.
+Returns the current BaragonService status. (`BaragonServiceStatus` object)
 
 ###Example Request
 ```python
@@ -148,16 +148,16 @@ requests.get("192.168.33.20:8080/baragon/v2/status")
   "pendingRequestCount": 0,       # Requests in the queue
   "workerLagMs": 1423,            # Time since worker last start
   "zookeeperState": "CONNECTED",  # Zookeeper state
-  "globalStateNodeSize": 1304     # Size of the /state zk node in bytes (limit 1MB in zk)
+  "globalStateNodeSize": 1304     # Size of the /state zk node in bytes (to help avoid hitting the zk limit)
 }
 ```
 
 <a id="requests"></a>
 #Requests
-| [Top](#top) | [State](#state) | [Workers](#workers) | [Status](#status) | [Requests](#requests) | [Auth](#auth)  | [Load Balancer](#load-balancer) |
+| [Top](#top) | [State](#state) | [Workers](#workers) | [Status](#status) | [Requests](#requests) | [Auth](#auth)  | [Load Balancer](#load-balancer) | [Agent API](#agent) |
 ##GET `/request`
 
-Returns the current pending requests
+Get the current pending requests. Returns a list of `QueuedRequestId` objects
 
 ###Example Request
 ```python
@@ -177,7 +177,14 @@ requests.get("192.168.33.20:8080/baragon/v2/request")
 
 ##POST `/request`
 
-Add a request to the queue with the given data.
+Add a request to the queue with the given data. Returns a `BaragonResponse` object. A `BaragonResponse can have the following statuses:
+- `WAITING`: waiting for request to be applied on all agents
+- `SUCCESS`: request was successfully applied on all agents
+- `FAILED`: request was not successfully applied on all agents, and was rolled back
+- `CANCELING`: request is in the process of being cancelled (rolled back)
+- `CANCELED`: request was cancelled (rolled back) on all agents
+- `INVALID_REQUEST_NOOP`: request was invalid and no action was taken on any load balancer
+- `UNKNOWN`: unknown.
 
 ###Example Request
 ```python
@@ -204,11 +211,11 @@ requests.post("http://192.168.33.20:8080/baragon/v2/request", data=data, headers
 ```
 
 ###Example Response
-- PENDING
+- WAITING
 ```json
 {
    "loadBalancerRequestId": "requestId",
-   "loadBalancerState": "PENDING",
+   "loadBalancerState": "WAITING",
    "message": "Queued as QueuedRequestId{serviceId=testService, requestId=requestId, index=2164}",
    "agentResponses": {
       "APPLY": [] 
@@ -220,7 +227,7 @@ requests.post("http://192.168.33.20:8080/baragon/v2/request", data=data, headers
 {
    "loadBalancerRequestId": "requestId",
    "loadBalancerState": "SUCCESS",
-   "message": "Queued as QueuedRequestId{serviceId=testService, requestId=requestId, index=2164}",
+   "message": "APPLY request succeeded! Added upstreams [example.com:80], removed upstreams []",
    "agentResponses": {
       "APPLY": [
          {
@@ -237,7 +244,7 @@ requests.post("http://192.168.33.20:8080/baragon/v2/request", data=data, headers
 
 ##GET `/request/{requestId}`
 
-Returns the status of a particular request.
+Returns the status of a particular request via a `BaragonResponse` object. This is the same type of response as the initial `POST` request to the `/request` endpoint. See above for possible statuses
 
 ###Example Request
 ```python
@@ -266,7 +273,7 @@ requests.get("192.168.33.20:8080/baragon/v2/request/requestId")
 
 <a id="auth"></a>
 #Auth
-| [Top](#top) | [State](#state) | [Workers](#workers) | [Status](#status) | [Requests](#requests) | [Auth](#auth)  | [Load Balancer](#load-balancer) |
+| [Top](#top) | [State](#state) | [Workers](#workers) | [Status](#status) | [Requests](#requests) | [Auth](#auth)  | [Load Balancer](#load-balancer) | [Agent API](#agent) |
 ##GET `/auth/keys`
 
 Returns the current list of auth keys (Must use the master auth key to access this)
@@ -337,7 +344,7 @@ requests.post("192.168.33.20:8080/baragon/v2/auth/keys", data=data, params=param
 
 <a id="load-balancer"></a>
 #Load Balancer
-| [Top](#top) | [State](#state) | [Workers](#workers) | [Status](#status) | [Requests](#requests) | [Auth](#auth)  | [Load Balancer](#load-balancer) |
+| [Top](#top) | [State](#state) | [Workers](#workers) | [Status](#status) | [Requests](#requests) | [Auth](#auth)  | [Load Balancer](#load-balancer) | [Agent API](#agent) |
 ##GET `/load-balancer`
 
 Returns a list of the current load balancer clusters/groups
@@ -396,7 +403,7 @@ requests.get("192.168.33.20:8080/baragon/v2/load-balancer/vagrant/known-agents")
 ]
 ```
 
-##DELETE `/load-balancer/{cluster}/known-agents`
+##DELETE `/load-balancer/{cluster}/known-agents/{agentId}`
 
 Remove the specified agent from the list of known agents. This will NOT remove if from the active agents if it is still connected in zookeeper
 
@@ -463,4 +470,47 @@ requests.get("192.168.33.20:8080/baragon/v2/load-balancer/vagrant/base-path", pa
 }
 ```
 
-| [Top](#top) | [State](#state) | [Workers](#workers) | [Status](#status) | [Requests](#requests) | [Auth](#auth)  | [Load Balancer](#load-balancer) |
+| [Top](#top) | [State](#state) | [Workers](#workers) | [Status](#status) | [Requests](#requests) | [Auth](#auth)  | [Load Balancer](#load-balancer) | [Agent API](#agent) |
+
+#Agent API
+
+The Baragon Agent API is generally only used by BaragonService to trigger requests, but the status endpoint can be useful for monitoring purposes.
+
+##POST `/request/{requestId}`
+
+Execute a request with the specified `requestId`. Request data will be fetched from zookeeper by the agent so only the ID is needed.
+
+###Example Request
+```python
+requests.post("192.168.33.21:8882/baragon-agent/v2/request/test-1")
+```
+
+###Example Response
+This can return:
+- `200`: Request was applied successfully
+- `400`: The request could not be completed due to an error caught by Baragon and the Agent has attempted to revert the changes
+- `500`: The request could not be completed due to an unforseen error, the Agent may not have been abel to successfully revert the changes
+
+##GET `/status`
+
+Get the status of the agent, returns a `BaragonAgentStatus` object.
+
+###Example Request
+```python
+requests.get("192.168.33.21:8882/baragon-agent/v2/status")
+```
+
+###Example Response
+```python
+{
+  "group": "vagrant", # load balancer group name from Agent config
+  "validConfigs": true, # Is the current configuration valid accoridng to the provided checkConfigCommand
+  "errorMessage": "message", # Current error message returned by the checkConfigCommand if there is one
+  "leader": true, # Is this agent currently the zk leader among agents in the same loadBalancerGroup
+  "mostRecentRequestId": "test1", # ID of the last request processed
+  "zookeeperState": "CONNECTED" # Current zookeeper connection state
+}
+```
+
+| [Top](#top) | [State](#state) | [Workers](#workers) | [Status](#status) | [Requests](#requests) | [Auth](#auth)  | [Load Balancer](#load-balancer) | [Agent API](#agent) |
+
