@@ -79,14 +79,14 @@ public class BaragonRequestWorker implements Runnable {
 
         if (!conflicts.isEmpty()) {
           requestManager.setRequestMessage(request.getLoadBalancerRequestId(), String.format("Invalid request due to base path conflicts: %s", conflicts));
-          return InternalRequestStates.FAILED_REVERTED;
+          return InternalRequestStates.INVALID_REQUEST_NOOP;
         }
 
         final Set<String> missingGroups = requestManager.getMissingLoadBalancerGroups(request);
 
         if (!missingGroups.isEmpty()) {
           requestManager.setRequestMessage(request.getLoadBalancerRequestId(), String.format("Invalid request due to non-existent load balancer groups: %s", missingGroups));
-          return InternalRequestStates.FAILED_REVERTED;
+          return InternalRequestStates.INVALID_REQUEST_NOOP;
         }
 
 //        for (String loadBalancerGroup : request.getLoadBalancerService().getLoadBalancerGroups()) {
@@ -108,6 +108,7 @@ public class BaragonRequestWorker implements Runnable {
             return InternalRequestStates.FAILED_SEND_REVERT_REQUESTS;
           case SUCCESS:
             try {
+              requestManager.setRequestMessage(request.getLoadBalancerRequestId(), String.format("%s request succeeded! Added upstreams: %s, Removed upstreams: %s", request.getAction(), request.getAddUpstreams(), request.getRemoveUpstreams()));
               requestManager.commitRequest(request);
               return InternalRequestStates.COMPLETED;
             } catch (Exception e) {
