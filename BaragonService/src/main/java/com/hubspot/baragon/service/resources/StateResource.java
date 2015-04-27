@@ -1,12 +1,10 @@
 package com.hubspot.baragon.service.resources;
 
-import java.net.ResponseCache;
 import java.util.Collection;
 
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -17,8 +15,6 @@ import com.google.inject.Inject;
 import com.hubspot.baragon.managers.ServiceManager;
 import com.hubspot.baragon.models.BaragonResponse;
 import com.hubspot.baragon.models.BaragonServiceState;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @Path("/state")
 @Produces(MediaType.APPLICATION_JSON)
@@ -42,7 +38,7 @@ public class StateResource {
   }
 
 
-  @PUT
+  @POST
   @Path("/{serviceId}/reload")
   public BaragonResponse reloadConfigs(@PathParam("serviceId") String serviceId) {
     return serviceManager.enqueueReloadServiceConfigs(serviceId);
