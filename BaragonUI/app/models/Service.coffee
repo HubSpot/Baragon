@@ -37,7 +37,7 @@ class Service extends Model
     reload: =>
         $.ajax
             url: "#{ config.apiRoot }/state/#{ @serviceId }/reload?authkey=#{ config.authKey }"
-            type: "PUT"
+            type: "POST"
             success: (data) =>
                 @set('request', data.loadBalancerRequestId)
 

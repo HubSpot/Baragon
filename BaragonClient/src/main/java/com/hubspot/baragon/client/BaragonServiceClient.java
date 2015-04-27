@@ -214,27 +214,6 @@ public class BaragonServiceClient {
     return response;
   }
 
-  private <T> Optional<T> put(String uri, String type, String id, Map<String, String> queryParams, Optional<Class<T>> clazz) {
-    LOG.info("Deleting {} {} from {}", type, id, uri);
-    final long start = System.currentTimeMillis();
-    HttpRequest.Builder request = buildRequest(uri, queryParams).setMethod(Method.PUT);
-    HttpResponse response = httpClient.execute(request.build());
-
-    if (response.getStatusCode() == 404) {
-      LOG.info("{} ({}) was not found", type, id);
-      return Optional.absent();
-    }
-
-    checkResponse(type, response);
-    LOG.info("Deleted {} ({}) from Baragon in %sms", type, id, System.currentTimeMillis() - start);
-
-    if (clazz.isPresent()) {
-      return Optional.of(response.getAs(clazz.get()));
-    }
-
-    return Optional.absent();
-  }
-
   // BaragonService overall status
 
   public Optional<BaragonServiceStatus> getBaragonServiceStatus(String hostname) {
@@ -266,7 +245,7 @@ public class BaragonServiceClient {
 
   public Optional<BaragonResponse> reloadServiceConfigs(String serviceId){
     final String uri = String.format(STATE_RELOAD_FORMAT, getHost(), contextPath, serviceId);
-    return put(uri, "service reload", serviceId, Collections.<String, String>emptyMap(), Optional.of(BaragonResponse.class));
+    return post(uri, "service reload",Optional.absent(), Optional.of(BaragonResponse.class));
   }
 
 

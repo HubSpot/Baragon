@@ -88,8 +88,8 @@ public class AgentRequestManager {
           return apply(request, maybeOldService);
       }
     } catch (Exception e) {
-      LOG.error(String.format("Caught exception while %sING for reqeust %s", action, requestId), e);
-      return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(String.format("Caught exception while %sING for reqeust %s: %s", action, requestId, e.getMessage())).build();
+      LOG.error(String.format("Caught exception while %sING for request %s", action, requestId), e);
+      return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(String.format("Caught exception while %sING for request %s: %s", action, requestId, e.getMessage())).build();
     } finally {
       LOG.info(String.format("Done processing %s request: %s", action, requestId));
       agentLock.unlock();
