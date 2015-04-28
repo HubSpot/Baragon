@@ -196,9 +196,9 @@ data = {
     "serviceBasePath":"/basepath",
     "loadBalancerGroups":["vagrant"],
     "options":{
-		"nginxExtraConfigs": [
-			"rewrite ^/test(.*) /test/v1/$1 last;"
-		]
+		  "nginxExtraConfigs": [
+			  "rewrite ^/test(.*) /test/v1/$1 last;"
+		  ]
     }
   },
   "addUpstreams":[
@@ -209,6 +209,8 @@ data = {
 headers = {'Content-type': 'application/json'}
 requests.post("http://192.168.33.20:8080/baragon/v2/request", data=data, headers=headers)
 ```
+
+*NOTE* The options hash can hold any objects you need it to. These values will later be available in the handlebars template under `service.options`
 
 ###Example Response
 - WAITING
