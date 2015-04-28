@@ -31,6 +31,9 @@ public class ElbConfiguration {
   @JsonProperty("removeKnownAgentEnabled")
   private boolean removeKnownAgentEnabled = false;
 
+  @JsonProperty("removeKnownAgentMinutes")
+  private int removeKnownAgentMinutes = 30;
+
   @JsonProperty("deregisterEnabled")
   private boolean deregisterEnabled = false;
 
@@ -96,5 +99,13 @@ public class ElbConfiguration {
 
   public void setDeregisterEnabled(boolean deregisterEnabled) {
     this.deregisterEnabled = deregisterEnabled;
+  }
+
+  public int getRemoveKnownAgentMinutes() {
+    return removeKnownAgentMinutes;
+  }
+
+  public void setRemoveKnownAgentMinutes(int removeKnownAgentMinutes) {
+    this.removeKnownAgentMinutes = removeKnownAgentMinutes;
   }
 }

@@ -2,6 +2,7 @@ package com.hubspot.baragon.worker;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicLong;
@@ -158,7 +159,7 @@ public class BaragonElbSyncWorker implements Runnable {
     for (LoadBalancerDescription elb : elbs) {
       if (group.getSources().contains(elb.getLoadBalancerName())) {
         for (Instance instance : elb.getInstances()) {
-          if (!agentInstances.contains(instance.getInstanceId()) && (!isKnownAgent(group, instance) || configuration.get().isRemoveKnownAgentEnabled())) {
+          if (!agentInstances.contains(instance.getInstanceId()) && canDeregisterAgent(group, instance)) {
             List<Instance> instanceList = new ArrayList<>(1);
             instanceList.add(instance);
             requests.add(new DeregisterInstancesFromLoadBalancerRequest(elb.getLoadBalancerName(), instanceList));
@@ -168,6 +169,21 @@ public class BaragonElbSyncWorker implements Runnable {
       }
     }
     return requests;
+  }
+
+  private boolean canDeregisterAgent(BaragonGroup group, Instance instance) {
+    Optional<BaragonKnownAgentMetadata>  agent = knownAgent(group, instance);
+    if (!agent.isPresent()) {
+      return true;
+    } else {
+      if (configuration.get().isRemoveKnownAgentEnabled()) {
+        Date lastSeen = new Date(agent.get().getLastSeenAt());
+        Date threshold = new Date(System.currentTimeMillis() - (configuration.get().getRemoveKnownAgentMinutes() * 60000));
+        return lastSeen.before(threshold);
+      } else {
+        return false;
+      }
+    }
   }
 
   private List<String> agentInstanceIds(Collection<BaragonAgentMetadata> agents) {
@@ -198,14 +214,13 @@ public class BaragonElbSyncWorker implements Runnable {
     return (instanceIsHealthy && healthyCount == 1);
   }
 
-  private boolean isKnownAgent(BaragonGroup group, Instance instance) {
+  private Optional<BaragonKnownAgentMetadata> knownAgent(BaragonGroup group, Instance instance) {
     Collection<BaragonKnownAgentMetadata> knownAgents = knownAgentsDatastore.getKnownAgentsMetadata(group.getName());
-    boolean isKnown = false;
     for (BaragonKnownAgentMetadata agent : knownAgents) {
       if (agent.getInstanceId().isPresent() && agent.getInstanceId().get().equals(instance.getInstanceId())) {
-        isKnown = true;
+        return Optional.of(agent);
       }
     }
-    return isKnown;
+    return Optional.absent();
   }
 }
