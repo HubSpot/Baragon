@@ -14,6 +14,7 @@ import com.hubspot.baragon.data.BaragonAgentResponseDatastore;
 import com.hubspot.baragon.data.BaragonLoadBalancerDatastore;
 import com.hubspot.baragon.data.BaragonRequestDatastore;
 import com.hubspot.baragon.data.BaragonStateDatastore;
+import com.hubspot.baragon.exceptions.InvalidRequestActionException;
 import com.hubspot.baragon.exceptions.RequestAlreadyEnqueuedException;
 import com.hubspot.baragon.models.BaragonRequest;
 import com.hubspot.baragon.models.BaragonResponse;
@@ -131,7 +132,7 @@ public class RequestManager {
     }
   }
 
-  public BaragonResponse enqueueRequest(BaragonRequest request) throws RequestAlreadyEnqueuedException {
+  public BaragonResponse enqueueRequest(BaragonRequest request) throws RequestAlreadyEnqueuedException, InvalidRequestActionException {
     final Optional<BaragonResponse> maybePreexistingResponse = getResponse(request.getLoadBalancerRequestId());
 
     if (maybePreexistingResponse.isPresent()) {
@@ -141,6 +142,10 @@ public class RequestManager {
       } else {
         return maybePreexistingResponse.get();
       }
+    }
+
+    if (request.getAction().isPresent() && request.getAction().equals(Optional.of(RequestAction.REVERT))) {
+      throw new InvalidRequestActionException("The REVERT action may only be used internally by Baragon, you may specify UPDATE, DELETE, RELOAD, or leave the action blank(UPDATE)");
     }
 
     requestDatastore.addRequest(request);

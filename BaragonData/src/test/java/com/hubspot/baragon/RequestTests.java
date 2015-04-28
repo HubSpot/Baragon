@@ -1,5 +1,6 @@
 package com.hubspot.baragon;
 
+import com.hubspot.baragon.exceptions.InvalidRequestActionException;
 import org.jukito.JukitoModule;
 import org.jukito.JukitoRunner;
 import org.junit.After;
@@ -175,7 +176,7 @@ public class RequestTests {
   }
 
   @Test(expected = RequestAlreadyEnqueuedException.class)
-  public void testPreexistingResponse(RequestManager requestManager) throws RequestAlreadyEnqueuedException {
+  public void testPreexistingResponse(RequestManager requestManager) throws RequestAlreadyEnqueuedException, InvalidRequestActionException {
     final String requestId = "test-127";
     Set<String> lbGroup = new HashSet<>();
     lbGroup.add(FAKE_LB_GROUP);
