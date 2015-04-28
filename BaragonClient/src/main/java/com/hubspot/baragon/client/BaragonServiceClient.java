@@ -10,6 +10,7 @@ import java.util.Collection;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import com.hubspot.baragon.models.BaragonGroup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.google.common.base.Optional;
@@ -40,6 +41,8 @@ public class BaragonServiceClient {
   private static final String LOAD_BALANCER_AGENTS_FORMAT = LOAD_BALANCER_FORMAT + "/%s/agents";
   private static final String LOAD_BALANCER_KNOWN_AGENTS_FORMAT = LOAD_BALANCER_FORMAT + "/%s/known-agents";
   private static final String LOAD_BALANCER_DELETE_KNOWN_AGENT_FORMAT = LOAD_BALANCER_KNOWN_AGENTS_FORMAT + "/%s";
+  private static final String LOAD_BALANCER_GROUP_FORMAT = LOAD_BALANCER_FORMAT + "/%s";
+  private static final String LOAD_BALANCER_TRAFFIC_SOURCE_FORMAT = LOAD_BALANCER_GROUP_FORMAT + "/sources";
 
   private static final String REQUEST_FORMAT = "http://%s/%s/request";
   private static final String REQUEST_ID_FORMAT = REQUEST_FORMAT + "/%s";
@@ -161,7 +164,7 @@ public class BaragonServiceClient {
   }
 
   private <T> void delete(String uri, String type, String id, Map<String, String> queryParams) {
-    delete(uri, type, id, queryParams, Optional.<Class<T>> absent());
+    delete(uri, type, id, queryParams, Optional.<Class<T>>absent());
   }
 
   private <T> Optional<T> delete(String uri, String type, String id, Map<String, String> queryParams, Optional<Class<T>> clazz) {
@@ -186,8 +189,12 @@ public class BaragonServiceClient {
   }
 
   private <T> Optional<T> post(String uri, String type, Optional<?> body, Optional<Class<T>> clazz) {
+    return post(uri, type, body, clazz, Collections.<String, String>emptyMap());
+  }
+
+  private <T> Optional<T> post(String uri, String type, Optional<?> body, Optional<Class<T>> clazz, Map<String, String> queryParams) {
     try {
-      HttpResponse response = post(uri, type, body);
+      HttpResponse response = post(uri, type, body, queryParams);
 
       if (clazz.isPresent()) {
         return Optional.of(response.getAs(clazz.get()));
@@ -199,10 +206,10 @@ public class BaragonServiceClient {
     return Optional.absent();
   }
 
-  private HttpResponse post(String uri, String type, Optional<?> body) {
+  private HttpResponse post(String uri, String type, Optional<?> body, Map<String, String> params) {
     LOG.info("Posting {} to {}", type, uri);
     final long start = System.currentTimeMillis();
-    HttpRequest.Builder request = buildRequest(uri).setMethod(Method.POST);
+    HttpRequest.Builder request = buildRequest(uri, params).setMethod(Method.POST);
 
     if (body.isPresent()) {
       request.setBody(body.get());
@@ -279,6 +286,20 @@ public class BaragonServiceClient {
     delete(requestUri, "known agent", agentId, Collections.<String, String>emptyMap());
   }
 
+  public BaragonGroup addTrafficSource(String loadBalancerGroupName, String source) {
+    final String requestUri = String.format(LOAD_BALANCER_TRAFFIC_SOURCE_FORMAT, getHost(), contextPath, loadBalancerGroupName);
+    return post(requestUri, "add source", Optional.absent(), Optional.of(BaragonGroup.class), ImmutableMap.of("source", source)).get();
+  }
+
+  public Optional<BaragonGroup> removeTrafficSource(String loadBalancerGroupName, String source) {
+    final String requestUri = String.format(LOAD_BALANCER_TRAFFIC_SOURCE_FORMAT, getHost(), contextPath, loadBalancerGroupName);
+    return delete(requestUri, "remove source", source, ImmutableMap.of("source", source), Optional.of(BaragonGroup.class));
+  }
+
+  public Optional<BaragonGroup> getGroupDetail(String loadBalancerGroupName) {
+    final String requestUri = String.format(LOAD_BALANCER_GROUP_FORMAT, getHost(), contextPath, loadBalancerGroupName);
+    return getSingle(requestUri, "group detail", loadBalancerGroupName, BaragonGroup.class);
+  }
 
   // BaragonService base path actions
 

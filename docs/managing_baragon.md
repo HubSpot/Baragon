@@ -14,6 +14,7 @@ Baragon Detailed Management Guide
   - [Statuses and Request Flow](#requestflow)
   - [Common Exceptions](#exceptions)
 - [BasePath Locking and Updating](#basepaths)
+- [ELB Sync](#elb)
 
 <a id="terminology"></a>
 ## Terminology
@@ -338,3 +339,22 @@ When adding a service to Baragon, the service must have an associated `basePath`
     - Service `A` is at base path `/test`
     - Make a request for service `B` with `replaceServiceId` set to `A`
     - Service `A`'s configs are removed, service `B`'s configs are added, base path `/test` is now associated with service `B`
+
+<a id="elb"></a>
+## ELB Sync
+
+`BaragonService` has the ability to keep you instances in sync with a traffic source (Right now only Amazon ELB). You can specify the following under `elb` in you `BaragonService` config to enable the ELB Sync and configure several safeguards.
+
+- `enabled`: Must be `true` for the elb sync worker to run, defaults to `false`
+- `awsAccessKeyId`, `awsAccessKeySecret`: AWS access key and secret. The IAM credentials require the following permissions
+  - `DeregisterInstancesFromLoadBalancer`
+  - `RegisterInstancesWithLoadBalancer`
+  - `DescribeLoadBalancers`
+  - `DescribeInstanceHealth`
+- `intervalSeconds`: The interval at which to run the elb sync worker, default is `120` seconds, can be no shorter than a minute
+- `initialDelaySeconds`: Initial delay after startup before trying to start the elb sycn worker, default is `0`
+- `removeLastHealthyEnabled`: If this is `false`, Baragon will not be allowed to deregister a healthy agent from the ELB if it is the last healthy instance registered with that ELB. Defaults to `false`
+- `removeKnownAgentEnabled`: If this is `false`, Baragon will not be allowed to deregister an agent if it is still in the known agents list. Defaults to `false`
+- `deregisterEnabled`: If this is `false`, Baragon will only be allowed to register new agents, not deregister. Defaults to `false`
+
+
