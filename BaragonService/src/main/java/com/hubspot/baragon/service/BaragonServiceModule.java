@@ -31,7 +31,6 @@ import com.hubspot.baragon.utils.JavaUtils;
 
 public class BaragonServiceModule extends AbstractModule {
   public static final String BARAGON_SERVICE_SCHEDULED_EXECUTOR = "baragon.service.scheduledExecutor";
-  public static final String BARAGON_SERVICE_EXECUTOR = "baragon.service.executor";
 
   public static final String BARAGON_SERVICE_HTTP_PORT = "baragon.service.http.port";
   public static final String BARAGON_SERVICE_HOSTNAME = "baragon.service.hostname";
@@ -92,13 +91,6 @@ public class BaragonServiceModule extends AbstractModule {
   @Named(BARAGON_SERVICE_SCHEDULED_EXECUTOR)
   public ScheduledExecutorService providesScheduledExecutor() {
     return Executors.newScheduledThreadPool(2);
-  }
-
-  @Provides
-  @Singleton
-  @Named(BARAGON_SERVICE_EXECUTOR)
-  public ExecutorService providesExecutor() {
-    return Executors.newSingleThreadExecutor();
   }
 
   @Provides

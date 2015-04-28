@@ -210,7 +210,7 @@ public class BaragonServiceClient {
 
     HttpResponse response = httpClient.execute(request.build());
     checkResponse(type, response);
-    LOG.info("Successfully put {} in {}ms", type, System.currentTimeMillis() - start);
+    LOG.info("Successfully posted {} in {}ms", type, System.currentTimeMillis() - start);
     return response;
   }
 

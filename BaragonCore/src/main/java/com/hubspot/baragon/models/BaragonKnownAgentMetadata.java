@@ -18,7 +18,7 @@ public class BaragonKnownAgentMetadata extends BaragonAgentMetadata {
   public BaragonKnownAgentMetadata(@JsonProperty("baseAgentUri") String baseAgentUri,
                                    @JsonProperty("agentId") String agentId,
                                    @JsonProperty("domain") Optional<String> domain,
-                                   @JsonProperty("elbConfig") Optional<String> instanceId,
+                                   @JsonProperty("instanceId") Optional<String> instanceId,
                                    @JsonProperty("lastSeenAt") long lastSeenAt) {
     super(baseAgentUri, agentId, domain, instanceId);
     this.lastSeenAt = lastSeenAt;
