@@ -31,7 +31,8 @@ class GroupDetailController extends Controller
         @refresh()
 
     refresh: ->
-        @models.group.fetch()
+        @models.group.fetch().error =>
+            app.caughtError()
         @models.basePaths.fetch()
         @collections.knownAgents.fetch()
         @collections.agents.fetch()

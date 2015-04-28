@@ -29,7 +29,7 @@ class GroupDetailView extends View
             knownAgents: @options.knownAgents.toJSON()
             agents: @options.agents.toJSON()
             config: config
-            synced: @model.synced
+            synced: @model.synced || @options.agents.synced
 
     removeKnownAgent: (e) ->
         id = $(e.target).parents('tr').data 'agent-id'

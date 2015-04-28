@@ -49,8 +49,8 @@ class ServicesView extends View
                 valuesToSearch = []
 
                 valuesToSearch.push(service.id)
-                valuesToSearch.push(service.basePath)
-                for group in service.loadBalancerGroups
+                valuesToSearch.push(service.service.basePath)
+                for group in service.service.loadBalancerGroups
                     valuesToSearch.push(group)
 
                 searchTarget = valuesToSearch.join("")
