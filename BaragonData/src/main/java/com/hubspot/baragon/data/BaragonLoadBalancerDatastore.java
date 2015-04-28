@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
 
+import com.hubspot.baragon.models.BaragonGroup;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.leader.LeaderLatch;
 import org.apache.zookeeper.KeeperException;
@@ -29,7 +30,8 @@ public class BaragonLoadBalancerDatastore extends AbstractDataStore {
   private static final Logger LOG = LoggerFactory.getLogger(BaragonLoadBalancerDatastore.class);
 
   public static final String LOAD_BALANCER_GROUPS_FORMAT = "/load-balancer";
-  public static final String LOAD_BALANCER_GROUP_HOSTS_FORMAT = LOAD_BALANCER_GROUPS_FORMAT + "/%s/hosts";
+  public static final String LOAD_BALANCER_GROUP_FORMAT = LOAD_BALANCER_GROUPS_FORMAT + "/%s";
+  public static final String LOAD_BALANCER_GROUP_HOSTS_FORMAT = LOAD_BALANCER_GROUP_FORMAT + "/hosts";
   public static final String LOAD_BALANCER_GROUP_HOST_FORMAT = LOAD_BALANCER_GROUP_HOSTS_FORMAT + "/%s";
 
   public static final String LOAD_BALANCER_BASE_PATHS_FORMAT = LOAD_BALANCER_GROUPS_FORMAT + "/%s/base-uris";
@@ -48,7 +50,69 @@ public class BaragonLoadBalancerDatastore extends AbstractDataStore {
     }
   }
 
-  public Set<String> getLoadBalancerGroups() {
+  public Collection<BaragonGroup> getLoadBalancerGroups() {
+    final Collection<String> nodes = getChildren(LOAD_BALANCER_GROUPS_FORMAT);
+
+    if (nodes.isEmpty()) {
+      return Collections.emptyList();
+    }
+    final Collection<BaragonGroup> groups = Lists.newArrayListWithCapacity(nodes.size());
+
+    for (String node : nodes) {
+      groups.addAll(readFromZk(String.format(LOAD_BALANCER_GROUP_FORMAT, node), BaragonGroup.class).asSet());
+    }
+
+    return groups;
+  }
+
+  public Optional<BaragonGroup> getLoadBalancerGroup(String name) {
+    try {
+      return readFromZk(String.format(LOAD_BALANCER_GROUP_FORMAT, name), BaragonGroup.class);
+    } catch (RuntimeException e) {
+      if (e.getMessage().contains("No content")) {
+        return Optional.absent();
+      }
+      throw Throwables.propagate(e);
+    }
+  }
+
+  public BaragonGroup addSourceToGroup(String name, String source) {
+    Optional<BaragonGroup> maybeGroup = getLoadBalancerGroup(name);
+    BaragonGroup group;
+    if (maybeGroup.isPresent()) {
+      group = maybeGroup.get();
+      group.addSource(source);
+    } else {
+      group = new BaragonGroup(name, Optional.<String>absent(), Sets.newHashSet(source));
+    }
+    writeToZk(String.format(LOAD_BALANCER_GROUP_FORMAT, name), group);
+    return group;
+  }
+
+  public Optional<BaragonGroup> removeSourceFromGroup(String name, String source) {
+    Optional<BaragonGroup> maybeGroup = getLoadBalancerGroup(name);
+    if (maybeGroup.isPresent()) {
+      maybeGroup.get().removeSource(source);
+      writeToZk(String.format(LOAD_BALANCER_GROUP_FORMAT, name), maybeGroup.get());
+      return maybeGroup;
+    } else {
+      return Optional.absent();
+    }
+  }
+
+  public void updateGroupInfo(String name, Optional<String> domain) {
+    Optional<BaragonGroup> maybeGroup = getLoadBalancerGroup(name);
+    BaragonGroup group;
+    if (maybeGroup.isPresent()) {
+      group = maybeGroup.get();
+      group.setDomain(domain);
+    } else {
+      group = new BaragonGroup(name, domain, Collections.<String>emptySet());
+    }
+    writeToZk(String.format(LOAD_BALANCER_GROUP_FORMAT, name), group);
+  }
+
+  public Set<String> getLoadBalancerGroupNames() {
     return ImmutableSet.copyOf(getChildren(LOAD_BALANCER_GROUPS_FORMAT));
   }
 

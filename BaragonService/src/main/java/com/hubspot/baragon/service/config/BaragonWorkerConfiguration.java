@@ -1,7 +1,10 @@
 package com.hubspot.baragon.service.config;
 
 import javax.validation.constraints.Min;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
+
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class BaragonWorkerConfiguration {
   private boolean enabled = true;
 

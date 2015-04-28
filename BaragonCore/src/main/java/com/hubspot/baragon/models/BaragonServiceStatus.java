@@ -9,6 +9,7 @@ public class BaragonServiceStatus {
   private final boolean leader;
   private final int pendingRequestCount;
   private final long workerLagMs;
+  private final long elbWorkerLagMs;
   private final String zookeeperState;
   private final int globalStateNodeSize;
 
@@ -16,11 +17,13 @@ public class BaragonServiceStatus {
   public BaragonServiceStatus(@JsonProperty("leader") boolean leader,
                               @JsonProperty("pendingRequestCount") int pendingRequestCount,
                               @JsonProperty("workerLagMs") long workerLagMs,
+                              @JsonProperty("elbWorkerLagMs") long elbWorkerLagMs,
                               @JsonProperty("zookeeperState") String zookeeperState,
                               @JsonProperty("globalStateNodeSize") int globalStateNodeSize) {
     this.leader = leader;
     this.pendingRequestCount = pendingRequestCount;
     this.workerLagMs = workerLagMs;
+    this.elbWorkerLagMs = elbWorkerLagMs;
     this.zookeeperState = zookeeperState;
     this.globalStateNodeSize = globalStateNodeSize;
   }
@@ -35,6 +38,10 @@ public class BaragonServiceStatus {
 
   public long getWorkerLagMs() {
     return workerLagMs;
+  }
+
+  public long getElbWorkerLagMs() {
+    return elbWorkerLagMs;
   }
 
   public String getZookeeperState() {
@@ -65,6 +72,9 @@ public class BaragonServiceStatus {
     if (workerLagMs != that.workerLagMs) {
       return false;
     }
+    if (elbWorkerLagMs != that.elbWorkerLagMs) {
+      return false;
+    }
     if (!zookeeperState.equals(that.zookeeperState)) {
       return false;
     }
@@ -77,6 +87,7 @@ public class BaragonServiceStatus {
     int result = (leader ? 1 : 0);
     result = 31 * result + pendingRequestCount;
     result = 31 * result + (int) (workerLagMs ^ (workerLagMs >>> 32));
+    result = 31 * result + (int) (elbWorkerLagMs ^ (elbWorkerLagMs >>> 32));
     result = 31 * result + zookeeperState.hashCode();
     result = 31 * result + globalStateNodeSize;
     return result;
@@ -88,6 +99,7 @@ public class BaragonServiceStatus {
         "leader=" + leader +
         ", pendingRequestCount=" + pendingRequestCount +
         ", workerLagMs=" + workerLagMs +
+        ",  elbWorkerLagMs=" + elbWorkerLagMs +
         ", zookeeperState='" + zookeeperState + '\'' +
         ", globalStateNodeSize='" + globalStateNodeSize + '\'' +
         ']';

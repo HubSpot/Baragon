@@ -1,7 +1,10 @@
 package com.hubspot.baragon;
 
+import com.hubspot.baragon.models.BaragonAgentMetadata;
+import com.hubspot.baragon.utils.ZkParallelFetcher;
 import org.apache.curator.framework.CuratorFramework;
 
+import java.util.Collection;
 import java.util.Set;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -11,6 +14,7 @@ import com.hubspot.baragon.data.BaragonLoadBalancerDatastore;
 
 public class BaragonLoadBalancerTestDatastore extends BaragonLoadBalancerDatastore {
   private Optional<Set<String>> loadBalancerGroupsOverride = Optional.absent();
+  private Optional<Collection<BaragonAgentMetadata>> loadBalancerAgentsOverride = Optional.absent();
 
   @Inject
   public BaragonLoadBalancerTestDatastore(CuratorFramework curatorFramework, ObjectMapper objectMapper) {
@@ -21,12 +25,25 @@ public class BaragonLoadBalancerTestDatastore extends BaragonLoadBalancerDatasto
     this.loadBalancerGroupsOverride = loadBalancerGroupsOverride;
   }
 
+  public void setLoadBalancerAgentsOverride(Optional<Collection<BaragonAgentMetadata>> loadBalancerAgentsOverride) {
+    this.loadBalancerAgentsOverride = loadBalancerAgentsOverride;
+  }
+
   @Override
-  public Set<String> getLoadBalancerGroups() {
+  public Set<String> getLoadBalancerGroupNames() {
     if (loadBalancerGroupsOverride.isPresent()) {
       return loadBalancerGroupsOverride.get();
     }
 
-    return super.getLoadBalancerGroups();
+    return super.getLoadBalancerGroupNames();
+  }
+
+  @Override
+  public Collection<BaragonAgentMetadata> getAgentMetadata(Collection<String> clusterNames) {
+    if (loadBalancerAgentsOverride.isPresent()) {
+      return loadBalancerAgentsOverride.get();
+    } else {
+      return super.getAgentMetadata(clusterNames);
+    }
   }
 }

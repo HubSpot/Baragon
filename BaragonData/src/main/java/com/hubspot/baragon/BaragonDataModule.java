@@ -10,6 +10,8 @@ import org.apache.curator.framework.recipes.cache.PathChildrenCache;
 import org.apache.curator.framework.state.ConnectionState;
 import org.apache.curator.retry.ExponentialBackoffRetry;
 
+import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.services.elasticloadbalancing.AmazonElasticLoadBalancingClient;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.guava.GuavaModule;
 import com.google.common.base.Optional;
@@ -19,6 +21,7 @@ import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import com.hubspot.baragon.config.AuthConfiguration;
 import com.hubspot.baragon.config.HttpClientConfiguration;
+import com.hubspot.baragon.config.ElbConfiguration;
 import com.hubspot.baragon.config.ZooKeeperConfiguration;
 import com.hubspot.baragon.data.BaragonAuthDatastore;
 import com.hubspot.baragon.data.BaragonConnectionStateListener;
@@ -34,6 +37,7 @@ public class BaragonDataModule extends AbstractModule {
   public static final String BARAGON_SERVICE_HTTP_CLIENT = "baragon.service.http.client";
 
   public static final String BARAGON_SERVICE_WORKER_LAST_START = "baragon.service.worker.lastStartedAt";
+  public static final String BARAGON_ELB_WORKER_LAST_START = "baragon.service.elb.lastStartedAt";
 
   public static final String BARAGON_AUTH_KEY_MAP = "baragon.auth.keyMap";
 
@@ -43,6 +47,8 @@ public class BaragonDataModule extends AbstractModule {
   public static final String BARAGON_ZK_CONNECTION_STATE = "baragon.zk.connectionState";
 
   public static final String BARAGON_SERVICE_LEADER_LATCH = "baragon.service.leaderLatch";
+
+  public static final String BARAGON_AWS_ELB_CLIENT = "baragon.aws.elb.client";
 
   @Override
   protected void configure() {
@@ -121,5 +127,15 @@ public class BaragonDataModule extends AbstractModule {
   @Named(BARAGON_AUTH_PATH_CACHE)
   public PathChildrenCache providesAuthPathChildrenCache(CuratorFramework curatorFramework) {
     return new PathChildrenCache(curatorFramework, BaragonAuthDatastore.AUTH_KEYS_PATH, false);
+  }
+
+  @Provides
+  @Named(BARAGON_AWS_ELB_CLIENT)
+  public AmazonElasticLoadBalancingClient providesAwsElbClient(Optional<ElbConfiguration> configuration) {
+    if (configuration.isPresent() && configuration.get().getAwsAccessKeyId() != null && configuration.get().getAwsAccessKeySecret() != null) {
+      return new AmazonElasticLoadBalancingClient(new BasicAWSCredentials(configuration.get().getAwsAccessKeyId(), configuration.get().getAwsAccessKeySecret()));
+    } else {
+      return new AmazonElasticLoadBalancingClient();
+    }
   }
 }

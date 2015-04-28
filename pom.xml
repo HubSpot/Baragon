@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
 
@@ -36,7 +37,7 @@
         <basepom.test.timeout>120</basepom.test.timeout>
 
         <!-- hubspot jackson and dropwizard dep use 2.3.x -->
-        <dep.jackson.version>2.3.3</dep.jackson.version>
+        <dep.jackson.version>2.5.1</dep.jackson.version>
         <dep.jackson.core.version>${dep.jackson.version}</dep.jackson.core.version>
         <dep.jackson.databind.version>${dep.jackson.version}</dep.jackson.databind.version>
 
@@ -64,6 +65,7 @@
         <hibernate.version>5.1.1.Final</hibernate.version>
         <handlebars.version>1.3.1</handlebars.version>
         <ringleader.version>0.1.1</ringleader.version>
+        <aws.sdk.version>1.9.27</aws.sdk.version>
         <baragon.jar.name.format>${project.artifactId}-${project.version}</baragon.jar.name.format>
     </properties>
 
@@ -197,21 +199,21 @@
             </dependency>
 
             <dependency>
-              <groupId>io.dropwizard</groupId>
-              <artifactId>dropwizard-views</artifactId>
-              <version>${dropwizard.version}</version>
+                <groupId>io.dropwizard</groupId>
+                <artifactId>dropwizard-views</artifactId>
+                <version>${dropwizard.version}</version>
             </dependency>
 
             <dependency>
-              <groupId>io.dropwizard</groupId>
-              <artifactId>dropwizard-views-mustache</artifactId>
-              <version>${dropwizard.version}</version>
+                <groupId>io.dropwizard</groupId>
+                <artifactId>dropwizard-views-mustache</artifactId>
+                <version>${dropwizard.version}</version>
             </dependency>
 
             <dependency>
-              <groupId>io.dropwizard</groupId>
-              <artifactId>dropwizard-assets</artifactId>
-              <version>${dropwizard.version}</version>
+                <groupId>io.dropwizard</groupId>
+                <artifactId>dropwizard-assets</artifactId>
+                <version>${dropwizard.version}</version>
             </dependency>
 
             <!-- Metrics -->
@@ -357,6 +359,32 @@
                 <artifactId>jukito</artifactId>
                 <version>${jukito.version}</version>
             </dependency>
+
+            <!-- AWS SDK -->
+            <dependency>
+                <groupId>com.amazonaws</groupId>
+                <artifactId>aws-java-sdk-core</artifactId>
+                <version>${aws.sdk.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>commons-logging</groupId>
+                        <artifactId>commons-logging</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+
+            <dependency>
+                <groupId>com.amazonaws</groupId>
+                <artifactId>aws-java-sdk-elasticloadbalancing</artifactId>
+                <version>${aws.sdk.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>commons-logging</groupId>
+                        <artifactId>commons-logging</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+
         </dependencies>
     </dependencyManagement>
 
@@ -386,14 +414,18 @@
                             <artifactId>maven-compiler-plugin</artifactId>
                             <configuration>
                                 <compilerArguments children.combine="append">
-                                    <bootclasspath>${project.jdk7.home}/jre/lib/rt.jar:${project.jdk7.home}/jre/lib/jce.jar:${project.jdk7.home}/../classes/classes.jar</bootclasspath>
+                                    <bootclasspath>
+                                        ${project.jdk7.home}/jre/lib/rt.jar:${project.jdk7.home}/jre/lib/jce.jar:${project.jdk7.home}/../classes/classes.jar
+                                    </bootclasspath>
                                 </compilerArguments>
                             </configuration>
                         </plugin>
                         <plugin>
                             <artifactId>maven-javadoc-plugin</artifactId>
                             <configuration>
-                                <bootclasspath>${project.jdk7.home}/jre/lib/rt.jar:${project.jdk7.home}/jre/lib/jce.jar:${project.jdk7.home}/../classes/classes.jar</bootclasspath>
+                                <bootclasspath>
+                                    ${project.jdk7.home}/jre/lib/rt.jar:${project.jdk7.home}/jre/lib/jce.jar:${project.jdk7.home}/../classes/classes.jar
+                                </bootclasspath>
                             </configuration>
                         </plugin>
                         <plugin>

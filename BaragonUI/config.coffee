@@ -43,6 +43,7 @@ exports.config =
             authKey: process.env.BARAGON_AUTH_KEY ? ''
             allowEdit: process.env.BARAGON_ALLOW_EDIT ? false
             authEnabled: process.env.BARAGON_AUTH_ENABLE ? true
+            elbEnabled: process.env.ELB_ENABLED ? true
             title: process.env.BARAGON_TITLE ? 'Baragon (local dev)'
             navColor: process.env.BARAGON_NAV_COLOR ? ''
 

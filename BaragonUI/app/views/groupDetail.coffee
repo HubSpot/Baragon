@@ -1,6 +1,7 @@
 View = require './view'
 
 Agent = require '../models/Agent'
+Group = require '../models/Group'
 
 class GroupDetailView extends View
 
@@ -10,21 +11,25 @@ class GroupDetailView extends View
     initialize: (@params) ->
         { @options, @groupId } = @params
         @listenTo @model, 'sync', @render
-        @listenTo @options, 'sync', @render
-        @listenTo @collection, 'sync', @render
+        @listenTo @options.agents, 'sync', @render
+        @listenTo @options.knownAgents, 'sync', @render
+        @listenTo @options.basePaths, 'sync', @render
 
     events: =>
         _.extend super,
             'click [data-action="remove"]':         'removeKnownAgent'
             'click [data-action="removeBasePath"]': 'removeBasePath'
+            'click [data-action="removeSource"]':   'removeSource'
+            'click [data-action="addSource"]':      'addSource'
 
     render: =>
         @$el.html @template
-            basePaths:  @model.attributes
-            knownAgents: @options.toJSON()
-            agents: @collection.toJSON()
+            group:  @model.attributes
+            basePaths: @options.basePaths.attributes
+            knownAgents: @options.knownAgents.toJSON()
+            agents: @options.agents.toJSON()
             config: config
-            synced: @collection.synced
+            synced: @model.synced
 
     removeKnownAgent: (e) ->
         id = $(e.target).parents('tr').data 'agent-id'
@@ -51,5 +56,13 @@ class GroupDetailView extends View
         $.ajax
             url: "#{ config.apiRoot }/load-balancer/#{group}/base-path?#{$.param({authkey: config.authKey, basePath: basePath})}"
             type: "DELETE"
+
+    removeSource: (e) ->
+        source = $(e.target).data 'source'
+        @model.promptRemoveSource(source, => @trigger 'refreshrequest')
+
+    addSource: (e) ->
+        @model.promptAddSource => @trigger 'refreshrequest'
+
 
 module.exports = GroupDetailView

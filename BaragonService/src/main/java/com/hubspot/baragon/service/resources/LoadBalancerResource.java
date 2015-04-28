@@ -19,6 +19,7 @@ import com.hubspot.baragon.data.BaragonKnownAgentsDatastore;
 import com.hubspot.baragon.data.BaragonLoadBalancerDatastore;
 import com.hubspot.baragon.data.BaragonStateDatastore;
 import com.hubspot.baragon.models.BaragonAgentMetadata;
+import com.hubspot.baragon.models.BaragonGroup;
 import com.hubspot.baragon.models.BaragonKnownAgentMetadata;
 import com.hubspot.baragon.models.BaragonResponse;
 import com.hubspot.baragon.models.BaragonService;
@@ -42,7 +43,25 @@ public class LoadBalancerResource {
 
   @GET
   public Collection<String> getClusters() {
-    return loadBalancerDatastore.getLoadBalancerGroups();
+    return loadBalancerDatastore.getLoadBalancerGroupNames();
+  }
+
+  @GET
+  @Path("/{clusterName}")
+  public Optional<BaragonGroup> getGroupDetail(@PathParam("clusterName") String clusterName) {
+    return loadBalancerDatastore.getLoadBalancerGroup(clusterName);
+  }
+
+  @POST
+  @Path("/{clusterName}/sources")
+  public BaragonGroup addSource(@PathParam("clusterName") String clusterName, @QueryParam("source") String source) {
+    return loadBalancerDatastore.addSourceToGroup(clusterName, source);
+  }
+
+  @DELETE
+  @Path("/{clusterName}/sources")
+  public Optional<BaragonGroup> removeSource(@PathParam("clusterName") String clusterName, @QueryParam("source") String source) {
+    return loadBalancerDatastore.removeSourceFromGroup(clusterName, source);
   }
 
   @GET

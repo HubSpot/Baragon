@@ -1,24 +1,31 @@
 {{#if synced}}
     <div class="row">
-        <div class="col-md-2">
+        <div class="col-md-3">
             <div class="panel panel-default">
                 <div class="panel-body">
-                    <h4>Worker Lag <span class="badge">{{ status.workerLagMs }} ms</h4>
+                    <h4>Request Worker Lag <span class="badge">{{ status.workerLagMs }} ms</h4>
                 </div>
             </div>
         </div>
-        <div class="col-md-10">
+        <div class="col-md-3">
             <div class="panel panel-default">
                 <div class="panel-body">
-                    <div class="col-md-3">
+                    <h4>Elb Worker Lag <span class="badge">{{ status.elbWorkerLagMs }} ms</h4>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    <div class="col-md-5">
                         <h4>Global ZK State Node Size</h4>
                     </div>
-                    <div class="col-md-2">
+                    <div class="col-md-3">
                         <h4>{{humanizeFileSize status.globalStateNodeSize}} used</h4>
                     </div>
-                    <div class="col-md-7">
+                    <div class="col-md-4">
                         <div class="progress">
-                            <span class="progress-bar progress-bar-info progress-bar-striped" style="width: {{roundedPercentage status.globalStateNodeSize 1048576}}%;"></span>
+                            <span class="progress-bar progress-bar-info progress-bar-striped" style="width: {{roundedPercentage status.globalStateNodeSize 1048576}}%;">{{ status.zookeeperState }}</span>
                         </div>
                     </div>
                 </div>

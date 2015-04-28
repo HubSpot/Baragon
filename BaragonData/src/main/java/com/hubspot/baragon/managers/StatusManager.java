@@ -20,6 +20,7 @@ public class StatusManager {
   private final BaragonStateDatastore stateDatastore;
   private final LeaderLatch leaderLatch;
   private final AtomicLong workerLastStart;
+  private final AtomicLong elbWorkerLastStart;
   private final AtomicReference<ConnectionState> connectionState;
 
   @Inject
@@ -27,11 +28,13 @@ public class StatusManager {
                        BaragonStateDatastore stateDatastore,
                        @Named(BaragonDataModule.BARAGON_SERVICE_LEADER_LATCH) LeaderLatch leaderLatch,
                        @Named(BaragonDataModule.BARAGON_SERVICE_WORKER_LAST_START) AtomicLong workerLastStart,
+                       @Named(BaragonDataModule.BARAGON_ELB_WORKER_LAST_START) AtomicLong elbWorkerLastStart,
                        @Named(BaragonDataModule.BARAGON_ZK_CONNECTION_STATE) AtomicReference<ConnectionState> connectionState) {
     this.requestDatastore = requestDatastore;
     this.stateDatastore = stateDatastore;
     this.leaderLatch = leaderLatch;
     this.workerLastStart = workerLastStart;
+    this.elbWorkerLastStart = elbWorkerLastStart;
     this.connectionState = connectionState;
   }
 
@@ -39,11 +42,12 @@ public class StatusManager {
     final ConnectionState currentConnectionState = connectionState.get();
     final String connectionStateString = currentConnectionState == null ? "UNKNOWN" : currentConnectionState.name();
     final long workerLagMs = System.currentTimeMillis() - workerLastStart.get();
-    if (connectionStateString == "CONNECTED" || connectionStateString == "RECONNECTED") {
+    final long elbWorkerLagMs = System.currentTimeMillis() - elbWorkerLastStart.get();
+    if (connectionStateString.equals("CONNECTED") || connectionStateString.equals("RECONNECTED")) {
       final int globalStateNodeSize = stateDatastore.getGlobalStateSize();
-      return new BaragonServiceStatus(leaderLatch.hasLeadership(), requestDatastore.getQueuedRequestCount(), workerLagMs, connectionStateString, globalStateNodeSize);
+      return new BaragonServiceStatus(leaderLatch.hasLeadership(), requestDatastore.getQueuedRequestCount(), workerLagMs, elbWorkerLagMs,connectionStateString, globalStateNodeSize);
     } else {
-      return new BaragonServiceStatus(leaderLatch.hasLeadership(), 0, workerLagMs, connectionStateString, 0);
+      return new BaragonServiceStatus(leaderLatch.hasLeadership(), 0, workerLagMs, elbWorkerLagMs, connectionStateString, 0);
     }
   }
 }

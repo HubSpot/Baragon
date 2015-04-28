@@ -1,12 +1,18 @@
 package com.hubspot.baragon.agent;
 
+import com.hubspot.baragon.config.ElbConfiguration;
 import io.dropwizard.jetty.HttpConnectorFactory;
 import io.dropwizard.server.SimpleServerFactory;
 
-import java.util.List;
+import java.io.IOException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.net.URL;
+import java.net.URLConnection;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 
@@ -39,6 +45,7 @@ public class BaragonAgentServiceModule extends AbstractModule {
   public static final String AGENT_TEMPLATES = "baragon.agent.templates";
   public static final String AGENT_MOST_RECENT_REQUEST_ID = "baragon.agent.mostRecentRequestId";
   public static final String AGENT_LOCK_TIMEOUT_MS = "baragon.agent.lock.timeoutMs";
+  public static final String AGENT_INSTANCE_ID = "baragon.agent.instanceid";
   public static final String DEFAULT_TEMPLATE_NAME = "default";
 
   @Override
@@ -118,7 +125,24 @@ public class BaragonAgentServiceModule extends AbstractModule {
     final String baseAgentUri = String.format(config.getBaseUrlTemplate(), hostname, httpPort, appRoot);
     final String agentId = String.format("%s:%s", hostname, httpPort);
 
-    return new BaragonAgentMetadata(baseAgentUri, agentId, domain);
+    return new BaragonAgentMetadata(baseAgentUri, agentId, domain, getInstanceId());
+  }
+
+  private Optional<String> getInstanceId() {
+    try {
+      String instanceId = null;
+      String inputLine;
+      URL ec2MetaData = new URL("http://169.254.169.254/latest/meta-data/instance-id");
+      URLConnection ec2Conn = ec2MetaData.openConnection();
+      BufferedReader in = new BufferedReader(new InputStreamReader(ec2Conn.getInputStream(), "UTF-8"));
+      while ((inputLine = in.readLine()) != null) {
+        instanceId = inputLine;
+      }
+      in.close();
+      return Optional.fromNullable(instanceId);
+    } catch (IOException e) {
+      return Optional.absent();
+    }
   }
 
   @Provides
@@ -137,6 +161,11 @@ public class BaragonAgentServiceModule extends AbstractModule {
   }
 
   @Provides
+  public Optional<ElbConfiguration> providesElbConfiguration() {
+    return Optional.absent();
+  }
+
+  @Provides
   @Singleton
   @Named(AGENT_LOCK)
   public Lock providesAgentLock() {
@@ -149,4 +178,5 @@ public class BaragonAgentServiceModule extends AbstractModule {
   public AtomicReference<String> providesMostRecentRequestId() {
     return new AtomicReference<>();
   }
+
 }
