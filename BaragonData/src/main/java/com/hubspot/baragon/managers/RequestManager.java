@@ -14,6 +14,7 @@ import com.hubspot.baragon.data.BaragonAgentResponseDatastore;
 import com.hubspot.baragon.data.BaragonLoadBalancerDatastore;
 import com.hubspot.baragon.data.BaragonRequestDatastore;
 import com.hubspot.baragon.data.BaragonStateDatastore;
+import com.hubspot.baragon.exceptions.InvalidRequestActionException;
 import com.hubspot.baragon.exceptions.RequestAlreadyEnqueuedException;
 import com.hubspot.baragon.models.BaragonRequest;
 import com.hubspot.baragon.models.BaragonResponse;
@@ -21,12 +22,13 @@ import com.hubspot.baragon.models.BaragonService;
 import com.hubspot.baragon.models.InternalRequestStates;
 import com.hubspot.baragon.models.InternalStatesMap;
 import com.hubspot.baragon.models.QueuedRequestId;
+import com.hubspot.baragon.models.RequestAction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Singleton
 public class RequestManager {
-  private static final Logger LOG = LoggerFactory.getLogger(BaragonStateDatastore.class);
+  private static final Logger LOG = LoggerFactory.getLogger(RequestManager.class);
   private final BaragonRequestDatastore requestDatastore;
   private final BaragonLoadBalancerDatastore loadBalancerDatastore;
   private final BaragonStateDatastore stateDatastore;
@@ -130,7 +132,7 @@ public class RequestManager {
     }
   }
 
-  public BaragonResponse enqueueRequest(BaragonRequest request) throws RequestAlreadyEnqueuedException {
+  public BaragonResponse enqueueRequest(BaragonRequest request) throws RequestAlreadyEnqueuedException, InvalidRequestActionException {
     final Optional<BaragonResponse> maybePreexistingResponse = getResponse(request.getLoadBalancerRequestId());
 
     if (maybePreexistingResponse.isPresent()) {
@@ -140,6 +142,10 @@ public class RequestManager {
       } else {
         return maybePreexistingResponse.get();
       }
+    }
+
+    if (request.getAction().isPresent() && request.getAction().equals(Optional.of(RequestAction.REVERT))) {
+      throw new InvalidRequestActionException("The REVERT action may only be used internally by Baragon, you may specify UPDATE, DELETE, RELOAD, or leave the action blank(UPDATE)");
     }
 
     requestDatastore.addRequest(request);
@@ -165,6 +171,31 @@ public class RequestManager {
   }
 
   public synchronized void commitRequest(BaragonRequest request) {
+    RequestAction action = request.getAction().or(RequestAction.UPDATE);
+    Optional<BaragonService> maybeOriginalService = getOriginalService(request);
+
+    switch(action) {
+      case UPDATE:
+      case REVERT:
+        clearChangedBasePaths(request, maybeOriginalService);
+        clearBasePathsFromUnusedLbs(request, maybeOriginalService);
+        removeOldService(request, maybeOriginalService);
+        updateStateDatastore(request);
+        clearBasePathsWithNoUpstreams(request);
+        break;
+      case DELETE:
+        clearChangedBasePaths(request, maybeOriginalService);
+        clearBasePathsFromUnusedLbs(request, maybeOriginalService);
+        deleteRemovedServices(request);
+        clearBasePathsWithNoUpstreams(request);
+        break;
+      default:
+        LOG.debug(String.format("No updates to commit for request action %s", action));
+        break;
+    }
+  }
+
+  private Optional<BaragonService> getOriginalService(BaragonRequest request) {
     Optional<BaragonService> maybeOriginalService = Optional.absent();
     if (request.getReplaceServiceId().isPresent()) {
       maybeOriginalService = stateDatastore.getService(request.getReplaceServiceId().get());
@@ -172,15 +203,51 @@ public class RequestManager {
     if (!maybeOriginalService.isPresent()) {
       maybeOriginalService = stateDatastore.getService(request.getLoadBalancerService().getServiceId());
     }
+    return maybeOriginalService;
+  }
 
-    // if we've changed the base path, clear out the old ones
+  private void deleteRemovedServices(BaragonRequest request) {
+    stateDatastore.removeService(request.getLoadBalancerService().getServiceId());
+    if (request.getReplaceServiceId().isPresent() && stateDatastore.getService(request.getReplaceServiceId().get()).isPresent()) {
+      stateDatastore.removeService(request.getReplaceServiceId().get());
+    }
+    stateDatastore.updateStateNode();
+  }
+
+  private void updateStateDatastore(BaragonRequest request) {
+    stateDatastore.addService(request.getLoadBalancerService());
+    stateDatastore.removeUpstreams(request.getLoadBalancerService().getServiceId(), request.getRemoveUpstreams());
+    stateDatastore.addUpstreams(request.getLoadBalancerService().getServiceId(), request.getAddUpstreams());
+    stateDatastore.updateStateNode();
+  }
+
+  private void removeOldService(BaragonRequest request, Optional<BaragonService> maybeOriginalService) {
+    if (maybeOriginalService.isPresent() && !maybeOriginalService.get().getServiceId().equals(request.getLoadBalancerService().getServiceId())) {
+      stateDatastore.removeService(maybeOriginalService.get().getServiceId());
+    }
+  }
+
+  private void clearBasePathsWithNoUpstreams(BaragonRequest request) {
+    try {
+      if (stateDatastore.getUpstreamsMap(request.getLoadBalancerService().getServiceId()).isEmpty()) {
+        for (String loadbalancerGroup : request.getLoadBalancerService().getLoadBalancerGroups()) {
+          loadBalancerDatastore.clearBasePath(loadbalancerGroup, request.getLoadBalancerService().getServiceBasePath());
+        }
+      }
+    } catch (Exception e) {
+      LOG.info(String.format("Error clearing base path %s", e));
+    }
+  }
+
+  private void clearChangedBasePaths(BaragonRequest request, Optional<BaragonService> maybeOriginalService) {
     if (maybeOriginalService.isPresent() && !maybeOriginalService.get().getServiceBasePath().equals(request.getLoadBalancerService().getServiceBasePath())) {
       for (String loadBalancerGroup : maybeOriginalService.get().getLoadBalancerGroups()) {
         loadBalancerDatastore.clearBasePath(loadBalancerGroup, maybeOriginalService.get().getServiceBasePath());
       }
     }
+  }
 
-    //If we have removed a load balancer group, clear the base path for that group
+  private void clearBasePathsFromUnusedLbs(BaragonRequest request, Optional<BaragonService> maybeOriginalService) {
     if (maybeOriginalService.isPresent()) {
       Set<String> removedLbGroups = maybeOriginalService.get().getLoadBalancerGroups();
       removedLbGroups.removeAll(request.getLoadBalancerService().getLoadBalancerGroups());
@@ -193,26 +260,6 @@ public class RequestManager {
           LOG.info(String.format("Error clearing base path %s", e));
         }
       }
-    }
-    // If the service ID has been changed, remove the old service from the state datastore
-    if (maybeOriginalService.isPresent() && !maybeOriginalService.get().getServiceId().equals(request.getLoadBalancerService().getServiceId())) {
-      stateDatastore.removeService(maybeOriginalService.get().getServiceId());
-    }
-
-    stateDatastore.addService(request.getLoadBalancerService());
-    stateDatastore.removeUpstreams(request.getLoadBalancerService().getServiceId(), request.getRemoveUpstreams());
-    stateDatastore.addUpstreams(request.getLoadBalancerService().getServiceId(), request.getAddUpstreams());
-    stateDatastore.updateStateNode();
-
-    // if there are no remaining upstreams, clear the base path
-    try {
-      if (stateDatastore.getUpstreamsMap(request.getLoadBalancerService().getServiceId()).isEmpty()) {
-        for (String loadbalancerGroup : request.getLoadBalancerService().getLoadBalancerGroups()) {
-          loadBalancerDatastore.clearBasePath(loadbalancerGroup, request.getLoadBalancerService().getServiceBasePath());
-        }
-      }
-    } catch (Exception e) {
-      LOG.info(String.format("Error clearing base path %s", e));
     }
   }
 }

@@ -54,13 +54,12 @@ templates:
       #
       # Service ID: {{{service.serviceId}}}
       # Service base path: {{{service.serviceBasePath}}}
-      # Last applied: {{formatTimestamp timestamp}} UTC
       # Owners:
-      {{#if service.owners}}
+      {{#each service.owners}}
       #   - {{{.}}}
       {{else}}
       #   No owners!
-      {{/if}}
+      {{/each}}
       {{#if upstreams}}
       {{#if service.options.nginxExtraConfigs}}
       # BEGIN CUSTOM NGINX CONFIGS
@@ -102,13 +101,12 @@ templates:
           #
           # Service ID: {{{service.serviceId}}}
           # Service base path: {{{service.serviceBasePath}}}
-          # Last applied: {{formatTimestamp timestamp}} UTC
           # Owners:
-          {{#if service.owners}}
+          {{#each service.owners}}
           #   - {{{.}}}
           {{else}}
           #   No owners!
-          {{/if}}
+          {{/each}}
           # This is a blank template for writing custom configuration
           # BEGIN CUSTOM PROXY CONFIG
           {{#each service.options.proxyConfig}}{{{.}}}
@@ -120,13 +118,12 @@ templates:
       #
       # Service ID: {{{service.serviceId}}}
       # Service base path: {{{service.serviceBasePath}}}
-      # Last applied: {{formatTimestamp timestamp}} UTC
       # Owners:
-      {{#if service.owners}}
+      {{#each service.owners}}
       #   - {{{.}}}
       {{else}}
       #   No owners!
-      {{/if}}
+      {{/each}}
       {{#if upstreams}}
       upstream baragon_{{{service.serviceId}}} {
           {{#each upstreams}}server {{{upstream}}};  # {{{requestId}}}
@@ -150,13 +147,12 @@ templates:
           #
           # Service ID: {{{service.serviceId}}}
           # Service base path: {{{service.serviceBasePath}}}
-          # Last applied: {{formatTimestamp timestamp}} UTC
           # Owners:
-          {{#if service.owners}}
+          {{#each service.owners}}
           #   - {{{.}}}
           {{else}}
           #   No owners!
-          {{/if}}
+          {{/each}}
           # This is a blank template for writing custom configuration
           # BEGIN CUSTOM UPSTREAM CONFIG
           {{#each service.options.upstreamConfig}}{{{.}}}

@@ -5,20 +5,21 @@ class Service extends Model
     url: -> "#{ config.apiRoot }/state/#{ @serviceId }?authkey=#{ config.authKey }"
 
     deleteTemplate: require '../templates/vex/serviceRemove'
+    deleteSuccessTemplate: require '../templates/vex/serviceRemoveSuccess'
+    reloadTemplate: require '../templates/vex/serviceReload'
+    reloadSuccessTemplate: require '../templates/vex/serviceReloadSuccess'
     removeUpstreamsTemplate: require '../templates/vex/removeUpstreams'
     removeUpstreamTemplate: require '../templates/vex/removeUpstream'
     removeUpstreamsSuccessTemplate: require '../templates/vex/removeUpstreamsSuccess'
 
     initialize: ({ @serviceId }) ->
 
+    ignoreAttributes: ['splitLbGroups', 'splitOwners', 'splitUpstreams']
+
     parse: (data) ->
         data.id = data.service.serviceId
-        data.loadBalancerGroups = data.service.loadBalancerGroups
         data.splitLbGroups = utils.splitArray(data.service.loadBalancerGroups.sort(), Math.ceil(data.service.loadBalancerGroups.length/2))
-        data.owners = data.service.owners
         data.splitOwners = utils.splitArray(data.service.owners.sort(), Math.ceil(data.service.owners.length/2))
-        data.basePath = data.service.serviceBasePath
-        data.options = data.service.options
         data.splitUpstreams = utils.splitArray(data.upstreams, Math.ceil(data.upstreams.length/2))
         data.upstreamsCount = data.upstreams.length
         if data.upstreamsCount > 0
@@ -29,6 +30,16 @@ class Service extends Model
         $.ajax
             url: @url()
             type: "DELETE"
+            success: (data) =>
+                console.dir(data)
+                @set('request', data.loadBalancerRequestId)
+
+    reload: =>
+        $.ajax
+            url: "#{ config.apiRoot }/state/#{ @serviceId }/reload?authkey=#{ config.authKey }"
+            type: "POST"
+            success: (data) =>
+                @set('request', data.loadBalancerRequestId)
 
     undo: =>
         this.fetch({
@@ -39,9 +50,9 @@ class Service extends Model
                     loadBalancerRequestId: requestId
                     loadBalancerService:
                         serviceId: @id
-                        owners: if @attributes.owners then @attributes.owners else []
-                        serviceBasePath: @attributes.basePath
-                        loadBalancerGroups: @attributes.loadBalancerGroups
+                        owners: if @attributes.service.owners then @attributes.service.owners else []
+                        serviceBasePath: @attributes.service.serviceBasePath
+                        loadBalancerGroups: @attributes.service.loadBalancerGroups
                     addUpstreams: []
                     removeUpstreams: @attributes.upstreams
                 }
@@ -61,9 +72,9 @@ class Service extends Model
                     loadBalancerRequestId: requestId
                     loadBalancerService:
                         serviceId: @id
-                        owners: if @attributes.owners then @attributes.owners else []
-                        serviceBasePath: @attributes.basePath
-                        loadBalancerGroups: @attributes.loadBalancerGroups
+                        owners: if @attributes.service.owners then @attributes.service.owners else []
+                        serviceBasePath: @attributes.service.serviceBasePath
+                        loadBalancerGroups: @attributes.service.loadBalancerGroups
                         options: @attributes.options
                     addUpstreams: []
                     removeUpstreams: [{upstream: upstream, request: requestId}]
@@ -91,6 +102,41 @@ class Service extends Model
                 return if data is false
                 @delete().done callback
 
+    promptDeleteSuccess: (callback) =>
+        vex.dialog.confirm
+            message: @deleteSuccessTemplate {request: @get('request'), config: config}
+            buttons: [
+                $.extend {}, vex.dialog.buttons.YES,
+                    text: 'OK',
+                    className: 'vex-dialog-button-primary vex-dialog-button-primary-remove'
+            ]
+            callback: (data) =>
+                return
+
+    promptReloadConfigs: (callback) =>
+        vex.dialog.confirm
+            message: @reloadTemplate {@serviceId}
+            buttons: [
+                $.extend {}, vex.dialog.buttons.YES,
+                    text: 'RELOAD',
+                    className: 'vex-dialog-button-primary vex-dialog-button-primary-remove'
+                vex.dialog.buttons.NO
+            ]
+            callback: (data) =>
+                return if data is false
+                @reload().done callback
+
+    promptReloadConfigsSuccess: (callback) =>
+        vex.dialog.confirm
+            message: @reloadSuccessTemplate {request: @get('request'), config: config}
+            buttons: [
+                $.extend {}, vex.dialog.buttons.YES,
+                    text: 'OK',
+                    className: 'vex-dialog-button-primary vex-dialog-button-primary-remove'
+            ]
+            callback: (data) =>
+                return
+
     promptRemoveUpstreams: (callback) =>
         vex.dialog.confirm
             message: @removeUpstreamsTemplate {@serviceId}
@@ -106,7 +152,7 @@ class Service extends Model
 
     promptRemoveUpstreamsSuccess: (callback) =>
         vex.dialog.confirm
-            message: @removeUpstreamsSuccessTemplate {request: @get('request')}
+            message: @removeUpstreamsSuccessTemplate {request: @get('request'), config: config}
             buttons: [
                 $.extend {}, vex.dialog.buttons.YES,
                     text: 'OK',

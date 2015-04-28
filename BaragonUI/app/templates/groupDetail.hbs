@@ -62,6 +62,11 @@
                         <ul class="list-group">
                             {{#each this}}
                                 <li class="list-group-item">
+                                    {{#if ../../config.allowEdit}}
+                                        <a data-action="removeBasePath" title="Remove Base Path Lock">
+                                            <span class="glyphicon glyphicon-remove" data-base-path="{{this}}"></span>
+                                        </a>
+                                    {{/if}}
                                     {{ this }}
                                 </li>
                             {{/each}}

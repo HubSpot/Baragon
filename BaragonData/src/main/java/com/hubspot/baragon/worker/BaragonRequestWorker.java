@@ -9,6 +9,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
 import com.hubspot.baragon.models.BaragonAgentMetadata;
+import com.hubspot.baragon.models.RequestAction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -107,7 +108,7 @@ public class BaragonRequestWorker implements Runnable {
             return InternalRequestStates.FAILED_SEND_REVERT_REQUESTS;
           case SUCCESS:
             try {
-              requestManager.setRequestMessage(request.getLoadBalancerRequestId(), String.format("%s request succeeded! Added upstreams: %s, Removed upstreams: %s", InternalStatesMap.getRequestType(currentState), request.getAddUpstreams(), request.getRemoveUpstreams()));
+              requestManager.setRequestMessage(request.getLoadBalancerRequestId(), String.format("%s request succeeded! Added upstreams: %s, Removed upstreams: %s", request.getAction().or(RequestAction.UPDATE), request.getAddUpstreams(), request.getRemoveUpstreams()));
               requestManager.commitRequest(request);
               return InternalRequestStates.COMPLETED;
             } catch (Exception e) {

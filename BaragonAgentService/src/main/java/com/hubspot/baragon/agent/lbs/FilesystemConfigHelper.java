@@ -45,7 +45,7 @@ public class FilesystemConfigHelper {
       }
 
       if (!file.delete()) {
-        throw new RuntimeException("Failed to remove " + filename + " for " + service.getServiceId());
+        throw new RuntimeException(String.format("Failed to remove %s for %s", filename, service.getServiceId()));
       }
     }
 
@@ -71,12 +71,7 @@ public class FilesystemConfigHelper {
   }
 
   public boolean configsMatch(Collection<BaragonConfigFile> newConfigs, Collection<BaragonConfigFile> currentConfigs) {
-    for (BaragonConfigFile file : newConfigs) {
-      if (!currentConfigs.contains(file)) {
-        return false;
-      }
-    }
-    return true;
+    return currentConfigs.containsAll(newConfigs);
   }
 
   public void bootstrapApply(ServiceContext context, Collection<BaragonConfigFile> newConfigs) throws InvalidConfigException, LbAdapterExecuteException, IOException, MissingTemplateException {
@@ -136,7 +131,7 @@ public class FilesystemConfigHelper {
 
       adapter.checkConfigs();
     } catch (Exception e) {
-      LOG.error("Caught exception while writing configs for " + service.getServiceId() + ", reverting to backups!", e);
+      LOG.error(String.format("Caught exception while writing configs for %s, reverting to backups!", service.getServiceId()), e);
 
       // Restore configs
       if (revertOnFailure) {
@@ -153,10 +148,39 @@ public class FilesystemConfigHelper {
       throw Throwables.propagate(e);
     }
 
-    // Load the new configs
     adapter.reloadConfigs();
 
     removeBackupConfigs(oldService);
+    LOG.info(String.format("Apply finished for %s", service.getServiceId()));
+  }
+
+  public void delete(BaragonService service, Optional<BaragonService> maybeOldService) throws InvalidConfigException, LbAdapterExecuteException, IOException, MissingTemplateException {
+    final boolean oldServiceExists = (maybeOldService.isPresent() && configsExist(maybeOldService.get()));
+    final boolean previousConfigsExist = configsExist(service);
+     try {
+      if (previousConfigsExist) {
+        backupConfigs(service);
+        remove(service, false);
+      }
+      if (oldServiceExists && !maybeOldService.get().equals(service)) {
+        backupConfigs(maybeOldService.get());
+        remove(maybeOldService.get(), false);
+      }
+       adapter.checkConfigs();
+    } catch (Exception e) {
+      LOG.error(String.format("Caught exception while deleting configs for %s, reverting to backups!", service.getServiceId()), e);
+      if (oldServiceExists && !maybeOldService.get().equals(service)) {
+        restoreConfigs(maybeOldService.get());
+      }
+      if (previousConfigsExist) {
+        restoreConfigs(service);
+      } else {
+        remove(service, false);
+      }
+
+      throw Throwables.propagate(e);
+     }
+    adapter.reloadConfigs();
   }
 
   private void writeConfigs(Collection<BaragonConfigFile> files) {
@@ -164,8 +188,8 @@ public class FilesystemConfigHelper {
       try {
         Files.write(file.getContent().getBytes(Charsets.UTF_8), new File(file.getFullPath()));
       } catch (IOException e) {
-        LOG.error("Failed writing " + file.getFullPath(), e);
-        throw new RuntimeException("Failed writing " + file.getFullPath(), e);
+        LOG.error(String.format("Failed writing %s", file.getFullPath()), e);
+        throw new RuntimeException(String.format("Failed writing %s", file.getFullPath()), e);
       }
     }
   }
@@ -199,8 +223,8 @@ public class FilesystemConfigHelper {
         File dest = new File(filename + BACKUP_FILENAME_SUFFIX);
         Files.copy(src, dest);
       } catch (IOException e) {
-        LOG.error("Failed to backup " + filename, e);
-        throw new RuntimeException("Failed to backup " + filename);
+        LOG.error(String.format("Failed to backup %s", filename), e);
+        throw new RuntimeException(String.format("Failed to backup %s", filename));
       }
     }
   }
@@ -234,8 +258,8 @@ public class FilesystemConfigHelper {
         File dest = new File(filename);
         Files.copy(src, dest);
       } catch (IOException e) {
-        LOG.error("Failed to restore " + filename, e);
-        throw new RuntimeException("Failed to restore " + filename);
+        LOG.error(String.format("Failed to restore %s", filename), e);
+        throw new RuntimeException(String.format("Failed to restore %s", filename));
       }
     }
   }

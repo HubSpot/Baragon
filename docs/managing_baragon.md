@@ -258,7 +258,8 @@ A request can be made to Baragon by posting a `BaragonRequest` object to `Barago
     {"upstream":"example.com:80","requestId":"requestId","rack":"us_east_1a"}
   ],
   "removeUpstreams":[],
-  "replaceServiceId":"otherServiceId"
+  "replaceServiceId":"otherServiceId",
+  "action":"UPDATE"
 }
 ```
 
@@ -267,10 +268,11 @@ A request can be made to Baragon by posting a `BaragonRequest` object to `Barago
   - `serviceId`: Must be unique within the Baragon cluster
   - `serviceBasePath`: Must be unique within the `loadBalancerGroup` (ie. cannot host two services at the same location), must be specified with a leading `/`
   - `loadBalancerGroups`: The request will be applied on agents in these groups. If a group is removed from the list (compared to a previously applied request), configuration files for the service will be removed via agents in that group and the `basePath` will become available again within that group
-  - `options` - Any valid json object is permittable here. These values will be available under `service.options` in the handlebars templates. These fields can be used for custom configuration specific to an individual service (ie. not appropriate to include in the template for all services)
+  - `options`: Any valid json object is permittable here. These values will be available under `service.options` in the handlebars templates. These fields can be used for custom configuration specific to an individual service (ie. not appropriate to include in the template for all services)
   - `templateName`: an optional field used to specify a custom template to render for this service. Specifying a `templateName` that does not exist in the `namedTemplates` on the agent will result in an error
 - `addUpstreams`/`removeUpstreams`: A list of `UpstreamInfo` objects. Data from these objects will be available under `upstreams` in teh handlebars templates. Generally used to specify valid application hosts connected to the load balancer (ie. post a request to connect a healthy application host)
 - `replaceServiceId`: An optional field used to rename a service or transfer a `basePath` to a different service. If specified, the configuration for the service in `replaceServiceId` will be swapped out for configuration belonging to the new serviceId and the basePath registered as belonging to the new serviceId(if the `replaceServiceId` exists). If it does not previously exist, the request will be applied as normal.
+- `action`: An optional field. You can specify `UPDATE`, `DELETE`, or `RELOAD`. `UPDATE` is the default action if left blank and will update configs if they exist or create new ones if they don't (ie. a normal request). The `DELETE` action will remove the service from the state datastore as well as removing any associated config files form all associated load balancers. `RELOAD` will trigger the agents to check configs for validity and reload/restart 
 
 <a id="requestflow"></a>
 ### Request Flow and Statuses

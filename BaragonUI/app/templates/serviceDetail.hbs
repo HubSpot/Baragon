@@ -4,13 +4,16 @@
             <h3>{{ service.id }}</h3>
         </div>
         <div class="col-md-3">
-            <h3>{{ service.basePath }}</h3>
+            <h3>{{ service.serviceBasePath }}</h3>
         </div>
         <div class="col-md-4 button-container">
             <a class="btn btn-default" data-service-id="{{ service.id }}" data-action="viewJSON">
                 JSON
             </a>
             {{#if config.allowEdit}}
+                <a class="btn btn-primary" data-service-id="{{ service.id }}" data-action="reload">
+                    Reload Configs
+                </a>
                 <a class="btn btn-warning" data-service-id="{{ service.id }}" data-action="removeUpstreams">
                     Remove Upstreams
                 </a>

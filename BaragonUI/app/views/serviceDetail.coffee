@@ -14,7 +14,8 @@ class ServiceDetailView extends View
             'click [data-action="viewJSON"]':        'viewJson'
             'click [data-action="delete"]':          'deleteService'
             'click [data-action="removeUpstreams"]': 'removeUpstreams'
-            'click [data-action="removeUpstream"]': 'removeUpstream'
+            'click [data-action="removeUpstream"]':  'removeUpstream'
+            'click [data-action="reload"]':          'reload'
 
     render: =>
         @$el.html @template
@@ -27,7 +28,8 @@ class ServiceDetailView extends View
 
     deleteService: (e) ->
         @model.promptDelete =>
-            app.router.navigate 'services', trigger: true
+            @model.promptDeleteSuccess =>
+                app.router.navigate 'services', trigger: true
 
     removeUpstreams: (e) ->
         @model.promptRemoveUpstreams =>
@@ -38,5 +40,9 @@ class ServiceDetailView extends View
         @model.promptRemoveUpstream(upstream, =>
             @model.promptRemoveUpstreamsSuccess => @trigger 'refreshrequest'
         )
+
+    reload: (e) ->
+        @model.promptReloadConfigs =>
+            @model.promptReloadConfigsSuccess => @trigger 'refreshrequest'
 
 module.exports = ServiceDetailView

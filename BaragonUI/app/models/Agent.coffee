@@ -6,7 +6,6 @@ class Agent extends Model
 
     deleteTemplate: require '../templates/vex/knownAgentRemove'
 
-
     promptRemoveKnown: (callback) =>
         vex.dialog.confirm
             message: @deleteTemplate {@agentId, @groupId}
