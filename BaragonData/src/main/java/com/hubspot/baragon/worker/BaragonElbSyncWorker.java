@@ -178,7 +178,7 @@ public class BaragonElbSyncWorker implements Runnable {
     } else {
       if (configuration.get().isRemoveKnownAgentEnabled()) {
         Date lastSeen = new Date(agent.get().getLastSeenAt());
-        Date threshold = new Date(System.currentTimeMillis() - (configuration.get().getRemoveKnownAgentMinutes() * 60000));
+        Date threshold = new Date(System.currentTimeMillis() - (configuration.get().getRemoveKnownAgentMinutes() * 60000L));
         return lastSeen.before(threshold);
       } else {
         return false;
