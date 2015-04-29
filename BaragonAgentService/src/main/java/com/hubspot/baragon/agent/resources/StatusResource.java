@@ -31,13 +31,9 @@ public class StatusResource {
   private final LeaderLatch leaderLatch;
   private final AtomicReference<String> mostRecentRequestId;
   private final AtomicReference<ConnectionState> connectionState;
-  private final BaragonKnownAgentsDatastore knownAgentsDatastore;
-  private final BaragonAgentMetadata baragonAgentMetadata;
 
   @Inject
   public StatusResource(LocalLbAdapter adapter, LoadBalancerConfiguration loadBalancerConfiguration,
-                        BaragonKnownAgentsDatastore knownAgentsDatastore,
-                        BaragonAgentMetadata baragonAgentMetadata,
                         @Named(BaragonAgentServiceModule.AGENT_LEADER_LATCH) LeaderLatch leaderLatch,
                         @Named(BaragonAgentServiceModule.AGENT_MOST_RECENT_REQUEST_ID) AtomicReference<String> mostRecentRequestId,
                         @Named(BaragonDataModule.BARAGON_ZK_CONNECTION_STATE) AtomicReference<ConnectionState> connectionState) {
@@ -46,14 +42,11 @@ public class StatusResource {
     this.leaderLatch = leaderLatch;
     this.mostRecentRequestId = mostRecentRequestId;
     this.connectionState = connectionState;
-    this.knownAgentsDatastore = knownAgentsDatastore;
-    this.baragonAgentMetadata = baragonAgentMetadata;
   }
 
   @GET
   @NoAuth
   public BaragonAgentStatus getStatus() {
-    knownAgentsDatastore.updateKnownAgentLastSeenAt(loadBalancerConfiguration.getName(), baragonAgentMetadata.getAgentId(), System.currentTimeMillis());
     boolean validConfigs = true;
     Optional<String> errorMessage = Optional.absent();
 

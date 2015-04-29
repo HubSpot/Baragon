@@ -7,8 +7,12 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+import com.hubspot.baragon.agent.config.BaragonAgentConfiguration;
+import com.hubspot.baragon.agent.workers.AgentHeartbeatWorker;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.curator.framework.recipes.leader.LeaderLatch;
 import org.slf4j.Logger;
@@ -35,29 +39,37 @@ import com.google.inject.name.Named;
 public class BootstrapManaged implements Managed {
   private static final Logger LOG = LoggerFactory.getLogger(BootstrapManaged.class);
 
-  private final LoadBalancerConfiguration loadBalancerConfiguration;
+  private final BaragonAgentConfiguration configuration;
   private final FilesystemConfigHelper configHelper;
   private final BaragonStateDatastore stateDatastore;
   private final BaragonLoadBalancerDatastore loadBalancerDatastore;
   private final LeaderLatch leaderLatch;
   private final BaragonKnownAgentsDatastore knownAgentsDatastore;
   private final BaragonAgentMetadata baragonAgentMetadata;
+  private final ScheduledExecutorService executorService;
+  private final AgentHeartbeatWorker agentHeartbeatWorker;
+
+  private ScheduledFuture<?> requestWorkerFuture = null;
 
   @Inject
   public BootstrapManaged(BaragonStateDatastore stateDatastore,
                           BaragonKnownAgentsDatastore knownAgentsDatastore,
                           BaragonLoadBalancerDatastore loadBalancerDatastore,
-                          LoadBalancerConfiguration loadBalancerConfiguration,
+                          BaragonAgentConfiguration configuration,
                           FilesystemConfigHelper configHelper,
                           @Named(BaragonAgentServiceModule.AGENT_LEADER_LATCH) LeaderLatch leaderLatch,
-                          BaragonAgentMetadata baragonAgentMetadata) {
-    this.loadBalancerConfiguration = loadBalancerConfiguration;
+                          BaragonAgentMetadata baragonAgentMetadata,
+                          @Named(BaragonAgentServiceModule.AGENT_SCHEDULED_EXECUTOR) ScheduledExecutorService executorService,
+                          AgentHeartbeatWorker agentHeartbeatWorker) {
+    this.configuration = configuration;
     this.configHelper = configHelper;
     this.stateDatastore = stateDatastore;
     this.leaderLatch = leaderLatch;
     this.knownAgentsDatastore = knownAgentsDatastore;
     this.loadBalancerDatastore = loadBalancerDatastore;
     this.baragonAgentMetadata = baragonAgentMetadata;
+    this.executorService = executorService;
+    this.agentHeartbeatWorker = agentHeartbeatWorker;
   }
 
   private void applyCurrentConfigs() {
@@ -72,7 +84,7 @@ public class BootstrapManaged implements Managed {
       List<Callable<Optional<Pair<ServiceContext, Collection<BaragonConfigFile>>>>> todo = new ArrayList<>(services.size());
 
       for (BaragonServiceState serviceState : stateDatastore.getGlobalState()) {
-        if (!(serviceState.getService().getLoadBalancerGroups() == null) && serviceState.getService().getLoadBalancerGroups().contains(loadBalancerConfiguration.getName())) {
+        if (!(serviceState.getService().getLoadBalancerGroups() == null) && serviceState.getService().getLoadBalancerGroups().contains(configuration.getLoadBalancerConfiguration().getName())) {
           todo.add(new BootstrapFileChecker(configHelper, serviceState, now));
         }
       }
@@ -111,10 +123,13 @@ public class BootstrapManaged implements Managed {
     leaderLatch.start();
 
     LOG.info("Updating BaragonGroup information...");
-    loadBalancerDatastore.updateGroupInfo(loadBalancerConfiguration.getName(), loadBalancerConfiguration.getDomain());
+    loadBalancerDatastore.updateGroupInfo(configuration.getLoadBalancerConfiguration().getName(), configuration.getLoadBalancerConfiguration().getDomain());
 
     LOG.info("Adding to known-agents...");
-    knownAgentsDatastore.addKnownAgent(loadBalancerConfiguration.getName(), BaragonKnownAgentMetadata.fromAgentMetadata(baragonAgentMetadata, System.currentTimeMillis()));
+    knownAgentsDatastore.addKnownAgent(configuration.getLoadBalancerConfiguration().getName(), BaragonKnownAgentMetadata.fromAgentMetadata(baragonAgentMetadata, System.currentTimeMillis()));
+
+    LOG.info("Starting agent heartbeat...");
+    requestWorkerFuture = executorService.scheduleAtFixedRate(agentHeartbeatWorker, 0, configuration.getHeartbeatIntervalSeconds(), TimeUnit.SECONDS);
   }
 
   @Override
