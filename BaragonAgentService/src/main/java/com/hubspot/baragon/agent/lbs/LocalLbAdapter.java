@@ -35,7 +35,7 @@ public class LocalLbAdapter {
     try {
       executor.execute(command);
     } catch (ExecuteException e) {
-      throw new LbAdapterExecuteException(baos.toString(Charsets.UTF_8.name()), e);
+      throw new LbAdapterExecuteException(baos.toString(Charsets.UTF_8.name()), e, command.toString());
     }
   }
 
