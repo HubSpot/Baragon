@@ -53,12 +53,26 @@ public class BaragonKnownAgentsDatastore extends AbstractDataStore {
     return metadata;
   }
 
+  public Optional<BaragonKnownAgentMetadata> getKnownAgentMetadata(String clusterName, String agentId) {
+    return readFromZk(String.format(KNOWN_AGENTS_GROUP_HOST_FORMAT, clusterName, agentId), BaragonKnownAgentMetadata.class);
+  }
+
   public void addKnownAgent(String clusterName, BaragonKnownAgentMetadata agentMetadata) {
     writeToZk(String.format(KNOWN_AGENTS_GROUP_HOST_FORMAT, clusterName, agentMetadata.getAgentId()), agentMetadata);
   }
 
   public void removeKnownAgent(String clusterName, String agentId) {
     deleteNode(String.format(KNOWN_AGENTS_GROUP_HOST_FORMAT, clusterName, agentId));
+  }
+
+  public void updateKnownAgentLastSeenAt(String clusterName, String agentId, long time) {
+    Optional<BaragonKnownAgentMetadata> maybeAgent = getKnownAgentMetadata(clusterName, agentId);
+    if (maybeAgent.isPresent()) {
+      maybeAgent.get().setLastSeenAt(time);
+      writeToZk(String.format(KNOWN_AGENTS_GROUP_HOST_FORMAT, clusterName, maybeAgent.get().getAgentId()), maybeAgent.get());
+    } else {
+      LOG.error("Could not fetch known agent metadata to update lastSeenAt time");
+    }
   }
 
 }

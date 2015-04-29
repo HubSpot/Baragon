@@ -10,7 +10,10 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import com.google.common.base.Optional;
+import com.hubspot.baragon.agent.config.LoadBalancerConfiguration;
 import com.hubspot.baragon.agent.managers.AgentRequestManager;
+import com.hubspot.baragon.data.BaragonKnownAgentsDatastore;
+import com.hubspot.baragon.models.BaragonAgentMetadata;
 import com.hubspot.baragon.models.RequestAction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,19 +27,30 @@ public class RequestResource {
   private static final Logger LOG = LoggerFactory.getLogger(RequestResource.class);
 
   private final AgentRequestManager agentRequestManager;
+  private final BaragonKnownAgentsDatastore knownAgentsDatastore;
+  private final BaragonAgentMetadata baragonAgentMetadata;
+  private final LoadBalancerConfiguration loadBalancerConfiguration;
 
   @Inject
-  public RequestResource(AgentRequestManager agentRequestManager) {
+  public RequestResource(AgentRequestManager agentRequestManager,
+                         BaragonKnownAgentsDatastore knownAgentsDatastore,
+                         BaragonAgentMetadata baragonAgentMetadata,
+                         LoadBalancerConfiguration loadBalancerConfiguration) {
     this.agentRequestManager = agentRequestManager;
+    this.knownAgentsDatastore = knownAgentsDatastore;
+    this.baragonAgentMetadata = baragonAgentMetadata;
+    this.loadBalancerConfiguration = loadBalancerConfiguration;
   }
 
   @POST
   public Response apply(@PathParam("requestId") String requestId) throws InterruptedException {
+    knownAgentsDatastore.updateKnownAgentLastSeenAt(loadBalancerConfiguration.getName(), baragonAgentMetadata.getAgentId(), System.currentTimeMillis());
     return agentRequestManager.processRequest(requestId, Optional.<RequestAction>absent());
   }
 
   @DELETE
   public Response revert(@PathParam("requestId") String requestId) throws InterruptedException {
+    knownAgentsDatastore.updateKnownAgentLastSeenAt(loadBalancerConfiguration.getName(), baragonAgentMetadata.getAgentId(), System.currentTimeMillis());
     return agentRequestManager.processRequest(requestId, Optional.of(RequestAction.REVERT));
   }
 
