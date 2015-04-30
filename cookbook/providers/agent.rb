@@ -46,6 +46,9 @@ action :create do
     '/bin/true'
   end
 
+  agent_log =
+    "#{node[:baragon][:agent_log_base]}/baragon_agent_#{new_resource.group}.log"
+
   agent_yaml = node[:baragon][:agent_yaml].to_hash
   agent_yaml['loadBalancerConfig']['rootPath'] = agent_root_path
 
@@ -69,7 +72,8 @@ action :create do
     mode 0644
     notifies :restart, "service[baragon-agent-#{new_resource.group}]"
     variables baragon_jar: baragon_agent_jar,
-              config_yaml: "/etc/baragon/agent-#{new_resource.group}.yml"
+              config_yaml: "/etc/baragon/agent-#{new_resource.group}.yml",
+              agent_log: agent_log
   end
 
   service "baragon-agent-#{new_resource.group}" do
