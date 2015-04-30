@@ -65,18 +65,19 @@ public class BaragonElbSyncWorker implements Runnable {
       for (BaragonGroup group : groups) {
         if (!group.getSources().isEmpty()) {
           elbs = elbsForGroup(group);
-          LOG.info(String.format("Registering new instances for group %s...", group.getName()));
+          LOG.debug(String.format("Registering new instances for group %s...", group.getName()));
           registerNewInstances(elbs, group);
           if (configuration.get().isDeregisterEnabled()) {
-            LOG.info(String.format("Deregistering old instances for group %s...", group.getName()));
+            LOG.debug(String.format("Deregistering old instances for group %s...", group.getName()));
             deregisterOldInstances(elbs, group);
           }
+          LOG.info(String.format("ELB sync complete for group: %s", group.getName()));
         } else {
-          LOG.info(String.format("No traffic sources present for group: %s", group.getName()));
+          LOG.debug(String.format("No traffic sources present for group: %s", group.getName()));
         }
       }
     } catch (AmazonClientException e) {
-      LOG.error(String.format("Could not retrieve elb information due to error %s", e));
+      LOG.error(String.format("Could not retrieve elb information due to amazon client error %s", e));
     } catch (Exception e) {
       LOG.error(String.format("Could not process elb sync due to error %s", e));
     }
@@ -89,13 +90,18 @@ public class BaragonElbSyncWorker implements Runnable {
 
   private void registerNewInstances(List<LoadBalancerDescription> elbs, BaragonGroup group) {
     Collection<BaragonAgentMetadata> agents = loadBalancerDatastore.getAgentMetadata(group.getName());
-    for (RegisterInstancesWithLoadBalancerRequest request : registerRequests(group, agents, elbs)) {
-      try {
-        elbClient.registerInstancesWithLoadBalancer(request);
-        LOG.info(String.format("Registered instances %s with ELB %s", request.getInstances(), request.getLoadBalancerName()));
-      } catch (AmazonClientException e) {
-        LOG.info("Could not register %s with elb %s due to error %s", request.getInstances(), request.getLoadBalancerName(), e);
+    List<RegisterInstancesWithLoadBalancerRequest> requests = registerRequests(group, agents, elbs);
+    if (!requests.isEmpty()) {
+      for (RegisterInstancesWithLoadBalancerRequest request : requests) {
+        try {
+          elbClient.registerInstancesWithLoadBalancer(request);
+          LOG.info(String.format("Registered instances %s with ELB %s", request.getInstances(), request.getLoadBalancerName()));
+        } catch (AmazonClientException e) {
+          LOG.error("Could not register %s with elb %s due to error %s", request.getInstances(), request.getLoadBalancerName(), e);
+        }
       }
+    } else {
+      LOG.debug(String.format("No new instances to register for group %s", group.getName()));
     }
   }
 
@@ -147,7 +153,7 @@ public class BaragonElbSyncWorker implements Runnable {
           }
           LOG.info(String.format("Deregistered instances %s from ELB %s", request.getInstances(), request.getLoadBalancerName()));
         } catch (AmazonClientException e) {
-          LOG.info("Could not deregister %s from elb %s due to error %s", request.getInstances(), request.getLoadBalancerName(), e);
+          LOG.error("Could not deregister %s from elb %s due to error %s", request.getInstances(), request.getLoadBalancerName(), e);
         }
       }
     } catch (Exception e) {
