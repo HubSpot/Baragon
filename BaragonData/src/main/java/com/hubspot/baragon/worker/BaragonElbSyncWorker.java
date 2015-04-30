@@ -77,6 +77,8 @@ public class BaragonElbSyncWorker implements Runnable {
       }
     } catch (AmazonClientException e) {
       LOG.error(String.format("Could not retrieve elb information due to error %s", e));
+    } catch (Exception e) {
+      LOG.error(String.format("Could not process elb sync due to error %s", e));
     }
   }
 
