@@ -59,7 +59,11 @@ public class BaragonLoadBalancerDatastore extends AbstractDataStore {
     final Collection<BaragonGroup> groups = Lists.newArrayListWithCapacity(nodes.size());
 
     for (String node : nodes) {
-      groups.addAll(readFromZk(String.format(LOAD_BALANCER_GROUP_FORMAT, node), BaragonGroup.class).asSet());
+      try {
+        groups.addAll(readFromZk(String.format(LOAD_BALANCER_GROUP_FORMAT, node), BaragonGroup.class).asSet());
+      } catch (Exception e) {
+        LOG.error(String.format("Could not fetch info for group %s due to error %s", node, e));
+      }
     }
 
     return groups;
