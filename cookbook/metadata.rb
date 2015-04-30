@@ -10,3 +10,4 @@ supports 'ubuntu', '= 14.04'
 
 depends 'java'
 depends 'git'
+depends 'maven'

@@ -1,7 +1,15 @@
 node.set[:java][:jdk_version] = 7
 
 include_recipe 'java'
-include_recipe 'baragon::build'
+
+case node[:baragon][:install_type]
+when 'source'
+  include_recipe 'baragon::build'
+when 'package'
+  include_recipe 'baragon::package'
+else
+  fail "Invalid install type: #{node[:baragon][:install_type]}"
+end
 
 %w(/etc/baragon /var/log/baragon).each do |dir|
   directory dir
