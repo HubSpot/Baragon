@@ -5,6 +5,8 @@ import io.dropwizard.jetty.HttpConnectorFactory;
 import io.dropwizard.server.SimpleServerFactory;
 
 import java.io.IOException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -40,6 +42,8 @@ import com.hubspot.baragon.models.BaragonAgentMetadata;
 import com.hubspot.baragon.utils.JavaUtils;
 
 public class BaragonAgentServiceModule extends AbstractModule {
+  public static final String AGENT_SCHEDULED_EXECUTOR = "baragon.service.scheduledExecutor";
+
   public static final String AGENT_LEADER_LATCH = "baragon.agent.leaderLatch";
   public static final String AGENT_LOCK = "baragon.agent.lock";
   public static final String AGENT_TEMPLATES = "baragon.agent.templates";
@@ -177,6 +181,13 @@ public class BaragonAgentServiceModule extends AbstractModule {
   @Named(AGENT_MOST_RECENT_REQUEST_ID)
   public AtomicReference<String> providesMostRecentRequestId() {
     return new AtomicReference<>();
+  }
+
+  @Provides
+  @Singleton
+  @Named(AGENT_SCHEDULED_EXECUTOR)
+  public ScheduledExecutorService providesScheduledExecutor() {
+    return Executors.newScheduledThreadPool(1);
   }
 
 }

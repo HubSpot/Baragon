@@ -61,6 +61,9 @@ public class BaragonAgentConfiguration extends Configuration {
   @JsonProperty("enableCorsFilter")
   private boolean enableCorsFilter = false;
 
+  @JsonProperty("heartbeatIntervalSeconds")
+  private int heartbeatIntervalSeconds = 15;
+
   public boolean isEnableCorsFilter() {
     return enableCorsFilter;
   }
@@ -135,5 +138,13 @@ public class BaragonAgentConfiguration extends Configuration {
 
   public void setDefaultDateFormat(String defaultDateFormat) {
     this.defaultDateFormat = defaultDateFormat;
+  }
+
+  public int getHeartbeatIntervalSeconds() {
+    return heartbeatIntervalSeconds;
+  }
+
+  public void setHeartbeatIntervalSeconds(int heartbeatIntervalSeconds) {
+    this.heartbeatIntervalSeconds = heartbeatIntervalSeconds;
   }
 }

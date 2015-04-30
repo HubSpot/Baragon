@@ -8,7 +8,7 @@ import com.google.common.base.Optional;
 
 @JsonIgnoreProperties( ignoreUnknown = true )
 public class BaragonKnownAgentMetadata extends BaragonAgentMetadata {
-  private final long lastSeenAt;
+  private long lastSeenAt;
 
   public static BaragonKnownAgentMetadata fromAgentMetadata(BaragonAgentMetadata agentMetadata, long firstSeenAt) {
     return new BaragonKnownAgentMetadata(agentMetadata.getBaseAgentUri(), agentMetadata.getAgentId(), agentMetadata.getDomain(), agentMetadata.getInstanceId(), firstSeenAt);
@@ -26,6 +26,10 @@ public class BaragonKnownAgentMetadata extends BaragonAgentMetadata {
 
   public long getLastSeenAt() {
     return lastSeenAt;
+  }
+
+  public void setLastSeenAt(long lastSeenAt) {
+    this.lastSeenAt = lastSeenAt;
   }
 
   @Override

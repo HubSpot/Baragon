@@ -44,6 +44,9 @@ defaultDateFormat: "yyyy-MM-dd hh:mm a"
 # (Optional) enable a cors filter for this host, defaults to false
 enableCorsFilter: false
 
+# (Optional) set the heartbeat/agent-check-in interval for updating knownAgents metadata, default is 15
+heartbeatIntervalSeconds: 15
+
 # (Optional) Testing configuration
 testing:
   enabled: false
