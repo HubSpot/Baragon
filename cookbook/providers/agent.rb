@@ -14,16 +14,31 @@ action :create do
   end
   # rubocop:enable Metrics/LineLength
 
-  baragon_agent_jar = "BaragonAgentService-#{node[:baragon][:version]}.jar"
+  case node[:baragon][:install_type]
+  when 'source'
+    run_context.include_recipe 'baragon::build'
 
-  remote_file "/usr/share/java/#{baragon_agent_jar}" do
-    action :create
-    backup 5
-    owner 'root'
-    group 'root'
-    mode 0644
-    source "file://#{Chef::Config[:file_cache_path]}/Baragon/" \
-           "BaragonAgentService/target/#{baragon_agent_jar}"
+    remote_file "/usr/share/java/BaragonAgentService-#{node[:baragon][:version]}-shaded.jar" do
+      action :create
+      backup 5
+      owner 'root'
+      group 'root'
+      mode 0644
+      source "file://#{Chef::Config[:file_cache_path]}/Baragon/" \
+             'BaragonAgentService/target/' \
+             "BaragonAgentService-#{node[:baragon][:version]}-SNAPSHOT-shaded.jar"
+    end
+  when 'package'
+    run_context.include_recipe 'maven'
+
+    maven 'BaragonAgentService' do
+      group_id 'com.hubspot'
+      classifier 'shaded'
+      version node['baragon']['version']
+      dest '/usr/share/java'
+    end
+  else
+    fail "Unsupported install type: #{node[:baragon][:install_type]}"
   end
 
   node.set[:baragon][:agent_yaml][:zookeeper][:quorum] =
@@ -71,8 +86,7 @@ action :create do
     group 'root'
     mode 0644
     notifies :restart, "service[baragon-agent-#{new_resource.group}]"
-    variables baragon_jar: baragon_agent_jar,
-              config_yaml: "/etc/baragon/agent-#{new_resource.group}.yml",
+    variables config_yaml: "/etc/baragon/agent-#{new_resource.group}.yml",
               agent_log: agent_log
   end
 
