@@ -28,6 +28,18 @@ suites:
     attributes:
       java:
         jdk_version: 7
+  - name: remotezk-source
+    run_list:
+      - recipe[apt]
+      - recipe[java]
+      - recipe[baragon::server]
+      - recipe[nginx]
+      - recipe[baragon::agent]
+    attributes:
+      java:
+        jdk_version: 7
+      baragon:
+        install_type: source
   - name: localzk
     run_list:
       - recipe[java]
@@ -45,3 +57,26 @@ suites:
         jdk_version: 7
       zookeeper:
         service_style: upstart
+      apt:
+        compile_time_update: true
+  - name: localzk-source
+    run_list:
+      - recipe[apt]
+      - recipe[java]
+      - recipe[zookeeper]
+      - recipe[zookeeper::service]
+      - recipe[nginx]
+      - recipe[baragon::server]
+      - recipe[baragon::agent]
+    attributes:
+      baragon:
+        mocking: true
+        zk_hosts:
+        - 'localhost:2181'
+        install_type: source
+      java:
+        jdk_version: 7
+      zookeeper:
+        service_style: upstart
+      apt:
+        compile_time_update: true
