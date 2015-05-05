@@ -90,6 +90,14 @@ action :create do
               agent_log: agent_log
   end
 
+  logrotate_app "baragon_agent_#{new_resource.group}" do
+    path agent_log
+    size '100M'
+    rotate 3
+    create '644 root root'
+    options %w(missingok copytruncate)
+  end
+
   service "baragon-agent-#{new_resource.group}" do
     provider Chef::Provider::Service::Upstart
     supports status: true,
