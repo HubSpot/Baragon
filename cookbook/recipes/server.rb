@@ -1,15 +1,30 @@
 include_recipe 'baragon::common'
 
-baragon_server_jar = "BaragonService-#{node[:baragon][:version]}.jar"
+case node[:baragon][:install_type]
+when 'source'
+  include_recipe 'baragon::build'
 
-remote_file "/usr/share/java/#{baragon_server_jar}" do
-  action   :create
-  backup   5
-  owner    'root'
-  group    'root'
-  mode     0644
-  source   "file://#{Chef::Config[:file_cache_path]}/Baragon/BaragonService" \
-           "/target/#{baragon_server_jar}"
+  remote_file "/usr/share/java/BaragonService-#{node[:baragon][:version]}-shaded.jar" do
+    action   :create
+    backup   5
+    owner    'root'
+    group    'root'
+    mode     0644
+    source   "file://#{Chef::Config[:file_cache_path]}/Baragon/BaragonService" \
+             '/target/' \
+             "BaragonService-#{node[:baragon][:version]}-SNAPSHOT-shaded.jar"
+  end
+when 'package'
+  include_recipe 'maven'
+
+  maven 'BaragonService' do
+    group_id 'com.hubspot'
+    classifier 'shaded'
+    version node['baragon']['version']
+    dest '/usr/share/java'
+  end
+else
+  fail "Unsupported install type: #{node[:baragon][:install_type]}"
 end
 
 node.set[:baragon][:service_yaml][:zookeeper][:quorum] =
@@ -32,8 +47,7 @@ template '/etc/init/baragon-server.conf' do
   group     'root'
   mode      0644
   notifies  :restart, 'service[baragon-server]'
-  variables baragon_jar: baragon_server_jar,
-            config_yaml: '/etc/baragon/service.yml'
+  variables config_yaml: '/etc/baragon/service.yml'
 end
 
 service 'baragon-server' do
