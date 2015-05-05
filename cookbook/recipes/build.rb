@@ -1,8 +1,3 @@
-user node[:baragon][:user] do
-  supports(manage_home: true)
-  home "/home/#{node[:baragon][:user]}"
-end
-
 directory "#{Chef::Config[:file_cache_path]}/Baragon" do
   owner node[:baragon][:user]
 end
