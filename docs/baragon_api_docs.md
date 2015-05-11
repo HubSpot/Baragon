@@ -364,6 +364,26 @@ requests.get("192.168.33.20:8080/baragon/v2/load-balancer")
 ]
 ```
 
+##GET `/load-balancer/{cluster}`
+
+Returns a BaragonGroup object for cluster named `cluster`
+
+###Example Request
+```python
+requests.get("192.168.33.20:8080/load-balancer/vagrant")
+```
+
+###Example Response
+```json
+{
+   "name":"vagrant",
+   "domain":"vagrant.baragon.biz",
+   "sources":[
+     "my-test-elb"
+   ]
+}
+```
+
 ##GET `/load-balancer/{cluster}/agents`
 
 Returns the currently active baragon agents for the specified load balancer cluster
@@ -469,6 +489,46 @@ requests.get("192.168.33.20:8080/baragon/v2/load-balancer/vagrant/base-path", pa
        "requestId":"testrequest",
        "rackId":"us_east_1a"
     }]
+}
+```
+
+##POST `/load-balancer/{cluster}/sources`
+
+Add a traffic source (ie. ELB name). Returns a BaragonGroup object
+
+###Example Request
+```python
+params = {'source':'my-test-elb'}
+requests.post("192.168.33.20:8080/load-balancer/vagrant/sources", params=params)
+```
+
+###Example Response
+```json
+{
+   "name":"vagrant",
+   "domain":"vagrant.baragon.biz",
+   "sources":[
+     "my-test-elb"
+   ]
+}
+```
+
+##DELETE `/load-balancer/{cluster}/sources`
+
+Remove a traffic source (ie. ELB name). Optionally returns a BaragonGroup object
+
+###Example Request
+```python
+params = {'source':'my-test-elb'}
+requests.delete("192.168.33.20:8080/load-balancer/vagrant/sources", params=params)
+```
+
+###Example Response
+```json
+{
+   "name":"vagrant",
+   "domain":"vagrant.baragon.biz",
+   "sources":[]
 }
 ```
 
