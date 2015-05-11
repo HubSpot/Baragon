@@ -1,4 +1,4 @@
-default[:baragon][:agent_log] = '/var/log/baragon/baragon_agent.log'
+default[:baragon][:agent_log_base] = '/var/log/baragon'
 
 default[:baragon][:agent_yaml] = {
   'server' => {
