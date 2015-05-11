@@ -46,8 +46,17 @@ agentMaxAttempts: 5
 # (Optional) Time to wait for a response from a Baragon Agent
 agentRequestTimeoutMs: 60000
 
-# (Optional)
-
+# (Optional) Elb Sync configuration
+elb:
+  enabled: false # Determines if the ELB sync worker should start, defaults to false
+  awsAccessKeyId: somekey # AWS credentials for accessing ELB api
+  awsAccessKeySecret: somesecret # AWS credentials for accessing ELB api
+  intervalSeconds: 120 # How oftent he sync worker should run, defaults to 120s
+  initialDelaySeconds: 0 # How long to wait before starting ELB sync worker, defaults to 0
+  deregisterEnabled: false # Is the sync worker allowed to remove instances from the elb, defaults to false
+  removeKnownAgentEnabled: false # Is the sync worker allowed to remove an instance from the ELB if it is still in the known agents list, defaults to false
+  removeKnownAgentMinutes: 30 # How long must an instance be inactive before it can be removed
+  removeLastHealthyEnabled: false # If there is only one healthy instance left, can the sync worker remove it, defaults to false
 
 # (Optional) HTTP client configuration, used by Baragon Service to comunicate with Baragon Agents
 httpClient:
