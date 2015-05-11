@@ -1,7 +1,11 @@
 node.set[:java][:jdk_version] = 7
 
 include_recipe 'java'
-include_recipe 'baragon::build'
+
+user node[:baragon][:user] do
+  supports(manage_home: true)
+  home "/home/#{node[:baragon][:user]}"
+end
 
 %w(/etc/baragon /var/log/baragon).each do |dir|
   directory dir
