@@ -86,7 +86,7 @@ public abstract class AbstractAgentWatchListener extends AbstractLatchListener {
         switch (event.getType()) {
           case CHILD_ADDED:
             String newGroup = ZKPaths.getNodeFromPath(event.getData().getPath());
-            LOG.info(String.format("Group %s added, starting listeners", newGroup));
+            LOG.info(String.format("Found group %s, starting listeners", newGroup));
             if (!agentCaches.containsKey(newGroup)) {
               String path = String.format(BaragonLoadBalancerDatastore.LOAD_BALANCER_GROUP_HOSTS_FORMAT, newGroup);
               PathChildrenCache cache = new PathChildrenCache(curatorFramework, path, true);

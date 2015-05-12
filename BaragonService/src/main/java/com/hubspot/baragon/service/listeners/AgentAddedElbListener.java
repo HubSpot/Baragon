@@ -57,13 +57,13 @@ public class AgentAddedElbListener extends AbstractAgentWatchListener {
             }
           }
         } else {
-         LOG.info(String.format("No instance id for agent %s, can't add to ELB", agent.getAgentId()));
+         LOG.debug(String.format("No instance id for agent %s, can't add to ELB", agent.getAgentId()));
         }
       } else {
-        LOG.info(String.format("No traffic sources for group %s, not adding agent %s to an ELB", group.get().getName(), agent.getAgentId()));
+        LOG.debug(String.format("No traffic sources for group %s, not adding agent %s to an ELB", group.get().getName(), agent.getAgentId()));
       }
     } else {
-      LOG.info(String.format("Group %s not found for agent %s", groupName, agent.getAgentId()));
+      LOG.debug(String.format("Group %s not found for agent %s", groupName, agent.getAgentId()));
     }
   }
 
