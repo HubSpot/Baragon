@@ -151,8 +151,8 @@ public class AgentRequestManager {
   private ServiceContext getApplyContext(BaragonRequest request) throws Exception {
     if (movedOffLoadBalancer(request)) {
       return new ServiceContext(request.getLoadBalancerService(), Collections.<UpstreamInfo>emptyList(), System.currentTimeMillis(), false);
-    } else if (request.getOverrideUpstreams().isPresent()) {
-      return new ServiceContext(request.getLoadBalancerService(), request.getOverrideUpstreams().get(), System.currentTimeMillis(), true);
+    } else if (!request.getReplaceUpstreams().isEmpty()) {
+      return new ServiceContext(request.getLoadBalancerService(), request.getReplaceUpstreams(), System.currentTimeMillis(), true);
     } else {
       final Map<String, UpstreamInfo> upstreamsMap = new HashMap<>();
       upstreamsMap.putAll(stateDatastore.getUpstreamsMap(request.getLoadBalancerService().getServiceId()));

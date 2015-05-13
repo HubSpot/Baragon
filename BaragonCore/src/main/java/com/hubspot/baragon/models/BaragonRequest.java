@@ -3,6 +3,7 @@ package com.hubspot.baragon.models;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.base.Objects;
 import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
 
@@ -10,7 +11,6 @@ import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -34,14 +34,14 @@ public class BaragonRequest {
 
   private final Optional<RequestAction> action;
 
-  private final Optional<List<UpstreamInfo>> overrideUpstreams;
+  private final List<UpstreamInfo> replaceUpstreams;
 
   @JsonCreator
   public BaragonRequest(@JsonProperty("loadBalancerRequestId") String loadBalancerRequestId,
                         @JsonProperty("loadBalancerService") BaragonService loadBalancerService,
                         @JsonProperty("addUpstreams") List<UpstreamInfo> addUpstreams,
                         @JsonProperty("removeUpstreams") List<UpstreamInfo> removeUpstreams,
-                        @JsonProperty("overrideUpstreams") Optional<List<UpstreamInfo>> overrideUpstreams,
+                        @JsonProperty("overrideUpstreams") List<UpstreamInfo> replaceUpstreams,
                         @JsonProperty("replaceServiceId") Optional<String> replaceServiceId,
                         @JsonProperty("action") Optional<RequestAction> action) {
     this.loadBalancerRequestId = loadBalancerRequestId;
@@ -50,15 +50,15 @@ public class BaragonRequest {
     this.removeUpstreams = addRequestId(removeUpstreams, loadBalancerRequestId);
     this.replaceServiceId = replaceServiceId;
     this.action = action;
-    this.overrideUpstreams = overrideUpstreams;
+    this.replaceUpstreams = Objects.firstNonNull(replaceUpstreams, Collections.<UpstreamInfo>emptyList());
   }
 
   public BaragonRequest(String loadBalancerRequestId, BaragonService loadBalancerService, List<UpstreamInfo> addUpstreams, List<UpstreamInfo> removeUpstreams) {
-    this(loadBalancerRequestId, loadBalancerService, addUpstreams, removeUpstreams, Optional.<List<UpstreamInfo>>absent(),Optional.<String>absent(), Optional.of(RequestAction.UPDATE));
+    this(loadBalancerRequestId, loadBalancerService, addUpstreams, removeUpstreams, Collections.<UpstreamInfo>emptyList(),Optional.<String>absent(), Optional.of(RequestAction.UPDATE));
   }
 
   public BaragonRequest(String loadBalancerRequestId, BaragonService loadBalancerService, List<UpstreamInfo> addUpstreams, List<UpstreamInfo> removeUpstreams, Optional<String> replaceServiceId) {
-    this(loadBalancerRequestId, loadBalancerService, addUpstreams, removeUpstreams, Optional.<List<UpstreamInfo>>absent(), replaceServiceId, Optional.of(RequestAction.UPDATE));
+    this(loadBalancerRequestId, loadBalancerService, addUpstreams, removeUpstreams, Collections.<UpstreamInfo>emptyList(), replaceServiceId, Optional.of(RequestAction.UPDATE));
   }
 
   public String getLoadBalancerRequestId() {
@@ -77,8 +77,8 @@ public class BaragonRequest {
     return removeUpstreams;
   }
 
-  public Optional<List<UpstreamInfo>> getOverrideUpstreams() {
-    return overrideUpstreams;
+  public List<UpstreamInfo> getReplaceUpstreams() {
+    return replaceUpstreams;
   }
 
   public Optional<String> getReplaceServiceId() {

@@ -145,7 +145,7 @@ public class RequestManager {
       }
     }
 
-    if (request.getOverrideUpstreams().isPresent() && (!request.getAddUpstreams().isEmpty() || !request.getRemoveUpstreams().isEmpty())) {
+    if (!request.getReplaceUpstreams().isEmpty() && (!request.getAddUpstreams().isEmpty() || !request.getRemoveUpstreams().isEmpty())) {
       throw new InvalidUpstreamsException("If overrideUpstreams is specified, addUpstreams and removeUpstreams mustbe empty");
     }
 
@@ -222,8 +222,8 @@ public class RequestManager {
   private void updateStateDatastore(BaragonRequest request) {
     try {
       stateDatastore.addService(request.getLoadBalancerService());
-      if (request.getOverrideUpstreams().isPresent()) {
-        stateDatastore.setUpstreams(request.getLoadBalancerService().getServiceId(), request.getOverrideUpstreams().get());
+      if (!request.getReplaceUpstreams().isEmpty()) {
+        stateDatastore.setUpstreams(request.getLoadBalancerService().getServiceId(), request.getReplaceUpstreams());
       } else {
         stateDatastore.removeUpstreams(request.getLoadBalancerService().getServiceId(), request.getRemoveUpstreams());
         stateDatastore.addUpstreams(request.getLoadBalancerService().getServiceId(), request.getAddUpstreams());
