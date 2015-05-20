@@ -120,6 +120,10 @@ public class BaragonLoadBalancerDatastore extends AbstractDataStore {
     return ImmutableSet.copyOf(getChildren(LOAD_BALANCER_GROUPS_FORMAT));
   }
 
+  public Optional<BaragonAgentMetadata> getAgent(String path) {
+    return readFromZk(path, BaragonAgentMetadata.class);
+  }
+
   public Collection<BaragonAgentMetadata> getAgentMetadata(String clusterName) {
     final Collection<String> nodes = getChildren(String.format(LOAD_BALANCER_GROUP_HOSTS_FORMAT, clusterName));
 

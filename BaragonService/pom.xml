@@ -13,7 +13,7 @@
   <properties>
     <basepom.shaded.main-class>com.hubspot.baragon.service.BaragonService</basepom.shaded.main-class>
   </properties>
-
+  
   <dependencies>
     <dependency>
       <groupId>com.hubspot.dropwizard</groupId>
@@ -110,6 +110,10 @@
     </dependency>
     <dependency>
       <groupId>org.apache.curator</groupId>
+      <artifactId>curator-client</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.curator</groupId>
       <artifactId>curator-recipes</artifactId>
     </dependency>
     <dependency>
@@ -121,7 +125,6 @@
       <artifactId>aws-java-sdk-elasticloadbalancing</artifactId>
     </dependency>
   </dependencies>
-
   <build>
     <plugins>
       <plugin>
