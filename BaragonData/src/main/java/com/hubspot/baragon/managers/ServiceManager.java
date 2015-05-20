@@ -76,11 +76,11 @@ public class ServiceManager {
     List<UpstreamInfo> empty = Collections.emptyList();
     List<UpstreamInfo> remove;
     remove =  new ArrayList<>(stateDatastore.getUpstreamsMap(service.getServiceId()).values());
-    return new BaragonRequest(requestId, service, empty, remove, Optional.<String>absent(), Optional.of(RequestAction.DELETE));
+    return new BaragonRequest(requestId, service, empty, remove, empty, Optional.<String>absent(), Optional.of(RequestAction.DELETE));
   }
 
   private BaragonRequest buildReloadRequest(BaragonService service, String requestId) {
     List<UpstreamInfo> empty = Collections.emptyList();
-    return new BaragonRequest(requestId, service, empty, empty, Optional.<String>absent(), Optional.of(RequestAction.RELOAD));
+    return new BaragonRequest(requestId, service, empty, empty, empty, Optional.<String>absent(), Optional.of(RequestAction.RELOAD));
   }
 }

@@ -95,6 +95,15 @@ public class BaragonStateDatastore extends AbstractDataStore {
     }
   }
 
+  public void setUpstreams(String serviceId, Collection<UpstreamInfo> upstreams) throws Exception {
+    for (UpstreamInfo upstreamInfo : getUpstreamsMap(serviceId).values()) {
+      deleteNode(String.format(UPSTREAM_FORMAT, serviceId, sanitizeNodeName(upstreamInfo.getUpstream())));
+    }
+    for (UpstreamInfo upstreamInfo : upstreams) {
+      writeToZk(String.format(UPSTREAM_FORMAT, serviceId, sanitizeNodeName(upstreamInfo.getUpstream())), upstreamInfo);
+    }
+  }
+
   public void updateStateNode() {
     try {
       LOG.info("Starting state node update");

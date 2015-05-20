@@ -15,6 +15,7 @@ import com.hubspot.baragon.data.BaragonLoadBalancerDatastore;
 import com.hubspot.baragon.data.BaragonRequestDatastore;
 import com.hubspot.baragon.data.BaragonStateDatastore;
 import com.hubspot.baragon.exceptions.InvalidRequestActionException;
+import com.hubspot.baragon.exceptions.InvalidUpstreamsException;
 import com.hubspot.baragon.exceptions.RequestAlreadyEnqueuedException;
 import com.hubspot.baragon.models.BaragonRequest;
 import com.hubspot.baragon.models.BaragonResponse;
@@ -132,7 +133,7 @@ public class RequestManager {
     }
   }
 
-  public BaragonResponse enqueueRequest(BaragonRequest request) throws RequestAlreadyEnqueuedException, InvalidRequestActionException {
+  public BaragonResponse enqueueRequest(BaragonRequest request) throws RequestAlreadyEnqueuedException, InvalidRequestActionException, InvalidUpstreamsException {
     final Optional<BaragonResponse> maybePreexistingResponse = getResponse(request.getLoadBalancerRequestId());
 
     if (maybePreexistingResponse.isPresent()) {
@@ -142,6 +143,10 @@ public class RequestManager {
       } else {
         return maybePreexistingResponse.get();
       }
+    }
+
+    if (!request.getReplaceUpstreams().isEmpty() && (!request.getAddUpstreams().isEmpty() || !request.getRemoveUpstreams().isEmpty())) {
+      throw new InvalidUpstreamsException("If overrideUpstreams is specified, addUpstreams and removeUpstreams mustbe empty");
     }
 
     if (request.getAction().isPresent() && request.getAction().equals(Optional.of(RequestAction.REVERT))) {
@@ -215,10 +220,18 @@ public class RequestManager {
   }
 
   private void updateStateDatastore(BaragonRequest request) {
-    stateDatastore.addService(request.getLoadBalancerService());
-    stateDatastore.removeUpstreams(request.getLoadBalancerService().getServiceId(), request.getRemoveUpstreams());
-    stateDatastore.addUpstreams(request.getLoadBalancerService().getServiceId(), request.getAddUpstreams());
-    stateDatastore.updateStateNode();
+    try {
+      stateDatastore.addService(request.getLoadBalancerService());
+      if (!request.getReplaceUpstreams().isEmpty()) {
+        stateDatastore.setUpstreams(request.getLoadBalancerService().getServiceId(), request.getReplaceUpstreams());
+      } else {
+        stateDatastore.removeUpstreams(request.getLoadBalancerService().getServiceId(), request.getRemoveUpstreams());
+        stateDatastore.addUpstreams(request.getLoadBalancerService().getServiceId(), request.getAddUpstreams());
+      }
+      stateDatastore.updateStateNode();
+    } catch (Exception e) {
+      LOG.error(String.format("Error updating state datastore %s", e));
+    }
   }
 
   private void removeOldService(BaragonRequest request, Optional<BaragonService> maybeOriginalService) {
