@@ -60,7 +60,6 @@ public class BaragonElbSyncWorker implements Runnable {
     List<LoadBalancerDescription> elbs;
     Collection<BaragonGroup> groups;
     try {
-      LOG.info("Starting ELB sync");
       groups = loadBalancerDatastore.getLoadBalancerGroups();
       for (BaragonGroup group : groups) {
         if (!group.getSources().isEmpty()) {
@@ -71,7 +70,7 @@ public class BaragonElbSyncWorker implements Runnable {
             LOG.debug(String.format("Deregistering old instances for group %s...", group.getName()));
             deregisterOldInstances(elbs, group);
           }
-          LOG.info(String.format("ELB sync complete for group: %s", group.getName()));
+          LOG.debug(String.format("ELB sync complete for group: %s", group.getName()));
         } else {
           LOG.debug(String.format("No traffic sources present for group: %s", group.getName()));
         }
@@ -81,6 +80,7 @@ public class BaragonElbSyncWorker implements Runnable {
     } catch (Exception e) {
       LOG.error(String.format("Could not process elb sync due to error %s", e));
     }
+    LOG.info("Finished ELB Sync");
   }
 
   private List<LoadBalancerDescription> elbsForGroup(BaragonGroup group) {
