@@ -139,7 +139,7 @@ public class BaragonAgentServiceModule extends AbstractModule {
     try {
       String instanceId = null;
       String inputLine;
-      URL ec2MetaData = new URL("http://169.254.169.254/latest/meta-data/instance-id");
+      URL ec2MetaData = new URL(url);
       URLConnection ec2Conn = ec2MetaData.openConnection();
       BufferedReader in = new BufferedReader(new InputStreamReader(ec2Conn.getInputStream(), "UTF-8"));
       while ((inputLine = in.readLine()) != null) {
