@@ -11,17 +11,16 @@ public class BaragonKnownAgentMetadata extends BaragonAgentMetadata {
   private long lastSeenAt;
 
   public static BaragonKnownAgentMetadata fromAgentMetadata(BaragonAgentMetadata agentMetadata, long lastSeenAt) {
-    return new BaragonKnownAgentMetadata(agentMetadata.getBaseAgentUri(), agentMetadata.getAgentId(), agentMetadata.getDomain(), agentMetadata.getInstanceId(), agentMetadata.getAvailabilityZone(), lastSeenAt);
+    return new BaragonKnownAgentMetadata(agentMetadata.getBaseAgentUri(), agentMetadata.getAgentId(), agentMetadata.getDomain(), agentMetadata.getEc2(), lastSeenAt);
   }
 
   @JsonCreator
   public BaragonKnownAgentMetadata(@JsonProperty("baseAgentUri") String baseAgentUri,
                                    @JsonProperty("agentId") String agentId,
                                    @JsonProperty("domain") Optional<String> domain,
-                                   @JsonProperty("instanceId") Optional<String> instanceId,
-                                   @JsonProperty("availabilityZone") Optional<String> availabilityZone,
+                                   @JsonProperty("ec2") BaragonAgentEc2Metadata ec2,
                                    @JsonProperty("lastSeenAt") long lastSeenAt) {
-    super(baseAgentUri, agentId, domain, instanceId, availabilityZone);
+    super(baseAgentUri, agentId, domain, ec2);
     this.lastSeenAt = lastSeenAt;
   }
 

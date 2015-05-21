@@ -17,8 +17,7 @@ public class BaragonAgentMetadata {
   private final String baseAgentUri;
   private final Optional<String> domain;
   private final String agentId;
-  private final Optional<String> instanceId;
-  private final Optional<String> availabilityZone;
+  private final BaragonAgentEc2Metadata ec2;
 
   @JsonCreator
   public static BaragonAgentMetadata fromString(String value) {
@@ -28,20 +27,18 @@ public class BaragonAgentMetadata {
       throw new InvalidAgentMetadataStringException(value);
     }
 
-    return new BaragonAgentMetadata(value, matcher.group(1), Optional.<String>absent(), Optional.<String>absent(), Optional.<String>absent());
+    return new BaragonAgentMetadata(value, matcher.group(1), Optional.<String>absent(), new BaragonAgentEc2Metadata(Optional.<String>absent(), Optional.<String>absent(), Optional.<String>absent()));
   }
 
   @JsonCreator
   public BaragonAgentMetadata(@JsonProperty("baseAgentUri") String baseAgentUri,
                               @JsonProperty("agentId") String agentId,
                               @JsonProperty("domain") Optional<String> domain,
-                              @JsonProperty("instanceId") Optional<String> instanceId,
-                              @JsonProperty("availabilityZone") Optional<String> availabilityZone) {
+                              @JsonProperty("ec2") BaragonAgentEc2Metadata ec2) {
     this.baseAgentUri = baseAgentUri;
     this.domain = domain;
     this.agentId = agentId;
-    this.instanceId = instanceId;
-    this.availabilityZone = availabilityZone;
+    this.ec2 = ec2;
   }
 
   public String getBaseAgentUri() {
@@ -56,12 +53,8 @@ public class BaragonAgentMetadata {
     return agentId;
   }
 
-  public Optional<String> getInstanceId() {
-    return instanceId;
-  }
-
-  public Optional<String> getAvailabilityZone() {
-    return availabilityZone;
+  public BaragonAgentEc2Metadata getEc2() {
+    return ec2;
   }
 
   @Override
@@ -84,10 +77,7 @@ public class BaragonAgentMetadata {
     if (!domain.equals(metadata.domain)) {
       return false;
     }
-    if (!instanceId.equals(metadata.instanceId)) {
-      return false;
-    }
-    if (!availabilityZone.equals(metadata.availabilityZone)) {
+    if (!ec2.equals(metadata.ec2)) {
       return false;
     }
 
@@ -99,8 +89,7 @@ public class BaragonAgentMetadata {
     int result = baseAgentUri.hashCode();
     result = 31 * result + domain.hashCode();
     result = 31 * result + (agentId != null ? agentId.hashCode() : 0);
-    result = 31 * result + (instanceId != null ? instanceId.hashCode() : 0);
-    result = 31 * result + (availabilityZone != null ? availabilityZone.hashCode() : 0);
+    result = 31 * result + (ec2 != null ? ec2.hashCode() : 0);
     return result;
   }
 
@@ -110,8 +99,7 @@ public class BaragonAgentMetadata {
             .add("baseAgentUri", baseAgentUri)
             .add("domain", domain)
             .add("agentId", agentId)
-            .add("instanceId", instanceId)
-            .add("availabilityZone", availabilityZone)
+            .add("ec2", ec2)
             .toString();
   }
 }

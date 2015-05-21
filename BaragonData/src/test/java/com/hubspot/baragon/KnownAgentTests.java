@@ -1,5 +1,6 @@
 package com.hubspot.baragon;
 
+import com.hubspot.baragon.models.BaragonAgentEc2Metadata;
 import org.jukito.JukitoModule;
 import org.jukito.JukitoRunner;
 import org.junit.Test;
@@ -33,7 +34,7 @@ public class KnownAgentTests {
 
   @Test
   public void testKnownAgentBaragonMetadata(BaragonKnownAgentsDatastore datastore) {
-    final BaragonKnownAgentMetadata metadata = new BaragonKnownAgentMetadata(BASE_URI, AGENT_ID, Optional.of(DOMAIN), Optional.<String>absent(), Optional.<String>absent(), System.currentTimeMillis());
+    final BaragonKnownAgentMetadata metadata = new BaragonKnownAgentMetadata(BASE_URI, AGENT_ID, Optional.of(DOMAIN), new BaragonAgentEc2Metadata(Optional.<String>absent(), Optional.<String>absent(), Optional.<String>absent()), System.currentTimeMillis());
     datastore.addKnownAgent(CLUSTER_NAME, metadata);
 
     assertEquals(Collections.singletonList(metadata), datastore.getKnownAgentsMetadata(CLUSTER_NAME));
@@ -41,7 +42,7 @@ public class KnownAgentTests {
 
   @Test
   public void testKnownAgentString() {
-    assertEquals(new BaragonAgentMetadata(BASE_URI, AGENT_ID, Optional.<String>absent(), Optional.<String>absent(), Optional.<String>absent()), BaragonAgentMetadata.fromString(BASE_URI));
+    assertEquals(new BaragonAgentMetadata(BASE_URI, AGENT_ID, Optional.<String>absent(), new BaragonAgentEc2Metadata(Optional.<String>absent(), Optional.<String>absent(), Optional.<String>absent())), BaragonAgentMetadata.fromString(BASE_URI));
   }
 
   @Test( expected = InvalidAgentMetadataStringException.class )
