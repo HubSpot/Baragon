@@ -52,6 +52,9 @@ public class BaragonAgentServiceModule extends AbstractModule {
   public static final String AGENT_INSTANCE_ID = "baragon.agent.instanceid";
   public static final String DEFAULT_TEMPLATE_NAME = "default";
 
+  private static final String INSTANCE_ID_URL = "http://169.254.169.254/latest/meta-data/instance-id";
+  private static final String AVAILABILITY_ZONE_URL = "http://169.254.169.254/latest/meta-data/placement/availability-zone";
+
   @Override
   protected void configure() {
     install(new BaragonDataModule());
@@ -129,14 +132,14 @@ public class BaragonAgentServiceModule extends AbstractModule {
     final String baseAgentUri = String.format(config.getBaseUrlTemplate(), hostname, httpPort, appRoot);
     final String agentId = String.format("%s:%s", hostname, httpPort);
 
-    return new BaragonAgentMetadata(baseAgentUri, agentId, domain, getInstanceId());
+    return new BaragonAgentMetadata(baseAgentUri, agentId, domain, getEc2Metadata(INSTANCE_ID_URL), getEc2Metadata(AVAILABILITY_ZONE_URL));
   }
 
-  private Optional<String> getInstanceId() {
+  private Optional<String> getEc2Metadata(String url) {
     try {
       String instanceId = null;
       String inputLine;
-      URL ec2MetaData = new URL("http://169.254.169.254/latest/meta-data/instance-id");
+      URL ec2MetaData = new URL(url);
       URLConnection ec2Conn = ec2MetaData.openConnection();
       BufferedReader in = new BufferedReader(new InputStreamReader(ec2Conn.getInputStream(), "UTF-8"));
       while ((inputLine = in.readLine()) != null) {

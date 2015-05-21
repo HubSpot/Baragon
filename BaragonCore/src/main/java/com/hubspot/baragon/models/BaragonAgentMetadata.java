@@ -18,6 +18,7 @@ public class BaragonAgentMetadata {
   private final Optional<String> domain;
   private final String agentId;
   private final Optional<String> instanceId;
+  private final Optional<String> availabilityZone;
 
   @JsonCreator
   public static BaragonAgentMetadata fromString(String value) {
@@ -27,18 +28,20 @@ public class BaragonAgentMetadata {
       throw new InvalidAgentMetadataStringException(value);
     }
 
-    return new BaragonAgentMetadata(value, matcher.group(1), Optional.<String>absent(), Optional.<String>absent());
+    return new BaragonAgentMetadata(value, matcher.group(1), Optional.<String>absent(), Optional.<String>absent(), Optional.<String>absent());
   }
 
   @JsonCreator
   public BaragonAgentMetadata(@JsonProperty("baseAgentUri") String baseAgentUri,
                               @JsonProperty("agentId") String agentId,
                               @JsonProperty("domain") Optional<String> domain,
-                              @JsonProperty("instanceId") Optional<String> instanceId) {
+                              @JsonProperty("instanceId") Optional<String> instanceId,
+                              @JsonProperty("availabilityZone") Optional<String> availabilityZone) {
     this.baseAgentUri = baseAgentUri;
     this.domain = domain;
     this.agentId = agentId;
     this.instanceId = instanceId;
+    this.availabilityZone = availabilityZone;
   }
 
   public String getBaseAgentUri() {
@@ -55,6 +58,10 @@ public class BaragonAgentMetadata {
 
   public Optional<String> getInstanceId() {
     return instanceId;
+  }
+
+  public Optional<String> getAvailabilityZone() {
+    return availabilityZone;
   }
 
   @Override
@@ -80,6 +87,9 @@ public class BaragonAgentMetadata {
     if (!instanceId.equals(metadata.instanceId)) {
       return false;
     }
+    if (!availabilityZone.equals(metadata.availabilityZone)) {
+      return false;
+    }
 
     return true;
   }
@@ -90,6 +100,7 @@ public class BaragonAgentMetadata {
     result = 31 * result + domain.hashCode();
     result = 31 * result + (agentId != null ? agentId.hashCode() : 0);
     result = 31 * result + (instanceId != null ? instanceId.hashCode() : 0);
+    result = 31 * result + (availabilityZone != null ? availabilityZone.hashCode() : 0);
     return result;
   }
 
@@ -100,6 +111,7 @@ public class BaragonAgentMetadata {
             .add("domain", domain)
             .add("agentId", agentId)
             .add("instanceId", instanceId)
+            .add("availabilityZone", availabilityZone)
             .toString();
   }
 }

@@ -10,8 +10,8 @@ import com.google.common.base.Optional;
 public class BaragonKnownAgentMetadata extends BaragonAgentMetadata {
   private long lastSeenAt;
 
-  public static BaragonKnownAgentMetadata fromAgentMetadata(BaragonAgentMetadata agentMetadata, long firstSeenAt) {
-    return new BaragonKnownAgentMetadata(agentMetadata.getBaseAgentUri(), agentMetadata.getAgentId(), agentMetadata.getDomain(), agentMetadata.getInstanceId(), firstSeenAt);
+  public static BaragonKnownAgentMetadata fromAgentMetadata(BaragonAgentMetadata agentMetadata, long lastSeenAt) {
+    return new BaragonKnownAgentMetadata(agentMetadata.getBaseAgentUri(), agentMetadata.getAgentId(), agentMetadata.getDomain(), agentMetadata.getInstanceId(), agentMetadata.getAvailabilityZone(), lastSeenAt);
   }
 
   @JsonCreator
@@ -19,8 +19,9 @@ public class BaragonKnownAgentMetadata extends BaragonAgentMetadata {
                                    @JsonProperty("agentId") String agentId,
                                    @JsonProperty("domain") Optional<String> domain,
                                    @JsonProperty("instanceId") Optional<String> instanceId,
+                                   @JsonProperty("availabilityZone") Optional<String> availabilityZone,
                                    @JsonProperty("lastSeenAt") long lastSeenAt) {
-    super(baseAgentUri, agentId, domain, instanceId);
+    super(baseAgentUri, agentId, domain, instanceId, availabilityZone);
     this.lastSeenAt = lastSeenAt;
   }
 
