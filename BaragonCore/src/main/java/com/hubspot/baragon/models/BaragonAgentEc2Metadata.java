@@ -1,6 +1,7 @@
 package com.hubspot.baragon.models;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLConnection;
@@ -63,7 +64,7 @@ public class BaragonAgentEc2Metadata {
       }
       in.close();
       return Optional.fromNullable(instanceId);
-    } catch (Exception e) {
+    } catch (IOException e) {
       return Optional.absent();
     }
   }
