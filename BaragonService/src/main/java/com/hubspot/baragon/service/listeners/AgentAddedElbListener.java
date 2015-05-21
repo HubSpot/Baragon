@@ -5,6 +5,7 @@ import java.util.List;
 
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.services.elasticloadbalancing.AmazonElasticLoadBalancingClient;
+import com.amazonaws.services.elasticloadbalancing.model.AttachLoadBalancerToSubnetsRequest;
 import com.amazonaws.services.elasticloadbalancing.model.DescribeLoadBalancersRequest;
 import com.amazonaws.services.elasticloadbalancing.model.EnableAvailabilityZonesForLoadBalancerRequest;
 import com.amazonaws.services.elasticloadbalancing.model.Instance;
@@ -50,7 +51,7 @@ public class AgentAddedElbListener extends AbstractAgentWatchListener {
       if (shouldAddInstance(agent, group, groupName)) {
         LOG.debug(String.format("Trying to register agent %s with ELB", agent.getAgentId()));
         for (String elbName : group.get().getSources()) {
-          Instance instance = new Instance(agent.getInstanceId().get());
+          Instance instance = new Instance(agent.getEc2().getInstanceId().get());
           RegisterInstancesWithLoadBalancerRequest request = new RegisterInstancesWithLoadBalancerRequest(elbName, Arrays.asList(instance));
           try {
             elbClient.registerInstancesWithLoadBalancer(request);
@@ -71,17 +72,15 @@ public class AgentAddedElbListener extends AbstractAgentWatchListener {
   }
 
   private void checkAZEnabled(BaragonAgentMetadata agent, String elbName, LoadBalancerDescription elb) {
-    if (agent.getAvailabilityZone().isPresent()) {
-      String availabilityZone = agent.getAvailabilityZone().get();
+    if (agent.getEc2().getAvailabilityZone().isPresent()) {
+      String availabilityZone = agent.getEc2().getAvailabilityZone().get();
       if (elb.getLoadBalancerName().equals(elbName) && elb.getAvailabilityZones().contains(availabilityZone)) {
         try {
-          LOG.info(String.format("Enabling availability zone %s in preparation for agent %s", availabilityZone, agent.getAgentId()));
-          List<String> availabilityZones = elb.getAvailabilityZones();
-          availabilityZones.add(availabilityZone);
-          EnableAvailabilityZonesForLoadBalancerRequest request = new EnableAvailabilityZonesForLoadBalancerRequest();
-          request.setAvailabilityZones(availabilityZones);
-          request.setLoadBalancerName(elb.getLoadBalancerName());
-          elbClient.enableAvailabilityZonesForLoadBalancer(request);
+          if (agent.getEc2().getSubnetId().isPresent()) {
+            addSubnet(agent, elb);
+          } else {
+            enabledAZ(agent, availabilityZone, elb);
+          }
         } catch (AmazonClientException e) {
           LOG.error("Could not enable availability zone %s for elb %s due to error", availabilityZone, elb.getLoadBalancerName(), e);
         }
@@ -91,12 +90,31 @@ public class AgentAddedElbListener extends AbstractAgentWatchListener {
     }
   }
 
+  private void addSubnet(BaragonAgentMetadata agent, LoadBalancerDescription elb) {
+    AttachLoadBalancerToSubnetsRequest request = new AttachLoadBalancerToSubnetsRequest();
+    request.setLoadBalancerName(elb.getLoadBalancerName());
+    List<String> subnets = elb.getSubnets();
+    subnets.add(agent.getEc2().getSubnetId().get());
+    request.setSubnets(subnets);
+    elbClient.attachLoadBalancerToSubnets(request);
+  }
+
+  private void enabledAZ(BaragonAgentMetadata agent, String availabilityZone, LoadBalancerDescription elb) {
+    LOG.info(String.format("Enabling availability zone %s in preparation for agent %s", availabilityZone, agent.getAgentId()));
+    List<String> availabilityZones = elb.getAvailabilityZones();
+    availabilityZones.add(availabilityZone);
+    EnableAvailabilityZonesForLoadBalancerRequest request = new EnableAvailabilityZonesForLoadBalancerRequest();
+    request.setAvailabilityZones(availabilityZones);
+    request.setLoadBalancerName(elb.getLoadBalancerName());
+    elbClient.enableAvailabilityZonesForLoadBalancer(request);
+  }
+
   private boolean shouldAddInstance(BaragonAgentMetadata agent, Optional<BaragonGroup> group, String groupName) {
     if (group.isPresent()) {
       if (!group.get().getSources().isEmpty()) {
-        if (agent.getInstanceId().isPresent()) {
+        if (agent.getEc2().getInstanceId().isPresent()) {
           for (String elbName : group.get().getSources()) {
-            Instance instance = new Instance(agent.getInstanceId().get());
+            Instance instance = new Instance(agent.getEc2().getInstanceId().get());
             LoadBalancerDescription elb = elbByName(elbName);
             if (!elb.getInstances().contains(instance)) {
               checkAZEnabled(agent, elbName, elb);
