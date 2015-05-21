@@ -74,7 +74,7 @@ public class AgentAddedElbListener extends AbstractAgentWatchListener {
   private void checkAZEnabled(BaragonAgentMetadata agent, String elbName, LoadBalancerDescription elb) {
     if (agent.getEc2().getAvailabilityZone().isPresent()) {
       String availabilityZone = agent.getEc2().getAvailabilityZone().get();
-      if (elb.getLoadBalancerName().equals(elbName) && elb.getAvailabilityZones().contains(availabilityZone)) {
+      if (elb.getLoadBalancerName().equals(elbName) && !elb.getAvailabilityZones().contains(availabilityZone)) {
         try {
           if (agent.getEc2().getSubnetId().isPresent()) {
             addSubnet(agent, elb);

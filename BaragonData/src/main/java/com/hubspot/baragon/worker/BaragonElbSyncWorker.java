@@ -137,7 +137,7 @@ public class BaragonElbSyncWorker implements Runnable {
     if (agent.getEc2().getAvailabilityZone().isPresent()) {
       String availabilityZone = agent.getEc2().getAvailabilityZone().get();
       for (LoadBalancerDescription elb : elbs) {
-        if (elb.getLoadBalancerName().equals(elbName) && elb.getAvailabilityZones().contains(availabilityZone)) {
+        if (elb.getLoadBalancerName().equals(elbName) && !elb.getAvailabilityZones().contains(availabilityZone)) {
           try {
             if (agent.getEc2().getSubnetId().isPresent()) {
               addSubnet(agent, elb);
