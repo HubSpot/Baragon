@@ -1,0 +1,20 @@
+zk:
+  image: bobrik/zookeeper
+  net: host
+  environment:
+    ZK_CONFIG: tickTime=2000,initLimit=10,syncLimit=5,maxClientCnxns=128,forceSync=no,clientPort=2181
+    ZK_ID: 1
+  expose:
+    - "2181"
+
+service:
+  image: hubspot/baragonservice
+  net: host
+  environment:
+    BARAGON_TYPE: service
+
+agent:
+  image: hubspot/baragonagent
+  net: host
+  environment:
+    BARAGON_TYPE: agent
