@@ -25,9 +25,38 @@ public class BaragonAgentEc2Metadata {
 
   public static BaragonAgentEc2Metadata fromEnvironment() {
     return new BaragonAgentEc2Metadata(
-      Optional.fromNullable(EC2MetadataUtils.getInstanceId()),
-      Optional.fromNullable(EC2MetadataUtils.getAvailabilityZone()),
+      findInstanceId(),
+      findAvailabilityZone(),
       findSubnet());
+  }
+
+  public static Optional<String> findInstanceId() {
+    try {
+      return Optional.fromNullable(EC2MetadataUtils.getInstanceId());
+    } catch (Exception e) {
+      return Optional.absent();
+    }
+  }
+
+  public static Optional<String> findAvailabilityZone() {
+    try {
+      return Optional.fromNullable(EC2MetadataUtils.getAvailabilityZone());
+    } catch (Exception e) {
+      return Optional.absent();
+    }
+  }
+
+  private static Optional<String> findSubnet() {
+    try {
+      List<EC2MetadataUtils.NetworkInterface> networkInterfaces = EC2MetadataUtils.getNetworkInterfaces();
+      if (EC2MetadataUtils.getNetworkInterfaces().isEmpty()) {
+        return Optional.absent();
+      } else {
+        return Optional.fromNullable(networkInterfaces.get(0).getSubnetId());
+      }
+    } catch (Exception e) {
+      return Optional.absent();
+    }
   }
 
   public Optional<String> getInstanceId() {
@@ -40,14 +69,5 @@ public class BaragonAgentEc2Metadata {
 
   public Optional<String> getSubnetId() {
     return subnetId;
-  }
-
-  private static Optional<String> findSubnet() {
-    List<EC2MetadataUtils.NetworkInterface> networkInterfaces = EC2MetadataUtils.getNetworkInterfaces();
-    if (EC2MetadataUtils.getNetworkInterfaces().isEmpty()) {
-      return Optional.absent();
-    } else {
-      return Optional.fromNullable(networkInterfaces.get(0).getSubnetId());
-    }
   }
 }
