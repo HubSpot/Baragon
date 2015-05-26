@@ -165,6 +165,7 @@ public class BootstrapManaged implements Managed {
       try {
         HttpResponse response = httpClient.execute(request);
         LOG.info(String.format("Got %s response from BaragonService", response.getStatusCode()));
+        LOG.info(response.getAsString());
       } catch (Exception e) {
         LOG.error(String.format("Could not notify service of %s", action), e);
       }
