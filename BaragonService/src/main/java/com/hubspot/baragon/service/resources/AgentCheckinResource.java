@@ -40,6 +40,7 @@ public class AgentCheckinResource {
         elbManager.attemptAddAgent(agent, loadBalancerDatastore.getLoadBalancerGroup(clusterName), clusterName);
       }
     } catch (Exception e) {
+      LOG.error("Could not register agent startup", e);
       return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
     }
     return Response.ok().build();
@@ -54,6 +55,7 @@ public class AgentCheckinResource {
         elbManager.attemptRemoveAgent(agent, loadBalancerDatastore.getLoadBalancerGroup(clusterName), clusterName);
       }
     } catch (Exception e) {
+      LOG.error("Could not register agent shutdown", e);
       return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
     }
     return Response.ok().build();
