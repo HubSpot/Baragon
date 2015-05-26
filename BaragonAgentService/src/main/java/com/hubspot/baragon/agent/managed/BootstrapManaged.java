@@ -165,6 +165,7 @@ public class BootstrapManaged implements Managed {
     leaderLatch.close();
     executorService.shutdown();
     if (configuration.isDeregisterOnGracefulShutdown()) {
+      LOG.info("Notifying BaragonService of shutdown...");
       notifyService("shutdown");
     }
   }
