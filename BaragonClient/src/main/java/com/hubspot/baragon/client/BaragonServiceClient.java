@@ -92,12 +92,12 @@ public class BaragonServiceClient {
     final Optional<String> maybeAuthkey = authkeyProvider.get();
 
     if (maybeAuthkey.isPresent()) {
-      builder.addQueryParam("authkey", maybeAuthkey.get());
+      builder.setQueryParam("authkey").to(maybeAuthkey.get());
     }
 
     if ((queryParams != null) && (!queryParams.isEmpty())) {
       for (Map.Entry<String, String> entry : queryParams.entrySet()) {
-        builder.addQueryParam(entry.getKey(), entry.getValue());
+        builder.setQueryParam(entry.getKey()).to(entry.getValue());
       }
     }
 

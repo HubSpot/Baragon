@@ -11,8 +11,13 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+import com.hubspot.baragon.BaragonDataModule;
 import com.hubspot.baragon.agent.config.BaragonAgentConfiguration;
 import com.hubspot.baragon.agent.workers.AgentHeartbeatWorker;
+import com.hubspot.baragon.data.BaragonWorkerDatastore;
+import com.hubspot.horizon.HttpClient;
+import com.hubspot.horizon.HttpRequest;
+import com.hubspot.horizon.HttpResponse;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.curator.framework.recipes.leader.LeaderLatch;
 import org.slf4j.Logger;
@@ -22,7 +27,6 @@ import com.hubspot.baragon.agent.lbs.BootstrapFileChecker;
 import com.hubspot.baragon.models.BaragonConfigFile;
 import com.hubspot.baragon.models.ServiceContext;
 import com.hubspot.baragon.agent.BaragonAgentServiceModule;
-import com.hubspot.baragon.agent.config.LoadBalancerConfiguration;
 import com.hubspot.baragon.agent.lbs.FilesystemConfigHelper;
 import com.hubspot.baragon.data.BaragonStateDatastore;
 import com.hubspot.baragon.models.BaragonKnownAgentMetadata;
@@ -48,6 +52,10 @@ public class BootstrapManaged implements Managed {
   private final BaragonAgentMetadata baragonAgentMetadata;
   private final ScheduledExecutorService executorService;
   private final AgentHeartbeatWorker agentHeartbeatWorker;
+  private final BaragonWorkerDatastore workerDatastore;
+  private final HttpClient httpClient;
+
+  private static final String SERVICE_CHECKIN_URL_FORMAT = "%s/checkin/%s/%s";
 
   private ScheduledFuture<?> requestWorkerFuture = null;
 
@@ -55,12 +63,14 @@ public class BootstrapManaged implements Managed {
   public BootstrapManaged(BaragonStateDatastore stateDatastore,
                           BaragonKnownAgentsDatastore knownAgentsDatastore,
                           BaragonLoadBalancerDatastore loadBalancerDatastore,
+                          BaragonWorkerDatastore workerDatastore,
                           BaragonAgentConfiguration configuration,
                           FilesystemConfigHelper configHelper,
-                          @Named(BaragonAgentServiceModule.AGENT_LEADER_LATCH) LeaderLatch leaderLatch,
+                          AgentHeartbeatWorker agentHeartbeatWorker,
                           BaragonAgentMetadata baragonAgentMetadata,
                           @Named(BaragonAgentServiceModule.AGENT_SCHEDULED_EXECUTOR) ScheduledExecutorService executorService,
-                          AgentHeartbeatWorker agentHeartbeatWorker) {
+                          @Named(BaragonAgentServiceModule.AGENT_LEADER_LATCH) LeaderLatch leaderLatch,
+                          @Named(BaragonDataModule.BARAGON_AGENT_HTTP_CLIENT) HttpClient httpClient) {
     this.configuration = configuration;
     this.configHelper = configHelper;
     this.stateDatastore = stateDatastore;
@@ -70,6 +80,8 @@ public class BootstrapManaged implements Managed {
     this.baragonAgentMetadata = baragonAgentMetadata;
     this.executorService = executorService;
     this.agentHeartbeatWorker = agentHeartbeatWorker;
+    this.workerDatastore = workerDatastore;
+    this.httpClient = httpClient;
   }
 
   private void applyCurrentConfigs() {
@@ -122,6 +134,9 @@ public class BootstrapManaged implements Managed {
     LOG.info("Starting leader latch...");
     leaderLatch.start();
 
+    LOG.info("Notifying BaragonService...");
+    notifyService("startup");
+
     LOG.info("Updating BaragonGroup information...");
     loadBalancerDatastore.updateGroupInfo(configuration.getLoadBalancerConfiguration().getName(), configuration.getLoadBalancerConfiguration().getDomain());
 
@@ -135,5 +150,24 @@ public class BootstrapManaged implements Managed {
   @Override
   public void stop() throws Exception {
     leaderLatch.close();
+    executorService.shutdown();
+    notifyService("shutdown");
+  }
+
+  private void notifyService(String action) {
+    Collection<String> baseUris = workerDatastore.getBaseUris();
+    if (!baseUris.isEmpty()) {
+      HttpRequest request = HttpRequest.newBuilder()
+        .setUrl(String.format(SERVICE_CHECKIN_URL_FORMAT, baseUris.iterator().next(), baragonAgentMetadata.getAgentId(), action))
+        .setMethod(HttpRequest.Method.POST)
+        .setBody(baragonAgentMetadata)
+        .build();
+      try {
+        HttpResponse response = httpClient.execute(request);
+        LOG.info(String.format("Got %s response from BaragonService", response.getStatusCode()));
+      } catch (Exception e) {
+        LOG.error(String.format("Could not notify service of %s", action), e);
+      }
+    }
   }
 }

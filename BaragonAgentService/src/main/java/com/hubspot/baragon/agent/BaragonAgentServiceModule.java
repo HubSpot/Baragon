@@ -1,6 +1,7 @@
 package com.hubspot.baragon.agent;
 
 import com.hubspot.baragon.config.ElbConfiguration;
+import com.hubspot.baragon.config.HttpClientConfiguration;
 import com.hubspot.baragon.models.BaragonAgentEc2Metadata;
 import io.dropwizard.jetty.HttpConnectorFactory;
 import io.dropwizard.server.SimpleServerFactory;
@@ -114,6 +115,11 @@ public class BaragonAgentServiceModule extends AbstractModule {
   @Provides
   public AuthConfiguration providesAuthConfiguration(BaragonAgentConfiguration configuration) {
     return configuration.getAuthConfiguration();
+  }
+
+  @Provides
+  public HttpClientConfiguration provideHttpClientConfiguration(BaragonAgentConfiguration configuration) {
+    return configuration.getHttpClientConfiguration();
   }
 
   @Provides

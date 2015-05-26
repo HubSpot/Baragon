@@ -1,5 +1,6 @@
 package com.hubspot.baragon.agent.config;
 
+import com.hubspot.baragon.config.HttpClientConfiguration;
 import io.dropwizard.Configuration;
 
 import java.util.Collections;
@@ -63,6 +64,19 @@ public class BaragonAgentConfiguration extends Configuration {
 
   @JsonProperty("heartbeatIntervalSeconds")
   private int heartbeatIntervalSeconds = 15;
+
+  @JsonProperty("httpClient")
+  @NotNull
+  @Valid
+  private HttpClientConfiguration httpClientConfiguration = new HttpClientConfiguration();
+
+  public HttpClientConfiguration getHttpClientConfiguration() {
+    return httpClientConfiguration;
+  }
+
+  public void setHttpClientConfiguration(HttpClientConfiguration httpClientConfiguration) {
+    this.httpClientConfiguration = httpClientConfiguration;
+  }
 
   public boolean isEnableCorsFilter() {
     return enableCorsFilter;

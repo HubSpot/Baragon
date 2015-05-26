@@ -4,6 +4,10 @@ import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicReference;
 
+import com.hubspot.horizon.HttpConfig;
+import com.hubspot.horizon.apache.ApacheHttpClient;
+import com.hubspot.baragon.models.BaragonAuthKey;
+import com.hubspot.horizon.HttpClient;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.framework.recipes.cache.PathChildrenCache;
@@ -25,7 +29,6 @@ import com.hubspot.baragon.config.ElbConfiguration;
 import com.hubspot.baragon.config.ZooKeeperConfiguration;
 import com.hubspot.baragon.data.BaragonAuthDatastore;
 import com.hubspot.baragon.data.BaragonConnectionStateListener;
-import com.hubspot.baragon.models.BaragonAuthKey;
 import com.ning.http.client.AsyncHttpClient;
 import com.ning.http.client.AsyncHttpClientConfig;
 
@@ -35,6 +38,7 @@ public class BaragonDataModule extends AbstractModule {
   public static final String BARAGON_AGENT_REQUEST_TIMEOUT_MS = "baragon.agent.requestTimeoutMs";
 
   public static final String BARAGON_SERVICE_HTTP_CLIENT = "baragon.service.http.client";
+  public static final String BARAGON_AGENT_HTTP_CLIENT = "baragon.agent.http.client";
 
   public static final String BARAGON_SERVICE_WORKER_LAST_START = "baragon.service.worker.lastStartedAt";
   public static final String BARAGON_ELB_WORKER_LAST_START = "baragon.service.elb.lastStartedAt";
@@ -94,6 +98,21 @@ public class BaragonDataModule extends AbstractModule {
     builder.setUserAgent(config.getUserAgent());
 
     return new AsyncHttpClient(builder.build());
+  }
+
+  @Provides
+  @Singleton
+  @Named(BARAGON_AGENT_HTTP_CLIENT)
+  public HttpClient providesApacheHttpClient(HttpClientConfiguration config, ObjectMapper objectMapper) {
+    HttpConfig.Builder configBuilder = HttpConfig.newBuilder()
+      .setRequestTimeoutSeconds(config.getRequestTimeoutInMs() / 1000)
+      .setUserAgent(config.getUserAgent())
+      .setConnectTimeoutSeconds(config.getConnectionTimeoutInMs() / 1000)
+      .setFollowRedirects(true)
+      .setMaxRetries(config.getMaxRequestRetry())
+      .setObjectMapper(objectMapper);
+
+    return new ApacheHttpClient(configBuilder.build());
   }
 
   @Provides
