@@ -12,6 +12,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+import com.google.common.base.Throwables;
 import com.hubspot.baragon.BaragonDataModule;
 import com.hubspot.baragon.agent.config.BaragonAgentConfiguration;
 import com.hubspot.baragon.agent.workers.AgentHeartbeatWorker;
@@ -125,6 +126,9 @@ public class BootstrapManaged implements Managed {
         configHelper.checkAndReload();
       } catch (Exception e) {
         LOG.error(String.format("Caught exception while applying and parsing configs"), e);
+        if (configuration.isExitOnStartupError()) {
+          Throwables.propagate(e);
+        }
       }
 
       LOG.info("Applied {} services in {}ms", todo.size(), stopwatch.elapsed(TimeUnit.MILLISECONDS));
@@ -141,8 +145,10 @@ public class BootstrapManaged implements Managed {
     LOG.info("Starting leader latch...");
     leaderLatch.start();
 
-    LOG.info("Notifying BaragonService...");
-    notifyService("startup");
+    if (configuration.isRegisterOnStartup()) {
+      LOG.info("Notifying BaragonService...");
+      notifyService("startup");
+    }
 
     LOG.info("Updating BaragonGroup information...");
     loadBalancerDatastore.updateGroupInfo(configuration.getLoadBalancerConfiguration().getName(), configuration.getLoadBalancerConfiguration().getDomain());
@@ -158,7 +164,9 @@ public class BootstrapManaged implements Managed {
   public void stop() throws Exception {
     leaderLatch.close();
     executorService.shutdown();
-    notifyService("shutdown");
+    if (configuration.isDeregisterOnGracefulShutdown()) {
+      notifyService("shutdown");
+    }
   }
 
   private void notifyService(String action) {
@@ -183,6 +191,9 @@ public class BootstrapManaged implements Managed {
         }
       } catch (Exception e) {
         LOG.error(String.format("Could not notify service of %s", action), e);
+        if (action.equals("startup") && configuration.isExitOnStartupError()) {
+          Throwables.propagate(e);
+        }
       }
     }
   }

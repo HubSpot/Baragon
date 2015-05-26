@@ -170,4 +170,20 @@ public class BaragonAgentConfiguration extends Configuration {
   public void setHeartbeatIntervalSeconds(int heartbeatIntervalSeconds) {
     this.heartbeatIntervalSeconds = heartbeatIntervalSeconds;
   }
+
+  public boolean isRegisterOnStartup() {
+    return registerOnStartup;
+  }
+
+  public void setRegisterOnStartup(boolean registerOnStartup) {
+    this.registerOnStartup = registerOnStartup;
+  }
+
+  public boolean isDeregisterOnGracefulShutdown() {
+    return deregisterOnGracefulShutdown;
+  }
+
+  public boolean isExitOnStartupError() {
+    return exitOnStartupError;
+  }
 }
