@@ -158,7 +158,7 @@ public class BootstrapManaged implements Managed {
     Collection<String> baseUris = workerDatastore.getBaseUris();
     if (!baseUris.isEmpty()) {
       HttpRequest request = HttpRequest.newBuilder()
-        .setUrl(String.format(SERVICE_CHECKIN_URL_FORMAT, baseUris.iterator().next(), baragonAgentMetadata.getAgentId(), action))
+        .setUrl(String.format(SERVICE_CHECKIN_URL_FORMAT, baseUris.iterator().next(), configuration.getLoadBalancerConfiguration().getName(), action))
         .setMethod(HttpRequest.Method.POST)
         .setBody(baragonAgentMetadata)
         .build();
