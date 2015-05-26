@@ -74,10 +74,10 @@ public class BaragonAgentConfiguration extends Configuration {
   private boolean registerOnStartup = true;
 
   @JsonProperty("deregisterOnGracefulShutdown")
-  private final boolean deregisterOnGracefulShutdown = false;
+  private boolean deregisterOnGracefulShutdown = false;
 
   @JsonProperty("exitOnStartupError")
-  private final boolean exitOnStartupError = false;
+  private boolean exitOnStartupError = false;
 
   public HttpClientConfiguration getHttpClientConfiguration() {
     return httpClientConfiguration;
@@ -183,7 +183,15 @@ public class BaragonAgentConfiguration extends Configuration {
     return deregisterOnGracefulShutdown;
   }
 
+  public void setDeregisterOnGracefulShutdown(boolean deregisterOnGracefulShutdown) {
+    this.deregisterOnGracefulShutdown = deregisterOnGracefulShutdown;
+  }
+
   public boolean isExitOnStartupError() {
     return exitOnStartupError;
+  }
+
+  public void setExitOnStartupError(boolean exitOnStartupError) {
+    this.exitOnStartupError = exitOnStartupError;
   }
 }
