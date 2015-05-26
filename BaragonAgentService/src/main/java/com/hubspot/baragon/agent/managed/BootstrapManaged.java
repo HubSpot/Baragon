@@ -3,6 +3,7 @@ package com.hubspot.baragon.agent.managed;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -14,7 +15,10 @@ import java.util.concurrent.TimeUnit;
 import com.hubspot.baragon.BaragonDataModule;
 import com.hubspot.baragon.agent.config.BaragonAgentConfiguration;
 import com.hubspot.baragon.agent.workers.AgentHeartbeatWorker;
+import com.hubspot.baragon.data.BaragonAuthDatastore;
 import com.hubspot.baragon.data.BaragonWorkerDatastore;
+import com.hubspot.baragon.exceptions.AgentStartupException;
+import com.hubspot.baragon.models.BaragonAuthKey;
 import com.hubspot.horizon.HttpClient;
 import com.hubspot.horizon.HttpRequest;
 import com.hubspot.horizon.HttpResponse;
@@ -47,6 +51,7 @@ public class BootstrapManaged implements Managed {
   private final FilesystemConfigHelper configHelper;
   private final BaragonStateDatastore stateDatastore;
   private final BaragonLoadBalancerDatastore loadBalancerDatastore;
+  private final BaragonAuthDatastore authDatastore;
   private final LeaderLatch leaderLatch;
   private final BaragonKnownAgentsDatastore knownAgentsDatastore;
   private final BaragonAgentMetadata baragonAgentMetadata;
@@ -65,6 +70,7 @@ public class BootstrapManaged implements Managed {
                           BaragonLoadBalancerDatastore loadBalancerDatastore,
                           BaragonWorkerDatastore workerDatastore,
                           BaragonAgentConfiguration configuration,
+                          BaragonAuthDatastore authDatastore,
                           FilesystemConfigHelper configHelper,
                           AgentHeartbeatWorker agentHeartbeatWorker,
                           BaragonAgentMetadata baragonAgentMetadata,
@@ -81,6 +87,7 @@ public class BootstrapManaged implements Managed {
     this.executorService = executorService;
     this.agentHeartbeatWorker = agentHeartbeatWorker;
     this.workerDatastore = workerDatastore;
+    this.authDatastore = authDatastore;
     this.httpClient = httpClient;
   }
 
@@ -157,15 +164,23 @@ public class BootstrapManaged implements Managed {
   private void notifyService(String action) {
     Collection<String> baseUris = workerDatastore.getBaseUris();
     if (!baseUris.isEmpty()) {
-      HttpRequest request = HttpRequest.newBuilder()
+      HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
         .setUrl(String.format(SERVICE_CHECKIN_URL_FORMAT, baseUris.iterator().next(), configuration.getLoadBalancerConfiguration().getName(), action))
         .setMethod(HttpRequest.Method.POST)
-        .setBody(baragonAgentMetadata)
-        .build();
+        .setBody(baragonAgentMetadata);
+
+      Map<String, BaragonAuthKey> authKeys = authDatastore.getAuthKeyMap();
+      if (!authKeys.isEmpty()) {
+        requestBuilder.setQueryParam("authkey").to(authKeys.entrySet().iterator().next().getValue().getValue());
+      }
+
+      HttpRequest request = requestBuilder.build();
       try {
         HttpResponse response = httpClient.execute(request);
         LOG.info(String.format("Got %s response from BaragonService", response.getStatusCode()));
-        LOG.info(response.getAsString());
+        if (response.isError()) {
+          throw new AgentStartupException(String.format("Bad response received from BaragonService %s", response.getAsString()));
+        }
       } catch (Exception e) {
         LOG.error(String.format("Could not notify service of %s", action), e);
       }

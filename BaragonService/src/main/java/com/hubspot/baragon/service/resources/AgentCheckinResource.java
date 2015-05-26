@@ -36,13 +36,10 @@ public class AgentCheckinResource {
   public Response addAgent(@PathParam("clusterName") String clusterName, BaragonAgentMetadata agent) {
     LOG.info(String.format("Notified of startup for agent %s", agent.getAgentId()));
     try {
-      LOG.info("checking if configured");
-      LOG.info(String.format("%S", elbManager.isElbConfigured()));
       if (elbManager.isElbConfigured()) {
         elbManager.attemptAddAgent(agent, loadBalancerDatastore.getLoadBalancerGroup(clusterName), clusterName);
       }
     } catch (Exception e) {
-      LOG.info(e.toString());
       LOG.error("Could not register agent startup", e);
       return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
     }
@@ -54,13 +51,10 @@ public class AgentCheckinResource {
   public Response removeAgent(@PathParam("clusterName") String clusterName, BaragonAgentMetadata agent) {
     LOG.info(String.format("Notified of shutdown for agent %s", agent.getAgentId()));
     try {
-      LOG.info("checking if configured");
-      LOG.info(String.format("%S", elbManager.isElbConfigured()));
       if (elbManager.isElbConfigured()) {
         elbManager.attemptRemoveAgent(agent, loadBalancerDatastore.getLoadBalancerGroup(clusterName), clusterName);
       }
     } catch (Exception e) {
-      LOG.info(e.toString());
       LOG.error("Could not register agent shutdown", e);
       return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
     }

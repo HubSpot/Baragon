@@ -70,6 +70,15 @@ public class BaragonAgentConfiguration extends Configuration {
   @Valid
   private HttpClientConfiguration httpClientConfiguration = new HttpClientConfiguration();
 
+  @JsonProperty("registerOnStartup")
+  private boolean registerOnStartup = true;
+
+  @JsonProperty("deregisterOnGracefulShutdown")
+  private final boolean deregisterOnGracefulShutdown = false;
+
+  @JsonProperty("exitOnStartupError")
+  private final boolean exitOnStartupError = false;
+
   public HttpClientConfiguration getHttpClientConfiguration() {
     return httpClientConfiguration;
   }
