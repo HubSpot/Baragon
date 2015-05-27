@@ -3,7 +3,6 @@ package com.hubspot.baragon.service;
 import com.google.common.base.Optional;
 import com.hubspot.baragon.config.ElbConfiguration;
 import com.hubspot.baragon.service.listeners.AbstractLatchListener;
-import com.hubspot.baragon.service.listeners.AgentAddedElbListener;
 import com.hubspot.baragon.service.listeners.ElbSyncWorkerListener;
 import com.hubspot.baragon.service.listeners.RequestWorkerListener;
 import io.dropwizard.jetty.HttpConnectorFactory;
@@ -46,7 +45,6 @@ public class BaragonServiceModule extends AbstractModule {
     Multibinder<AbstractLatchListener> latchBinder = Multibinder.newSetBinder(binder(), AbstractLatchListener.class);
     latchBinder.addBinding().to(RequestWorkerListener.class);
     latchBinder.addBinding().to(ElbSyncWorkerListener.class);
-    latchBinder.addBinding().to(AgentAddedElbListener.class);
   }
 
   @Provides

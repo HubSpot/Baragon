@@ -3,6 +3,7 @@ package com.hubspot.baragon.agent.managed;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -11,8 +12,17 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+import com.google.common.base.Throwables;
+import com.hubspot.baragon.BaragonDataModule;
 import com.hubspot.baragon.agent.config.BaragonAgentConfiguration;
 import com.hubspot.baragon.agent.workers.AgentHeartbeatWorker;
+import com.hubspot.baragon.data.BaragonAuthDatastore;
+import com.hubspot.baragon.data.BaragonWorkerDatastore;
+import com.hubspot.baragon.exceptions.AgentStartupException;
+import com.hubspot.baragon.models.BaragonAuthKey;
+import com.hubspot.horizon.HttpClient;
+import com.hubspot.horizon.HttpRequest;
+import com.hubspot.horizon.HttpResponse;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.curator.framework.recipes.leader.LeaderLatch;
 import org.slf4j.Logger;
@@ -22,7 +32,6 @@ import com.hubspot.baragon.agent.lbs.BootstrapFileChecker;
 import com.hubspot.baragon.models.BaragonConfigFile;
 import com.hubspot.baragon.models.ServiceContext;
 import com.hubspot.baragon.agent.BaragonAgentServiceModule;
-import com.hubspot.baragon.agent.config.LoadBalancerConfiguration;
 import com.hubspot.baragon.agent.lbs.FilesystemConfigHelper;
 import com.hubspot.baragon.data.BaragonStateDatastore;
 import com.hubspot.baragon.models.BaragonKnownAgentMetadata;
@@ -43,11 +52,16 @@ public class BootstrapManaged implements Managed {
   private final FilesystemConfigHelper configHelper;
   private final BaragonStateDatastore stateDatastore;
   private final BaragonLoadBalancerDatastore loadBalancerDatastore;
+  private final BaragonAuthDatastore authDatastore;
   private final LeaderLatch leaderLatch;
   private final BaragonKnownAgentsDatastore knownAgentsDatastore;
   private final BaragonAgentMetadata baragonAgentMetadata;
   private final ScheduledExecutorService executorService;
   private final AgentHeartbeatWorker agentHeartbeatWorker;
+  private final BaragonWorkerDatastore workerDatastore;
+  private final HttpClient httpClient;
+
+  private static final String SERVICE_CHECKIN_URL_FORMAT = "%s/checkin/%s/%s";
 
   private ScheduledFuture<?> requestWorkerFuture = null;
 
@@ -55,12 +69,15 @@ public class BootstrapManaged implements Managed {
   public BootstrapManaged(BaragonStateDatastore stateDatastore,
                           BaragonKnownAgentsDatastore knownAgentsDatastore,
                           BaragonLoadBalancerDatastore loadBalancerDatastore,
+                          BaragonWorkerDatastore workerDatastore,
                           BaragonAgentConfiguration configuration,
+                          BaragonAuthDatastore authDatastore,
                           FilesystemConfigHelper configHelper,
-                          @Named(BaragonAgentServiceModule.AGENT_LEADER_LATCH) LeaderLatch leaderLatch,
+                          AgentHeartbeatWorker agentHeartbeatWorker,
                           BaragonAgentMetadata baragonAgentMetadata,
                           @Named(BaragonAgentServiceModule.AGENT_SCHEDULED_EXECUTOR) ScheduledExecutorService executorService,
-                          AgentHeartbeatWorker agentHeartbeatWorker) {
+                          @Named(BaragonAgentServiceModule.AGENT_LEADER_LATCH) LeaderLatch leaderLatch,
+                          @Named(BaragonDataModule.BARAGON_AGENT_HTTP_CLIENT) HttpClient httpClient) {
     this.configuration = configuration;
     this.configHelper = configHelper;
     this.stateDatastore = stateDatastore;
@@ -70,6 +87,9 @@ public class BootstrapManaged implements Managed {
     this.baragonAgentMetadata = baragonAgentMetadata;
     this.executorService = executorService;
     this.agentHeartbeatWorker = agentHeartbeatWorker;
+    this.workerDatastore = workerDatastore;
+    this.authDatastore = authDatastore;
+    this.httpClient = httpClient;
   }
 
   private void applyCurrentConfigs() {
@@ -106,6 +126,9 @@ public class BootstrapManaged implements Managed {
         configHelper.checkAndReload();
       } catch (Exception e) {
         LOG.error(String.format("Caught exception while applying and parsing configs"), e);
+        if (configuration.isExitOnStartupError()) {
+          Throwables.propagate(e);
+        }
       }
 
       LOG.info("Applied {} services in {}ms", todo.size(), stopwatch.elapsed(TimeUnit.MILLISECONDS));
@@ -122,6 +145,11 @@ public class BootstrapManaged implements Managed {
     LOG.info("Starting leader latch...");
     leaderLatch.start();
 
+    if (configuration.isRegisterOnStartup()) {
+      LOG.info("Notifying BaragonService...");
+      notifyService("startup");
+    }
+
     LOG.info("Updating BaragonGroup information...");
     loadBalancerDatastore.updateGroupInfo(configuration.getLoadBalancerConfiguration().getName(), configuration.getLoadBalancerConfiguration().getDomain());
 
@@ -135,5 +163,39 @@ public class BootstrapManaged implements Managed {
   @Override
   public void stop() throws Exception {
     leaderLatch.close();
+    executorService.shutdown();
+    if (configuration.isDeregisterOnGracefulShutdown()) {
+      LOG.info("Notifying BaragonService of shutdown...");
+      notifyService("shutdown");
+    }
+  }
+
+  private void notifyService(String action) {
+    Collection<String> baseUris = workerDatastore.getBaseUris();
+    if (!baseUris.isEmpty()) {
+      HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
+        .setUrl(String.format(SERVICE_CHECKIN_URL_FORMAT, baseUris.iterator().next(), configuration.getLoadBalancerConfiguration().getName(), action))
+        .setMethod(HttpRequest.Method.POST)
+        .setBody(baragonAgentMetadata);
+
+      Map<String, BaragonAuthKey> authKeys = authDatastore.getAuthKeyMap();
+      if (!authKeys.isEmpty()) {
+        requestBuilder.setQueryParam("authkey").to(authKeys.entrySet().iterator().next().getValue().getValue());
+      }
+
+      HttpRequest request = requestBuilder.build();
+      try {
+        HttpResponse response = httpClient.execute(request);
+        LOG.info(String.format("Got %s response from BaragonService", response.getStatusCode()));
+        if (response.isError()) {
+          throw new AgentStartupException(String.format("Bad response received from BaragonService %s", response.getAsString()));
+        }
+      } catch (Exception e) {
+        LOG.error(String.format("Could not notify service of %s", action), e);
+        if (action.equals("startup") && configuration.isExitOnStartupError()) {
+          Throwables.propagate(e);
+        }
+      }
+    }
   }
 }

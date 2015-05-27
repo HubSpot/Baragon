@@ -1,5 +1,6 @@
 package com.hubspot.baragon.agent.config;
 
+import com.hubspot.baragon.config.HttpClientConfiguration;
 import io.dropwizard.Configuration;
 
 import java.util.Collections;
@@ -63,6 +64,28 @@ public class BaragonAgentConfiguration extends Configuration {
 
   @JsonProperty("heartbeatIntervalSeconds")
   private int heartbeatIntervalSeconds = 15;
+
+  @JsonProperty("httpClient")
+  @NotNull
+  @Valid
+  private HttpClientConfiguration httpClientConfiguration = new HttpClientConfiguration();
+
+  @JsonProperty("registerOnStartup")
+  private boolean registerOnStartup = true;
+
+  @JsonProperty("deregisterOnGracefulShutdown")
+  private boolean deregisterOnGracefulShutdown = false;
+
+  @JsonProperty("exitOnStartupError")
+  private boolean exitOnStartupError = false;
+
+  public HttpClientConfiguration getHttpClientConfiguration() {
+    return httpClientConfiguration;
+  }
+
+  public void setHttpClientConfiguration(HttpClientConfiguration httpClientConfiguration) {
+    this.httpClientConfiguration = httpClientConfiguration;
+  }
 
   public boolean isEnableCorsFilter() {
     return enableCorsFilter;
@@ -146,5 +169,29 @@ public class BaragonAgentConfiguration extends Configuration {
 
   public void setHeartbeatIntervalSeconds(int heartbeatIntervalSeconds) {
     this.heartbeatIntervalSeconds = heartbeatIntervalSeconds;
+  }
+
+  public boolean isRegisterOnStartup() {
+    return registerOnStartup;
+  }
+
+  public void setRegisterOnStartup(boolean registerOnStartup) {
+    this.registerOnStartup = registerOnStartup;
+  }
+
+  public boolean isDeregisterOnGracefulShutdown() {
+    return deregisterOnGracefulShutdown;
+  }
+
+  public void setDeregisterOnGracefulShutdown(boolean deregisterOnGracefulShutdown) {
+    this.deregisterOnGracefulShutdown = deregisterOnGracefulShutdown;
+  }
+
+  public boolean isExitOnStartupError() {
+    return exitOnStartupError;
+  }
+
+  public void setExitOnStartupError(boolean exitOnStartupError) {
+    this.exitOnStartupError = exitOnStartupError;
   }
 }
