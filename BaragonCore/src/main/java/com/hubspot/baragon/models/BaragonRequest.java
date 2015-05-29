@@ -41,7 +41,7 @@ public class BaragonRequest {
                         @JsonProperty("loadBalancerService") BaragonService loadBalancerService,
                         @JsonProperty("addUpstreams") List<UpstreamInfo> addUpstreams,
                         @JsonProperty("removeUpstreams") List<UpstreamInfo> removeUpstreams,
-                        @JsonProperty("overrideUpstreams") List<UpstreamInfo> replaceUpstreams,
+                        @JsonProperty("replaceUpstreams") List<UpstreamInfo> replaceUpstreams,
                         @JsonProperty("replaceServiceId") Optional<String> replaceServiceId,
                         @JsonProperty("action") Optional<RequestAction> action) {
     this.loadBalancerRequestId = loadBalancerRequestId;
