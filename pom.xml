@@ -82,15 +82,17 @@
         <version>${project.version}</version>
       </dependency>
 
+      <!-- Dropwizard -->
+      <dependency>
+        <groupId>com.hubspot.dropwizard</groupId>
+        <artifactId>dropwizard-guice</artifactId>
+        <version>${dropwizard.version}</version>
+      </dependency>
+
+      <!-- Horizon -->
       <dependency>
         <groupId>com.hubspot</groupId>
         <artifactId>HorizonCore</artifactId>
-        <version>${horizon.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>com.hubspot</groupId>
-        <artifactId>HorizonApache</artifactId>
         <version>${horizon.version}</version>
       </dependency>
 
@@ -101,11 +103,12 @@
       </dependency>
 
       <dependency>
-        <groupId>com.hubspot.dropwizard</groupId>
-        <artifactId>dropwizard-guice</artifactId>
-        <version>${dropwizard.version}</version>
+        <groupId>com.hubspot</groupId>
+        <artifactId>HorizonApache</artifactId>
+        <version>${horizon.version}</version>
       </dependency>
 
+      <!-- Ringleader -->
       <dependency>
         <groupId>com.hubspot</groupId>
         <artifactId>Ringleader</artifactId>
