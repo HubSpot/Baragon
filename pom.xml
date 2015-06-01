@@ -29,6 +29,8 @@
   </developers>
 
   <properties>
+    <horizon.version>0.0.14</horizon.version>           
+    <ringleader.version>0.1.4</ringleader.version>           
     <baragon.jar.name.format>${project.artifactId}-${project.version}</baragon.jar.name.format>
   </properties>
 
@@ -83,31 +85,31 @@
       <dependency>
         <groupId>com.hubspot</groupId>
         <artifactId>HorizonCore</artifactId>
-        <version>0.0.13</version>
+        <version>${horizon.version}</version>
       </dependency>
 
       <dependency>
         <groupId>com.hubspot</groupId>
         <artifactId>HorizonApache</artifactId>
-        <version>0.0.13</version>
+        <version>${horizon.version}</version>
       </dependency>
 
       <dependency>
         <groupId>com.hubspot</groupId>
         <artifactId>HorizonNing</artifactId>
-        <version>0.0.13</version>
+        <version>${horizon.version}</version>
       </dependency>
 
       <dependency>
         <groupId>com.hubspot.dropwizard</groupId>
         <artifactId>dropwizard-guice</artifactId>
-        <version>0.7.1</version>
+        <version>${dropwizard.version}</version>
       </dependency>
 
       <dependency>
         <groupId>com.hubspot</groupId>
         <artifactId>Ringleader</artifactId>
-        <version>0.1.4</version>
+        <version>${ringleader.version}</version>
       </dependency>
 
     </dependencies>
