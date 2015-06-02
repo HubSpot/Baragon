@@ -19,6 +19,8 @@ agent1:
   environment:
     BARAGON_TYPE: agent
     NGINX_PORT: 80
+    BARAGON_PORT: 8882
+    BARAGON_AGENT_GROUP: test
   volumes:
     - ./docker/configs/1/custom:/etc/nginx/conf.d/custom
     - ./docker/configs/1/proxy:/etc/nginx/conf.d/proxy
@@ -30,6 +32,8 @@ agent2:
   environment:
     BARAGON_TYPE: agent
     NGINX_PORT: 81
+    BARAGON_PORT: 8883
+    BARAGON_AGENT_GROUP: test
   volumes:
     - ./docker/configs/2/custom:/etc/nginx/conf.d/custom
     - ./docker/configs/2/proxy:/etc/nginx/conf.d/proxy

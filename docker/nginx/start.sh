@@ -1,3 +1,4 @@
 #!/bin/bash
-/usr/bin/sed -i "s/##NGINX_PORT##/${NGINX_PORT:=80}/" /etc/nginx/conf.d/vhost.conf
+echo "Starting nginx on port ${NGINX_PORT:=80}"
+/bin/sed -i "s/NGINX_PORT_PLACEHOLDER/${NGINX_PORT:=80}/" /etc/nginx/conf.d/vhost.conf
 nginx

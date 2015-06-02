@@ -9,7 +9,7 @@ ENV JAVA_PACKAGE       server-jre
 
 RUN apt-get update && \
     apt-get upgrade -y && \
-    apt-get install -y python-setuptools tar nginx curl && \
+    apt-get install -y python-setuptools tar nginx curl sed && \
     easy_install supervisor && \
     mkdir -p /etc/nginx/conf.d/{custom,proxy,upstreams} && \
     curl -kLOH "Cookie: gpw_e24=http%3A%2F%2Fwww.oracle.com%2F; oraclelicense=accept-securebackup-cookie" \
