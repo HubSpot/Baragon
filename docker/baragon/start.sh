@@ -3,6 +3,7 @@ set -o errexit -o nounset -o pipefail
 
 TYPE=${BARAGON_TYPE:=agent}
 
+[[ ! ${BARAGON_AGENT_DOMAIN:-} ]] || args+=( -Ddw.loadBalancerConfig.domain="$BARAGON_AGENT_DOMAIN" )
 [[ ! ${BARAGON_AGENT_GROUP:-} ]] || args+=( -Ddw.loadBalancerConfig.name="$BARAGON_AGENT_GROUP" )
 [[ ! ${BARAGON_ZK_NAMESPACE:-} ]] || args+=( -Ddw.zookeeper.zkNamespace="$BARAGON_ZK_NAMESPACE" )
 [[ ! ${BARAGON_ZK_QUORUM:-} ]] || args+=( -Ddw.zookeeper.quorum="$BARAGON_ZK_QUORUM" )

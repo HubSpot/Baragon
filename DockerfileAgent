@@ -26,6 +26,7 @@ COPY docker/supervisor /etc/supervisor
 COPY docker/baragon /etc/baragon
 COPY docker/nginx/conf.d /etc/nginx/conf.d
 COPY docker/nginx/nginx.conf /etc/nginx/nginx.conf
+COPY docker/nginx/start.sh /etc/nginx/start.sh
 
 ENV BARAGON_TYPE agent
 

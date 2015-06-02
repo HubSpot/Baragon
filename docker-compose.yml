@@ -13,8 +13,24 @@ service:
   environment:
     BARAGON_TYPE: service
 
-agent:
+agent1:
   image: hubspot/baragonagent
   net: host
   environment:
     BARAGON_TYPE: agent
+    NGINX_PORT: 80
+  volumes:
+    - ./docker/configs/1/custom:/etc/nginx/conf.d/custom
+    - ./docker/configs/1/proxy:/etc/nginx/conf.d/proxy
+    - ./docker/configs/1/upstreams:/etc/nginx/conf.d/upstreams
+
+agent2:
+  image: hubspot/baragonagent
+  net: host
+  environment:
+    BARAGON_TYPE: agent
+    NGINX_PORT: 81
+  volumes:
+    - ./docker/configs/2/custom:/etc/nginx/conf.d/custom
+    - ./docker/configs/2/proxy:/etc/nginx/conf.d/proxy
+    - ./docker/configs/2/upstreams:/etc/nginx/conf.d/upstreams

@@ -13,6 +13,7 @@ Baragon is a system for automating load balancer configuration updates. It pairs
   - [Detailed Setup Guide](docs/managing_baragon.md)
   - [Example Baragon Service Configuration](docs/baragon_service_config.yaml)
   - [Example Baragon Agent Configuration](docs/baragon_agent_config.yaml)
+- [Quick Start With Docker Compose](#docker)
 - [Quick Start With Vagrant](#vagrant)
 - [BaragonUI](#ui)
 - [API Docs](docs/baragon_api_docs.md)
@@ -64,6 +65,22 @@ For more details on configuring and using Baragon, check out the [detailed setup
 3. Copy `BaragonService-*-SNAPSHOT.jar` and `$SERVICE_CONFIG_YAML` onto one or more hosts, and start the service via `java -jar BaragonService-*-SNAPSHOT.jar server $SERVICE_CONFIG_YAML`.
 
 4. Copy `BaragonAgentService-*-SNAPSHOT.jar` and `$AGENT_CONFIG_YAML` onto each of your load balancer hosts. Start the BaragonAgent service via `java -jar BaragonAgentService-*-SNAPSHOT.jar server $AGENT_CONFIG_YAML`.
+
+<a id="docker"></a>
+## Quickstart with Docker Compose
+
+To get an example cluster up and running, you can install [docker](https://docs.docker.com/installation/) and [docker-compose](https://docs.docker.com/compose/#installation-and-set-up).
+
+Simply run `docker-compose up` to bring up:
+- zookeper container
+- Baragon Service container
+- Baragon Agent + Nginx container
+
+The Baragon UI will be available at [localhost:8080](http://localhost:8080) and nginx at [localhost:80](http://localhost:80).
+
+*If using boot2docker replace localhost with the `boot2docker ip`
+
+Nginx's config directories that BaragonAgent writes to will also be mounted as volumes in the `docker/configs` folder on your local machine.
 
 <a id="vagrant"></a>
 ## Quickstart with Vagrant

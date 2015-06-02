@@ -24,3 +24,5 @@ BaragonUI/bower_components/*
 BaragonUI/brunchlog
 BaragonUI/app/env.coffee
 BaragonUI/.vee
+
+docker/configs/*
