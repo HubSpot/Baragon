@@ -11,7 +11,9 @@ RUN apt-get update && \
     apt-get upgrade -y && \
     apt-get install -y python-setuptools tar nginx curl sed && \
     easy_install supervisor && \
-    mkdir -p /etc/nginx/conf.d/{custom,proxy,upstreams} && \
+    mkdir -p /etc/nginx/conf.d/custom && \
+    mkdir -p /etc/nginx/conf.d/proxy && \
+    mkdir -p /etc/nginx/conf.d/upstreams && \
     curl -kLOH "Cookie: gpw_e24=http%3A%2F%2Fwww.oracle.com%2F; oraclelicense=accept-securebackup-cookie" \
     http://download.oracle.com/otn-pub/java/jdk/${JAVA_VERSION_MAJOR}u${JAVA_VERSION_MINOR}-b${JAVA_VERSION_BUILD}/${JAVA_PACKAGE}-${JAVA_VERSION_MAJOR}u${JAVA_VERSION_MINOR}-linux-x64.tar.gz && \
     gunzip ${JAVA_PACKAGE}-${JAVA_VERSION_MAJOR}u${JAVA_VERSION_MINOR}-linux-x64.tar.gz && \
