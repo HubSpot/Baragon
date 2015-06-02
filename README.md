@@ -74,11 +74,11 @@ To get an example cluster up and running, you can install [docker](https://docs.
 Simply run `docker-compose up` to bring up:
 - zookeper container
 - Baragon Service container
-- Baragon Agent + Nginx container
+- Two Baragon Agent + Nginx containers
 
 The Baragon UI will be available at [localhost:8080](http://localhost:8080) and nginx at [localhost:80](http://localhost:80).
 
-*If using boot2docker replace localhost with the `boot2docker ip`
+***If using boot2docker replace localhost with the `boot2docker ip`***
 
 Nginx's config directories that BaragonAgent writes to will also be mounted as volumes in the `docker/configs` folder on your local machine.
 
