@@ -14,6 +14,7 @@ public class ServiceContext {
   private final Collection<UpstreamInfo> upstreams;
   private final Long timestamp;
   private final boolean present;
+  private final boolean rootPath;
 
   @JsonCreator
   public ServiceContext(@JsonProperty("service") BaragonService service,
@@ -24,6 +25,7 @@ public class ServiceContext {
     this.timestamp = timestamp;
     this.upstreams = Objects.firstNonNull(upstreams, Collections.<UpstreamInfo>emptyList());
     this.present = present;
+    this.rootPath = service.getServiceBasePath().equals("/");
   }
 
   public BaragonService getService() {
@@ -40,6 +42,10 @@ public class ServiceContext {
 
   public boolean isPresent() {
     return present;
+  }
+
+  public boolean isRootPath() {
+    return rootPath;
   }
 
   @Override
@@ -65,6 +71,9 @@ public class ServiceContext {
     if (!upstreams.equals(that.upstreams)) {
       return false;
     }
+    if (rootPath != that.rootPath) {
+      return false;
+    }
 
     return true;
   }
@@ -75,6 +84,7 @@ public class ServiceContext {
     result = 31 * result + upstreams.hashCode();
     result = 31 * result + timestamp.hashCode();
     result = 31 * result + (present ? 1 : 0);
+    result = 31 * result + (rootPath ? 1 : 0);
     return result;
   }
 
@@ -85,6 +95,7 @@ public class ServiceContext {
         ", upstreams=" + upstreams +
         ", timestamp=" + timestamp +
         ", present=" + present +
+        ", rootPath=" + rootPath +
         ']';
   }
 }
