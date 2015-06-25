@@ -27,6 +27,6 @@ COPY docker/baragon /etc/baragon
 
 ENV BARAGON_TYPE service
 
-COPY BaragonService/target/BaragonService-0.1.7-SNAPSHOT-shaded.jar /etc/baragon/service.jar
+COPY BaragonService/target/BaragonService-0.1.8-SNAPSHOT-shaded.jar /etc/baragon/service.jar
 
 CMD /usr/local/bin/supervisord -c /etc/supervisor/supervisord.conf

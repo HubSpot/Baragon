@@ -32,6 +32,6 @@ COPY docker/nginx/start.sh /etc/nginx/start.sh
 
 ENV BARAGON_TYPE agent
 
-COPY BaragonAgentService/target/BaragonAgentService-0.1.7-SNAPSHOT-shaded.jar /etc/baragon/agent.jar
+COPY BaragonAgentService/target/BaragonAgentService-0.1.8-SNAPSHOT-shaded.jar /etc/baragon/agent.jar
 
 CMD /usr/local/bin/supervisord -c /etc/supervisor/supervisord.conf
