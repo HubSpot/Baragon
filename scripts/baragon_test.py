@@ -50,7 +50,7 @@ def get_request_response(requestId):
     params = {'authkey': AUTH_KEY}
     try:
         response = requests.get(uri, params=params)
-        while response.json()['loadBalancerState'] == 'WAITING':
+        while response.json()['loadBalancerState'] == 'WAITING' or response.json()['loadBalancerState'] == 'CANCELING':
             time.sleep(2)
             response = requests.get(uri, params=params)
         return response.json()
@@ -483,6 +483,41 @@ class InvalidTemplateName(unittest.TestCase):
         undo_request(self.randomId, True)
         remove_service(self.randomId, True)
 
+
+class CancelledRequest(unittest.TestCase):
+    def setUp(self):
+        self.randomId = 'Request' + str(time.time()).replace('.','')
+        self.params = {'authkey': AUTH_KEY}
+        self.headers = {'Content-type': 'application/json'}
+        self.uri = '{0}/request'.format(BASE_URI)
+
+    def test_cancel_request(self):
+        sys.stderr.write('Trying to post {0}... '.format(self.randomId))
+        json_data = build_json(self.randomId, self.randomId, '/{0}'.format(self.randomId), UPSTREAM, None, None, {})
+        post_response = requests.post(self.uri,data=json_data, params=self.params, headers=self.headers)
+        self.assertEqual(post_response.status_code, 200)
+        result = get_request_response(self.randomId)
+        if result['loadBalancerState'] == 'SUCCESS':
+            newId = self.randomId + '-2'
+            sys.stderr.write('Trying to post {0}... '.format(self.randomId + '-2'))
+            json_data = build_json(newId, self.randomId, '/{0}'.format(newId), '{0}{1}'.format('new', UPSTREAM), None, None, {})
+            post_response = requests.post(self.uri,data=json_data, params=self.params, headers=self.headers)
+            self.assertEqual(post_response.status_code, 200)
+            cancel_response = requests.delete('{0}/{1}'.format(self.uri, newId), params=self.params, headers=self.headers)
+            self.assertEqual(cancel_response.status_code, 200)
+            result = get_request_response(newId)
+            if result['loadBalancerState'] == 'CANCELED':
+                service_uri = '{0}/state/{1}'.format(BASE_URI, self.randomId)
+                service_response = requests.get(service_uri, params=self.params, headers=self.headers)
+                self.assertEqual(service_response.json()['upstreams'][0]['upstream'], UPSTREAM)
+            else:
+                raise Exception('Request failed, result was: {0}'.format(json_data))
+
+    def tearDown(self):
+        sys.stderr.write('Cleaning up... ')
+        undo_request(self.randomId)
+        remove_service(self.randomId)
+
 def test_main(args):
     global BASE_URI
     global AUTH_KEY
@@ -510,7 +545,8 @@ def test_main(args):
             ValidBasePathRename,
             InvalidRequest,
             InvalidRequestWithBasePathChange,
-            InvalidTemplateName
+            InvalidTemplateName,
+            CancelledRequest
         )
 
 if __name__ == '__main__':
