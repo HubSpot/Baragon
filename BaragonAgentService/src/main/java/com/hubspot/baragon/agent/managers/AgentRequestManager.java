@@ -13,6 +13,7 @@ import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
+import com.hubspot.baragon.exceptions.LockTimeoutException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,8 +40,6 @@ public class AgentRequestManager {
   private final Optional<TestingConfiguration> maybeTestingConfiguration;
   private final Random random;
   private final LoadBalancerConfiguration loadBalancerConfiguration;
-  private final Lock agentLock;
-  private final long agentLockTimeoutMs;
 
   @Inject
   public AgentRequestManager(BaragonStateDatastore stateDatastore,
@@ -49,9 +48,7 @@ public class AgentRequestManager {
                         Optional<TestingConfiguration> maybeTestingConfiguration,
                         LoadBalancerConfiguration loadBalancerConfiguration,
                         Random random,
-                        @Named(BaragonAgentServiceModule.AGENT_MOST_RECENT_REQUEST_ID) AtomicReference<String> mostRecentRequestId,
-                        @Named(BaragonAgentServiceModule.AGENT_LOCK) Lock agentLock,
-                        @Named(BaragonAgentServiceModule.AGENT_LOCK_TIMEOUT_MS) long agentLockTimeoutMs) {
+                        @Named(BaragonAgentServiceModule.AGENT_MOST_RECENT_REQUEST_ID) AtomicReference<String> mostRecentRequestId) {
     this.stateDatastore = stateDatastore;
     this.configHelper = configHelper;
     this.maybeTestingConfiguration = maybeTestingConfiguration;
@@ -59,14 +56,9 @@ public class AgentRequestManager {
     this.mostRecentRequestId = mostRecentRequestId;
     this.random = random;
     this.loadBalancerConfiguration = loadBalancerConfiguration;
-    this.agentLock = agentLock;
-    this.agentLockTimeoutMs = agentLockTimeoutMs;
   }
 
   public Response processRequest(String requestId, Optional<RequestAction> maybeAction) throws InterruptedException {
-    if (!agentLock.tryLock(agentLockTimeoutMs, TimeUnit.MILLISECONDS)) {
-      return Response.status(Response.Status.CONFLICT).build();
-    }
     final Optional<BaragonRequest> maybeRequest = requestDatastore.getRequest(requestId);
     if (!maybeRequest.isPresent()) {
       return Response.status(Response.Status.NOT_FOUND).entity(String.format("Request %s does not exist", requestId)).build();
@@ -87,12 +79,13 @@ public class AgentRequestManager {
         default:
           return apply(request, maybeOldService);
       }
+    } catch (LockTimeoutException e) {
+      return Response.status(Response.Status.CONFLICT).build();
     } catch (Exception e) {
       LOG.error(String.format("Caught exception while %sING for request %s", action, requestId), e);
       return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(String.format("Caught exception while %sING for request %s: %s", action, requestId, e.getMessage())).build();
     } finally {
       LOG.info(String.format("Done processing %s request: %s", action, requestId));
-      agentLock.unlock();
     }
   }
 

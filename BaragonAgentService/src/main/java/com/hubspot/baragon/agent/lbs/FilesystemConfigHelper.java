@@ -4,7 +4,13 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
+import com.google.inject.name.Named;
+import com.hubspot.baragon.agent.BaragonAgentServiceModule;
+import com.hubspot.baragon.exceptions.LockTimeoutException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,11 +36,18 @@ public class FilesystemConfigHelper {
 
   private final LbConfigGenerator configGenerator;
   private final LocalLbAdapter adapter;
+  private final ReentrantLock agentLock;
+  private final long agentLockTimeoutMs;
 
   @Inject
-  public FilesystemConfigHelper(LbConfigGenerator configGenerator, LocalLbAdapter adapter) {
+  public FilesystemConfigHelper(LbConfigGenerator configGenerator,
+                                LocalLbAdapter adapter,
+                                @Named(BaragonAgentServiceModule.AGENT_LOCK) ReentrantLock agentLock,
+                                @Named(BaragonAgentServiceModule.AGENT_LOCK_TIMEOUT_MS) long agentLockTimeoutMs) {
     this.configGenerator = configGenerator;
     this.adapter = adapter;
+    this.agentLock = agentLock;
+    this.agentLockTimeoutMs = agentLockTimeoutMs;
   }
 
   public void remove(BaragonService service, boolean reloadConfigs) throws LbAdapterExecuteException, IOException {
@@ -54,9 +67,20 @@ public class FilesystemConfigHelper {
     }
   }
 
-  public void checkAndReload() throws InvalidConfigException, LbAdapterExecuteException, IOException {
-    adapter.checkConfigs();
-    adapter.reloadConfigs();
+  public void checkAndReload() throws InvalidConfigException, LbAdapterExecuteException, IOException, InterruptedException, LockTimeoutException {
+    if (!agentLock.tryLock(agentLockTimeoutMs, TimeUnit.MILLISECONDS)) {
+      throw new LockTimeoutException("Timed out waiting to acquire lock");
+    }
+
+    try {
+      adapter.checkConfigs();
+    } catch (Exception e) {
+      LOG.error("Caught exception while trying to reload configs", e);
+      throw Throwables.propagate(e);
+    } finally {
+      adapter.reloadConfigs();
+      agentLock.unlock();
+    }
   }
 
   public Optional<Collection<BaragonConfigFile>> configsToApply(ServiceContext context) throws MissingTemplateException {
@@ -94,7 +118,7 @@ public class FilesystemConfigHelper {
     LOG.info(String.format("Apply finished for %s", service.getServiceId()));
   }
 
-  public void apply(ServiceContext context, Optional<BaragonService> maybeOldService, boolean revertOnFailure) throws InvalidConfigException, LbAdapterExecuteException, IOException, MissingTemplateException {
+  public void apply(ServiceContext context, Optional<BaragonService> maybeOldService, boolean revertOnFailure) throws InvalidConfigException, LbAdapterExecuteException, IOException, MissingTemplateException, InterruptedException, LockTimeoutException  {
     final BaragonService service = context.getService();
     final BaragonService oldService = maybeOldService.or(service);
 
@@ -115,6 +139,10 @@ public class FilesystemConfigHelper {
       if (oldServiceExists) {
         backupConfigs(oldService);
       }
+    }
+
+    if (!agentLock.tryLock(agentLockTimeoutMs, TimeUnit.MILLISECONDS)) {
+      throw new LockTimeoutException("Timed out waiting to acquire lock");
     }
 
     // Write & check the configs
@@ -146,18 +174,24 @@ public class FilesystemConfigHelper {
       }
 
       throw Throwables.propagate(e);
+    } finally {
+      adapter.reloadConfigs();
+      agentLock.unlock();
     }
-
-    adapter.reloadConfigs();
 
     removeBackupConfigs(oldService);
     LOG.info(String.format("Apply finished for %s", service.getServiceId()));
   }
 
-  public void delete(BaragonService service, Optional<BaragonService> maybeOldService) throws InvalidConfigException, LbAdapterExecuteException, IOException, MissingTemplateException {
+  public void delete(BaragonService service, Optional<BaragonService> maybeOldService) throws InvalidConfigException, LbAdapterExecuteException, IOException, MissingTemplateException, InterruptedException, LockTimeoutException {
     final boolean oldServiceExists = (maybeOldService.isPresent() && configsExist(maybeOldService.get()));
     final boolean previousConfigsExist = configsExist(service);
-     try {
+
+    if (!agentLock.tryLock(agentLockTimeoutMs, TimeUnit.MILLISECONDS)) {
+      throw new LockTimeoutException("Timed out waiting to acquire lock");
+    }
+
+    try {
       if (previousConfigsExist) {
         backupConfigs(service);
         remove(service, false);
@@ -179,8 +213,10 @@ public class FilesystemConfigHelper {
       }
 
       throw Throwables.propagate(e);
-     }
-    adapter.reloadConfigs();
+     } finally {
+      adapter.reloadConfigs();
+      agentLock.unlock();
+    }
   }
 
   private void writeConfigs(Collection<BaragonConfigFile> files) {

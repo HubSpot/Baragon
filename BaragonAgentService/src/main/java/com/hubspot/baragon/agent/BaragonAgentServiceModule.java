@@ -6,16 +6,10 @@ import com.hubspot.baragon.models.BaragonAgentEc2Metadata;
 import io.dropwizard.jetty.HttpConnectorFactory;
 import io.dropwizard.server.SimpleServerFactory;
 
-import java.io.IOException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import java.net.URL;
-import java.net.URLConnection;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
@@ -51,7 +45,6 @@ public class BaragonAgentServiceModule extends AbstractModule {
   public static final String AGENT_TEMPLATES = "baragon.agent.templates";
   public static final String AGENT_MOST_RECENT_REQUEST_ID = "baragon.agent.mostRecentRequestId";
   public static final String AGENT_LOCK_TIMEOUT_MS = "baragon.agent.lock.timeoutMs";
-  public static final String AGENT_INSTANCE_ID = "baragon.agent.instanceid";
   public static final String DEFAULT_TEMPLATE_NAME = "default";
 
   @Override
@@ -163,7 +156,7 @@ public class BaragonAgentServiceModule extends AbstractModule {
   @Provides
   @Singleton
   @Named(AGENT_LOCK)
-  public Lock providesAgentLock() {
+  public ReentrantLock providesAgentLock() {
     return new ReentrantLock();
   }
 
