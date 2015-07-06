@@ -164,7 +164,7 @@ public class AgentManager {
       final Optional<AgentResponseId> maybeAgentResponseId = agentResponseDatastore.getLastAgentResponseId(request.getLoadBalancerRequestId(), requestType, baseUrl);
 
       if (!maybeAgentResponseId.isPresent()) {
-        return AgentRequestsStatus.WAITING;
+        return AgentRequestsStatus.RETRY;
       }
 
       Optional<AgentResponse> maybeLastResponse = agentResponseDatastore.getAgentResponse(request.getLoadBalancerRequestId(), requestType, maybeAgentResponseId.get(), baseUrl);
