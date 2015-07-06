@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 import com.google.inject.name.Named;
@@ -69,7 +68,7 @@ public class FilesystemConfigHelper {
 
   public void checkAndReload() throws InvalidConfigException, LbAdapterExecuteException, IOException, InterruptedException, LockTimeoutException {
     if (!agentLock.tryLock(agentLockTimeoutMs, TimeUnit.MILLISECONDS)) {
-      throw new LockTimeoutException("Timed out waiting to acquire lock");
+      throw new LockTimeoutException(String.format("Timed out waiting to acquire lock, %s others waiting on agent lock", agentLock.getQueueLength()));
     }
 
     try {

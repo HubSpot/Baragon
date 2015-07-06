@@ -1,7 +1,7 @@
 package com.hubspot.baragon.exceptions;
 
 public class LockTimeoutException extends Exception {
-  public LockTimeoutException(String heldBy) {
-    super(heldBy);
+  public LockTimeoutException(String message) {
+    super(message);
   }
 }

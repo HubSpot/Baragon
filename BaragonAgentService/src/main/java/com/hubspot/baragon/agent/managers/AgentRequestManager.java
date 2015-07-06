@@ -80,6 +80,7 @@ public class AgentRequestManager {
           return apply(request, maybeOldService);
       }
     } catch (LockTimeoutException e) {
+      LOG.error(String.format("Could not acquire lock before timeout for request %s", requestId), e);
       return Response.status(Response.Status.CONFLICT).build();
     } catch (Exception e) {
       LOG.error(String.format("Caught exception while %sING for request %s", action, requestId), e);
