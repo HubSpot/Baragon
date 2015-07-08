@@ -73,11 +73,11 @@ public class FilesystemConfigHelper {
 
     try {
       adapter.checkConfigs();
+      adapter.reloadConfigs();
     } catch (Exception e) {
       LOG.error("Caught exception while trying to reload configs", e);
       throw Throwables.propagate(e);
     } finally {
-      adapter.reloadConfigs();
       agentLock.unlock();
     }
   }
@@ -157,6 +157,7 @@ public class FilesystemConfigHelper {
       }
 
       adapter.checkConfigs();
+      adapter.reloadConfigs();
     } catch (Exception e) {
       LOG.error(String.format("Caught exception while writing configs for %s, reverting to backups!", service.getServiceId()), e);
 
@@ -174,7 +175,6 @@ public class FilesystemConfigHelper {
 
       throw Throwables.propagate(e);
     } finally {
-      adapter.reloadConfigs();
       agentLock.unlock();
     }
 
@@ -199,7 +199,8 @@ public class FilesystemConfigHelper {
         backupConfigs(maybeOldService.get());
         remove(maybeOldService.get(), false);
       }
-       adapter.checkConfigs();
+      adapter.checkConfigs();
+      adapter.reloadConfigs();
     } catch (Exception e) {
       LOG.error(String.format("Caught exception while deleting configs for %s, reverting to backups!", service.getServiceId()), e);
       if (oldServiceExists && !maybeOldService.get().equals(service)) {
@@ -213,7 +214,6 @@ public class FilesystemConfigHelper {
 
       throw Throwables.propagate(e);
      } finally {
-      adapter.reloadConfigs();
       agentLock.unlock();
     }
   }
