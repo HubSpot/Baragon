@@ -19,6 +19,12 @@
     </dependency>
 
     <dependency>
+      <groupId>com.hubspot</groupId>
+      <artifactId>BaragonCore</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
       <scope>test</scope>
@@ -103,28 +109,45 @@
 
                 <!-- Baragon Service -->
                 <image>
+                  <alias>baragon-service</alias>
                   <name>hubspot/baragonservice:${project.version}</name>
                   <run>
+                    <env>
+                      <BARAGON_ZK_QUORUM>baragon-test-zk:2181</BARAGON_ZK_QUORUM>
+                    </env>
                     <ports>
                       <port>baragon.service.port:8080</port>
                     </ports>
                     <links>
                       <link>baragon-test-zk</link>
                     </links>
+                    <wait>
+                      <log>Started BaragonService</log>
+                      <time>10000</time>
+                    </wait>
                   </run>
                 </image>
 
                 <!-- Baragon Agent -->
                 <image>
+                  <alias>baragon-agent-1</alias>
                   <name>hubspot/baragonagent:${project.version}</name>
                   <run>
+                    <env>
+                      <BARAGON_ZK_QUORUM>baragon-test-zk:2181</BARAGON_ZK_QUORUM>
+                    </env>
                     <ports>
                       <port>baragon.agent.nginx.port:80</port>
                       <port>baragon.agent.port:8881</port>
                     </ports>
                     <links>
                       <link>baragon-test-zk</link>
+                      <link>baragon-service</link>
                     </links>
+                    <wait>
+                      <log>Started BaragonAgentService</log>
+                      <time>20000</time>
+                    </wait>
                   </run>
                 </image>
               </images>

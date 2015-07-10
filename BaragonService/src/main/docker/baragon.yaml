@@ -1,6 +1,6 @@
 server:
   type: simple
-  applicationContextPath: /baragon
+  applicationContextPath: /baragon/v2
   connector:
     type: http
     port: 8080

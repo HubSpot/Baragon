@@ -33,13 +33,6 @@ public class DockerTestModule extends AbstractModule {
 
   @Override
   protected void configure() {
-    /*Properties p = System.getProperties();
-    Enumeration keys = p.keys();
-    while (keys.hasMoreElements()) {
-      String key = (String)keys.nextElement();
-      String value = (String)p.get(key);
-      System.out.println(key + ": " + value);
-    }*/
     final int baragonPort = Integer.parseInt(System.getProperty("baragon.service.port"));
     install(new BaragonClientModule(Arrays.asList(String.format("%s:%d", getDockerAddress().or("localhost"), baragonPort))));
   }
