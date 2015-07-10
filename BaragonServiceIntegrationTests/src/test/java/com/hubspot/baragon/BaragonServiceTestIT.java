@@ -20,7 +20,7 @@ import org.junit.runner.RunWith;
 import com.google.common.base.Optional;
 
 @RunWith(JukitoRunner.class)
-public class BaragonServiceTest {
+public class BaragonServiceTestIT {
 
   //@Inject BaragonServiceClient baragonServiceClient;
 
