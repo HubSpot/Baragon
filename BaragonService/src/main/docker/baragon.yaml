@@ -3,7 +3,7 @@ server:
   applicationContextPath: /baragon
   connector:
     type: http
-    port: 7099
+    port: 8080
   requestLog:
     appenders:
       - type: file
@@ -29,7 +29,7 @@ zookeeper:
 
 ui:
   title: Baragon (docker)
-  baseUrl: http://localhost:7099/baragon
+  baseUrl: http://localhost:8080/baragon/ui
 
 logging:
   loggers:
