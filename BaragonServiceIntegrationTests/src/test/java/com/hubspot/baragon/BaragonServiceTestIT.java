@@ -36,7 +36,8 @@ public class BaragonServiceTestIT {
 
   @Test
   public void testState() throws Exception {
-    //baragonServiceClient.getGlobalState();
+    BaragonServiceClient baragonServiceClient = getInjector().getInstance(BaragonServiceClient.class);
+    System.out.println(Arrays.toString(baragonServiceClient.getGlobalState().toArray()));
     return;
   }
 
