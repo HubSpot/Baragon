@@ -42,6 +42,7 @@
     <module>BaragonAgentService</module>
     <module>BaragonClient</module>
     <module>BaragonWatcher</module>
+    <module>BaragonServiceIntegrationTests</module>
   </modules>
 
   <dependencyManagement>
@@ -76,6 +77,12 @@
         <artifactId>BaragonAgentService</artifactId>
         <version>${project.version}</version>
       </dependency>
+
+      <dependency>
+         <groupId>com.hubspot</groupId>
+       <artifactId>BaragonServiceIntegrationTests</artifactId>
+       <version>${project.version}</version>
+     </dependency>
 
       <dependency>
         <groupId>com.hubspot</groupId>
