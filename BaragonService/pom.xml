@@ -12,7 +12,7 @@
   <properties>
     <basepom.shaded.main-class>com.hubspot.baragon.service.BaragonService</basepom.shaded.main-class>
   </properties>
-  
+
   <dependencies>
     <dependency>
       <groupId>com.hubspot.dropwizard</groupId>
@@ -120,57 +120,129 @@
       <artifactId>aws-java-sdk-elasticloadbalancing</artifactId>
     </dependency>
   </dependencies>
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>com.github.eirslett</groupId>
-        <artifactId>frontend-maven-plugin</artifactId>
-        <configuration>
-          <workingDirectory>../BaragonUI</workingDirectory>
-          <nodeDownloadRoot>https://hubspot-boxen-public.s3.amazonaws.com/nodejs/</nodeDownloadRoot>
-        </configuration>
-        <executions>
-          <execution>
-            <id>install node and npm</id>
-            <goals>
-              <goal>install-node-and-npm</goal>
-            </goals>
+
+  <profiles>
+  <profile>
+    <id>build-docker-image</id>
+    <activation>
+      <property>
+      <name>env.DOCKER_HOST</name>
+      </property>
+    </activation>
+
+    <build>
+      <plugins>
+
+        <plugin>
+            <groupId>org.jolokia</groupId>
+            <artifactId>docker-maven-plugin</artifactId>
             <configuration>
-              <nodeVersion>v0.10.28</nodeVersion>
-              <npmVersion>1.4.9</npmVersion>
+              <images>
+                <image>
+                  <name>hubspot/baragonservice:${project.version}</name>
+                  <build>
+                    <from>java:8u45-jre</from>
+                    <maintainer>tpetr@hubspot.com</maintainer>
+                    <ports>
+                      <port>8080</port>
+                    </ports>
+                    <entryPoint>
+                      <exec>
+                        <arg>/start-${project.name}.sh</arg>
+                      </exec>
+                    </entryPoint>
+                    <cmd>
+                      <exec>
+                        <args>server</args>
+                        <args>/etc/baragon.yaml</args>
+                      </exec>
+                    </cmd>
+                    <assembly>
+                      <mode>dir</mode>
+                      <basedir>/</basedir>
+                      <inline>
+                        <fileSets>
+                          <fileSet>
+                            <directory>${project.basedir}/src/main/docker</directory>
+                            <outputDirectory>/</outputDirectory>
+                          </fileSet>
+                        </fileSets>
+                        <files>
+                          <file>
+                            <source>${project.basedir}/target/${project.name}-${project.version}-shaded.jar</source>
+                            <destName>${project.name}.jar</destName>
+                            <outputDirectory>/</outputDirectory>
+                          </file>
+                        </files>
+                      </inline>
+                    </assembly>
+                  </build>
+                </image>
+              </images>
             </configuration>
-          </execution>
-          <execution>
-            <id>npm install</id>
-            <goals>
-              <goal>npm</goal>
-            </goals>
-            <configuration>
-              <arguments>install</arguments>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>build-helper-maven-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>add-generated-resources</id>
-            <phase>generate-resources</phase>
-            <goals>
-              <goal>add-resource</goal>
-            </goals>
-            <configuration>
-              <resources>
-                <resource>
-                  <directory>${project.build.directory}/generated-resources</directory>
-                </resource>
-              </resources>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-    </plugins>
-  </build>
+            <executions>
+              <execution>
+                <id>build</id>
+                <phase>pre-integration-test</phase>
+                <goals>
+                  <goal>build</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+
+
+        <plugin>
+          <groupId>com.github.eirslett</groupId>
+          <artifactId>frontend-maven-plugin</artifactId>
+          <configuration>
+            <workingDirectory>../BaragonUI</workingDirectory>
+            <nodeDownloadRoot>https://hubspot-boxen-public.s3.amazonaws.com/nodejs/</nodeDownloadRoot>
+          </configuration>
+          <executions>
+            <execution>
+              <id>install node and npm</id>
+              <goals>
+                <goal>install-node-and-npm</goal>
+              </goals>
+              <configuration>
+                <nodeVersion>v0.10.28</nodeVersion>
+                <npmVersion>1.4.9</npmVersion>
+              </configuration>
+            </execution>
+            <execution>
+              <id>npm install</id>
+              <goals>
+                <goal>npm</goal>
+              </goals>
+              <configuration>
+                <arguments>install</arguments>
+              </configuration>
+            </execution>
+          </executions>
+        </plugin>
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>build-helper-maven-plugin</artifactId>
+          <executions>
+            <execution>
+              <id>add-generated-resources</id>
+              <phase>generate-resources</phase>
+              <goals>
+                <goal>add-resource</goal>
+              </goals>
+              <configuration>
+                <resources>
+                  <resource>
+                    <directory>${project.build.directory}/generated-resources</directory>
+                  </resource>
+                </resources>
+              </configuration>
+            </execution>
+          </executions>
+        </plugin>
+      </plugins>
+    </build>
+  </profile>
+</profiles>
 </project>
