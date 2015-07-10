@@ -1,12 +1,15 @@
 package com.hubspot.baragon;
 
 import java.util.Arrays;
+import java.util.Enumeration;
+import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.google.common.base.Optional;
 import com.google.common.base.Strings;
 import com.google.inject.AbstractModule;
+import com.hubspot.baragon.client.BaragonClientModule;
 
 public class DockerTestModule extends AbstractModule {
 
@@ -30,6 +33,14 @@ public class DockerTestModule extends AbstractModule {
 
   @Override
   protected void configure() {
-
+    /*Properties p = System.getProperties();
+    Enumeration keys = p.keys();
+    while (keys.hasMoreElements()) {
+      String key = (String)keys.nextElement();
+      String value = (String)p.get(key);
+      System.out.println(key + ": " + value);
+    }*/
+    final int baragonPort = Integer.parseInt(System.getProperty("baragon.service.port"));
+    install(new BaragonClientModule(Arrays.asList(String.format("%s:%d", getDockerAddress().or("localhost"), baragonPort))));
   }
 }
