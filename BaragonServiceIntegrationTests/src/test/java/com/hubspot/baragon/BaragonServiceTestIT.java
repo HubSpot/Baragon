@@ -5,6 +5,8 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
+
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.hubspot.baragon.client.BaragonServiceClient;
@@ -45,16 +47,16 @@ public class BaragonServiceTestIT {
   
   private String setupTestService() {
     String requestId = "Service" + new Date().getTime();
-    setupTestService(requestId, requestId, SERVICE_BASE_PATH, Optional.<String>absent());
+    setupTestService(requestId, requestId, SERVICE_BASE_PATH, Optional.<String>absent(), Optional.<Map<String, Object>>absent());
     
     return requestId;
   }
   
-  private void setupTestService(String requestId, String serviceId, String basePath, Optional<String> replaceServiceId) {
+  private void setupTestService(String requestId, String serviceId, String basePath, Optional<String> replaceServiceId, Optional<Map<String, Object>> options) {
     System.out.println("Requesting " + serviceId + "...");
     UpstreamInfo upstream = new UpstreamInfo(UPSTREAM, Optional.<String>absent(), Optional.<String>absent());
     BaragonService lbService = new BaragonService(serviceId, new ArrayList<String>(), basePath, 
-        new HashSet<String>(Arrays.asList(LOAD_BALANCER_GROUP)), new HashMap<String, Object>(), Optional.<String>absent());
+        new HashSet<String>(Arrays.asList(LOAD_BALANCER_GROUP)), options.isPresent() ? options.get() : new HashMap<String, Object>(), Optional.<String>absent());
     
     BaragonRequest request = new BaragonRequest(requestId, lbService, Arrays.asList(upstream), new ArrayList<UpstreamInfo>(), replaceServiceId);
     baragonServiceClient.enqueueRequest(request);
@@ -175,7 +177,7 @@ public class BaragonServiceTestIT {
     
     if(baragonServiceClient.getRequest(requestId).get().getLoadBalancerState().equals(BaragonRequestState.SUCCESS)) {
       
-      setupTestService(requestId + "-2", requestId, SERVICE_BASE_PATH + "-2", Optional.fromNullable(requestId));
+      setupTestService(requestId + "-2", requestId, SERVICE_BASE_PATH + "-2", Optional.fromNullable(requestId), Optional.<Map<String, Object>>absent());
       while(baragonServiceClient.getRequest(requestId).get().getLoadBalancerState().equals(BaragonRequestState.WAITING)) { }
       
       if(baragonServiceClient.getRequest(requestId).get().getLoadBalancerState().equals(BaragonRequestState.SUCCESS)) {
@@ -199,7 +201,7 @@ public class BaragonServiceTestIT {
   @Test
   public void testValidRequestNonexistantReplaceId() throws Exception {
     String requestId = "Service" + new Date().getTime();
-    setupTestService(requestId, requestId, SERVICE_BASE_PATH, Optional.fromNullable("someotherservice"));
+    setupTestService(requestId, requestId, SERVICE_BASE_PATH, Optional.fromNullable("someotherservice"), Optional.<Map<String, Object>>absent());
     while(baragonServiceClient.getRequest(requestId).get().getLoadBalancerState().equals(BaragonRequestState.WAITING)) { }
     
     if(baragonServiceClient.getRequest(requestId).get().getLoadBalancerState().equals(BaragonRequestState.SUCCESS)) {
@@ -247,7 +249,7 @@ public class BaragonServiceTestIT {
     
     if(baragonServiceClient.getRequest(serviceId).get().getLoadBalancerState().equals(BaragonRequestState.SUCCESS)) {
       String serviceId2 = serviceId + "-2";
-      setupTestService(serviceId2, serviceId2, SERVICE_BASE_PATH, Optional.fromNullable("someotherservice"));
+      setupTestService(serviceId2, serviceId2, SERVICE_BASE_PATH, Optional.fromNullable("someotherservice"), Optional.<Map<String, Object>>absent());
       while(baragonServiceClient.getRequest(serviceId2).get().getLoadBalancerState().equals(BaragonRequestState.WAITING)) { }
       
       if(baragonServiceClient.getRequest(serviceId2).get().getLoadBalancerState().equals(BaragonRequestState.INVALID_REQUEST_NOOP)) {
@@ -275,7 +277,7 @@ public class BaragonServiceTestIT {
     if(baragonServiceClient.getRequest(serviceId).get().getLoadBalancerState().equals(BaragonRequestState.SUCCESS)) {
       
       String renameId = serviceId + "-2";
-      setupTestService(renameId, renameId, SERVICE_BASE_PATH + "-2", Optional.fromNullable(serviceId));
+      setupTestService(renameId, renameId, SERVICE_BASE_PATH + "-2", Optional.fromNullable(serviceId), Optional.<Map<String, Object>>absent());
       while(baragonServiceClient.getRequest(renameId).get().getLoadBalancerState().equals(BaragonRequestState.WAITING)) { }
       
       if(baragonServiceClient.getRequest(renameId).get().getLoadBalancerState().equals(BaragonRequestState.SUCCESS)) {
@@ -297,4 +299,65 @@ public class BaragonServiceTestIT {
     }
   }
   
+  @Test
+  public void testValidBasePathServiceIdChange() throws Exception {
+    String serviceId = setupTestService();
+    while(baragonServiceClient.getRequest(serviceId).get().getLoadBalancerState().equals(BaragonRequestState.WAITING)) { }
+    
+    if(baragonServiceClient.getRequest(serviceId).get().getLoadBalancerState().equals(BaragonRequestState.SUCCESS)) {
+      String renameId = serviceId + "-2";
+      setupTestService(renameId, renameId, SERVICE_BASE_PATH, Optional.fromNullable(serviceId), Optional.<Map<String, Object>>absent());
+      while(baragonServiceClient.getRequest(renameId).get().getLoadBalancerState().equals(BaragonRequestState.WAITING)) { }
+      
+      if(baragonServiceClient.getRequest(renameId).get().getLoadBalancerState().equals(BaragonRequestState.SUCCESS)) {
+        assertTrue(baragonServiceClient.getServiceState(renameId).get().getService().getServiceBasePath().equals(SERVICE_BASE_PATH));
+        removeService(renameId);
+      } 
+      else {
+        removeService(serviceId);
+        BaragonResponse resp = baragonServiceClient.getRequest(serviceId).get();
+        throw new Exception("Request did not succeed: " + resp.getMessage().get().toString() 
+            + "\nState: " + resp.getLoadBalancerState());
+      }
+    } 
+    else {
+      BaragonResponse resp = baragonServiceClient.getRequest(serviceId).get();
+      throw new Exception("Request did not succeed: " + resp.getMessage().get().toString() 
+          + "\nState: " + resp.getLoadBalancerState());
+    }
+  }
+
+  @Test
+  public void testInvalidRequest() throws Exception {
+    String requestId = "Service" + new Date().getTime();
+    HashMap<String, Object> options = new HashMap<String, Object>();
+    options.put("nginxExtraConfigs", new String[] {"rewrite /this_is_invalid_yo"});
+    
+    setupTestService(requestId, requestId, SERVICE_BASE_PATH, Optional.<String>absent(), Optional.<Map<String, Object>>fromNullable(options));
+    while(baragonServiceClient.getRequest(requestId).get().getLoadBalancerState().equals(BaragonRequestState.WAITING)) { }
+    
+    BaragonResponse response = baragonServiceClient.getRequest(requestId).get();
+    assertEquals(response.getLoadBalancerState(), BaragonRequestState.FAILED);
+    assertEquals(response.getAgentResponses().get().get("REVERT").iterator().next().getStatusCode().get(), new Integer(200));
+  }
+
+  @Test
+  public void testInvalidRequestNonexistantReplaceId() throws Exception {
+    String requestId = "Service" + new Date().getTime();
+    HashMap<String, Object> options = new HashMap<String, Object>();
+    options.put("nginxExtraConfigs", new String[] {"rewrite /this_is_invalid_yo"});
+    
+    setupTestService(requestId, requestId, SERVICE_BASE_PATH, Optional.fromNullable("someotherservice"), Optional.<Map<String, Object>>fromNullable(options));
+    while(baragonServiceClient.getRequest(requestId).get().getLoadBalancerState().equals(BaragonRequestState.WAITING)) { }
+    
+    BaragonResponse response = baragonServiceClient.getRequest(requestId).get();
+    assertEquals(response.getLoadBalancerState(), BaragonRequestState.FAILED);
+    assertEquals(response.getAgentResponses().get().get("REVERT").iterator().next().getStatusCode().get(), new Integer(200));
+  }
+
 }
+
+
+
+
+
