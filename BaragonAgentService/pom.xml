@@ -105,6 +105,19 @@
     </dependency>
   </dependencies>
 
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <!-- turn off Werror, because Antlr annotation processor logs a warning with JDK 7 -->
+          <compilerArguments combine.self="override" />
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+
   <profiles>
     <profile>
       <id>build-docker-image</id>
@@ -115,14 +128,6 @@
       </activation>
       <build>
         <plugins>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-compiler-plugin</artifactId>
-            <configuration>
-              <!-- turn off Werror, because Antlr annotation processor logs a warning with JDK 7 -->
-              <compilerArguments combine.self="override" />
-            </configuration>
-          </plugin>
           <plugin>
             <groupId>org.jolokia</groupId>
             <artifactId>docker-maven-plugin</artifactId>
