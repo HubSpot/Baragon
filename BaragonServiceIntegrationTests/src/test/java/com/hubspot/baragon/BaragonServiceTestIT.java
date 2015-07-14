@@ -93,7 +93,6 @@ public class BaragonServiceTestIT {
         System.out.print("Waiting");
       else
         System.out.print(".");
-      System.out.flush();
       
       Thread.sleep((long) Math.pow(2, retries) * 10);
       
