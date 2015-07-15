@@ -102,7 +102,7 @@ public class BaragonServiceTestIT {
     BaragonResponse resp = baragonServiceClient.getRequest(requestId).get();
     if (!resp.getLoadBalancerState().equals(targetState)) {
       throw new Exception("Request " + requestId + " stuck while waiting to reach " + targetState + ": \n" +
-          resp.getLoadBalancerState() + " - " + resp.getMessage()); 
+          resp.getLoadBalancerState() + " - " + resp.getMessage());
     }
   }
   
