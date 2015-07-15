@@ -72,14 +72,14 @@ public class BaragonServiceTestIT {
     baragonServiceClient.enqueueRequest(request);
   }
   
-  private void removeService(String serviceId) {
+  private void removeService(String serviceId) throws Exception {
     LOG.info("Cleaning up...");
     
     if(!baragonServiceClient.getServiceState(serviceId).isPresent())
       return;
 
     BaragonResponse resp = baragonServiceClient.deleteService(serviceId).get();
-    while(baragonServiceClient.getRequest(resp.getLoadBalancerRequestId()).get().getLoadBalancerState().equals(BaragonRequestState.WAITING)) { }
+    waitForStatus(resp.getLoadBalancerRequestId(), BaragonRequestState.SUCCESS);
     
     assertFalse(baragonServiceClient.getServiceState(serviceId).isPresent());
   }
@@ -135,7 +135,7 @@ public class BaragonServiceTestIT {
   };
   
   @After
-  public void teardown() {
+  public void teardown() throws Exception {
     for(BaragonServiceState state :baragonServiceClient.getGlobalState()) {
       removeService(state.getService().getServiceId());
     }
