@@ -47,6 +47,19 @@
       <artifactId>jukito</artifactId>
       <scope>test</scope>
     </dependency>
+
+    <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>slf4j-api</artifactId>
+        <scope>test</scope>
+    </dependency>
+
+    <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>slf4j-simple</artifactId>
+        <scope>test</scope>
+    </dependency>
+
   </dependencies>
 
   <profiles>
@@ -97,6 +110,7 @@
                   <name>bobrik/zookeeper</name>
                   <alias>baragon-test-zk</alias>
                   <run>
+                    <namingStrategy>alias</namingStrategy>
                     <ports>
                       <port>zk.port:2181</port>
                     </ports>
@@ -112,6 +126,7 @@
                   <alias>baragon-service</alias>
                   <name>hubspot/baragonservice:${project.version}</name>
                   <run>
+                    <namingStrategy>alias</namingStrategy>
                     <env>
                       <BARAGON_ZK_QUORUM>baragon-test-zk:2181</BARAGON_ZK_QUORUM>
                     </env>
@@ -133,6 +148,7 @@
                   <alias>baragon-agent-1</alias>
                   <name>hubspot/baragonagent:${project.version}</name>
                   <run>
+                    <namingStrategy>alias</namingStrategy>
                     <env>
                       <BARAGON_ZK_QUORUM>baragon-test-zk:2181</BARAGON_ZK_QUORUM>
                     </env>

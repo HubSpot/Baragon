@@ -30,6 +30,8 @@ import org.junit.rules.Stopwatch;
 import org.junit.rules.TestRule;
 import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Optional;
 
@@ -45,6 +47,8 @@ public class BaragonServiceTestIT {
       BaragonRequestState.SUCCESS, BaragonRequestState.INVALID_REQUEST_NOOP, BaragonRequestState.CANCELED});
 	
   private BaragonServiceClient baragonServiceClient;
+  
+  private static final Logger LOG = LoggerFactory.getLogger(BaragonServiceTestIT.class);
 
   // Helpers --------------------------------------------
   
@@ -60,7 +64,7 @@ public class BaragonServiceTestIT {
   }
   
   private void setupTestService(String requestId, String serviceId, String basePath, Optional<String> replaceServiceId, Optional<Map<String, Object>> options, Optional<String> template) {
-    System.out.println("Requesting " + requestId + "...");
+    LOG.info("Requesting " + requestId + "...");
     UpstreamInfo upstream = new UpstreamInfo(UPSTREAM, Optional.<String>absent(), Optional.<String>absent());
     BaragonService lbService = new BaragonService(serviceId, new ArrayList<String>(), basePath, 
         new HashSet<String>(Arrays.asList(LOAD_BALANCER_GROUP)), options.isPresent() ? options.get() : new HashMap<String, Object>(), template);
@@ -70,7 +74,7 @@ public class BaragonServiceTestIT {
   }
   
   private void removeService(String serviceId) {
-    System.out.println("Cleaning up...");
+    LOG.info("Cleaning up...");
     
     if(!baragonServiceClient.getServiceState(serviceId).isPresent())
       return;
@@ -81,24 +85,21 @@ public class BaragonServiceTestIT {
     assertFalse(baragonServiceClient.getServiceState(serviceId).isPresent());
   }
   
-  public void waitForStatus(String requestId, BaragonRequestState targetState) throws Exception {
+  public void waitForStatus(String requestId, BaragonRequestState targetState) throws Exception {   
+    LOG.info("Waiting...");
+    
     int retries = 1;
     for(BaragonRequestState state = baragonServiceClient.getRequest(requestId).get().getLoadBalancerState(); 
-        !state.equals(targetState) 
+        !state.equals(targetState)
         && !TERMINAL_STATES.contains(state)
         && retries <= MAX_REQUEST_RETRIES; 
         retries++) {
       
-      if (retries <= 1)
-        System.out.print("Waiting");
-      else
-        System.out.print(".");
-      
-      Thread.sleep((long) Math.pow(2, retries) * 10);
+      Thread.sleep((long) (1000 + (Math.pow(1.8, retries) * 10)));
       
       state = baragonServiceClient.getRequest(requestId).get().getLoadBalancerState(); 
     }
-    System.out.println("");
+    LOG.info("");
     BaragonResponse resp = baragonServiceClient.getRequest(requestId).get();
     if (!resp.getLoadBalancerState().equals(targetState)) {
       throw new Exception("Request " + requestId + " stuck while waiting to reach " + targetState + ": \n" +
@@ -116,13 +117,13 @@ public class BaragonServiceTestIT {
   @Rule
   public TestRule watcher = new TestWatcher() {
      protected void starting(Description description) {
-        System.out.println("\nStarting: " + description.getMethodName());
+        LOG.info("\nStarting: " + description.getMethodName());
      }
      protected void succeeded(Description description) {
-       System.out.println("\u001B[32mTest passed\u001B[0m");
+       LOG.info("\u001B[32mTest passed\u001B[0m");
      }
      protected void failed(Throwable e, Description description) {
-       System.out.println("\u001B[31mTest failed\u001B[0m");
+       LOG.info("\u001B[31mTest failed\u001B[0m");
      }
   };
   
@@ -130,7 +131,7 @@ public class BaragonServiceTestIT {
   public Stopwatch stopwatch = new Stopwatch() {
       @Override
       protected void finished(long nanos, Description description) {
-        System.out.println("(" + nanos / 1000000000.0 + " s)");
+        LOG.info("(" + nanos / 1000000000.0 + " s)");
       }
   };
   
@@ -162,8 +163,9 @@ public class BaragonServiceTestIT {
   
   @Test
   public void testClusterAgents() throws Exception {
-    BaragonAgentMetadata metadata = baragonServiceClient.getLoadBalancerGroupAgentMetadata(LOAD_BALANCER_GROUP).toArray(new BaragonAgentMetadata[0])[0];
-    assertTrue(metadata.getBaseAgentUri() != null && !metadata.getBaseAgentUri().isEmpty());
+    BaragonAgentMetadata[] metadata = baragonServiceClient.getLoadBalancerGroupAgentMetadata(LOAD_BALANCER_GROUP).toArray(new BaragonAgentMetadata[0]);
+    for(BaragonAgentMetadata md : metadata)
+      assertTrue(md.getBaseAgentUri() != null && !md.getBaseAgentUri().isEmpty());
   }
   
   @Test
