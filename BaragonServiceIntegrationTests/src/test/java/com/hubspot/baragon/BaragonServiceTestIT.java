@@ -64,7 +64,6 @@ public class BaragonServiceTestIT {
   }
   
   private void setupTestService(String requestId, String serviceId, String basePath, Optional<String> replaceServiceId, Optional<Map<String, Object>> options, Optional<String> template) {
-    LOG.info("Requesting " + requestId + "...");
     UpstreamInfo upstream = new UpstreamInfo(UPSTREAM, Optional.<String>absent(), Optional.<String>absent());
     BaragonService lbService = new BaragonService(serviceId, new ArrayList<String>(), basePath, 
         new HashSet<String>(Arrays.asList(LOAD_BALANCER_GROUP)), options.isPresent() ? options.get() : new HashMap<String, Object>(), template);
@@ -183,30 +182,29 @@ public class BaragonServiceTestIT {
     String serviceId = setupTestService();
     waitForStatus(serviceId, BaragonRequestState.SUCCESS);
     
-    testGetService();
-    testState();
-    testClusterBasePaths();
+    testGetService(serviceId);
+    testState(serviceId);
+    testClusterBasePaths(serviceId);
   }
   
-  public void testClusterBasePaths() {
-    String groupName = baragonServiceClient.getLoadBalancerGroups().toArray(new String[0])[0];
-    String[] basePaths = baragonServiceClient.getOccupiedBasePaths(groupName).toArray(new String[0]);
-    assertTrue(basePaths.length > 0);
-    BaragonService service = baragonServiceClient.getServiceForBasePath(LOAD_BALANCER_GROUP, basePaths[0]).get();
-    assertTrue(service.getServiceId() != null);
+  public void testClusterBasePaths(String serviceId) {
+    Collection<String> basePaths = baragonServiceClient.getOccupiedBasePaths(LOAD_BALANCER_GROUP);
+    assertTrue(basePaths.size() > 0);
+    Optional<BaragonService> service = baragonServiceClient.getServiceForBasePath(LOAD_BALANCER_GROUP, basePaths.iterator().next());
+    assertTrue(service.isPresent());
+    assertEquals(service.get().getServiceId(), serviceId);
   }
   
-  public void testGetService() {
-    BaragonServiceState state = baragonServiceClient.getGlobalState().iterator().next();
-    String serviceId = state.getService().getServiceId();
-    assertNotNull(serviceId);
-    BaragonServiceState serviceState = baragonServiceClient.getServiceState(serviceId).get();
-    assertNotNull(serviceState.getService().getServiceId());
+  public void testGetService(String serviceId) {
+    Optional<BaragonService> service = baragonServiceClient.getServiceForBasePath(LOAD_BALANCER_GROUP, SERVICE_BASE_PATH);
+    assertTrue(service.isPresent());
+    assertEquals(service.get().getServiceId(), serviceId);
   }
   
-  public void testState() {
-    BaragonServiceState state = baragonServiceClient.getGlobalState().iterator().next();
-    assertNotNull(state.getService().getServiceId());
+  public void testState(String serviceId) {
+    Optional<BaragonServiceState> serviceState = baragonServiceClient.getServiceState(serviceId);
+    assertTrue(serviceState.isPresent());
+    assertEquals(serviceState.get().getService().getServiceBasePath(), SERVICE_BASE_PATH);
   }
   
   // ----------------------------------------------------
@@ -216,7 +214,7 @@ public class BaragonServiceTestIT {
     String requestId = setupTestService();
     waitForStatus(requestId, BaragonRequestState.SUCCESS);
       
-    setupTestService(requestId + "-2", requestId, SERVICE_BASE_PATH + "-2", Optional.fromNullable(requestId), Optional.<Map<String, Object>>absent(), Optional.<String>absent());
+    setupTestService(requestId + "-2", requestId, SERVICE_BASE_PATH + "-2", Optional.of(requestId), Optional.<Map<String, Object>>absent(), Optional.<String>absent());
     waitForStatus(requestId + "-2", BaragonRequestState.SUCCESS);
     assertTrue(baragonServiceClient.getOccupiedBasePaths(LOAD_BALANCER_GROUP).contains(SERVICE_BASE_PATH + "-2"));
   }
@@ -224,7 +222,7 @@ public class BaragonServiceTestIT {
   @Test
   public void testValidRequestNonexistantReplaceId() throws Exception {
     String requestId = "Service" + new Date().getTime();
-    setupTestService(requestId, requestId, SERVICE_BASE_PATH, Optional.fromNullable("someotherservice"), Optional.<Map<String, Object>>absent(), Optional.<String>absent());
+    setupTestService(requestId, requestId, SERVICE_BASE_PATH, Optional.of("someotherservice"), Optional.<Map<String, Object>>absent(), Optional.<String>absent());
     waitForStatus(requestId, BaragonRequestState.SUCCESS);
   }
   
@@ -243,7 +241,7 @@ public class BaragonServiceTestIT {
     waitForStatus(serviceId, BaragonRequestState.SUCCESS);
     
     String serviceId2 = serviceId + "-2";
-    setupTestService(serviceId2, serviceId2, SERVICE_BASE_PATH, Optional.fromNullable("someotherservice"), Optional.<Map<String, Object>>absent(), Optional.<String>absent());
+    setupTestService(serviceId2, serviceId2, SERVICE_BASE_PATH, Optional.of("someotherservice"), Optional.<Map<String, Object>>absent(), Optional.<String>absent());
     waitForStatus(serviceId2, BaragonRequestState.INVALID_REQUEST_NOOP);
   }
 
@@ -253,7 +251,7 @@ public class BaragonServiceTestIT {
     waitForStatus(serviceId, BaragonRequestState.SUCCESS);
       
     String renameId = serviceId + "-2";
-    setupTestService(renameId, renameId, SERVICE_BASE_PATH + "-2", Optional.fromNullable(serviceId), Optional.<Map<String, Object>>absent(), Optional.<String>absent());
+    setupTestService(renameId, renameId, SERVICE_BASE_PATH + "-2", Optional.of(serviceId), Optional.<Map<String, Object>>absent(), Optional.<String>absent());
     waitForStatus(renameId, BaragonRequestState.SUCCESS);
     assertTrue(baragonServiceClient.getOccupiedBasePaths(LOAD_BALANCER_GROUP).iterator().next().equals(SERVICE_BASE_PATH + "-2"));
   }
@@ -264,7 +262,7 @@ public class BaragonServiceTestIT {
     waitForStatus(serviceId, BaragonRequestState.SUCCESS);
     
     String renameId = serviceId + "-2";
-    setupTestService(renameId, renameId, SERVICE_BASE_PATH, Optional.fromNullable(serviceId), Optional.<Map<String, Object>>absent(), Optional.<String>absent());
+    setupTestService(renameId, renameId, SERVICE_BASE_PATH, Optional.of(serviceId), Optional.<Map<String, Object>>absent(), Optional.<String>absent());
     waitForStatus(renameId, BaragonRequestState.SUCCESS);
     
     assertTrue(baragonServiceClient.getServiceState(renameId).get().getService().getServiceBasePath().equals(SERVICE_BASE_PATH));
@@ -276,7 +274,7 @@ public class BaragonServiceTestIT {
     HashMap<String, Object> options = new HashMap<String, Object>();
     options.put("nginxExtraConfigs", new String[] {"rewrite /this_is_invalid_yo"});
     
-    setupTestService(requestId, requestId, SERVICE_BASE_PATH, Optional.<String>absent(), Optional.<Map<String, Object>>fromNullable(options), Optional.<String>absent());
+    setupTestService(requestId, requestId, SERVICE_BASE_PATH, Optional.<String>absent(), Optional.<Map<String, Object>>of(options), Optional.<String>absent());
     waitForStatus(requestId, BaragonRequestState.FAILED);
     
     BaragonResponse response = baragonServiceClient.getRequest(requestId).get();
@@ -290,7 +288,7 @@ public class BaragonServiceTestIT {
     HashMap<String, Object> options = new HashMap<String, Object>();
     options.put("nginxExtraConfigs", new String[] {"rewrite /this_is_invalid_yo"});
     
-    setupTestService(requestId, requestId, SERVICE_BASE_PATH, Optional.fromNullable("someotherservice"), Optional.<Map<String, Object>>fromNullable(options), Optional.<String>absent());
+    setupTestService(requestId, requestId, SERVICE_BASE_PATH, Optional.of("someotherservice"), Optional.<Map<String, Object>>of(options), Optional.<String>absent());
     waitForStatus(requestId, BaragonRequestState.FAILED);
     
     BaragonResponse response = baragonServiceClient.getRequest(requestId).get();
@@ -307,7 +305,7 @@ public class BaragonServiceTestIT {
     HashMap<String, Object> options = new HashMap<String, Object>();
     options.put("nginxExtraConfigs", new String[] {"rewrite /this_is_invalid_yo"});
     
-    setupTestService(requestId2, requestId2, SERVICE_BASE_PATH, Optional.fromNullable(requestId), Optional.<Map<String, Object>>fromNullable(options), Optional.<String>absent());
+    setupTestService(requestId2, requestId2, SERVICE_BASE_PATH, Optional.of(requestId), Optional.<Map<String, Object>>of(options), Optional.<String>absent());
     waitForStatus(requestId2, BaragonRequestState.FAILED);
     
     BaragonResponse response2 = baragonServiceClient.getRequest(requestId2).get();
@@ -318,7 +316,7 @@ public class BaragonServiceTestIT {
   @Test
   public void testInvalidTemplateName() throws Exception {
     String requestId = "Service" + new Date().getTime();
-    setupTestService(requestId, requestId, SERVICE_BASE_PATH, Optional.<String>absent(), Optional.<Map<String, Object>>absent(), Optional.fromNullable("invalidtemplatename"));
+    setupTestService(requestId, requestId, SERVICE_BASE_PATH, Optional.<String>absent(), Optional.<Map<String, Object>>absent(), Optional.of("invalidtemplatename"));
     waitForStatus(requestId, BaragonRequestState.INVALID_REQUEST_NOOP);
     
     assertTrue(baragonServiceClient.getRequest(requestId).get().getLoadBalancerState().equals(BaragonRequestState.INVALID_REQUEST_NOOP));
