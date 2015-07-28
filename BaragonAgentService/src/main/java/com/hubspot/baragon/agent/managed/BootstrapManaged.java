@@ -12,6 +12,10 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+import com.github.rholder.retry.Retryer;
+import com.github.rholder.retry.RetryerBuilder;
+import com.github.rholder.retry.StopStrategies;
+import com.github.rholder.retry.WaitStrategies;
 import com.google.common.base.Throwables;
 import com.hubspot.baragon.BaragonDataModule;
 import com.hubspot.baragon.agent.config.BaragonAgentConfiguration;
@@ -166,11 +170,36 @@ public class BootstrapManaged implements Managed {
     executorService.shutdown();
     if (configuration.isDeregisterOnGracefulShutdown()) {
       LOG.info("Notifying BaragonService of shutdown...");
-      notifyService("shutdown");
+      notifyServiceWithRetry("shutdown");
     }
   }
 
-  private void notifyService(String action) {
+  private void notifyServiceWithRetry(final String action) {
+    Callable<Void> callable = new Callable<Void>() {
+      public Void call() throws Exception {
+        notifyService(action);
+        return null;
+      }
+    };
+
+    Retryer<Void> retryer = RetryerBuilder.<Void>newBuilder()
+      .retryIfException()
+      .withStopStrategy(StopStrategies.stopAfterAttempt(configuration.getMaxNotifyServiceAttempts()))
+      .withWaitStrategy(WaitStrategies.exponentialWait(1, TimeUnit.SECONDS))
+      .build();
+
+    try {
+      retryer.call(callable);
+    } catch (Exception e) {
+      if (action.equals("startup") && !configuration.isExitOnStartupError()) {
+        LOG.error("Could not notify service of startup", e);
+      } else {
+        throw Throwables.propagate(e);
+      }
+    }
+  }
+
+  private void notifyService(String action) throws AgentStartupException {
     Collection<String> baseUris = workerDatastore.getBaseUris();
     if (!baseUris.isEmpty()) {
       HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
@@ -184,17 +213,10 @@ public class BootstrapManaged implements Managed {
       }
 
       HttpRequest request = requestBuilder.build();
-      try {
-        HttpResponse response = httpClient.execute(request);
-        LOG.info(String.format("Got %s response from BaragonService", response.getStatusCode()));
-        if (response.isError()) {
-          throw new AgentStartupException(String.format("Bad response received from BaragonService %s", response.getAsString()));
-        }
-      } catch (Exception e) {
-        LOG.error(String.format("Could not notify service of %s", action), e);
-        if (action.equals("startup") && configuration.isExitOnStartupError()) {
-          Throwables.propagate(e);
-        }
+      HttpResponse response = httpClient.execute(request);
+      LOG.info(String.format("Got %s response from BaragonService", response.getStatusCode()));
+      if (response.isError()) {
+        throw new AgentStartupException(String.format("Bad response received from BaragonService %s", response.getAsString()));
       }
     }
   }
