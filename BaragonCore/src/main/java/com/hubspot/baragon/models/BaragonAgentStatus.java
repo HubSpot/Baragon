@@ -13,6 +13,7 @@ public class BaragonAgentStatus {
   private final boolean leader;
   private final String mostRecentRequestId;
   private final String zookeeperState;
+  private final BaragonAgentMetadata agentInfo;
 
   @JsonCreator
   public BaragonAgentStatus(@JsonProperty("group") String group,
@@ -20,13 +21,15 @@ public class BaragonAgentStatus {
                             @JsonProperty("errorMessage") Optional<String> errorMessage,
                             @JsonProperty("leader") boolean leader,
                             @JsonProperty("mostRecentRequestId") String mostRecentRequestId,
-                            @JsonProperty("zookeeperState") String zookeeperState) {
+                            @JsonProperty("zookeeperState") String zookeeperState,
+                            @JsonProperty("agentInfo") BaragonAgentMetadata agentInfo) {
     this.group = group;
     this.validConfigs = validConfigs;
     this.errorMessage = errorMessage;
     this.leader = leader;
     this.mostRecentRequestId = mostRecentRequestId;
     this.zookeeperState = zookeeperState;
+    this.agentInfo = agentInfo;
   }
 
   public String getGroup() {
@@ -51,6 +54,10 @@ public class BaragonAgentStatus {
 
   public String getZookeeperState() {
     return zookeeperState;
+  }
+
+  public BaragonAgentMetadata getAgentInfo() {
+    return agentInfo;
   }
 
   @Override
@@ -79,8 +86,10 @@ public class BaragonAgentStatus {
     if (mostRecentRequestId != null ? !mostRecentRequestId.equals(that.mostRecentRequestId) : that.mostRecentRequestId != null) {
       return false;
     }
-
     if (!zookeeperState.equals(that.zookeeperState)) {
+      return false;
+    }
+    if (!agentInfo.equals(that.agentInfo)) {
       return false;
     }
 
@@ -95,6 +104,7 @@ public class BaragonAgentStatus {
     result = 31 * result + (leader ? 1 : 0);
     result = 31 * result + (mostRecentRequestId != null ? mostRecentRequestId.hashCode() : 0);
     result = 31 * result + zookeeperState.hashCode();
+    result = 31 * result + agentInfo.hashCode();
     return result;
   }
 
@@ -107,6 +117,7 @@ public class BaragonAgentStatus {
         ", leader=" + leader +
         ", mostRecentRequestId='" + mostRecentRequestId + '\'' +
         ", zookeeperState='" + zookeeperState + '\'' +
+        ", agentInfo='" + agentInfo + '\'' +
         ']';
   }
 }
