@@ -1,17 +1,23 @@
 package com.hubspot.baragon.service.resources;
 
+import java.util.Collection;
+
 import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import com.hubspot.baragon.data.BaragonLoadBalancerDatastore;
 import com.hubspot.baragon.managers.ElbManager;
 import com.hubspot.baragon.models.BaragonAgentMetadata;
+import com.hubspot.baragon.models.BaragonGroup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,5 +65,21 @@ public class AgentCheckinResource {
       return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
     }
     return Response.ok().build();
+  }
+
+  @GET
+  @Produces(MediaType.TEXT_PLAIN)
+  @Path("/{clusterName}/can-shutdown")
+  public boolean canShutdownAgent(@PathParam("clusterName") String clusterName, @QueryParam("agentId") String agentId) {
+    Optional<BaragonAgentMetadata> maybeAgent = loadBalancerDatastore.getAgent(clusterName, agentId);
+    Optional<BaragonGroup> maybeGroup = loadBalancerDatastore.getLoadBalancerGroup(clusterName);
+    if (maybeAgent.isPresent()) {
+      if (elbManager.elbEnabledAgent(maybeAgent.get(), maybeGroup, clusterName)) {
+        if (elbManager.isActiveAndHealthy(maybeGroup, maybeAgent.get())) {
+          return false;
+        }
+      }
+    }
+    return true;
   }
 }
