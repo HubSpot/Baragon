@@ -70,16 +70,16 @@ public class AgentCheckinResource {
   @GET
   @Produces(MediaType.TEXT_PLAIN)
   @Path("/{clusterName}/can-shutdown")
-  public boolean canShutdownAgent(@PathParam("clusterName") String clusterName, @QueryParam("agentId") String agentId) {
+  public String canShutdownAgent(@PathParam("clusterName") String clusterName, @QueryParam("agentId") String agentId) {
     Optional<BaragonAgentMetadata> maybeAgent = loadBalancerDatastore.getAgent(clusterName, agentId);
     Optional<BaragonGroup> maybeGroup = loadBalancerDatastore.getLoadBalancerGroup(clusterName);
     if (maybeAgent.isPresent()) {
       if (elbManager.elbEnabledAgent(maybeAgent.get(), maybeGroup, clusterName)) {
         if (elbManager.isActiveAndHealthy(maybeGroup, maybeAgent.get())) {
-          return false;
+          return "0";
         }
       }
     }
-    return true;
+    return "1";
   }
 }
