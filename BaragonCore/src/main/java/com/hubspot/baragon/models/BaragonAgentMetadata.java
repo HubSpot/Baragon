@@ -43,7 +43,7 @@ public class BaragonAgentMetadata {
     this.domain = domain;
     this.agentId = agentId;
     this.ec2 = ec2;
-    this.extraAgentData = extraAgentData;
+    this.extraAgentData = Objects.firstNonNull(extraAgentData, Collections.<String, String>emptyMap());
   }
 
   public String getBaseAgentUri() {
