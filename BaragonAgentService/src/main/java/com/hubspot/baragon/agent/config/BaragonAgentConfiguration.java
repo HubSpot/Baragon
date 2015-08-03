@@ -83,6 +83,9 @@ public class BaragonAgentConfiguration extends Configuration {
   @JsonProperty("extraAgentData")
   private Map<String, String> extraAgentData = Collections.emptyMap();
 
+  @JsonProperty("maxNotifyServiceAttempts")
+  private int maxNotifyServiceAttempts = 3;
+
   public HttpClientConfiguration getHttpClientConfiguration() {
     return httpClientConfiguration;
   }
@@ -205,5 +208,13 @@ public class BaragonAgentConfiguration extends Configuration {
 
   public void setExtraAgentData(Map<String, String> extraAgentData) {
     this.extraAgentData = extraAgentData;
+  }
+
+  public int getMaxNotifyServiceAttempts() {
+    return maxNotifyServiceAttempts;
+  }
+
+  public void setMaxNotifyServiceAttempts(int maxNotifyServiceAttempts) {
+    this.maxNotifyServiceAttempts = maxNotifyServiceAttempts;
   }
 }
