@@ -124,6 +124,18 @@ public class BaragonLoadBalancerDatastore extends AbstractDataStore {
     return readFromZk(path, BaragonAgentMetadata.class);
   }
 
+  public Optional<BaragonAgentMetadata> getAgent(String clusterName, String agentId) {
+    Collection<BaragonAgentMetadata> agents = getAgentMetadata(clusterName);
+    Optional<BaragonAgentMetadata> maybeAgent = Optional.absent();
+    for (BaragonAgentMetadata agent : agents) {
+      if (agent.getAgentId().equals(agentId)) {
+        maybeAgent = Optional.of(agent);
+        break;
+      }
+    }
+    return maybeAgent;
+  }
+
   public Collection<BaragonAgentMetadata> getAgentMetadata(String clusterName) {
     final Collection<String> nodes = getChildren(String.format(LOAD_BALANCER_GROUP_HOSTS_FORMAT, clusterName));
 

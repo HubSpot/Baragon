@@ -56,6 +56,15 @@ public class ElbManager {
     return (configuration.isPresent() && configuration.get().isEnabled());
   }
 
+  public boolean isActiveAndHealthy(Optional<BaragonGroup> group, BaragonAgentMetadata agent) {
+    for (String elbName : group.get().getSources()) {
+      if (isHealthyInstance(agent.getEc2().getInstanceId().get(), elbName)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   public void attemptRemoveAgent(BaragonAgentMetadata agent, Optional<BaragonGroup> group, String groupName) {
     if (elbEnabledAgent(agent, group, groupName)) {
       for (String elbName : group.get().getSources()) {
@@ -97,7 +106,7 @@ public class ElbManager {
     }
   }
 
-  private boolean elbEnabledAgent(BaragonAgentMetadata agent, Optional<BaragonGroup> group, String groupName) {
+  public boolean elbEnabledAgent(BaragonAgentMetadata agent, Optional<BaragonGroup> group, String groupName) {
     if (group.isPresent()) {
       if (!group.get().getSources().isEmpty()) {
         if (agent.getEc2().getInstanceId().isPresent()) {
@@ -328,6 +337,20 @@ public class ElbManager {
       }
     }
     return (instanceIsHealthy && healthyCount == 1);
+  }
+
+  private boolean isHealthyInstance(String instanceId, String loadBalancerName) throws AmazonClientException {
+    DescribeInstanceHealthRequest describeRequest = new DescribeInstanceHealthRequest(loadBalancerName);
+    DescribeInstanceHealthResult result = elbClient.describeInstanceHealth(describeRequest);
+    boolean instanceIsHealthy = false;
+    for (InstanceState instanceState : result.getInstanceStates()) {
+      if (instanceState.getState().equals("InService")) {
+        if (instanceState.getInstanceId().equals(instanceId)) {
+          instanceIsHealthy = true;
+        }
+      }
+    }
+    return instanceIsHealthy;
   }
 
   private Optional<BaragonKnownAgentMetadata> knownAgent(BaragonGroup group, Instance instance) {
