@@ -79,6 +79,9 @@ public class BaragonAgentConfiguration extends Configuration {
   @JsonProperty("exitOnStartupError")
   private boolean exitOnStartupError = false;
 
+  @JsonProperty("maxNotifyServiceAttempts")
+  private int maxNotifyServiceAttempts = 3;
+
   public HttpClientConfiguration getHttpClientConfiguration() {
     return httpClientConfiguration;
   }
@@ -193,5 +196,13 @@ public class BaragonAgentConfiguration extends Configuration {
 
   public void setExitOnStartupError(boolean exitOnStartupError) {
     this.exitOnStartupError = exitOnStartupError;
+  }
+
+  public int getMaxNotifyServiceAttempts() {
+    return maxNotifyServiceAttempts;
+  }
+
+  public void setMaxNotifyServiceAttempts(int maxNotifyServiceAttempts) {
+    this.maxNotifyServiceAttempts = maxNotifyServiceAttempts;
   }
 }
