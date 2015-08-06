@@ -86,6 +86,9 @@ public class BaragonAgentConfiguration extends Configuration {
   @JsonProperty("maxNotifyServiceAttempts")
   private int maxNotifyServiceAttempts = 3;
 
+  @JsonProperty("stateFile")
+  private Optional<String> stateFile = Optional.absent();
+
   public HttpClientConfiguration getHttpClientConfiguration() {
     return httpClientConfiguration;
   }
@@ -216,5 +219,13 @@ public class BaragonAgentConfiguration extends Configuration {
 
   public void setMaxNotifyServiceAttempts(int maxNotifyServiceAttempts) {
     this.maxNotifyServiceAttempts = maxNotifyServiceAttempts;
+  }
+
+  public Optional<String> getStateFile() {
+    return stateFile;
+  }
+
+  public void setStateFile(Optional<String> stateFile) {
+    this.stateFile = stateFile;
   }
 }
