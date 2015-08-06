@@ -1,9 +1,13 @@
 package com.hubspot.baragon.agent.managed;
 
 import java.io.BufferedWriter;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.File;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -234,9 +238,12 @@ public class BootstrapManaged implements Managed {
   }
 
   private void writeStateFile() throws IOException {
-    BufferedWriter writer = new BufferedWriter(new FileWriter(configuration.getStateFile().get()));
-    writer.write("RUNNING");
-    writer.close();
+    Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(configuration.getStateFile().get()), "UTF-8"));
+    try {
+      writer.write("RUNNING");
+    } finally {
+      writer.close();
+    }
   }
 
   private boolean removeStateFile() {
