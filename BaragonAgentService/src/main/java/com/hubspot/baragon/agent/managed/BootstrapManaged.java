@@ -1,5 +1,13 @@
 package com.hubspot.baragon.agent.managed;
 
+import java.io.BufferedWriter;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.File;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -162,6 +170,11 @@ public class BootstrapManaged implements Managed {
 
     LOG.info("Starting agent heartbeat...");
     requestWorkerFuture = executorService.scheduleAtFixedRate(agentHeartbeatWorker, 0, configuration.getHeartbeatIntervalSeconds(), TimeUnit.SECONDS);
+
+    if (configuration.getStateFile().isPresent()) {
+      LOG.info("Writing state file...");
+      writeStateFile();
+    }
   }
 
   @Override
@@ -171,6 +184,9 @@ public class BootstrapManaged implements Managed {
     if (configuration.isDeregisterOnGracefulShutdown()) {
       LOG.info("Notifying BaragonService of shutdown...");
       notifyServiceWithRetry("shutdown");
+    }
+    if (configuration.getStateFile().isPresent()) {
+      removeStateFile();
     }
   }
 
@@ -219,5 +235,19 @@ public class BootstrapManaged implements Managed {
         throw new AgentStartupException(String.format("Bad response received from BaragonService %s", response.getAsString()));
       }
     }
+  }
+
+  private void writeStateFile() throws IOException {
+    Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(configuration.getStateFile().get()), "UTF-8"));
+    try {
+      writer.write("RUNNING");
+    } finally {
+      writer.close();
+    }
+  }
+
+  private boolean removeStateFile() {
+    File stateFile = new File(configuration.getStateFile().get());
+    return (!stateFile.exists() || stateFile.delete());
   }
 }
