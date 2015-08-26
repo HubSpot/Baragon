@@ -134,7 +134,7 @@ public class BaragonServiceClient {
 
   private <T> Optional<T> getSingle(String uri, String type, String id, Class<T> clazz, Map<String, String> queryParams) {
     checkNotNull(id, String.format("Provide a %s id", type));
-    LOG.info("Getting {} {} from {}", type, id, uri);
+    LOG.debug("Getting {} {} from {}", type, id, uri);
     final long start = System.currentTimeMillis();
 
     HttpResponse response = httpClient.execute(buildRequest(uri, queryParams).build());
@@ -149,7 +149,7 @@ public class BaragonServiceClient {
   }
 
   private <T> Collection<T> getCollection(String uri, String type, TypeReference<Collection<T>> typeReference) {
-    LOG.info("Getting all {} from {}", type, uri);
+    LOG.debug("Getting all {} from {}", type, uri);
     final long start = System.currentTimeMillis();
 
     HttpResponse response = httpClient.execute(buildRequest(uri).build());
@@ -159,7 +159,7 @@ public class BaragonServiceClient {
     }
 
     checkResponse(type, response);
-    LOG.info("Got {} in {}ms", type, System.currentTimeMillis() - start);
+    LOG.debug("Got {} in {}ms", type, System.currentTimeMillis() - start);
     return response.getAs(typeReference);
   }
 
@@ -168,18 +168,18 @@ public class BaragonServiceClient {
   }
 
   private <T> Optional<T> delete(String uri, String type, String id, Map<String, String> queryParams, Optional<Class<T>> clazz) {
-    LOG.info("Deleting {} {} from {}", type, id, uri);
+    LOG.debug("Deleting {} {} from {}", type, id, uri);
     final long start = System.currentTimeMillis();
     HttpRequest.Builder request = buildRequest(uri, queryParams).setMethod(Method.DELETE);
     HttpResponse response = httpClient.execute(request.build());
 
     if (response.getStatusCode() == 404) {
-      LOG.info("{} ({}) was not found", type, id);
+      LOG.debug("{} ({}) was not found", type, id);
       return Optional.absent();
     }
 
     checkResponse(type, response);
-    LOG.info("Deleted {} ({}) from Baragon in %sms", type, id, System.currentTimeMillis() - start);
+    LOG.debug("Deleted {} ({}) from Baragon in %sms", type, id, System.currentTimeMillis() - start);
 
     if (clazz.isPresent()) {
       return Optional.of(response.getAs(clazz.get()));
@@ -207,7 +207,7 @@ public class BaragonServiceClient {
   }
 
   private HttpResponse post(String uri, String type, Optional<?> body, Map<String, String> params) {
-    LOG.info("Posting {} to {}", type, uri);
+    LOG.debug("Posting {} to {}", type, uri);
     final long start = System.currentTimeMillis();
     HttpRequest.Builder request = buildRequest(uri, params).setMethod(Method.POST);
 
@@ -217,7 +217,7 @@ public class BaragonServiceClient {
 
     HttpResponse response = httpClient.execute(request.build());
     checkResponse(type, response);
-    LOG.info("Successfully posted {} in {}ms", type, System.currentTimeMillis() - start);
+    LOG.debug("Successfully posted {} in {}ms", type, System.currentTimeMillis() - start);
     return response;
   }
 
