@@ -144,7 +144,7 @@ public class BaragonServiceClient {
     }
 
     checkResponse(type, response);
-    LOG.info("Got {} {} in {}ms", type, id, System.currentTimeMillis() - start);
+    LOG.debug("Got {} {} in {}ms", type, id, System.currentTimeMillis() - start);
     return Optional.fromNullable(response.getAs(clazz));
   }
 
