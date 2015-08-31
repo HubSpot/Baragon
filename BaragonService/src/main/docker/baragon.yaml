@@ -29,7 +29,7 @@ zookeeper:
 
 ui:
   title: Baragon (docker)
-  baseUrl: http://localhost:8080/baragon/ui
+  baseUrl: http://localhost:8080/baragon/v2/ui
 
 logging:
   loggers:
