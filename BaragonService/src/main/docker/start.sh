@@ -5,7 +5,7 @@ if [ ${DOCKER_HOST} ]; then
 	HOST_IP="${HOST_AND_PORT%:*}"
 fi
 
-DEFAULT_URI_BASE="http://${HOST_IP:=localhost}:${BARAGON_PORT:=8080}${SINGULARITY_UI_BASE:=/baragon}"
+DEFAULT_URI_BASE="http://${HOST_IP:=localhost}:${BARAGON_PORT:=8080}${BARAGON_UI_BASE:=/baragon/v2}"
 
 [[ ! ${BARAGON_ZK_NAMESPACE:-} ]] || args+=( -Ddw.zookeeper.zkNamespace="$BARAGON_ZK_NAMESPACE" )
 [[ ! ${BARAGON_ZK_QUORUM:-} ]] || args+=( -Ddw.zookeeper.quorum="$BARAGON_ZK_QUORUM" )

@@ -180,8 +180,6 @@ upstream baragon_testService {
 
 The resulting configuration will cause the added upstream's running applications to be available on the `/test` path for the current load balancer. Subsequent requests can then add or remove upstreams when applications are stopped or started on different hosts.
 
-*HINT: A configuration similar to this is [implemented for each vagrant](../vagrant/configure-nginx.sh) `BaragonAgent` if you want to see a sample configuration in action*
-
 <a id="haproxy"></a>
 #### Setting up Baragon Agent with Haproxy
 
@@ -247,7 +245,7 @@ A request can be made to Baragon by posting a `BaragonRequest` object to `Barago
     "serviceId":"testService",
     "owners":["owner@example.com"],
     "serviceBasePath":"/basepath",
-    "loadBalancerGroups":["vagrant"],
+    "loadBalancerGroups":["test"],
     "options":{
       "nginxExtraConfigs": [
         "rewrite ^/test(.*) /test/v1/$1 last;"

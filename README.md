@@ -14,9 +14,9 @@ Baragon is a system for automating load balancer configuration updates. It pairs
   - [Example Baragon Service Configuration](docs/baragon_service_config.yaml)
   - [Example Baragon Agent Configuration](docs/baragon_agent_config.yaml)
 - [Quick Start With Docker Compose](#docker)
-- [Quick Start With Vagrant](#vagrant)
 - [BaragonUI](#ui)
 - [API Docs](docs/baragon_api_docs.md)
+- [Developing](docs/development.md)
 
 <a id="basics"></a>
 ## Baragon Basics
@@ -81,18 +81,6 @@ The Baragon UI will be available at [localhost:8080](http://localhost:8080) and 
 ***If using boot2docker replace localhost with the `boot2docker ip`***
 
 Nginx's config directories that BaragonAgent writes to will also be mounted as volumes in the `docker/configs` folder on your local machine.
-
-<a id="vagrant"></a>
-## Quickstart with Vagrant
-
-Baragon comes with Vagrant boxes for easy local development and integration testing. Ensure Virtualbox and Vagrant are installed on your machine, then run `vagrant up` inside the `vagrant` folder of the git repo to spin up a Baragon cluster for testing. This will spin up the following:
-- A BaragonService instance located at `192.168.33.20:8080/baragon/v2`
-  - Zookeeper will be running on this instance
-- A BaragonAgent instance located at `192.168.33.21:8882/baragon-agent/v2`
-  - The BaragonAgent will be assigned to the `vagrant` loadBalancerGroup
-  - Preconfigured nginx will be running on the BaragonAgent vagrant box, accessible at `192.168.33.21:80`
-
-Additional vagrant configurations are available and details can be found [here](docs/vagrant.md)
 
 <a id="ui"></a>
 ## BaragonUI
