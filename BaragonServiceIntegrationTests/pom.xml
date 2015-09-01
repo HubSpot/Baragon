@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>com.hubspot</groupId>
+    <artifactId>Baragon</artifactId>
+    <version>0.1.9-SNAPSHOT</version>
+  </parent>
+
+  <artifactId>BaragonServiceIntegrationTests</artifactId>
+
+  <dependencies>
+
+    <dependency>
+      <groupId>com.hubspot</groupId>
+      <artifactId>BaragonClient</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>com.hubspot</groupId>
+      <artifactId>BaragonCore</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>com.google.inject</groupId>
+      <artifactId>guice</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.jukito</groupId>
+      <artifactId>jukito</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>slf4j-api</artifactId>
+        <scope>test</scope>
+    </dependency>
+
+    <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>slf4j-simple</artifactId>
+        <scope>test</scope>
+    </dependency>
+
+  </dependencies>
+
+  <profiles>
+    <profile>
+      <id>run-docker-integration-tests</id>
+      <activation>
+        <property>
+          <name>env.DOCKER_HOST</name>
+        </property>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <artifactId>maven-failsafe-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>integration-test</id>
+                <goals>
+                  <goal>integration-test</goal>
+                </goals>
+              </execution>
+              <execution>
+                <id>verify</id>
+                <goals>
+                  <goal>verify</goal>
+                </goals>
+              </execution>
+            </executions>
+            <configuration>
+              <systemPropertyVariables>
+                <!-- Needs to be repeated here (the following two lines strangely doesn't work when the next line is omitted although)
+                     Maven, you little sneaky beast ... -->
+                <zk.port>${zk.port}</zk.port>
+                <baragon.service.port>${baragon.service.port}</baragon.service.port>
+                <baragon.agent.nginx.port>${baragon.agent.nginx.port}</baragon.agent.nginx.port>
+                <baragon.agent.port>${baragon.agent.nginx.port}</baragon.agent.port>
+              </systemPropertyVariables>
+            </configuration>
+          </plugin>
+
+          <plugin>
+            <groupId>org.jolokia</groupId>
+            <artifactId>docker-maven-plugin</artifactId>
+            <configuration>
+              <images>
+                <!-- Zookeeper -->
+                <image>
+                  <name>bobrik/zookeeper</name>
+                  <alias>baragon-test-zk</alias>
+                  <run>
+                    <namingStrategy>alias</namingStrategy>
+                    <ports>
+                      <port>zk.port:2181</port>
+                    </ports>
+                    <env>
+                      <ZK_CONFIG>tickTime=2000,initLimit=10,syncLimit=5,maxClientCnxns=128,forceSync=no,clientPort=2181</ZK_CONFIG>
+                      <ZK_ID>1</ZK_ID>
+                    </env>
+                  </run>
+                </image>
+
+                <!-- Baragon Service -->
+                <image>
+                  <alias>baragon-service</alias>
+                  <name>hubspot/baragonservice:${project.version}</name>
+                  <run>
+                    <namingStrategy>alias</namingStrategy>
+                    <env>
+                      <BARAGON_ZK_QUORUM>baragon-test-zk:2181</BARAGON_ZK_QUORUM>
+                    </env>
+                    <ports>
+                      <port>baragon.service.port:8080</port>
+                    </ports>
+                    <links>
+                      <link>baragon-test-zk</link>
+                    </links>
+                    <wait>
+                      <log>Started BaragonService</log>
+                      <time>10000</time>
+                    </wait>
+                  </run>
+                </image>
+
+                <!-- Baragon Agent -->
+                <image>
+                  <alias>baragon-agent-1</alias>
+                  <name>hubspot/baragonagent:${project.version}</name>
+                  <run>
+                    <namingStrategy>alias</namingStrategy>
+                    <env>
+                      <BARAGON_ZK_QUORUM>baragon-test-zk:2181</BARAGON_ZK_QUORUM>
+                    </env>
+                    <ports>
+                      <port>baragon.agent.nginx.port:80</port>
+                      <port>baragon.agent.port:8881</port>
+                    </ports>
+                    <links>
+                      <link>baragon-test-zk</link>
+                      <link>baragon-service</link>
+                    </links>
+                    <wait>
+                      <log>Started BaragonAgentService</log>
+                      <time>20000</time>
+                    </wait>
+                  </run>
+                </image>
+              </images>
+            </configuration>
+            <executions>
+
+              <execution>
+                <id>start-docker-images</id>
+                <phase>pre-integration-test</phase>
+                <goals>
+                  <goal>start</goal>
+                </goals>
+              </execution>
+              <execution>
+                <id>stop-docker-images</id>
+                <phase>post-integration-test</phase>
+                <goals>
+                  <goal>stop</goal>
+                </goals>
+              </execution>
+
+            </executions>
+          </plugin>
+        </plugins>
+
+      </build>
+    </profile>
+  </profiles>
+</project>
+
+<!-- Local Variables: -->
+<!-- mode: nxml -->
+<!-- nxml-child-indent: 2 -->
+<!-- End: -->

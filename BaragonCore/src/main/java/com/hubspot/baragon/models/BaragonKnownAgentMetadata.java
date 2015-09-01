@@ -1,5 +1,7 @@
 package com.hubspot.baragon.models;
 
+import java.util.Map;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -11,7 +13,7 @@ public class BaragonKnownAgentMetadata extends BaragonAgentMetadata {
   private long lastSeenAt;
 
   public static BaragonKnownAgentMetadata fromAgentMetadata(BaragonAgentMetadata agentMetadata, long lastSeenAt) {
-    return new BaragonKnownAgentMetadata(agentMetadata.getBaseAgentUri(), agentMetadata.getAgentId(), agentMetadata.getDomain(), agentMetadata.getEc2(), lastSeenAt);
+    return new BaragonKnownAgentMetadata(agentMetadata.getBaseAgentUri(), agentMetadata.getAgentId(), agentMetadata.getDomain(), agentMetadata.getEc2(), agentMetadata.getExtraAgentData(), lastSeenAt);
   }
 
   @JsonCreator
@@ -19,8 +21,9 @@ public class BaragonKnownAgentMetadata extends BaragonAgentMetadata {
                                    @JsonProperty("agentId") String agentId,
                                    @JsonProperty("domain") Optional<String> domain,
                                    @JsonProperty("ec2") BaragonAgentEc2Metadata ec2,
+                                   @JsonProperty("extraAgentData")Map<String, String> extraAgentData,
                                    @JsonProperty("lastSeenAt") long lastSeenAt) {
-    super(baseAgentUri, agentId, domain, ec2);
+    super(baseAgentUri, agentId, domain, ec2, extraAgentData);
     this.lastSeenAt = lastSeenAt;
   }
 

@@ -5,6 +5,7 @@ import io.dropwizard.Configuration;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import javax.validation.Valid;
 import javax.validation.constraints.Min;
@@ -78,6 +79,15 @@ public class BaragonAgentConfiguration extends Configuration {
 
   @JsonProperty("exitOnStartupError")
   private boolean exitOnStartupError = false;
+
+  @JsonProperty("extraAgentData")
+  private Map<String, String> extraAgentData = Collections.emptyMap();
+
+  @JsonProperty("maxNotifyServiceAttempts")
+  private int maxNotifyServiceAttempts = 3;
+
+  @JsonProperty("stateFile")
+  private Optional<String> stateFile = Optional.absent();
 
   public HttpClientConfiguration getHttpClientConfiguration() {
     return httpClientConfiguration;
@@ -193,5 +203,29 @@ public class BaragonAgentConfiguration extends Configuration {
 
   public void setExitOnStartupError(boolean exitOnStartupError) {
     this.exitOnStartupError = exitOnStartupError;
+  }
+
+  public Map<String, String> getExtraAgentData() {
+    return extraAgentData;
+  }
+
+  public void setExtraAgentData(Map<String, String> extraAgentData) {
+    this.extraAgentData = extraAgentData;
+  }
+
+  public int getMaxNotifyServiceAttempts() {
+    return maxNotifyServiceAttempts;
+  }
+
+  public void setMaxNotifyServiceAttempts(int maxNotifyServiceAttempts) {
+    this.maxNotifyServiceAttempts = maxNotifyServiceAttempts;
+  }
+
+  public Optional<String> getStateFile() {
+    return stateFile;
+  }
+
+  public void setStateFile(Optional<String> stateFile) {
+    this.stateFile = stateFile;
   }
 }

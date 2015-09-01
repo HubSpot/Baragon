@@ -31,9 +31,12 @@ public class StatusResource {
   private final LeaderLatch leaderLatch;
   private final AtomicReference<String> mostRecentRequestId;
   private final AtomicReference<ConnectionState> connectionState;
+  private final BaragonAgentMetadata agentMetadata;
 
   @Inject
-  public StatusResource(LocalLbAdapter adapter, LoadBalancerConfiguration loadBalancerConfiguration,
+  public StatusResource(LocalLbAdapter adapter,
+                        LoadBalancerConfiguration loadBalancerConfiguration,
+                        BaragonAgentMetadata agentMetadata,
                         @Named(BaragonAgentServiceModule.AGENT_LEADER_LATCH) LeaderLatch leaderLatch,
                         @Named(BaragonAgentServiceModule.AGENT_MOST_RECENT_REQUEST_ID) AtomicReference<String> mostRecentRequestId,
                         @Named(BaragonDataModule.BARAGON_ZK_CONNECTION_STATE) AtomicReference<ConnectionState> connectionState) {
@@ -42,6 +45,7 @@ public class StatusResource {
     this.leaderLatch = leaderLatch;
     this.mostRecentRequestId = mostRecentRequestId;
     this.connectionState = connectionState;
+    this.agentMetadata = agentMetadata;
   }
 
   @GET
@@ -61,6 +65,6 @@ public class StatusResource {
 
     final String connectionStateString = currentConnectionState == null ? "UNKNOWN" : currentConnectionState.name();
 
-    return new BaragonAgentStatus(loadBalancerConfiguration.getName(), validConfigs, errorMessage, leaderLatch.hasLeadership(), mostRecentRequestId.get(), connectionStateString);
+    return new BaragonAgentStatus(loadBalancerConfiguration.getName(), validConfigs, errorMessage, leaderLatch.hasLeadership(), mostRecentRequestId.get(), connectionStateString, agentMetadata);
   }
 }

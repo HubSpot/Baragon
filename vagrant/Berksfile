@@ -1,2 +1,0 @@
-source 'https://supermarket.getchef.com'
-cookbook 'baragon', path: '../cookbook'
