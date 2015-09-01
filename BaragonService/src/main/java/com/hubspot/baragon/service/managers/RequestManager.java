@@ -1,4 +1,4 @@
-package com.hubspot.baragon.managers;
+package com.hubspot.baragon.service.managers;
 
 import java.util.HashSet;
 import java.util.List;
@@ -10,7 +10,6 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import com.hubspot.baragon.data.BaragonAgentResponseDatastore;
 import com.hubspot.baragon.data.BaragonLoadBalancerDatastore;
 import com.hubspot.baragon.data.BaragonRequestDatastore;
 import com.hubspot.baragon.data.BaragonStateDatastore;
@@ -24,6 +23,7 @@ import com.hubspot.baragon.models.InternalRequestStates;
 import com.hubspot.baragon.models.InternalStatesMap;
 import com.hubspot.baragon.models.QueuedRequestId;
 import com.hubspot.baragon.models.RequestAction;
+import com.hubspot.baragon.service.history.RequestIdHistoryHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,15 +33,15 @@ public class RequestManager {
   private final BaragonRequestDatastore requestDatastore;
   private final BaragonLoadBalancerDatastore loadBalancerDatastore;
   private final BaragonStateDatastore stateDatastore;
-  private final BaragonAgentResponseDatastore agentResponseDatastore;
+  private final RequestIdHistoryHelper requestIdHistoryHelper;
 
   @Inject
   public RequestManager(BaragonRequestDatastore requestDatastore, BaragonLoadBalancerDatastore loadBalancerDatastore,
-                        BaragonStateDatastore stateDatastore, BaragonAgentResponseDatastore agentResponseDatastore) {
+                        BaragonStateDatastore stateDatastore, RequestIdHistoryHelper requestIdHistoryHelper) {
     this.requestDatastore = requestDatastore;
     this.loadBalancerDatastore = loadBalancerDatastore;
     this.stateDatastore = stateDatastore;
-    this.agentResponseDatastore = agentResponseDatastore;
+    this.requestIdHistoryHelper = requestIdHistoryHelper;
   }
 
   public Optional<BaragonRequest> getRequest(String requestId) {
@@ -66,16 +66,6 @@ public class RequestManager {
 
   public void removeQueuedRequest(QueuedRequestId queuedRequestId) {
     requestDatastore.removeQueuedRequest(queuedRequestId);
-  }
-
-  public Optional<BaragonResponse> getResponse(String requestId) {
-    final Optional<InternalRequestStates> maybeStatus = requestDatastore.getRequestState(requestId);
-
-    if (!maybeStatus.isPresent()) {
-      return Optional.absent();
-    }
-
-    return Optional.of(new BaragonResponse(requestId, InternalStatesMap.getRequestState(maybeStatus.get()), requestDatastore.getRequestMessage(requestId), Optional.of(agentResponseDatastore.getLastResponses(requestId))));
   }
 
   public Map<String, String> getBasePathConflicts(BaragonRequest request) {
@@ -134,10 +124,10 @@ public class RequestManager {
   }
 
   public BaragonResponse enqueueRequest(BaragonRequest request) throws RequestAlreadyEnqueuedException, InvalidRequestActionException, InvalidUpstreamsException {
-    final Optional<BaragonResponse> maybePreexistingResponse = getResponse(request.getLoadBalancerRequestId());
+    final Optional<BaragonResponse> maybePreexistingResponse = requestIdHistoryHelper.getResponseById(request.getLoadBalancerRequestId());
 
     if (maybePreexistingResponse.isPresent()) {
-      Optional<BaragonRequest> maybePreexistingRequest = requestDatastore.getRequest(request.getLoadBalancerRequestId());
+      Optional<BaragonRequest> maybePreexistingRequest = requestIdHistoryHelper.getRequestById(request.getLoadBalancerRequestId());
       if (maybePreexistingRequest.isPresent() && !maybePreexistingRequest.get().equals(request)) {
         throw new RequestAlreadyEnqueuedException(request.getLoadBalancerRequestId(), maybePreexistingResponse.get(), String.format("Request %s is already enqueued with different parameters", request.getLoadBalancerRequestId()));
       } else {
@@ -160,7 +150,7 @@ public class RequestManager {
 
     requestDatastore.setRequestMessage(request.getLoadBalancerRequestId(), String.format("Queued as %s", queuedRequestId));
 
-    return getResponse(request.getLoadBalancerRequestId()).get();
+    return requestIdHistoryHelper.getResponseById(request.getLoadBalancerRequestId()).get();
   }
 
   public Optional<InternalRequestStates> cancelRequest(String requestId) {

@@ -89,7 +89,7 @@ public class BootstrapManaged implements Managed {
                           BaragonAgentMetadata baragonAgentMetadata,
                           @Named(BaragonAgentServiceModule.AGENT_SCHEDULED_EXECUTOR) ScheduledExecutorService executorService,
                           @Named(BaragonAgentServiceModule.AGENT_LEADER_LATCH) LeaderLatch leaderLatch,
-                          @Named(BaragonDataModule.BARAGON_AGENT_HTTP_CLIENT) HttpClient httpClient) {
+                          @Named(BaragonAgentServiceModule.BARAGON_AGENT_HTTP_CLIENT) HttpClient httpClient) {
     this.configuration = configuration;
     this.configHelper = configHelper;
     this.stateDatastore = stateDatastore;

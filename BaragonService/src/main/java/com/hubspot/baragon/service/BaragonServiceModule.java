@@ -1,10 +1,21 @@
 package com.hubspot.baragon.service;
 
+import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.services.elasticloadbalancing.AmazonElasticLoadBalancingClient;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Optional;
-import com.hubspot.baragon.config.ElbConfiguration;
+import com.google.inject.ProvisionException;
+import com.hubspot.baragon.service.config.ElbConfiguration;
+import com.hubspot.baragon.service.history.HistoryManager;
+import com.hubspot.baragon.service.history.JDBIHistoryManager;
+import com.hubspot.baragon.service.history.NoopHistoryManager;
 import com.hubspot.baragon.service.listeners.AbstractLatchListener;
 import com.hubspot.baragon.service.listeners.ElbSyncWorkerListener;
 import com.hubspot.baragon.service.listeners.RequestWorkerListener;
+import com.ning.http.client.AsyncHttpClient;
+import com.ning.http.client.AsyncHttpClientConfig;
+import io.dropwizard.db.DataSourceFactory;
+import io.dropwizard.jdbi.DBIFactory;
 import io.dropwizard.jetty.HttpConnectorFactory;
 import io.dropwizard.server.SimpleServerFactory;
 
@@ -12,6 +23,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicLong;
 
+import io.dropwizard.setup.Environment;
 import org.apache.curator.framework.recipes.leader.LeaderLatch;
 
 import com.google.common.base.Strings;
@@ -26,17 +38,22 @@ import com.hubspot.baragon.config.HttpClientConfiguration;
 import com.hubspot.baragon.config.ZooKeeperConfiguration;
 import com.hubspot.baragon.data.BaragonWorkerDatastore;
 import com.hubspot.baragon.service.config.BaragonConfiguration;
+import com.hubspot.baragon.service.history.HistoryJDBI;
 import com.hubspot.baragon.utils.JavaUtils;
+import org.skife.jdbi.v2.DBI;
 
 public class BaragonServiceModule extends AbstractModule {
   public static final String BARAGON_SERVICE_SCHEDULED_EXECUTOR = "baragon.service.scheduledExecutor";
 
   public static final String BARAGON_SERVICE_HTTP_PORT = "baragon.service.http.port";
   public static final String BARAGON_SERVICE_HOSTNAME = "baragon.service.hostname";
+  public static final String BARAGON_SERVICE_HTTP_CLIENT = "baragon.service.http.client";
 
   public static final String BARAGON_MASTER_AUTH_KEY = "baragon.master.auth.key";
 
   public static final String BARAGON_URI_BASE = "_baragon_uri_base";
+
+  public static final String BARAGON_AWS_ELB_CLIENT = "baragon.aws.elb.client";
 
   @Override
   protected void configure() {
@@ -89,7 +106,7 @@ public class BaragonServiceModule extends AbstractModule {
   @Singleton
   @Named(BARAGON_SERVICE_SCHEDULED_EXECUTOR)
   public ScheduledExecutorService providesScheduledExecutor() {
-    return Executors.newScheduledThreadPool(2);
+    return Executors.newScheduledThreadPool(3);
   }
 
   @Provides
@@ -146,5 +163,46 @@ public class BaragonServiceModule extends AbstractModule {
   String getSingularityUriBase(final BaragonConfiguration configuration) {
     final String singularityUiPrefix = configuration.getUiConfiguration().getBaseUrl().or(((SimpleServerFactory) configuration.getServerFactory()).getApplicationContextPath());
     return (singularityUiPrefix.endsWith("/")) ?  singularityUiPrefix.substring(0, singularityUiPrefix.length() - 1) : singularityUiPrefix;
+  }
+
+  @Provides
+  @Singleton
+  @Named(BARAGON_SERVICE_HTTP_CLIENT)
+  public AsyncHttpClient providesHttpClient(HttpClientConfiguration config) {
+    AsyncHttpClientConfig.Builder builder = new AsyncHttpClientConfig.Builder();
+
+    builder.setMaxRequestRetry(config.getMaxRequestRetry());
+    builder.setRequestTimeoutInMs(config.getRequestTimeoutInMs());
+    builder.setFollowRedirects(true);
+    builder.setConnectionTimeoutInMs(config.getConnectionTimeoutInMs());
+    builder.setUserAgent(config.getUserAgent());
+
+    return new AsyncHttpClient(builder.build());
+  }
+
+  @Provides
+  @Named(BARAGON_AWS_ELB_CLIENT)
+  public AmazonElasticLoadBalancingClient providesAwsElbClient(Optional<ElbConfiguration> configuration) {
+    if (configuration.isPresent() && configuration.get().getAwsAccessKeyId() != null && configuration.get().getAwsAccessKeySecret() != null) {
+      return new AmazonElasticLoadBalancingClient(new BasicAWSCredentials(configuration.get().getAwsAccessKeyId(), configuration.get().getAwsAccessKeySecret()));
+    } else {
+      return new AmazonElasticLoadBalancingClient();
+    }
+  }
+
+  @Provides
+  @Singleton
+  public HistoryManager providesHistoryManager(ObjectMapper objectMapper, Environment environment, BaragonConfiguration configuration) {
+    if (configuration.getDatabaseConfiguration().isPresent()) {
+      try {
+        DataSourceFactory dataSourceFactory = configuration.getDatabaseConfiguration().get();
+        DBI dbi = new DBIFactory().build(environment, dataSourceFactory, "db");
+        return new JDBIHistoryManager(objectMapper, dbi.onDemand(HistoryJDBI.class));
+      } catch (ClassNotFoundException e) {
+        throw new ProvisionException("while instantiating DBI", e);
+      }
+    } else {
+      return new NoopHistoryManager();
+    }
   }
 }

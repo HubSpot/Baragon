@@ -1,5 +1,6 @@
-package com.hubspot.baragon;
+package com.hubspot.baragon.service;
 
+import com.hubspot.baragon.BaragonServiceTestModule;
 import com.hubspot.baragon.models.BaragonAgentEc2Metadata;
 import org.jukito.JukitoModule;
 import org.jukito.JukitoRunner;
@@ -28,7 +29,7 @@ public class KnownAgentTests {
 
     @Override
     protected void configureTest() {
-      install(new BaragonDataTestModule());
+      install(new BaragonServiceTestModule());
     }
   }
 

@@ -1,4 +1,4 @@
-package com.hubspot.baragon.managers;
+package com.hubspot.baragon.service.managers;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -22,8 +22,8 @@ import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
-import com.hubspot.baragon.BaragonDataModule;
-import com.hubspot.baragon.config.ElbConfiguration;
+import com.hubspot.baragon.service.BaragonServiceModule;
+import com.hubspot.baragon.service.config.ElbConfiguration;
 import com.hubspot.baragon.data.BaragonKnownAgentsDatastore;
 import com.hubspot.baragon.data.BaragonLoadBalancerDatastore;
 import com.hubspot.baragon.models.BaragonAgentMetadata;
@@ -45,7 +45,7 @@ public class ElbManager {
   public ElbManager(BaragonLoadBalancerDatastore loadBalancerDatastore,
                               BaragonKnownAgentsDatastore knownAgentsDatastore,
                               Optional<ElbConfiguration> configuration,
-                              @Named(BaragonDataModule.BARAGON_AWS_ELB_CLIENT) AmazonElasticLoadBalancingClient elbClient) {
+                              @Named(BaragonServiceModule.BARAGON_AWS_ELB_CLIENT) AmazonElasticLoadBalancingClient elbClient) {
     this.elbClient = elbClient;
     this.configuration = configuration;
     this.loadBalancerDatastore = loadBalancerDatastore;

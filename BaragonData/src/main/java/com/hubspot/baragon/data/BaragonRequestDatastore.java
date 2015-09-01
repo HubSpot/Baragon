@@ -51,6 +51,10 @@ public class BaragonRequestDatastore extends AbstractDataStore {
     return maybeRequest;
   }
 
+  public List<String> getAllRequestIds() {
+    return getChildren(REQUEST_FORMAT);
+  }
+
   //
   // REQUEST STATE
   //

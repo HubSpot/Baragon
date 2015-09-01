@@ -3,8 +3,7 @@ package com.hubspot.baragon.service.listeners;
 import com.google.inject.Inject;
 import com.hubspot.baragon.service.BaragonServiceModule;
 import com.hubspot.baragon.service.config.BaragonConfiguration;
-import com.hubspot.baragon.worker.BaragonRequestWorker;
-import org.apache.curator.framework.recipes.leader.LeaderLatchListener;
+import com.hubspot.baragon.service.worker.BaragonRequestWorker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

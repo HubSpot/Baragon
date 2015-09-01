@@ -1,20 +1,20 @@
 package com.hubspot.baragon.service.config;
 
+import com.hubspot.baragon.config.AuthConfiguration;
+import com.hubspot.baragon.config.HttpClientConfiguration;
 import io.dropwizard.Configuration;
 
 import javax.validation.Valid;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 
+import io.dropwizard.db.DataSourceFactory;
 import org.hibernate.validator.constraints.NotEmpty;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Optional;
-import com.hubspot.baragon.config.AuthConfiguration;
-import com.hubspot.baragon.config.HttpClientConfiguration;
 import com.hubspot.baragon.config.ZooKeeperConfiguration;
-import com.hubspot.baragon.config.ElbConfiguration;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class BaragonConfiguration extends Configuration {
@@ -71,6 +71,9 @@ public class BaragonConfiguration extends Configuration {
 
   @JsonProperty("enableCorsFilter")
   private boolean enableCorsFilter = false;
+
+  @JsonProperty("database")
+  private DataSourceFactory databaseConfiguration;
 
   public ZooKeeperConfiguration getZooKeeperConfiguration() {
     return zooKeeperConfiguration;
@@ -166,5 +169,13 @@ public class BaragonConfiguration extends Configuration {
 
   public boolean isEnableCorsFilter() {
     return enableCorsFilter;
+  }
+
+  public Optional<DataSourceFactory> getDatabaseConfiguration() {
+    return Optional.fromNullable(databaseConfiguration);
+  }
+
+  public void setDatabaseConfiguration(DataSourceFactory databaseConfiguration) {
+    this.databaseConfiguration = databaseConfiguration;
   }
 }

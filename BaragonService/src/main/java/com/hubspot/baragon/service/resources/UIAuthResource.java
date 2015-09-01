@@ -3,10 +3,8 @@ package com.hubspot.baragon.service.resources;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
-import com.hubspot.baragon.auth.NoAuth;
 import com.hubspot.baragon.service.BaragonServiceModule;
 import com.hubspot.baragon.service.config.BaragonConfiguration;
-import com.hubspot.baragon.service.views.IndexView;
 
 import javax.inject.Singleton;
 import javax.ws.rs.GET;

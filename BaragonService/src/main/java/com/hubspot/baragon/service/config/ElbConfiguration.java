@@ -1,4 +1,4 @@
-package com.hubspot.baragon.config;
+package com.hubspot.baragon.service.config;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;

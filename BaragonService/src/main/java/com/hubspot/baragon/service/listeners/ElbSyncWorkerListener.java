@@ -2,9 +2,9 @@ package com.hubspot.baragon.service.listeners;
 
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
-import com.hubspot.baragon.config.ElbConfiguration;
+import com.hubspot.baragon.service.config.ElbConfiguration;
 import com.hubspot.baragon.service.BaragonServiceModule;
-import com.hubspot.baragon.worker.BaragonElbSyncWorker;
+import com.hubspot.baragon.service.worker.BaragonElbSyncWorker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

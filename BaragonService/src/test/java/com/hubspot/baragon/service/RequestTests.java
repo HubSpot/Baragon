@@ -1,7 +1,9 @@
-package com.hubspot.baragon;
+package com.hubspot.baragon.service;
 
+import com.hubspot.baragon.BaragonServiceTestModule;
 import com.hubspot.baragon.exceptions.InvalidRequestActionException;
 import com.hubspot.baragon.exceptions.InvalidUpstreamsException;
+import com.hubspot.baragon.service.history.RequestIdHistoryHelper;
 import org.jukito.JukitoModule;
 import org.jukito.JukitoRunner;
 import org.junit.After;
@@ -22,13 +24,13 @@ import com.google.common.collect.ImmutableSet;
 import com.hubspot.baragon.data.BaragonLoadBalancerDatastore;
 import com.hubspot.baragon.data.BaragonStateDatastore;
 import com.hubspot.baragon.exceptions.RequestAlreadyEnqueuedException;
-import com.hubspot.baragon.managers.RequestManager;
+import com.hubspot.baragon.service.managers.RequestManager;
 import com.hubspot.baragon.models.BaragonRequest;
 import com.hubspot.baragon.models.BaragonRequestState;
 import com.hubspot.baragon.models.BaragonResponse;
 import com.hubspot.baragon.models.BaragonService;
 import com.hubspot.baragon.models.UpstreamInfo;
-import com.hubspot.baragon.worker.BaragonRequestWorker;
+import com.hubspot.baragon.service.worker.BaragonRequestWorker;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -44,7 +46,7 @@ public class RequestTests {
   public static class Module extends JukitoModule {
     @Override
     protected void configureTest() {
-      install(new BaragonDataTestModule());
+      install(new BaragonServiceTestModule());
     }
   }
 
@@ -64,8 +66,8 @@ public class RequestTests {
     }
   }
 
-  private Optional<BaragonResponse> assertResponseStateExists(RequestManager requestManager, String requestId, BaragonRequestState expected) {
-    final Optional<BaragonResponse> maybeResponse = requestManager.getResponse(requestId);
+  private Optional<BaragonResponse> assertResponseStateExists(RequestIdHistoryHelper requestIdHistoryHelper, String requestId, BaragonRequestState expected) {
+    final Optional<BaragonResponse> maybeResponse = requestIdHistoryHelper.getResponseById(requestId);
 
     assertTrue(String.format("Response for request %s exists", requestId), maybeResponse.isPresent());
     assertEquals(expected, maybeResponse.get().getLoadBalancerState());
@@ -73,32 +75,32 @@ public class RequestTests {
     return maybeResponse;
   }
 
-  private Optional<BaragonResponse> assertResponseStateAbsent(RequestManager requestManager, String requestId) {
-    final Optional<BaragonResponse> maybeResponse = requestManager.getResponse(requestId);
+  private Optional<BaragonResponse> assertResponseStateAbsent(RequestIdHistoryHelper requestIdHistoryHelper, String requestId) {
+    final Optional<BaragonResponse> maybeResponse = requestIdHistoryHelper.getResponseById(requestId);
 
     assertTrue(String.format("Response for request %s does not exist", requestId), !maybeResponse.isPresent());
 
     return maybeResponse;
   }
 
-  private void assertSuccessfulRequestLifecycle(RequestManager requestManager, BaragonRequestWorker requestWorker, String requestId) {
-    assertResponseStateExists(requestManager, requestId, BaragonRequestState.WAITING);  // PENDING
+  private void assertSuccessfulRequestLifecycle(RequestIdHistoryHelper requestIdHistoryHelper, BaragonRequestWorker requestWorker, String requestId) {
+    assertResponseStateExists(requestIdHistoryHelper, requestId, BaragonRequestState.WAITING);  // PENDING
 
     requestWorker.run();
 
-    assertResponseStateExists(requestManager, requestId, BaragonRequestState.WAITING);  // SEND REQUESTS
+    assertResponseStateExists(requestIdHistoryHelper, requestId, BaragonRequestState.WAITING);  // SEND REQUESTS
 
     requestWorker.run();
 
-    assertResponseStateExists(requestManager, requestId, BaragonRequestState.WAITING);  // CHECK REQUESTS
+    assertResponseStateExists(requestIdHistoryHelper, requestId, BaragonRequestState.WAITING);  // CHECK REQUESTS
 
     requestWorker.run();
 
-    assertResponseStateExists(requestManager, requestId, BaragonRequestState.SUCCESS);  // SUCCESS
+    assertResponseStateExists(requestIdHistoryHelper, requestId, BaragonRequestState.SUCCESS);  // SUCCESS
   }
 
   @Test
-  public void removeNonExistentUpstream(RequestManager requestManager, BaragonRequestWorker requestWorker) {
+  public void removeNonExistentUpstream(RequestManager requestManager, RequestIdHistoryHelper requestIdHistoryHelper, BaragonRequestWorker requestWorker) {
     final String requestId = "test-125";
     Set<String> lbGroup = new HashSet<>();
     lbGroup.add(REAL_LB_GROUP);
@@ -111,19 +113,19 @@ public class RequestTests {
     Optional<BaragonResponse> maybeResponse;
 
     try {
-      assertResponseStateAbsent(requestManager, requestId);
+      assertResponseStateAbsent(requestIdHistoryHelper, requestId);
 
       LOG.info("Going to enqueue request: {}", request);
       requestManager.enqueueRequest(request);
 
-      assertSuccessfulRequestLifecycle(requestManager, requestWorker, requestId);
+      assertSuccessfulRequestLifecycle(requestIdHistoryHelper, requestWorker, requestId);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
   }
 
   @Test
-  public void addHttpUrlUpstream(RequestManager requestManager, BaragonRequestWorker requestWorker, BaragonStateDatastore stateDatastore) {
+  public void addHttpUrlUpstream(RequestManager requestManager, RequestIdHistoryHelper requestIdHistoryHelper, BaragonRequestWorker requestWorker, BaragonStateDatastore stateDatastore) {
     final String requestId = "test-http-url-upstream-1";
     final String serviceId = "httpUrlUpstreamService";
     Set<String> lbGroup = new HashSet<>();
@@ -136,12 +138,12 @@ public class RequestTests {
     final BaragonRequest request = new BaragonRequest(requestId, service, ImmutableList.of(httpUrlUpstream), Collections.<UpstreamInfo>emptyList(), Optional.<String>absent());
 
     try {
-      assertResponseStateAbsent(requestManager, requestId);
+      assertResponseStateAbsent(requestIdHistoryHelper, requestId);
 
       LOG.info("Going to enqueue request: {}", request);
       requestManager.enqueueRequest(request);
 
-      assertSuccessfulRequestLifecycle(requestManager, requestWorker, requestId);
+      assertSuccessfulRequestLifecycle(requestIdHistoryHelper, requestWorker, requestId);
 
       assertEquals(ImmutableSet.of(httpUrlUpstream.getUpstream()), stateDatastore.getUpstreamsMap(serviceId).keySet());
     } catch (Exception e) {
@@ -150,7 +152,7 @@ public class RequestTests {
   }
 
   @Test
-  public void testNonExistentLoadBalancerGroup(RequestManager requestManager, BaragonRequestWorker requestWorker) {
+  public void testNonExistentLoadBalancerGroup(RequestManager requestManager, RequestIdHistoryHelper requestIdHistoryHelper, BaragonRequestWorker requestWorker) {
     final String requestId = "test-126";
     Set<String> lbGroup = new HashSet<>();
     lbGroup.add(FAKE_LB_GROUP);
@@ -161,16 +163,16 @@ public class RequestTests {
     final BaragonRequest request = new BaragonRequest(requestId, service, ImmutableList.of(upstream), ImmutableList.<UpstreamInfo>of(), Optional.<String>absent());
 
     try {
-      assertResponseStateAbsent(requestManager, requestId);
+      assertResponseStateAbsent(requestIdHistoryHelper, requestId);
 
       LOG.info("Going to enqueue request: {}", request);
       requestManager.enqueueRequest(request);
 
-      assertResponseStateExists(requestManager, requestId, BaragonRequestState.WAITING);
+      assertResponseStateExists(requestIdHistoryHelper, requestId, BaragonRequestState.WAITING);
 
       requestWorker.run();
 
-      assertResponseStateExists(requestManager, requestId, BaragonRequestState.FAILED);
+      assertResponseStateExists(requestIdHistoryHelper, requestId, BaragonRequestState.FAILED);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -192,7 +194,7 @@ public class RequestTests {
   }
 
   @Test
-  public void testBasePathConflicts(RequestManager requestManager, BaragonRequestWorker requestWorker, BaragonLoadBalancerDatastore loadBalancerDatastore) {
+  public void testBasePathConflicts(RequestManager requestManager, RequestIdHistoryHelper requestIdHistoryHelper, BaragonRequestWorker requestWorker, BaragonLoadBalancerDatastore loadBalancerDatastore) {
     loadBalancerDatastore.setBasePathServiceId(REAL_LB_GROUP, "/foo", "foo-service");
     final String requestId = "test-128";
     Set<String> lbGroup = new HashSet<>();
@@ -205,16 +207,16 @@ public class RequestTests {
     final BaragonRequest request = new BaragonRequest(requestId, service, ImmutableList.of(upstream), ImmutableList.<UpstreamInfo>of(), Optional.<String>absent());
 
     try {
-      assertResponseStateAbsent(requestManager, requestId);
+      assertResponseStateAbsent(requestIdHistoryHelper, requestId);
 
       LOG.info("Going to enqueue request: {}", request);
       requestManager.enqueueRequest(request);
 
-      assertResponseStateExists(requestManager, requestId, BaragonRequestState.WAITING);
+      assertResponseStateExists(requestIdHistoryHelper, requestId, BaragonRequestState.WAITING);
 
       requestWorker.run();
 
-      assertResponseStateExists(requestManager, requestId, BaragonRequestState.FAILED);
+      assertResponseStateExists(requestIdHistoryHelper, requestId, BaragonRequestState.FAILED);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
