@@ -4,13 +4,13 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
-import com.google.common.base.Optional;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.base.Optional;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class BaragonService {

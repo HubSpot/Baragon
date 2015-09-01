@@ -1,16 +1,11 @@
 package com.hubspot.baragon.service.config;
 
+import javax.validation.constraints.Pattern;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Optional;
 import com.google.common.base.Strings;
 import org.hibernate.validator.constraints.NotEmpty;
-
-import java.util.Locale;
-
-import javax.validation.Valid;
-import javax.validation.constraints.Pattern;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 public class UIConfiguration {
 

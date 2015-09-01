@@ -1,8 +1,6 @@
 package com.hubspot.baragon;
 
 import java.util.Arrays;
-import java.util.Enumeration;
-import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 

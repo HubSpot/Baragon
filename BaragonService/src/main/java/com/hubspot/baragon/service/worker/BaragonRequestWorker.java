@@ -1,33 +1,31 @@
-package com.hubspot.baragon.worker;
+package com.hubspot.baragon.service.worker;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
-
-import com.hubspot.baragon.models.BaragonAgentMetadata;
-import com.hubspot.baragon.models.RequestAction;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Optional;
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import com.hubspot.baragon.BaragonDataModule;
-import com.hubspot.baragon.managers.AgentManager;
-import com.hubspot.baragon.managers.RequestManager;
 import com.hubspot.baragon.models.AgentRequestType;
 import com.hubspot.baragon.models.AgentResponse;
 import com.hubspot.baragon.models.BaragonRequest;
 import com.hubspot.baragon.models.InternalRequestStates;
 import com.hubspot.baragon.models.InternalStatesMap;
 import com.hubspot.baragon.models.QueuedRequestId;
+import com.hubspot.baragon.models.RequestAction;
+import com.hubspot.baragon.service.managers.AgentManager;
+import com.hubspot.baragon.service.managers.RequestManager;
 import com.hubspot.baragon.utils.JavaUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+@Singleton
 public class BaragonRequestWorker implements Runnable {
   private static final Logger LOG = LoggerFactory.getLogger(BaragonRequestWorker.class);
 
@@ -167,6 +165,8 @@ public class BaragonRequestWorker implements Runnable {
 
     if (InternalStatesMap.isRemovable(newState)) {
       requestManager.removeQueuedRequest(queuedRequestId);
+      requestManager.saveResponseToHistory(maybeRequest.get(), newState);
+      requestManager.deleteRequest(requestId);
     }
   }
 

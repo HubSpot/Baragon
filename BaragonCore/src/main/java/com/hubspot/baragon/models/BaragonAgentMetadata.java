@@ -1,16 +1,16 @@
 package com.hubspot.baragon.models;
 
+import java.util.Collections;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Objects;
 import com.google.common.base.Optional;
 import com.hubspot.baragon.exceptions.InvalidAgentMetadataStringException;
-
-import java.util.Collections;
-import java.util.Map;
-import java.util.regex.Pattern;
-import java.util.regex.Matcher;
 
 @JsonIgnoreProperties( ignoreUnknown = true )
 public class BaragonAgentMetadata {

@@ -4,20 +4,14 @@ server:
   connector:
     type: http
     port: 8080
-  requestLog:
-    appenders:
-      - type: file
-        currentLogFilename: ../logs/access.log
-        archivedLogFilenamePattern: ../logs/access-%d.log.gz
 
-mesos:
-  master: zk://localhost:2181/mesos
-  defaultCpus: 1
-  defaultMemory: 128
-  frameworkName: Baragon
-  frameworkId: Baragon
-  frameworkFailoverTimeout: 1000000
-  useNativeCode: false
+history:
+  enabled: true
+  workerInitialDelayHours: 0
+  purgeOldRequests: true
+  purgeOldRequestsAfterDays: 1
+  purgeWhenDateNotFound: true
+  purgeEveryHours: 1
 
 zookeeper:
   quorum: localhost:2181
@@ -30,9 +24,7 @@ zookeeper:
 ui:
   title: Baragon (docker)
   baseUrl: http://localhost:8080/baragon/v2/ui
-
-logging:
-  loggers:
-    "com.hubspot.baragon" : TRACE
+  allowEdit: false
+  allowEditKey: test
 
 enableCorsFilter: true

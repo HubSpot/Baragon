@@ -1,8 +1,7 @@
 package com.hubspot.baragon.config;
 
-import org.hibernate.validator.constraints.NotEmpty;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.hibernate.validator.constraints.NotEmpty;
 
 public class HttpClientConfiguration {
   public static final int MAX_REQUEST_RETRY_DEFAULT = 5;

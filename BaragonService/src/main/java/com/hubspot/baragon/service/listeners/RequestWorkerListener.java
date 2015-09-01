@@ -1,18 +1,17 @@
 package com.hubspot.baragon.service.listeners;
 
-import com.google.inject.Inject;
-import com.hubspot.baragon.service.BaragonServiceModule;
-import com.hubspot.baragon.service.config.BaragonConfiguration;
-import com.hubspot.baragon.worker.BaragonRequestWorker;
-import org.apache.curator.framework.recipes.leader.LeaderLatchListener;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import javax.inject.Named;
+
+import com.google.inject.Inject;
+import com.hubspot.baragon.service.BaragonServiceModule;
+import com.hubspot.baragon.service.config.BaragonConfiguration;
+import com.hubspot.baragon.service.worker.BaragonRequestWorker;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class RequestWorkerListener extends AbstractLatchListener {
   private static final Logger LOG = LoggerFactory.getLogger(RequestWorkerListener.class);

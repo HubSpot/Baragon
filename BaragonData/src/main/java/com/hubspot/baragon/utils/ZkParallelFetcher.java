@@ -1,14 +1,5 @@
 package com.hubspot.baragon.utils;
 
-import com.google.common.base.Function;
-import com.google.inject.Inject;
-import org.apache.curator.framework.CuratorFramework;
-import org.apache.curator.framework.api.BackgroundCallback;
-import org.apache.curator.framework.api.CuratorEvent;
-import org.apache.curator.utils.ZKPaths;
-import org.apache.log4j.Logger;
-import org.apache.zookeeper.KeeperException;
-
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
@@ -18,6 +9,15 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+
+import com.google.common.base.Function;
+import com.google.inject.Inject;
+import org.apache.curator.framework.CuratorFramework;
+import org.apache.curator.framework.api.BackgroundCallback;
+import org.apache.curator.framework.api.CuratorEvent;
+import org.apache.curator.utils.ZKPaths;
+import org.apache.log4j.Logger;
+import org.apache.zookeeper.KeeperException;
 
 public class ZkParallelFetcher {
   private static final Logger LOG = Logger.getLogger(ZkParallelFetcher.class);

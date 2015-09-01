@@ -1,42 +1,48 @@
 package com.hubspot.baragon.service;
 
-import com.google.common.base.Optional;
-import com.hubspot.baragon.config.ElbConfiguration;
-import com.hubspot.baragon.service.listeners.AbstractLatchListener;
-import com.hubspot.baragon.service.listeners.ElbSyncWorkerListener;
-import com.hubspot.baragon.service.listeners.RequestWorkerListener;
-import io.dropwizard.jetty.HttpConnectorFactory;
-import io.dropwizard.server.SimpleServerFactory;
-
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.apache.curator.framework.recipes.leader.LeaderLatch;
-
+import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.services.elasticloadbalancing.AmazonElasticLoadBalancingClient;
+import com.google.common.base.Optional;
 import com.google.common.base.Strings;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
-import com.google.inject.name.Named;
 import com.google.inject.multibindings.Multibinder;
+import com.google.inject.name.Named;
 import com.hubspot.baragon.BaragonDataModule;
 import com.hubspot.baragon.config.AuthConfiguration;
 import com.hubspot.baragon.config.HttpClientConfiguration;
 import com.hubspot.baragon.config.ZooKeeperConfiguration;
 import com.hubspot.baragon.data.BaragonWorkerDatastore;
 import com.hubspot.baragon.service.config.BaragonConfiguration;
+import com.hubspot.baragon.service.config.ElbConfiguration;
+import com.hubspot.baragon.service.listeners.AbstractLatchListener;
+import com.hubspot.baragon.service.listeners.ElbSyncWorkerListener;
+import com.hubspot.baragon.service.listeners.RequestPurgingListener;
+import com.hubspot.baragon.service.listeners.RequestWorkerListener;
 import com.hubspot.baragon.utils.JavaUtils;
+import com.ning.http.client.AsyncHttpClient;
+import com.ning.http.client.AsyncHttpClientConfig;
+import io.dropwizard.jetty.HttpConnectorFactory;
+import io.dropwizard.server.SimpleServerFactory;
+import org.apache.curator.framework.recipes.leader.LeaderLatch;
 
 public class BaragonServiceModule extends AbstractModule {
   public static final String BARAGON_SERVICE_SCHEDULED_EXECUTOR = "baragon.service.scheduledExecutor";
 
   public static final String BARAGON_SERVICE_HTTP_PORT = "baragon.service.http.port";
   public static final String BARAGON_SERVICE_HOSTNAME = "baragon.service.hostname";
+  public static final String BARAGON_SERVICE_HTTP_CLIENT = "baragon.service.http.client";
 
   public static final String BARAGON_MASTER_AUTH_KEY = "baragon.master.auth.key";
 
   public static final String BARAGON_URI_BASE = "_baragon_uri_base";
+
+  public static final String BARAGON_AWS_ELB_CLIENT = "baragon.aws.elb.client";
 
   @Override
   protected void configure() {
@@ -45,6 +51,7 @@ public class BaragonServiceModule extends AbstractModule {
     Multibinder<AbstractLatchListener> latchBinder = Multibinder.newSetBinder(binder(), AbstractLatchListener.class);
     latchBinder.addBinding().to(RequestWorkerListener.class);
     latchBinder.addBinding().to(ElbSyncWorkerListener.class);
+    latchBinder.addBinding().to(RequestPurgingListener.class);
   }
 
   @Provides
@@ -89,7 +96,7 @@ public class BaragonServiceModule extends AbstractModule {
   @Singleton
   @Named(BARAGON_SERVICE_SCHEDULED_EXECUTOR)
   public ScheduledExecutorService providesScheduledExecutor() {
-    return Executors.newScheduledThreadPool(2);
+    return Executors.newScheduledThreadPool(3);
   }
 
   @Provides
@@ -146,5 +153,30 @@ public class BaragonServiceModule extends AbstractModule {
   String getSingularityUriBase(final BaragonConfiguration configuration) {
     final String singularityUiPrefix = configuration.getUiConfiguration().getBaseUrl().or(((SimpleServerFactory) configuration.getServerFactory()).getApplicationContextPath());
     return (singularityUiPrefix.endsWith("/")) ?  singularityUiPrefix.substring(0, singularityUiPrefix.length() - 1) : singularityUiPrefix;
+  }
+
+  @Provides
+  @Singleton
+  @Named(BARAGON_SERVICE_HTTP_CLIENT)
+  public AsyncHttpClient providesHttpClient(HttpClientConfiguration config) {
+    AsyncHttpClientConfig.Builder builder = new AsyncHttpClientConfig.Builder();
+
+    builder.setMaxRequestRetry(config.getMaxRequestRetry());
+    builder.setRequestTimeoutInMs(config.getRequestTimeoutInMs());
+    builder.setFollowRedirects(true);
+    builder.setConnectionTimeoutInMs(config.getConnectionTimeoutInMs());
+    builder.setUserAgent(config.getUserAgent());
+
+    return new AsyncHttpClient(builder.build());
+  }
+
+  @Provides
+  @Named(BARAGON_AWS_ELB_CLIENT)
+  public AmazonElasticLoadBalancingClient providesAwsElbClient(Optional<ElbConfiguration> configuration) {
+    if (configuration.isPresent() && configuration.get().getAwsAccessKeyId() != null && configuration.get().getAwsAccessKeySecret() != null) {
+      return new AmazonElasticLoadBalancingClient(new BasicAWSCredentials(configuration.get().getAwsAccessKeyId(), configuration.get().getAwsAccessKeySecret()));
+    } else {
+      return new AmazonElasticLoadBalancingClient();
+    }
   }
 }

@@ -1,21 +1,19 @@
 package com.hubspot.baragon.service.managed;
 
-import com.hubspot.baragon.service.listeners.AbstractLatchListener;
-import io.dropwizard.lifecycle.Managed;
-
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.Set;
+import java.util.concurrent.ScheduledExecutorService;
 
 import javax.inject.Named;
-
-import org.apache.curator.framework.recipes.leader.LeaderLatch;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.google.inject.Inject;
 import com.hubspot.baragon.BaragonDataModule;
 import com.hubspot.baragon.service.BaragonServiceModule;
 import com.hubspot.baragon.service.config.BaragonConfiguration;
+import com.hubspot.baragon.service.listeners.AbstractLatchListener;
+import io.dropwizard.lifecycle.Managed;
+import org.apache.curator.framework.recipes.leader.LeaderLatch;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 public class BaragonManaged implements Managed {

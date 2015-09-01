@@ -1,8 +1,5 @@
 package com.hubspot.baragon.agent.config;
 
-import com.hubspot.baragon.config.HttpClientConfiguration;
-import io.dropwizard.Configuration;
-
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -11,14 +8,15 @@ import javax.validation.Valid;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 
-import org.hibernate.validator.constraints.NotEmpty;
-
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Optional;
 import com.google.common.base.Strings;
 import com.hubspot.baragon.config.AuthConfiguration;
+import com.hubspot.baragon.config.HttpClientConfiguration;
 import com.hubspot.baragon.config.ZooKeeperConfiguration;
+import io.dropwizard.Configuration;
+import org.hibernate.validator.constraints.NotEmpty;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class BaragonAgentConfiguration extends Configuration {

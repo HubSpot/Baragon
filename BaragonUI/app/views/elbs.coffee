@@ -26,6 +26,17 @@ class ElbsView extends View
         @renderTable()
 
         @$('.icons-column span[title]').tooltip()
+        $('table.paginated:not([id])').DataTable
+          dom: "<'row'<'col-md-5'f><'col-md-4'i><'col-md-3'p>><'row't><'clear'>"
+          ordering: false
+          lengthChange: false
+          pageLength: 15
+          pagingType: 'simple'
+          language:
+            paginate:
+              previous: '<span class="glyphicon glyphicon-chevron-left"></span>'
+              next: '<span class="glyphicon glyphicon-chevron-right"></span>'
+            search: 'Search: _INPUT_'
 
     renderTable: =>
         @filterCollection()

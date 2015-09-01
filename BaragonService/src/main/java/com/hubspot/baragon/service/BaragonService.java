@@ -1,16 +1,15 @@
 package com.hubspot.baragon.service;
 
+import com.google.inject.Stage;
+import com.hubspot.baragon.auth.BaragonAuthUpdater;
+import com.hubspot.baragon.service.bundles.CorsBundle;
+import com.hubspot.baragon.service.config.BaragonConfiguration;
+import com.hubspot.dropwizard.guice.GuiceBundle;
 import io.dropwizard.Application;
+import io.dropwizard.assets.AssetsBundle;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import io.dropwizard.views.ViewBundle;
-import io.dropwizard.assets.AssetsBundle;
-
-import com.google.inject.Stage;
-import com.hubspot.baragon.auth.BaragonAuthUpdater;
-import com.hubspot.baragon.service.config.BaragonConfiguration;
-import com.hubspot.baragon.service.bundles.CorsBundle;
-import com.hubspot.dropwizard.guice.GuiceBundle;
 
 public class BaragonService extends Application<BaragonConfiguration> {
 
