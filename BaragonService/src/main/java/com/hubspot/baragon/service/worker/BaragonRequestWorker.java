@@ -1,14 +1,12 @@
-package com.hubspot.baragon.worker;
+package com.hubspot.baragon.service.worker;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
-import com.hubspot.baragon.models.BaragonAgentMetadata;
+import com.google.inject.Singleton;
 import com.hubspot.baragon.models.RequestAction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,8 +16,8 @@ import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import com.hubspot.baragon.BaragonDataModule;
-import com.hubspot.baragon.managers.AgentManager;
-import com.hubspot.baragon.managers.RequestManager;
+import com.hubspot.baragon.service.managers.AgentManager;
+import com.hubspot.baragon.service.managers.RequestManager;
 import com.hubspot.baragon.models.AgentRequestType;
 import com.hubspot.baragon.models.AgentResponse;
 import com.hubspot.baragon.models.BaragonRequest;
@@ -28,6 +26,7 @@ import com.hubspot.baragon.models.InternalStatesMap;
 import com.hubspot.baragon.models.QueuedRequestId;
 import com.hubspot.baragon.utils.JavaUtils;
 
+@Singleton
 public class BaragonRequestWorker implements Runnable {
   private static final Logger LOG = LoggerFactory.getLogger(BaragonRequestWorker.class);
 

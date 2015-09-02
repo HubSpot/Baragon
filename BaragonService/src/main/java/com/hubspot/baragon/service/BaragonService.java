@@ -1,10 +1,12 @@
 package com.hubspot.baragon.service;
 
 import io.dropwizard.Application;
+import io.dropwizard.db.DataSourceFactory;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import io.dropwizard.views.ViewBundle;
 import io.dropwizard.assets.AssetsBundle;
+import io.dropwizard.migrations.MigrationsBundle;
 
 import com.google.inject.Stage;
 import com.hubspot.baragon.auth.BaragonAuthUpdater;
@@ -26,6 +28,12 @@ public class BaragonService extends Application<BaragonConfiguration> {
     bootstrap.addBundle(guiceBundle);
     bootstrap.addBundle(new ViewBundle());
     bootstrap.addBundle(new AssetsBundle("/assets/static/", "/static/"));
+    bootstrap.addBundle(new MigrationsBundle<BaragonConfiguration>() {
+      @Override
+      public DataSourceFactory getDataSourceFactory(final BaragonConfiguration configuration) {
+        return configuration.getDatabaseConfiguration().get();
+      }
+    });
   }
 
   @Override

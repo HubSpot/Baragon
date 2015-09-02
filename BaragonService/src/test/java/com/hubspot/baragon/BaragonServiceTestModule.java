@@ -2,6 +2,8 @@ package com.hubspot.baragon;
 
 import java.util.concurrent.atomic.AtomicLong;
 
+import com.hubspot.baragon.service.BaragonLoadBalancerTestDatastore;
+import com.hubspot.baragon.service.BaragonServiceModule;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.retry.RetryOneTime;
@@ -19,7 +21,7 @@ import com.hubspot.baragon.data.BaragonLoadBalancerDatastore;
 import com.ning.http.client.AsyncHttpClient;
 import com.ning.http.client.AsyncHttpClientConfig;
 
-public class BaragonDataTestModule extends AbstractModule {
+public class BaragonServiceTestModule extends AbstractModule {
   @Override
   protected void configure() {
     bind(TestingServer.class).in(Scopes.SINGLETON);
@@ -43,7 +45,7 @@ public class BaragonDataTestModule extends AbstractModule {
 
   @Provides
   @Singleton
-  @Named(BaragonDataModule.BARAGON_SERVICE_HTTP_CLIENT)
+  @Named(BaragonServiceModule.BARAGON_SERVICE_HTTP_CLIENT)
   public AsyncHttpClient providesHttpClient(HttpClientConfiguration config) {
     AsyncHttpClientConfig.Builder builder = new AsyncHttpClientConfig.Builder();
 

@@ -1,4 +1,4 @@
-package com.hubspot.baragon.managers;
+package com.hubspot.baragon.service.managers;
 
 import org.apache.curator.framework.recipes.leader.LeaderLatch;
 import org.apache.curator.framework.state.ConnectionState;

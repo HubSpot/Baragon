@@ -12,6 +12,7 @@ import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.utils.ZKPaths;
 
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 
 @Singleton
@@ -45,10 +46,18 @@ public class BaragonRequestDatastore extends AbstractDataStore {
     final Optional<BaragonRequest> maybeRequest = getRequest(requestId);
 
     if (maybeRequest.isPresent()) {
-      deleteNode(String.format(REQUEST_FORMAT, requestId));
+      deleteNode(String.format(REQUEST_FORMAT, requestId), true);
     }
 
     return maybeRequest;
+  }
+
+  public List<String> getAllRequestIds() {
+    return getChildren(REQUESTS_FORMAT);
+  }
+
+  public Optional<Date> getRequestUpdatedAt(String requestId) {
+    return getUpdatedAt(String.format(String.format(REQUEST_STATE_FORMAT, requestId)));
   }
 
   //

@@ -1,4 +1,4 @@
-package com.hubspot.baragon.managers;
+package com.hubspot.baragon.service.managers;
 
 import java.util.Collection;
 import java.util.Map;
@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.ArrayList;
 
 import com.hubspot.baragon.models.RequestAction;
+import com.hubspot.baragon.service.BaragonServiceModule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,7 +50,7 @@ public class AgentManager {
   public AgentManager(BaragonLoadBalancerDatastore loadBalancerDatastore,
                       BaragonStateDatastore stateDatastore,
                       BaragonAgentResponseDatastore agentResponseDatastore,
-                      @Named(BaragonDataModule.BARAGON_SERVICE_HTTP_CLIENT) AsyncHttpClient asyncHttpClient,
+                      @Named(BaragonServiceModule.BARAGON_SERVICE_HTTP_CLIENT) AsyncHttpClient asyncHttpClient,
                       @Named(BaragonDataModule.BARAGON_AGENT_REQUEST_URI_FORMAT) String baragonAgentRequestUriFormat,
                       @Named(BaragonDataModule.BARAGON_AGENT_MAX_ATTEMPTS) Integer baragonAgentMaxAttempts,
                       @Named(BaragonDataModule.BARAGON_AUTH_KEY) Optional<String> baragonAuthKey,

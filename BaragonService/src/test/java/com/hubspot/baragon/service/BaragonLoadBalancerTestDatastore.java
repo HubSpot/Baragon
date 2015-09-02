@@ -1,7 +1,6 @@
-package com.hubspot.baragon;
+package com.hubspot.baragon.service;
 
 import com.hubspot.baragon.models.BaragonAgentMetadata;
-import com.hubspot.baragon.utils.ZkParallelFetcher;
 import org.apache.curator.framework.CuratorFramework;
 
 import java.util.Collection;
