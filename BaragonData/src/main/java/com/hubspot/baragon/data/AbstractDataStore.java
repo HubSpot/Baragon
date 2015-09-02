@@ -145,8 +145,16 @@ public abstract class AbstractDataStore {
   }
 
   protected boolean deleteNode(String path) {
+    return deleteNode(path, false);
+  }
+
+  protected boolean deleteNode(String path, boolean recursive) {
     try {
-      curatorFramework.delete().forPath(path);
+      if (recursive) {
+        curatorFramework.delete().deletingChildrenIfNeeded().forPath(path);
+      } else {
+        curatorFramework.delete().forPath(path);
+      }
       return true;
     } catch (KeeperException.NoNodeException e) {
       return false;

@@ -35,7 +35,7 @@ public class HistoryPersisterListener extends AbstractLatchListener {
 
   @Override
   public void isLeader() {
-    LOG.info("We are the leader! Starting ElbSyncWorker...");
+    LOG.info("We are the leader! Starting History Persister...");
 
     if (historyPersisterWorkerFuture != null) {
       historyPersisterWorkerFuture.cancel(false);

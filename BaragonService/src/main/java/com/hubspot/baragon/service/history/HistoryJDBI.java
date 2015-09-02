@@ -11,16 +11,16 @@ import org.skife.jdbi.v2.sqlobject.stringtemplate.UseStringTemplate3StatementLoc
 @UseStringTemplate3StatementLocator
 public interface HistoryJDBI {
 
-  @SqlUpdate("INSERT INTO requestHistory (requestId, serviceId, status, createdAt, updatedAt, bytes) VALUES (:requestId, :serviceId, :status, :createdAt, :updatedAt, :response)")
+  @SqlUpdate("INSERT INTO responseHistory (requestId, serviceId, bytes, createdAt) VALUES (:requestId, :serviceId, :bytes, :createdAt)")
   void insertRequestHistory(@Bind("requestId") String requestId, @Bind("serviceId") String serviceId, @Bind("createdAt") Date createdAt, @Bind("bytes") byte[] response);
 
-  @SqlQuery("SELECT bytes FROM requestHistory WHERE requestId = :requestId")
-  byte[] getRequestById(@Bind("taskId") String requestId);
+  @SqlQuery("SELECT bytes FROM responseHistory WHERE requestId = :requestId")
+  byte[] getRequestById(@Bind("requestId") String requestId);
 
-  @SqlQuery("SELECT requestId FROM requestHistory ORDER BY createdAt DESC LIMIT :limitStart, :limitCount")
+  @SqlQuery("SELECT requestId FROM responseHistory ORDER BY createdAt DESC LIMIT :limitStart, :limitCount")
   List<String> getRequestIds(@Bind("limitStart") Integer limitStart, @Bind("limitCount") Integer limitCount);
 
-  @SqlQuery("SELECT requestId FROM requestHistory WHERE serviceId = :serviceId LIMIT :limitStart, :limitCount")
+  @SqlQuery("SELECT requestId FROM responseHistory WHERE serviceId = :serviceId LIMIT :limitStart, :limitCount")
   List<String> getRequestsForService(@Bind("serviceId") String serviceId, @Bind("limitStart") Integer limitStart, @Bind("limitCount") Integer limitCount);
 
 }

@@ -6,12 +6,15 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Optional;
 import com.google.inject.ProvisionException;
 import com.hubspot.baragon.service.config.ElbConfiguration;
+import com.hubspot.baragon.service.history.BaragonMappers;
 import com.hubspot.baragon.service.history.HistoryManager;
 import com.hubspot.baragon.service.history.JDBIHistoryManager;
 import com.hubspot.baragon.service.history.NoopHistoryManager;
 import com.hubspot.baragon.service.listeners.AbstractLatchListener;
 import com.hubspot.baragon.service.listeners.ElbSyncWorkerListener;
+import com.hubspot.baragon.service.listeners.HistoryPersisterListener;
 import com.hubspot.baragon.service.listeners.RequestWorkerListener;
+import com.hubspot.baragon.service.worker.HistoryPersisterWorker;
 import com.ning.http.client.AsyncHttpClient;
 import com.ning.http.client.AsyncHttpClientConfig;
 import io.dropwizard.db.DataSourceFactory;
@@ -62,6 +65,7 @@ public class BaragonServiceModule extends AbstractModule {
     Multibinder<AbstractLatchListener> latchBinder = Multibinder.newSetBinder(binder(), AbstractLatchListener.class);
     latchBinder.addBinding().to(RequestWorkerListener.class);
     latchBinder.addBinding().to(ElbSyncWorkerListener.class);
+    latchBinder.addBinding().to(HistoryPersisterListener.class);
   }
 
   @Provides
@@ -197,6 +201,8 @@ public class BaragonServiceModule extends AbstractModule {
       try {
         DataSourceFactory dataSourceFactory = configuration.getDatabaseConfiguration().get();
         DBI dbi = new DBIFactory().build(environment, dataSourceFactory, "db");
+        dbi.registerMapper(new BaragonMappers.BaragonBytesMapper());
+        dbi.registerMapper(new BaragonMappers.BaragonRequestIdMapper());
         return new JDBIHistoryManager(objectMapper, dbi.onDemand(HistoryJDBI.class));
       } catch (ClassNotFoundException e) {
         throw new ProvisionException("while instantiating DBI", e);

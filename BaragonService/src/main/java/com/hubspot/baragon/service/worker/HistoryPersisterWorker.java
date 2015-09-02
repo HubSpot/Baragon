@@ -6,7 +6,7 @@ import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import com.hubspot.baragon.data.BaragonAgentResponseDatastore;
 import com.hubspot.baragon.data.BaragonRequestDatastore;
-import com.hubspot.baragon.service.history.JDBIHistoryManager;
+import com.hubspot.baragon.service.history.HistoryManager;
 import com.hubspot.baragon.models.BaragonRequest;
 import com.hubspot.baragon.models.BaragonResponse;
 import com.hubspot.baragon.models.InternalRequestStates;
@@ -19,12 +19,12 @@ public class HistoryPersisterWorker implements Runnable {
 
   private final BaragonRequestDatastore requestDatastore;
   private final BaragonAgentResponseDatastore agentResponseDatastore;
-  private final JDBIHistoryManager historyManager;
+  private final HistoryManager historyManager;
 
   @Inject
   public HistoryPersisterWorker(BaragonRequestDatastore requestDatastore,
                                 BaragonAgentResponseDatastore agentResponseDatastore,
-                                JDBIHistoryManager historyManager) {
+                                HistoryManager historyManager) {
     this.requestDatastore = requestDatastore;
     this.agentResponseDatastore = agentResponseDatastore;
     this.historyManager = historyManager;
@@ -36,12 +36,15 @@ public class HistoryPersisterWorker implements Runnable {
     for (String requestId : allRequestIds) {
       try {
         Optional<InternalRequestStates> maybeState = requestDatastore.getRequestState(requestId);
+        Optional<BaragonResponse> maybePersistedResponse = historyManager.getRequestResponse(requestId);
         if (maybeState.isPresent() && InternalStatesMap.isRemovable(maybeState.get())) {
-          final Optional<InternalRequestStates> maybeStatus = requestDatastore.getRequestState(requestId);
-          final Optional<BaragonRequest> maybeRequest = requestDatastore.getRequest(requestId);
+          if (!maybePersistedResponse.isPresent()) {
+            final Optional<InternalRequestStates> maybeStatus = requestDatastore.getRequestState(requestId);
+            final Optional<BaragonRequest> maybeRequest = requestDatastore.getRequest(requestId);
 
-          BaragonResponse response = new BaragonResponse(requestId, InternalStatesMap.getRequestState(maybeStatus.get()), requestDatastore.getRequestMessage(requestId), Optional.of(agentResponseDatastore.getLastResponses(requestId)), maybeRequest);
-          historyManager.saveRequestHistory(response);
+            BaragonResponse response = new BaragonResponse(requestId, InternalStatesMap.getRequestState(maybeStatus.get()), requestDatastore.getRequestMessage(requestId), Optional.of(agentResponseDatastore.getLastResponses(requestId)), maybeRequest);
+            historyManager.saveRequestHistory(response);
+          }
           requestDatastore.deleteRequest(requestId);
         } else {
           LOG.trace(String.format("Request %s still in progress, will not persist to db",requestId));

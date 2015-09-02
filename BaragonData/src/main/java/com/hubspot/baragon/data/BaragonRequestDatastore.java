@@ -45,14 +45,14 @@ public class BaragonRequestDatastore extends AbstractDataStore {
     final Optional<BaragonRequest> maybeRequest = getRequest(requestId);
 
     if (maybeRequest.isPresent()) {
-      deleteNode(String.format(REQUEST_FORMAT, requestId));
+      deleteNode(String.format(REQUEST_FORMAT, requestId), true);
     }
 
     return maybeRequest;
   }
 
   public List<String> getAllRequestIds() {
-    return getChildren(REQUEST_FORMAT);
+    return getChildren(REQUESTS_FORMAT);
   }
 
   //
