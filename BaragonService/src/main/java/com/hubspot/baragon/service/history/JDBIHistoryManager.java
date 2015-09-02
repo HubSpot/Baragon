@@ -23,7 +23,7 @@ public class JDBIHistoryManager implements HistoryManager {
     this.history = history;
   }
 
-  public boolean saveRequestHistory(BaragonResponse response) {
+  public boolean saveRequestHistory(BaragonResponse response, Date updatedAt) {
     try {
       byte[] responseBytes = objectMapper.writeValueAsBytes(response);
       String serviceId;
@@ -32,12 +32,16 @@ public class JDBIHistoryManager implements HistoryManager {
       } else {
         serviceId = "";
       }
-      history.insertRequestHistory(response.getLoadBalancerRequestId(), serviceId, new Date(), responseBytes);
+      history.insertRequestHistory(response.getLoadBalancerRequestId(), serviceId, updatedAt, responseBytes);
       return true;
     } catch (Exception e) {
-      LOG.error("Could not write hsitory to database", e);
+      LOG.error("Could not write history to database", e);
       return false;
     }
+  }
+
+  public void deleteRequestHistoryOlderThan(Date referenceDate) {
+    history.deleteHistoryOlderThan(referenceDate);
   }
 
   public Optional<BaragonRequest> getRequestById(String requestId) {

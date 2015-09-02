@@ -1,9 +1,11 @@
 package com.hubspot.baragon.service.worker;
 
+import java.util.Date;
 import java.util.List;
 
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import com.hubspot.baragon.data.BaragonAgentResponseDatastore;
 import com.hubspot.baragon.data.BaragonRequestDatastore;
 import com.hubspot.baragon.service.history.HistoryManager;
@@ -14,6 +16,7 @@ import com.hubspot.baragon.models.InternalStatesMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@Singleton
 public class HistoryPersisterWorker implements Runnable {
   private static final Logger LOG = LoggerFactory.getLogger(HistoryPersisterWorker.class);
 
@@ -41,9 +44,17 @@ public class HistoryPersisterWorker implements Runnable {
           if (!maybePersistedResponse.isPresent()) {
             final Optional<InternalRequestStates> maybeStatus = requestDatastore.getRequestState(requestId);
             final Optional<BaragonRequest> maybeRequest = requestDatastore.getRequest(requestId);
+            Optional<Date> maybeUpdatedAt = requestDatastore.getRequestUpdatedAt(requestId);
+
+            Date updatedAt;
+            if (maybeUpdatedAt.isPresent()) {
+              updatedAt = maybeUpdatedAt.get();
+            } else {
+              updatedAt = new Date();
+            }
 
             BaragonResponse response = new BaragonResponse(requestId, InternalStatesMap.getRequestState(maybeStatus.get()), requestDatastore.getRequestMessage(requestId), Optional.of(agentResponseDatastore.getLastResponses(requestId)), maybeRequest);
-            historyManager.saveRequestHistory(response);
+            historyManager.saveRequestHistory(response, updatedAt);
           }
           requestDatastore.deleteRequest(requestId);
         } else {

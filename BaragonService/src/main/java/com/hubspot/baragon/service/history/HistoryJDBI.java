@@ -11,16 +11,18 @@ import org.skife.jdbi.v2.sqlobject.stringtemplate.UseStringTemplate3StatementLoc
 @UseStringTemplate3StatementLocator
 public interface HistoryJDBI {
 
-  @SqlUpdate("INSERT INTO responseHistory (requestId, serviceId, bytes, createdAt) VALUES (:requestId, :serviceId, :bytes, :createdAt)")
-  void insertRequestHistory(@Bind("requestId") String requestId, @Bind("serviceId") String serviceId, @Bind("createdAt") Date createdAt, @Bind("bytes") byte[] response);
+  @SqlUpdate("INSERT INTO responseHistory (requestId, serviceId, bytes, updatedAt) VALUES (:requestId, :serviceId, :bytes, :updatedAt)")
+  void insertRequestHistory(@Bind("requestId") String requestId, @Bind("serviceId") String serviceId, @Bind("updatedAt") Date updatedAt, @Bind("bytes") byte[] response);
 
   @SqlQuery("SELECT bytes FROM responseHistory WHERE requestId = :requestId")
   byte[] getRequestById(@Bind("requestId") String requestId);
 
-  @SqlQuery("SELECT requestId FROM responseHistory ORDER BY createdAt DESC LIMIT :limitStart, :limitCount")
+  @SqlQuery("SELECT requestId FROM responseHistory ORDER BY updatedAt DESC LIMIT :limitStart, :limitCount")
   List<String> getRequestIds(@Bind("limitStart") Integer limitStart, @Bind("limitCount") Integer limitCount);
 
-  @SqlQuery("SELECT requestId FROM responseHistory WHERE serviceId = :serviceId LIMIT :limitStart, :limitCount")
+  @SqlQuery("SELECT requestId FROM responseHistory WHERE serviceId = :serviceId ORDER BY updatedAt DESC LIMIT :limitStart, :limitCount")
   List<String> getRequestsForService(@Bind("serviceId") String serviceId, @Bind("limitStart") Integer limitStart, @Bind("limitCount") Integer limitCount);
 
+  @SqlQuery("DELETE FROM responseHistory WHERE updatedAt < :referenceDate")
+  void deleteHistoryOlderThan(@Bind("referenceDate") Date referenceDate);
 }

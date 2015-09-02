@@ -12,6 +12,7 @@ import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.utils.ZKPaths;
 
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 
 @Singleton
@@ -53,6 +54,10 @@ public class BaragonRequestDatastore extends AbstractDataStore {
 
   public List<String> getAllRequestIds() {
     return getChildren(REQUESTS_FORMAT);
+  }
+
+  public Optional<Date> getRequestUpdatedAt(String requestId) {
+    return getUpdatedAt(String.format(String.format(REQUEST_STATE_FORMAT, requestId)));
   }
 
   //

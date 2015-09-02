@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
+import com.google.inject.Singleton;
 import com.hubspot.baragon.models.RequestAction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,6 +26,7 @@ import com.hubspot.baragon.models.InternalStatesMap;
 import com.hubspot.baragon.models.QueuedRequestId;
 import com.hubspot.baragon.utils.JavaUtils;
 
+@Singleton
 public class BaragonRequestWorker implements Runnable {
   private static final Logger LOG = LoggerFactory.getLogger(BaragonRequestWorker.class);
 

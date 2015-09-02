@@ -75,6 +75,9 @@ public class BaragonConfiguration extends Configuration {
   @JsonProperty("database")
   private DataSourceFactory databaseConfiguration;
 
+  @JsonProperty("history")
+  private HistoryConfiguration historyConfiguration = new HistoryConfiguration();
+
   public ZooKeeperConfiguration getZooKeeperConfiguration() {
     return zooKeeperConfiguration;
   }
@@ -177,5 +180,13 @@ public class BaragonConfiguration extends Configuration {
 
   public void setDatabaseConfiguration(DataSourceFactory databaseConfiguration) {
     this.databaseConfiguration = databaseConfiguration;
+  }
+
+  public HistoryConfiguration getHistoryConfiguration() {
+    return historyConfiguration;
+  }
+
+  public void setHistoryConfiguration(HistoryConfiguration historyConfiguration) {
+    this.historyConfiguration = historyConfiguration;
   }
 }

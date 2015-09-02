@@ -5,6 +5,12 @@ server:
     type: http
     port: 8080
 
+database:
+  driverClass: com.mysql.jdbc.Driver
+  user: root
+  password: my-secret-pw
+  url: jdbc:mysql://192.168.59.103:3306/baragon
+
 zookeeper:
   quorum: localhost:2181
   zkNamespace: baragon

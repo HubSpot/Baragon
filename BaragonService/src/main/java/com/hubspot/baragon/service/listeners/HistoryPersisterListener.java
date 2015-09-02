@@ -16,8 +16,6 @@ import org.slf4j.LoggerFactory;
 public class HistoryPersisterListener extends AbstractLatchListener {
   private static final Logger LOG = LoggerFactory.getLogger(HistoryPersisterListener.class);
 
-  private static final int PERSIST_HISTORY_EVERY_SECS = 120;
-
   private final ScheduledExecutorService executorService;
   private final BaragonConfiguration configuration;
   private final HistoryPersisterWorker historyPersisterWorker;
@@ -41,7 +39,12 @@ public class HistoryPersisterListener extends AbstractLatchListener {
       historyPersisterWorkerFuture.cancel(false);
     }
 
-    historyPersisterWorkerFuture = executorService.scheduleAtFixedRate(historyPersisterWorker, PERSIST_HISTORY_EVERY_SECS, PERSIST_HISTORY_EVERY_SECS, TimeUnit.SECONDS);
+    historyPersisterWorkerFuture = executorService.scheduleAtFixedRate(
+      historyPersisterWorker,
+      configuration.getHistoryConfiguration().getPersistEveryMinutes(),
+      configuration.getHistoryConfiguration().getPersistEveryMinutes(),
+      TimeUnit.MINUTES
+    );
   }
 
   @Override
