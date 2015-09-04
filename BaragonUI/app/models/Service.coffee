@@ -28,7 +28,7 @@ class Service extends Model
 
     delete: =>
         $.ajax
-            url: @url()
+            url: "#{ @url() }?authkey=#{ localStorage.getItem 'baragonAuthKey' }"
             type: "DELETE"
             success: (data) =>
                 console.dir(data)
@@ -36,7 +36,7 @@ class Service extends Model
 
     reload: =>
         $.ajax
-            url: "#{ @url }/reload?authkey=#{ localStorage.getItem 'baragonAuthKey' }"
+            url: "#{ @url() }/reload?authkey=#{ localStorage.getItem 'baragonAuthKey' }"
             type: "POST"
             success: (data) =>
                 @set('request', data.loadBalancerRequestId)

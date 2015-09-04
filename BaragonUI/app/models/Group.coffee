@@ -17,12 +17,12 @@ class Group extends Model
 
     deleteSource: (source) =>
         $.ajax
-            url: "#{ @url }/sources?authkey=#{ localStorage.getItem 'baragonAuthKey' }&source=#{source}"
+            url: "#{ @url() }/sources?authkey=#{ localStorage.getItem 'baragonAuthKey' }&source=#{source}"
             type: "DELETE"
 
     addSource: (source) =>
         $.ajax
-            url: "#{ @url }/sources?authkey=#{ localStorage.getItem 'baragonAuthKey' }&source=#{source}"
+            url: "#{ @url() }/sources?authkey=#{ localStorage.getItem 'baragonAuthKey' }&source=#{source}"
             type: "POST"
 
     promptRemoveSource: (source, callback) =>
