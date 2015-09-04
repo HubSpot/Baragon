@@ -18,6 +18,7 @@ import com.hubspot.baragon.service.views.IndexView;
  */
 @Singleton
 @Path(UIResource.UI_RESOURCE_LOCATION + "{uiPath:.*}")
+@NoAuth
 public class UIResource {
 
   static final String UI_RESOURCE_LOCATION = "/ui";
@@ -31,7 +32,6 @@ public class UIResource {
     this.baragonUriBase = baragonUriBase;
   }
 
-  @NoAuth
   @GET
   @Produces(MediaType.TEXT_HTML)
   public IndexView getIndex() {

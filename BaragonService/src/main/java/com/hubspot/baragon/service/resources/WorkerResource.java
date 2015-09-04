@@ -8,10 +8,12 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
 import com.google.inject.Inject;
+import com.hubspot.baragon.auth.NoAuth;
 import com.hubspot.baragon.data.BaragonWorkerDatastore;
 
 @Path("/workers")
 @Produces(MediaType.APPLICATION_JSON)
+@NoAuth
 public class WorkerResource {
   private final BaragonWorkerDatastore datastore;
 

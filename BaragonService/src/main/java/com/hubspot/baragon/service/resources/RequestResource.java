@@ -15,6 +15,7 @@ import javax.ws.rs.core.MediaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
+import com.hubspot.baragon.auth.NoAuth;
 import com.hubspot.baragon.models.BaragonRequest;
 import com.hubspot.baragon.models.BaragonResponse;
 import com.hubspot.baragon.models.QueuedRequestId;
@@ -39,6 +40,7 @@ public class RequestResource {
   }
 
   @GET
+  @NoAuth
   @Path("/{requestId}")
   public Optional<BaragonResponse> getResponse(@PathParam("requestId") String requestId) {
     return manager.getResponse(requestId);
@@ -56,11 +58,13 @@ public class RequestResource {
   }
 
   @GET
+  @NoAuth
   public List<QueuedRequestId> getQueuedRequestIds() {
     return manager.getQueuedRequestIds();
   }
 
   @GET
+  @NoAuth
   @Path("/history/{serviceId}")
   public List<BaragonResponse> getRecentRequestIds(@PathParam("serviceId") String serviceId) {
     return manager.getResponsesForService(serviceId);

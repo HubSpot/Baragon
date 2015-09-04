@@ -12,6 +12,7 @@ import javax.ws.rs.core.MediaType;
 
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
+import com.hubspot.baragon.auth.NoAuth;
 import com.hubspot.baragon.models.BaragonResponse;
 import com.hubspot.baragon.models.BaragonServiceState;
 import com.hubspot.baragon.service.managers.ServiceManager;
@@ -27,11 +28,13 @@ public class StateResource {
   }
 
   @GET
+  @NoAuth
   public Collection<BaragonServiceState> getAllServices() {
     return serviceManager.getAllServices();
   }
 
   @GET
+  @NoAuth
   @Path("/{serviceId}")
   public Optional<BaragonServiceState> getService(@PathParam("serviceId") String serviceId) {
     return serviceManager.getService(serviceId);

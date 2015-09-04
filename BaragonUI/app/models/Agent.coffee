@@ -21,7 +21,7 @@ class Agent extends Model
 
     delete: =>
         $.ajax
-            url: "#{ config.apiRoot }/load-balancer/#{@groupId}/known-agents/#{@agentId}?authkey=#{ config.authKey }"
+            url: "#{ config.apiRoot }/load-balancer/#{@groupId}/known-agents/#{@agentId}?authkey=#{ localStorage.getItem 'baragonAuthKey' }"
             type: "DELETE"
 
 module.exports = Agent

@@ -24,7 +24,11 @@ zookeeper:
 ui:
   title: Baragon (docker)
   baseUrl: http://localhost:8080/baragon/v2/ui
-  allowEdit: false
-  allowEditKey: test
+
+auth:
+  key: test-key
+  enabled: true
+
+masterAuthKey: test-master-key
 
 enableCorsFilter: true

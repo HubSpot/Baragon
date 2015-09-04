@@ -6,7 +6,7 @@ class Elbs extends Collection
 
     model: Elb
 
-    url: => "#{ config.apiRoot }/elbs?authkey=#{ config.authKey }"
+    url: => "#{ config.apiRoot }/elbs"
 
     initialize: (models) =>
 

@@ -5,7 +5,7 @@ class Group extends Model
     sourceRemoveTemplate: require '../templates/vex/sourceRemove'
     sourceAddTemplate: require '../templates/vex/sourceAdd'
 
-    url: -> "#{ config.apiRoot }/load-balancer/#{ @groupId }?authkey=#{ config.authKey }"
+    url: -> "#{ config.apiRoot }/load-balancer/#{ @groupId }"
 
     ignoreAttributes: ['splitSources']
 
@@ -17,12 +17,12 @@ class Group extends Model
 
     deleteSource: (source) =>
         $.ajax
-            url: "#{ config.apiRoot }/load-balancer/#{ @groupId }/sources?authkey=#{ config.authKey }&source=#{source}"
+            url: "#{ @url }/sources?authkey=#{ localStorage.getItem 'baragonAuthKey' }&source=#{source}"
             type: "DELETE"
 
     addSource: (source) =>
         $.ajax
-            url: "#{ config.apiRoot }/load-balancer/#{ @groupId }/sources?authkey=#{ config.authKey }&source=#{source}"
+            url: "#{ @url }/sources?authkey=#{ localStorage.getItem 'baragonAuthKey' }&source=#{source}"
             type: "POST"
 
     promptRemoveSource: (source, callback) =>

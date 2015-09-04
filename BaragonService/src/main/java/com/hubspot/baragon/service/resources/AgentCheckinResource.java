@@ -12,6 +12,7 @@ import javax.ws.rs.core.Response;
 
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
+import com.hubspot.baragon.auth.NoAuth;
 import com.hubspot.baragon.data.BaragonLoadBalancerDatastore;
 import com.hubspot.baragon.models.BaragonAgentMetadata;
 import com.hubspot.baragon.models.BaragonGroup;
@@ -66,6 +67,7 @@ public class AgentCheckinResource {
   }
 
   @GET
+  @NoAuth
   @Produces(MediaType.TEXT_PLAIN)
   @Path("/{clusterName}/can-shutdown")
   public String canShutdownAgent(@PathParam("clusterName") String clusterName, @QueryParam("agentId") String agentId) {

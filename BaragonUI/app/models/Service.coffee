@@ -2,7 +2,7 @@ Model = require './model'
 
 class Service extends Model
 
-    url: -> "#{ config.apiRoot }/state/#{ @serviceId }?authkey=#{ config.authKey }"
+    url: -> "#{ config.apiRoot }/state/#{ @serviceId }"
 
     deleteTemplate: require '../templates/vex/serviceRemove'
     deleteSuccessTemplate: require '../templates/vex/serviceRemoveSuccess'
@@ -36,7 +36,7 @@ class Service extends Model
 
     reload: =>
         $.ajax
-            url: "#{ config.apiRoot }/state/#{ @serviceId }/reload?authkey=#{ config.authKey }"
+            url: "#{ @url }/reload?authkey=#{ localStorage.getItem 'baragonAuthKey' }"
             type: "POST"
             success: (data) =>
                 @set('request', data.loadBalancerRequestId)
@@ -57,7 +57,7 @@ class Service extends Model
                     removeUpstreams: @attributes.upstreams
                 }
                 $.ajax
-                    url: "#{ config.apiRoot }/request?authkey=#{ config.authKey }"
+                    url: "#{ config.apiRoot }/request?authkey=#{ localStorage.getItem 'baragonAuthKey' }"
                     type: "post"
                     contentType: "application/json"
                     data: JSON.stringify(serviceData)
@@ -80,7 +80,7 @@ class Service extends Model
                     removeUpstreams: [{upstream: upstream, request: requestId}]
                 }
                 $.ajax
-                    url: "#{ config.apiRoot }/request?authkey=#{ config.authKey }"
+                    url: "#{ config.apiRoot }/request?authkey=#{ localStorage.getItem 'baragonAuthKey' }"
                     type: "post"
                     contentType: "application/json"
                     data: JSON.stringify(serviceData)
