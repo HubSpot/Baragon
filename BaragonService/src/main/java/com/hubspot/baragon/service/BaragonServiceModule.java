@@ -17,6 +17,7 @@ import com.hubspot.baragon.BaragonDataModule;
 import com.hubspot.baragon.config.AuthConfiguration;
 import com.hubspot.baragon.config.HttpClientConfiguration;
 import com.hubspot.baragon.config.ZooKeeperConfiguration;
+import com.hubspot.baragon.data.BaragonConnectionStateListener;
 import com.hubspot.baragon.data.BaragonWorkerDatastore;
 import com.hubspot.baragon.service.config.BaragonConfiguration;
 import com.hubspot.baragon.service.config.ElbConfiguration;
@@ -29,7 +30,10 @@ import com.ning.http.client.AsyncHttpClient;
 import com.ning.http.client.AsyncHttpClientConfig;
 import io.dropwizard.jetty.HttpConnectorFactory;
 import io.dropwizard.server.SimpleServerFactory;
+import org.apache.curator.framework.CuratorFramework;
+import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.framework.recipes.leader.LeaderLatch;
+import org.apache.curator.retry.ExponentialBackoffRetry;
 
 public class BaragonServiceModule extends AbstractModule {
   public static final String BARAGON_SERVICE_SCHEDULED_EXECUTOR = "baragon.service.scheduledExecutor";
@@ -178,5 +182,21 @@ public class BaragonServiceModule extends AbstractModule {
     } else {
       return new AmazonElasticLoadBalancingClient();
     }
+  }
+
+  @Singleton
+  @Provides
+  public CuratorFramework provideCurator(ZooKeeperConfiguration config, BaragonConnectionStateListener connectionStateListener) {
+    CuratorFramework client = CuratorFrameworkFactory.newClient(
+      config.getQuorum(),
+      config.getSessionTimeoutMillis(),
+      config.getConnectTimeoutMillis(),
+      new ExponentialBackoffRetry(config.getRetryBaseSleepTimeMilliseconds(), config.getRetryMaxTries()));
+
+    client.getConnectionStateListenable().addListener(connectionStateListener);
+
+    client.start();
+
+    return client.usingNamespace(config.getZkNamespace());
   }
 }

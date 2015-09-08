@@ -48,22 +48,6 @@ public class BaragonDataModule extends AbstractModule {
 
   @Singleton
   @Provides
-  public CuratorFramework provideCurator(ZooKeeperConfiguration config, BaragonConnectionStateListener connectionStateListener) {
-    CuratorFramework client = CuratorFrameworkFactory.newClient(
-        config.getQuorum(),
-        config.getSessionTimeoutMillis(),
-        config.getConnectTimeoutMillis(),
-        new ExponentialBackoffRetry(config.getRetryBaseSleepTimeMilliseconds(), config.getRetryMaxTries()));
-
-    client.getConnectionStateListenable().addListener(connectionStateListener);
-
-    client.start();
-
-    return client.usingNamespace(config.getZkNamespace());
-  }
-
-  @Singleton
-  @Provides
   public ObjectMapper provideObjectMapper() {
     final ObjectMapper objectMapper = new ObjectMapper();
 
