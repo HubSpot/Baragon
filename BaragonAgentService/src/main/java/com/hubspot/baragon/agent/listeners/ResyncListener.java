@@ -20,9 +20,11 @@ import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import com.hubspot.baragon.agent.BaragonAgentServiceModule;
+import com.hubspot.baragon.agent.ServerProvider;
 import com.hubspot.baragon.agent.config.BaragonAgentConfiguration;
 import com.hubspot.baragon.agent.lbs.BootstrapFileChecker;
 import com.hubspot.baragon.agent.lbs.FilesystemConfigHelper;
+import com.hubspot.baragon.agent.managed.LifecycleHelper;
 import com.hubspot.baragon.data.BaragonStateDatastore;
 import com.hubspot.baragon.exceptions.ReapplyFailedException;
 import com.hubspot.baragon.models.BaragonConfigFile;
@@ -32,6 +34,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.state.ConnectionState;
 import org.apache.curator.framework.state.ConnectionStateListener;
+import org.eclipse.jetty.server.Server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,20 +42,21 @@ public class ResyncListener implements ConnectionStateListener {
   private static final Logger LOG = LoggerFactory.getLogger(ResyncListener.class);
 
   private final BaragonAgentConfiguration configuration;
-  private final FilesystemConfigHelper configHelper;
-  private final BaragonStateDatastore stateDatastore;
+
+  private final LifecycleHelper lifecycleHelper;
+  private final ServerProvider serverProvider;
   private final Lock agentLock;
   private final long agentLockTimeoutMs;
 
   @Inject
-  public ResyncListener(BaragonStateDatastore stateDatastore,
-                        FilesystemConfigHelper configHelper,
+  public ResyncListener(LifecycleHelper lifecycleHelper,
                         BaragonAgentConfiguration configuration,
+                        ServerProvider serverProvider,
                         @Named(BaragonAgentServiceModule.AGENT_LOCK) Lock agentLock,
                         @Named(BaragonAgentServiceModule.AGENT_LOCK_TIMEOUT_MS) long agentLockTimeoutMs) {
-    this.stateDatastore = stateDatastore;
-    this.configHelper = configHelper;
+    this.lifecycleHelper = lifecycleHelper;
     this.configuration = configuration;
+    this.serverProvider = serverProvider;
     this.agentLock = agentLock;
     this.agentLockTimeoutMs = agentLockTimeoutMs;
   }
@@ -68,7 +72,7 @@ public class ResyncListener implements ConnectionStateListener {
     Callable<Void> callable = new Callable<Void>() {
       public Void call() throws Exception {
         if (agentLock.tryLock(agentLockTimeoutMs, TimeUnit.MILLISECONDS)) {
-          applyCurrentConfigs();
+          lifecycleHelper.applyCurrentConfigs();
           return null;
         } else {
           throw new ReapplyFailedException("Failed to acquire lock to reapply most current configs");
@@ -85,52 +89,25 @@ public class ResyncListener implements ConnectionStateListener {
     try {
       retryer.call(callable);
     } catch (Exception e) {
-      // Shut down and exit, we are not in sync
+      abort(e);
     }
   }
 
-  public void applyCurrentConfigs() {
-    LOG.info("Loading current state of the world from zookeeper...");
-
-    final Stopwatch stopwatch = Stopwatch.createStarted();
-    final long now = System.currentTimeMillis();
-
-    final Collection<String> services = stateDatastore.getServices();
-    if (services.size() > 0) {
-      ExecutorService executorService = Executors.newFixedThreadPool(services.size());
-      List<Callable<Optional<Pair<ServiceContext, Collection<BaragonConfigFile>>>>> todo = new ArrayList<>(services.size());
-
-      for (BaragonServiceState serviceState : stateDatastore.getGlobalState()) {
-        if (!(serviceState.getService().getLoadBalancerGroups() == null) && serviceState.getService().getLoadBalancerGroups().contains(configuration.getLoadBalancerConfiguration().getName())) {
-          todo.add(new BootstrapFileChecker(configHelper, serviceState, now));
-        }
-      }
-
-      LOG.info("Going to apply {} services...", todo.size());
-
+  private void abort(Exception exception) {
+    LOG.error("Caught exception while trying to resync, aborting", exception);
+    Optional<Server> server = serverProvider.get();
+    if (server.isPresent()) {
       try {
-        List<Future<Optional<Pair<ServiceContext, Collection<BaragonConfigFile>>>>> applied = executorService.invokeAll(todo);
-        for (Future<Optional<Pair<ServiceContext, Collection<BaragonConfigFile>>>> serviceFuture : applied) {
-          Optional<Pair<ServiceContext, Collection<BaragonConfigFile>>> maybeToApply = serviceFuture.get();
-          if (maybeToApply.isPresent()) {
-            try {
-              configHelper.bootstrapApply(maybeToApply.get().getKey(), maybeToApply.get().getValue());
-            } catch (Exception e) {
-              LOG.error(String.format("Caught exception while applying %s during bootstrap", maybeToApply.get().getKey().getService().getServiceId()), e);
-            }
-          }
-        }
-        configHelper.checkAndReload();
+        server.get().stop();
+        lifecycleHelper.shutdown();
       } catch (Exception e) {
-        LOG.error(String.format("Caught exception while applying and parsing configs"), e);
-        if (configuration.isExitOnStartupError()) {
-          Throwables.propagate(e);
-        }
+        LOG.warn("While aborting server", e);
+      } finally {
+        System.exit(1);
       }
-
-      LOG.info("Applied {} services in {}ms", todo.size(), stopwatch.elapsed(TimeUnit.MILLISECONDS));
     } else {
-      LOG.info("No services were found to apply");
+      LOG.warn("Baragon Agent abort called before server has fully initialized!");
+      System.exit(1); // Use the hammer.
     }
   }
 }
