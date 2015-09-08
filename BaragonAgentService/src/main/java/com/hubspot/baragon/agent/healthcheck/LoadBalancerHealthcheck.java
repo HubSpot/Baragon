@@ -1,11 +1,10 @@
 package com.hubspot.baragon.agent.healthcheck;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.google.inject.Inject;
 import com.hubspot.baragon.agent.lbs.LocalLbAdapter;
 import com.hubspot.dropwizard.guice.InjectableHealthCheck;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class LoadBalancerHealthcheck extends InjectableHealthCheck {
   public static final String NAME = "loadBalancerConfigs";

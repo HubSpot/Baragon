@@ -54,7 +54,7 @@ class GroupDetailView extends View
 
     removeRequest: (group, basePath) ->
         $.ajax
-            url: "#{ config.apiRoot }/load-balancer/#{group}/base-path?#{$.param({authkey: config.authKey, basePath: basePath})}"
+            url: "#{ config.apiRoot }/load-balancer/#{group}/base-path?#{$.param({authkey: localStorage.getItem 'baragonAuthKey', basePath: basePath})}"
             type: "DELETE"
 
     removeSource: (e) ->

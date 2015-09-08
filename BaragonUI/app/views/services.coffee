@@ -7,10 +7,8 @@ class ServicesView extends View
     template: require '../templates/services'
     tableTemplate: require '../templates/servicesTable'
 
-    initialize: ({@searchFilter}) ->
+    initialize: () ->
         @listenTo @collection, 'sync', @render
-        @searchChange = _.debounce @searchChange, 200
-        @currentServices = []
 
     events: =>
         _.extend super,
@@ -27,35 +25,27 @@ class ServicesView extends View
         @$el.html @template
             config: config
             synced: @collection.synced
-            searchFilter: @searchFilter
 
         @renderTable()
 
         @$('.actions-column a[title]').tooltip()
         @$('.icons-column span[title]').tooltip()
+        $('table.paginated:not([id])').DataTable
+          dom: "<'row'<'col-md-5'f><'col-md-4'i><'col-md-3'p>><'row't><'clear'>"
+          ordering: false
+          lengthChange: false
+          pageLength: 15
+          pagingType: 'simple'
+          language:
+            paginate:
+              previous: '<span class="glyphicon glyphicon-chevron-left"></span>'
+              next: '<span class="glyphicon glyphicon-chevron-right"></span>'
+            search: 'Search: _INPUT_'
 
     renderTable: =>
-        @filterCollection()
         @$('#servicesTable').html @tableTemplate
-           services: @currentServices
+           services: @collection.toJSON()
            config: config
-
-    filterCollection: =>
-        services = _.pluck @collection.models, "attributes"
-
-        if @searchFilter
-            services = _.filter services, (service) =>
-                searchFilter = @searchFilter.toLowerCase().split("@")[0]
-                valuesToSearch = []
-
-                valuesToSearch.push(service.id)
-                valuesToSearch.push(service.service.basePath)
-                for group in service.service.loadBalancerGroups
-                    valuesToSearch.push(group)
-
-                searchTarget = valuesToSearch.join("")
-                searchTarget.toLowerCase().indexOf(searchFilter) isnt -1
-        @currentServices = services
 
     viewJson: (e) ->
         id = $(e.target).parents('tr').data 'service-id'
@@ -78,16 +68,5 @@ class ServicesView extends View
         serviceModel = new Service {serviceId: id}
         serviceModel.promptReloadConfigs =>
             serviceModel.promptReloadConfigsSuccess => @trigger 'refreshrequest'
-
-
-    searchChange: (event) =>
-        return unless @ is app.views.current
-
-        previousSearchFilter = @searchFilter
-        $search = @$ "input[type='search']"
-        @searchFilter = $search.val()
-
-        if @searchFilter isnt previousSearchFilter
-            @renderTable()
 
 module.exports = ServicesView

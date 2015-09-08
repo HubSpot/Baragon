@@ -2,7 +2,7 @@ Model = require './model'
 
 class Elb extends Model
 
-    url: -> "#{ config.apiRoot }/elbs/#{ @elbName }?authkey=#{ config.authKey }"
+    url: -> "#{ config.apiRoot }/elbs/#{ @elbName }"
 
     initialize: ({ @elbName }) ->
 

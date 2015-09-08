@@ -1,22 +1,19 @@
 package com.hubspot.baragon.client;
 
-import javax.inject.Provider;
-
+import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.List;
-import java.util.Collection;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import javax.inject.Provider;
 
-import com.hubspot.baragon.models.BaragonGroup;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.hubspot.baragon.models.BaragonAgentMetadata;
+import com.hubspot.baragon.models.BaragonGroup;
 import com.hubspot.baragon.models.BaragonRequest;
 import com.hubspot.baragon.models.BaragonResponse;
 import com.hubspot.baragon.models.BaragonService;
@@ -27,7 +24,9 @@ import com.hubspot.horizon.HttpClient;
 import com.hubspot.horizon.HttpRequest;
 import com.hubspot.horizon.HttpRequest.Method;
 import com.hubspot.horizon.HttpResponse;
-import com.fasterxml.jackson.core.type.TypeReference;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 public class BaragonServiceClient {
 
@@ -134,7 +133,7 @@ public class BaragonServiceClient {
 
   private <T> Optional<T> getSingle(String uri, String type, String id, Class<T> clazz, Map<String, String> queryParams) {
     checkNotNull(id, String.format("Provide a %s id", type));
-    LOG.info("Getting {} {} from {}", type, id, uri);
+    LOG.debug("Getting {} {} from {}", type, id, uri);
     final long start = System.currentTimeMillis();
 
     HttpResponse response = httpClient.execute(buildRequest(uri, queryParams).build());
@@ -144,12 +143,12 @@ public class BaragonServiceClient {
     }
 
     checkResponse(type, response);
-    LOG.info("Got {} {} in {}ms", type, id, System.currentTimeMillis() - start);
+    LOG.debug("Got {} {} in {}ms", type, id, System.currentTimeMillis() - start);
     return Optional.fromNullable(response.getAs(clazz));
   }
 
   private <T> Collection<T> getCollection(String uri, String type, TypeReference<Collection<T>> typeReference) {
-    LOG.info("Getting all {} from {}", type, uri);
+    LOG.debug("Getting all {} from {}", type, uri);
     final long start = System.currentTimeMillis();
 
     HttpResponse response = httpClient.execute(buildRequest(uri).build());
@@ -159,7 +158,7 @@ public class BaragonServiceClient {
     }
 
     checkResponse(type, response);
-    LOG.info("Got {} in {}ms", type, System.currentTimeMillis() - start);
+    LOG.debug("Got {} in {}ms", type, System.currentTimeMillis() - start);
     return response.getAs(typeReference);
   }
 
@@ -168,18 +167,18 @@ public class BaragonServiceClient {
   }
 
   private <T> Optional<T> delete(String uri, String type, String id, Map<String, String> queryParams, Optional<Class<T>> clazz) {
-    LOG.info("Deleting {} {} from {}", type, id, uri);
+    LOG.debug("Deleting {} {} from {}", type, id, uri);
     final long start = System.currentTimeMillis();
     HttpRequest.Builder request = buildRequest(uri, queryParams).setMethod(Method.DELETE);
     HttpResponse response = httpClient.execute(request.build());
 
     if (response.getStatusCode() == 404) {
-      LOG.info("{} ({}) was not found", type, id);
+      LOG.debug("{} ({}) was not found", type, id);
       return Optional.absent();
     }
 
     checkResponse(type, response);
-    LOG.info("Deleted {} ({}) from Baragon in %sms", type, id, System.currentTimeMillis() - start);
+    LOG.debug("Deleted {} ({}) from Baragon in %sms", type, id, System.currentTimeMillis() - start);
 
     if (clazz.isPresent()) {
       return Optional.of(response.getAs(clazz.get()));
@@ -207,7 +206,7 @@ public class BaragonServiceClient {
   }
 
   private HttpResponse post(String uri, String type, Optional<?> body, Map<String, String> params) {
-    LOG.info("Posting {} to {}", type, uri);
+    LOG.debug("Posting {} to {}", type, uri);
     final long start = System.currentTimeMillis();
     HttpRequest.Builder request = buildRequest(uri, params).setMethod(Method.POST);
 
@@ -217,7 +216,7 @@ public class BaragonServiceClient {
 
     HttpResponse response = httpClient.execute(request.build());
     checkResponse(type, response);
-    LOG.info("Successfully posted {} in {}ms", type, System.currentTimeMillis() - start);
+    LOG.debug("Successfully posted {} in {}ms", type, System.currentTimeMillis() - start);
     return response;
   }
 

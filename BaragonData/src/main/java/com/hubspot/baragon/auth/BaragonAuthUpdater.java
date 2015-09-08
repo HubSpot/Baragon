@@ -1,17 +1,7 @@
 package com.hubspot.baragon.auth;
 
-import io.dropwizard.lifecycle.Managed;
-
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
-
-import org.apache.curator.framework.CuratorFramework;
-import org.apache.curator.framework.recipes.cache.PathChildrenCache;
-import org.apache.curator.framework.recipes.cache.PathChildrenCache.StartMode;
-import org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent;
-import org.apache.curator.framework.recipes.cache.PathChildrenCacheListener;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.google.common.io.Closeables;
 import com.google.inject.Inject;
@@ -19,6 +9,14 @@ import com.google.inject.name.Named;
 import com.hubspot.baragon.BaragonDataModule;
 import com.hubspot.baragon.data.BaragonAuthDatastore;
 import com.hubspot.baragon.models.BaragonAuthKey;
+import io.dropwizard.lifecycle.Managed;
+import org.apache.curator.framework.CuratorFramework;
+import org.apache.curator.framework.recipes.cache.PathChildrenCache;
+import org.apache.curator.framework.recipes.cache.PathChildrenCache.StartMode;
+import org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent;
+import org.apache.curator.framework.recipes.cache.PathChildrenCacheListener;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class BaragonAuthUpdater implements Managed, PathChildrenCacheListener {
   private static final Logger LOG = LoggerFactory.getLogger(BaragonAuthUpdater.class);

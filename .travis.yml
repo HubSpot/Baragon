@@ -3,3 +3,6 @@ jdk:
   - oraclejdk7
   - openjdk7
   - oraclejdk8
+git:
+  depth: 100
+sudo: false

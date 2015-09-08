@@ -6,8 +6,8 @@
     width 2em
     border-radius 100%
     border .25em solid transparent
-    border-top-color $grey
-    border-right-color $grey
+    border-top-color $lighterGrey
+    border-right-color $lighterGrey
     z-index 300
     backface-visibility hidden
     animation spinner 700ms linear infinite
@@ -31,24 +31,6 @@
         &.cushy
             margin-top 3em
             margin-bottom 3em
-
-.page-loader-with-message
-    text-align center
-    margin 2em 0
-    color #888
-
-    .page-loader
-        margin-bottom 2em
-        border-top-color #707070
-        border-right-color #707070
-
-    p
-        font-size 1.3em
-        font-weight 300
-        letter-spacing .03em
-
-.empty-table-message + .page-loader-with-message
-    margin-top 3em
 
 @keyframes spinner
     0%

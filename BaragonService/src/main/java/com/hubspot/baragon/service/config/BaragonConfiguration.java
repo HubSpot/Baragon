@@ -1,12 +1,8 @@
 package com.hubspot.baragon.service.config;
 
-import io.dropwizard.Configuration;
-
 import javax.validation.Valid;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
-
-import org.hibernate.validator.constraints.NotEmpty;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -14,7 +10,8 @@ import com.google.common.base.Optional;
 import com.hubspot.baragon.config.AuthConfiguration;
 import com.hubspot.baragon.config.HttpClientConfiguration;
 import com.hubspot.baragon.config.ZooKeeperConfiguration;
-import com.hubspot.baragon.config.ElbConfiguration;
+import io.dropwizard.Configuration;
+import org.hibernate.validator.constraints.NotEmpty;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class BaragonConfiguration extends Configuration {
@@ -71,6 +68,9 @@ public class BaragonConfiguration extends Configuration {
 
   @JsonProperty("enableCorsFilter")
   private boolean enableCorsFilter = false;
+
+  @JsonProperty("history")
+  private HistoryConfiguration historyConfiguration = new HistoryConfiguration();
 
   public ZooKeeperConfiguration getZooKeeperConfiguration() {
     return zooKeeperConfiguration;
@@ -166,5 +166,13 @@ public class BaragonConfiguration extends Configuration {
 
   public boolean isEnableCorsFilter() {
     return enableCorsFilter;
+  }
+
+  public HistoryConfiguration getHistoryConfiguration() {
+    return historyConfiguration;
+  }
+
+  public void setHistoryConfiguration(HistoryConfiguration historyConfiguration) {
+    this.historyConfiguration = historyConfiguration;
   }
 }

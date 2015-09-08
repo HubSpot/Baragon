@@ -1,27 +1,15 @@
 package com.hubspot.baragon.agent;
 
-import com.hubspot.baragon.config.ElbConfiguration;
-import com.hubspot.baragon.config.HttpClientConfiguration;
-import com.hubspot.baragon.models.BaragonAgentEc2Metadata;
-import io.dropwizard.jetty.HttpConnectorFactory;
-import io.dropwizard.server.SimpleServerFactory;
-
-import java.io.IOException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import java.net.URL;
-import java.net.URLConnection;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.util.List;
-import java.util.Map;
-import java.util.HashMap;
 
-import org.apache.curator.framework.recipes.leader.LeaderLatch;
-
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.jknack.handlebars.Handlebars;
 import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
@@ -38,10 +26,18 @@ import com.hubspot.baragon.agent.handlebars.FirstOfHelper;
 import com.hubspot.baragon.agent.handlebars.FormatTimestampHelper;
 import com.hubspot.baragon.agent.models.LbConfigTemplate;
 import com.hubspot.baragon.config.AuthConfiguration;
+import com.hubspot.baragon.config.HttpClientConfiguration;
 import com.hubspot.baragon.config.ZooKeeperConfiguration;
 import com.hubspot.baragon.data.BaragonLoadBalancerDatastore;
+import com.hubspot.baragon.models.BaragonAgentEc2Metadata;
 import com.hubspot.baragon.models.BaragonAgentMetadata;
 import com.hubspot.baragon.utils.JavaUtils;
+import com.hubspot.horizon.HttpClient;
+import com.hubspot.horizon.HttpConfig;
+import com.hubspot.horizon.apache.ApacheHttpClient;
+import io.dropwizard.jetty.HttpConnectorFactory;
+import io.dropwizard.server.SimpleServerFactory;
+import org.apache.curator.framework.recipes.leader.LeaderLatch;
 
 public class BaragonAgentServiceModule extends AbstractModule {
   public static final String AGENT_SCHEDULED_EXECUTOR = "baragon.service.scheduledExecutor";
@@ -51,8 +47,9 @@ public class BaragonAgentServiceModule extends AbstractModule {
   public static final String AGENT_TEMPLATES = "baragon.agent.templates";
   public static final String AGENT_MOST_RECENT_REQUEST_ID = "baragon.agent.mostRecentRequestId";
   public static final String AGENT_LOCK_TIMEOUT_MS = "baragon.agent.lock.timeoutMs";
-  public static final String AGENT_INSTANCE_ID = "baragon.agent.instanceid";
   public static final String DEFAULT_TEMPLATE_NAME = "default";
+  public static final String BARAGON_AGENT_HTTP_CLIENT = "baragon.agent.http.client";
+
 
   @Override
   protected void configure() {
@@ -156,11 +153,6 @@ public class BaragonAgentServiceModule extends AbstractModule {
   }
 
   @Provides
-  public Optional<ElbConfiguration> providesElbConfiguration() {
-    return Optional.absent();
-  }
-
-  @Provides
   @Singleton
   @Named(AGENT_LOCK)
   public Lock providesAgentLock() {
@@ -179,6 +171,21 @@ public class BaragonAgentServiceModule extends AbstractModule {
   @Named(AGENT_SCHEDULED_EXECUTOR)
   public ScheduledExecutorService providesScheduledExecutor() {
     return Executors.newScheduledThreadPool(1);
+  }
+
+  @Provides
+  @Singleton
+  @Named(BARAGON_AGENT_HTTP_CLIENT)
+  public HttpClient providesApacheHttpClient(HttpClientConfiguration config, ObjectMapper objectMapper) {
+    HttpConfig.Builder configBuilder = HttpConfig.newBuilder()
+      .setRequestTimeoutSeconds(config.getRequestTimeoutInMs() / 1000)
+      .setUserAgent(config.getUserAgent())
+      .setConnectTimeoutSeconds(config.getConnectionTimeoutInMs() / 1000)
+      .setFollowRedirects(true)
+      .setMaxRetries(config.getMaxRequestRetry())
+      .setObjectMapper(objectMapper);
+
+    return new ApacheHttpClient(configBuilder.build());
   }
 
 }

@@ -2,14 +2,13 @@ package com.hubspot.baragon.data;
 
 import java.util.Map;
 
-import org.apache.curator.framework.CuratorFramework;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Optional;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.hubspot.baragon.models.BaragonAuthKey;
+import org.apache.curator.framework.CuratorFramework;
 
 @Singleton
 public class BaragonAuthDatastore extends AbstractDataStore {

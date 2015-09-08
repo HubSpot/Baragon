@@ -119,7 +119,8 @@ On startup the Baragon Agent instance will do the following:
   - At this point, the agent is ready to start processing requests and will appear in the list of active agents when the Baragon Request Worker looks for agents in a particular load balancer group
 - Add to Known Agents List
   - while the leader latch entry will disappear if the agent stops running, an additional entry (identical except for an added timestamp) is also added that will persist. This known agents list helps keep track of every agent Baragon has seen at one point or another and can be helpful for debugging.
-
+- Notify BaragonService
+  - Once the agent is ready to process updates, it will notify BaragonService via an http call. This is mostly important when ELB sync is used, because BaragonService will use this to trigger the initial addition of that instance to the ELB
 
 <a id="nginx"></a>
 #### Setting up Baragon Agent with Nginx
@@ -179,8 +180,6 @@ upstream baragon_testService {
 ```
 
 The resulting configuration will cause the added upstream's running applications to be available on the `/test` path for the current load balancer. Subsequent requests can then add or remove upstreams when applications are stopped or started on different hosts.
-
-*HINT: A configuration similar to this is [implemented for each vagrant](../vagrant/configure-nginx.sh) `BaragonAgent` if you want to see a sample configuration in action*
 
 <a id="haproxy"></a>
 #### Setting up Baragon Agent with Haproxy
@@ -247,7 +246,7 @@ A request can be made to Baragon by posting a `BaragonRequest` object to `Barago
     "serviceId":"testService",
     "owners":["owner@example.com"],
     "serviceBasePath":"/basepath",
-    "loadBalancerGroups":["vagrant"],
+    "loadBalancerGroups":["test"],
     "options":{
       "nginxExtraConfigs": [
         "rewrite ^/test(.*) /test/v1/$1 last;"

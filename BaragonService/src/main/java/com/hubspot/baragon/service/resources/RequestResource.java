@@ -13,16 +13,16 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
-import com.hubspot.baragon.managers.RequestManager;
+import com.hubspot.baragon.auth.NoAuth;
 import com.hubspot.baragon.models.BaragonRequest;
 import com.hubspot.baragon.models.BaragonResponse;
 import com.hubspot.baragon.models.QueuedRequestId;
-import com.hubspot.baragon.worker.BaragonRequestWorker;
+import com.hubspot.baragon.service.managers.RequestManager;
+import com.hubspot.baragon.service.worker.BaragonRequestWorker;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Path("/request")
 @Consumes({MediaType.APPLICATION_JSON})
@@ -40,6 +40,7 @@ public class RequestResource {
   }
 
   @GET
+  @NoAuth
   @Path("/{requestId}")
   public Optional<BaragonResponse> getResponse(@PathParam("requestId") String requestId) {
     return manager.getResponse(requestId);
@@ -57,8 +58,16 @@ public class RequestResource {
   }
 
   @GET
+  @NoAuth
   public List<QueuedRequestId> getQueuedRequestIds() {
     return manager.getQueuedRequestIds();
+  }
+
+  @GET
+  @NoAuth
+  @Path("/history/{serviceId}")
+  public List<BaragonResponse> getRecentRequestIds(@PathParam("serviceId") String serviceId) {
+    return manager.getResponsesForService(serviceId);
   }
 
   @DELETE

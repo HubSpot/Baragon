@@ -46,6 +46,13 @@ agentMaxAttempts: 5
 # (Optional) Time to wait for a response from a Baragon Agent
 agentRequestTimeoutMs: 60000
 
+# (Optional) Configuration to purge old requests from zookeeper, defaults shown
+history:
+  purgeOldRequests: false # Should we purge old requests
+  purgeOldRequestsAfterDays: 7 # delete requests older than this many days
+  purgeWhenDateNotFound: false # if we can't determine when a request was last updated, should we delete it
+  purgeEveryHours: 24 # how often to run the purger
+
 # (Optional) Elb Sync configuration
 elb:
   enabled: false # Determines if the ELB sync worker should start, defaults to false
