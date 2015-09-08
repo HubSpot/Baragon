@@ -59,24 +59,28 @@ public class RequestPurgingWorker implements Runnable {
   public void cleanUpActiveRequests(long referenceTime) {
     List<String> allMaybeActiveRequestIds = requestDatastore.getAllRequestIds();
     for (String requestId : allMaybeActiveRequestIds) {
-      Optional<InternalRequestStates> maybeState = requestDatastore.getRequestState(requestId);
-      switch(getPurgeActionForMaybeActiveRequest(requestId, referenceTime, maybeState)) {
-        case PURGE:
-          requestDatastore.deleteRequest(requestId);
-          break;
-        case SAVE:
-          Optional<BaragonRequest> maybeRequest = requestDatastore.getRequest(requestId);
-          if (maybeRequest.isPresent()) {
-            BaragonResponse response = new BaragonResponse(maybeRequest.get().getLoadBalancerRequestId(), InternalStatesMap.getRequestState(maybeState.get()), requestDatastore.getRequestMessage(maybeRequest.get().getLoadBalancerRequestId()), Optional.of(agentResponseDatastore.getLastResponses(maybeRequest.get().getLoadBalancerRequestId())), maybeRequest);
-            responseHistoryDatastore.addResponse(maybeRequest.get().getLoadBalancerService().getServiceId(), maybeRequest.get().getLoadBalancerRequestId(), response);
+      try {
+        Optional<InternalRequestStates> maybeState = requestDatastore.getRequestState(requestId);
+        switch (getPurgeActionForMaybeActiveRequest(requestId, referenceTime, maybeState)) {
+          case PURGE:
             requestDatastore.deleteRequest(requestId);
-          } else {
-            LOG.warn(String.format("Could not get request data to save history for request %s", requestId));
-          }
-          break;
-        case NONE:
-        default:
-          break;
+            break;
+          case SAVE:
+            Optional<BaragonRequest> maybeRequest = requestDatastore.getRequest(requestId);
+            if (maybeRequest.isPresent()) {
+              BaragonResponse response = new BaragonResponse(maybeRequest.get().getLoadBalancerRequestId(), InternalStatesMap.getRequestState(maybeState.get()), requestDatastore.getRequestMessage(maybeRequest.get().getLoadBalancerRequestId()), Optional.of(agentResponseDatastore.getLastResponses(maybeRequest.get().getLoadBalancerRequestId())), maybeRequest);
+              responseHistoryDatastore.addResponse(maybeRequest.get().getLoadBalancerService().getServiceId(), maybeRequest.get().getLoadBalancerRequestId(), response);
+              requestDatastore.deleteRequest(requestId);
+            } else {
+              LOG.warn(String.format("Could not get request data to save history for request %s", requestId));
+            }
+            break;
+          case NONE:
+          default:
+            break;
+        }
+      } catch (Exception e) {
+        LOG.error(String.format("Caught exception trying to clean up request %s", requestId));
       }
       if (Thread.interrupted()) {
         LOG.warn("Purger was interrupted, stopping purge");
