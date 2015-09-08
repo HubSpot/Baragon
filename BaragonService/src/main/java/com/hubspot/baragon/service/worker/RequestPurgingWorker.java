@@ -1,7 +1,7 @@
 package com.hubspot.baragon.service.worker;
 
-import java.util.Date;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
@@ -19,8 +19,6 @@ import org.slf4j.LoggerFactory;
 
 public class RequestPurgingWorker implements Runnable {
   private static final Logger LOG = LoggerFactory.getLogger(RequestPurgingWorker.class);
-
-  private static final long DAY_IN_MS = 1000 * 60 * 60 * 24;
 
   private final BaragonRequestDatastore requestDatastore;
   private final BaragonConfiguration configuration;
@@ -47,10 +45,14 @@ public class RequestPurgingWorker implements Runnable {
 
   @Override
   public void run() {
-   long referenceTime = System.currentTimeMillis() - (configuration.getHistoryConfiguration().getPurgeOldRequestsAfterDays() * DAY_IN_MS);
-    cleanUpActiveRequests(referenceTime);
-    if (configuration.getHistoryConfiguration().isPurgeOldRequests()) {
-      purgeHistoricalRequests(referenceTime);
+    try {
+      long referenceTime = System.currentTimeMillis() - (TimeUnit.DAYS.toMillis(configuration.getHistoryConfiguration().getPurgeOldRequestsAfterDays()));
+      cleanUpActiveRequests(referenceTime);
+      if (configuration.getHistoryConfiguration().isPurgeOldRequests()) {
+        purgeHistoricalRequests(referenceTime);
+      }
+    } catch (Exception e) {
+      LOG.error("Caught exception during old request purging", e);
     }
   }
 
