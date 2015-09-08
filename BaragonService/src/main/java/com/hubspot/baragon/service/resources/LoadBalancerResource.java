@@ -15,6 +15,7 @@ import javax.ws.rs.core.MediaType;
 import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
+import com.hubspot.baragon.auth.NoAuth;
 import com.hubspot.baragon.data.BaragonKnownAgentsDatastore;
 import com.hubspot.baragon.data.BaragonLoadBalancerDatastore;
 import com.hubspot.baragon.data.BaragonStateDatastore;
@@ -41,11 +42,13 @@ public class LoadBalancerResource {
   }
 
   @GET
+  @NoAuth
   public Collection<String> getClusters() {
     return loadBalancerDatastore.getLoadBalancerGroupNames();
   }
 
   @GET
+  @NoAuth
   @Path("/{clusterName}")
   public Optional<BaragonGroup> getGroupDetail(@PathParam("clusterName") String clusterName) {
     return loadBalancerDatastore.getLoadBalancerGroup(clusterName);
@@ -64,6 +67,7 @@ public class LoadBalancerResource {
   }
 
   @GET
+  @NoAuth
   @Path("/{clusterName}/hosts")
   @Deprecated
   public Collection<String> getHosts(@PathParam("clusterName") String clusterName) {
@@ -78,12 +82,14 @@ public class LoadBalancerResource {
   }
 
   @GET
+  @NoAuth
   @Path("/{clusterName}/agents")
   public Collection<BaragonAgentMetadata> getAgentMetadata(@PathParam("clusterName") String clusterName) {
     return loadBalancerDatastore.getAgentMetadata(clusterName);
   }
 
   @GET
+  @NoAuth
   @Path("/{clusterName}/known-agents")
   public Collection<BaragonKnownAgentMetadata> getKnownAgentsMetadata(@PathParam("clusterName") String clusterName) {
     return knownAgentsDatastore.getKnownAgentsMetadata(clusterName);
@@ -96,12 +102,14 @@ public class LoadBalancerResource {
   }
 
   @GET
+  @NoAuth
   @Path("/{clusterName}/base-path/all")
   public Collection<String> getBasePaths(@PathParam("clusterName") String clusterName) {
     return loadBalancerDatastore.getBasePaths(clusterName);
   }
 
   @GET
+  @NoAuth
   @Path("/{clusterName}/base-path")
   public Optional<BaragonService> getBasePathServiceId(@PathParam("clusterName") String clusterName, @QueryParam("basePath") String basePath) {
     final Optional<String> maybeServiceId = loadBalancerDatastore.getBasePathServiceId(clusterName, basePath);

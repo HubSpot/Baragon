@@ -6,7 +6,7 @@ class QueuedRequests extends Collection
 
     model: QueuedRequest
 
-    url: => "#{ config.apiRoot }/request?authkey=#{ config.authKey }"
+    url: => "#{ config.apiRoot }/request"
 
     initialize: (models) =>
 

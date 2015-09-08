@@ -26,7 +26,6 @@ import com.hubspot.baragon.service.BaragonServiceModule;
 @Path("/auth")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-@NoAuth
 public class AuthResource {
   private final BaragonAuthDatastore datastore;
   private final String masterAuthKey;
@@ -39,6 +38,13 @@ public class AuthResource {
   }
 
   @GET
+  @Path("/key/verify")
+  public void verifyKey() {
+
+  }
+
+  @GET
+  @NoAuth
   @Path("/keys")
   public Collection<BaragonAuthKey> getKeys(@QueryParam("authkey") String queryAuthKey) {
     if (!masterAuthKey.equals(queryAuthKey)) {
@@ -49,6 +55,7 @@ public class AuthResource {
   }
 
   @DELETE
+  @NoAuth
   @Path("/keys/{key}")
   public Optional<BaragonAuthKey> expireKey(@PathParam("key") String key, @QueryParam("authkey") String queryAuthKey) {
     if (!masterAuthKey.equals(queryAuthKey)) {
@@ -59,6 +66,7 @@ public class AuthResource {
   }
 
   @POST
+  @NoAuth
   @Path("/keys")
   public void addKey(BaragonAuthKey authKey, @QueryParam("authkey") String queryAuthKey) {
     if (!masterAuthKey.equals(queryAuthKey)) {

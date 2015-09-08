@@ -25,6 +25,7 @@ import com.amazonaws.services.elasticloadbalancing.model.RegisterInstancesWithLo
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
+import com.hubspot.baragon.auth.NoAuth;
 import com.hubspot.baragon.service.BaragonServiceModule;
 import com.hubspot.baragon.service.config.ElbConfiguration;
 import com.hubspot.baragon.service.exceptions.BaragonNotFoundException;
@@ -45,6 +46,7 @@ public class ElbResource {
 
 
   @GET
+  @NoAuth
   public List<LoadBalancerDescription> getAllElbs() {
     if (config.isPresent()) {
       return elbClient.describeLoadBalancers().getLoadBalancerDescriptions();
@@ -54,6 +56,7 @@ public class ElbResource {
   }
 
   @GET
+  @NoAuth
   @Path("/{elbName}")
   public LoadBalancerDescription getElb(@PathParam("elbName") String elbName) {
     if (config.isPresent()) {

@@ -29,13 +29,21 @@
                     </li>
                 {{/if}}
             </ul>
-            {{#unless config.allowEdit}}
+            {{#if config.allowEdit}}
+                {{#if config.authEnabled}}
+                    <ul class="nav navbar-nav navbar-right">
+                        <li>
+                            <a data-action="disableEdit">Disable Edit</a>
+                        </li>
+                    </ul>
+                {{/if}}
+            {{else}}
                 <ul class="nav navbar-nav navbar-right">
                     <li>
                         <a data-action="enableEdit">Enable Edit</a>
                     </li>
                 </ul>
-            {{/unless}}
+            {{/if}}
         </div>
     </div>
 </nav>

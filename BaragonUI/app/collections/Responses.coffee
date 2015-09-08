@@ -6,7 +6,7 @@ class Responses extends Collection
 
     model: Request
 
-    url: => "#{ config.apiRoot }/request/history/#{ @serviceId }?authkey=#{ config.authKey }"
+    url: => "#{ config.apiRoot }/request/history/#{ @serviceId }"
 
     initialize: (models, { @serviceId }) =>
 
