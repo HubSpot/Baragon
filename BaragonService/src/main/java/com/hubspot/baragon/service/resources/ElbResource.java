@@ -25,8 +25,8 @@ import com.amazonaws.services.elasticloadbalancing.model.RegisterInstancesWithLo
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
-import com.hubspot.baragon.BaragonDataModule;
-import com.hubspot.baragon.config.ElbConfiguration;
+import com.hubspot.baragon.service.BaragonServiceModule;
+import com.hubspot.baragon.service.config.ElbConfiguration;
 import com.hubspot.baragon.service.exceptions.BaragonNotFoundException;
 import com.hubspot.baragon.service.exceptions.BaragonWebException;
 
@@ -37,7 +37,7 @@ public class ElbResource {
   private final Optional<ElbConfiguration> config;
 
   @Inject
-  public ElbResource(@Named(BaragonDataModule.BARAGON_AWS_ELB_CLIENT)AmazonElasticLoadBalancingClient elbClient,
+  public ElbResource(@Named(BaragonServiceModule.BARAGON_AWS_ELB_CLIENT)AmazonElasticLoadBalancingClient elbClient,
                      Optional<ElbConfiguration> config) {
     this.elbClient = elbClient;
     this.config = config;

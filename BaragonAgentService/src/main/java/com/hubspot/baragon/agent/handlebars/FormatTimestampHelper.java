@@ -4,11 +4,10 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.github.jknack.handlebars.Helper;
 import com.github.jknack.handlebars.Options;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class FormatTimestampHelper implements Helper<Number> {
   private static final Logger LOG = LoggerFactory.getLogger(FormatTimestampHelper.class);

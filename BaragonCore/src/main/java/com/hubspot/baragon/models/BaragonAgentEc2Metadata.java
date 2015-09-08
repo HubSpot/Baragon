@@ -2,11 +2,11 @@ package com.hubspot.baragon.models;
 
 import java.util.List;
 
+import com.amazonaws.util.EC2MetadataUtils;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Optional;
-import com.amazonaws.util.EC2MetadataUtils;
 
 @JsonIgnoreProperties( ignoreUnknown = true )
 public class BaragonAgentEc2Metadata {

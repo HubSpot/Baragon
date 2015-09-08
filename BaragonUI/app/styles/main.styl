@@ -1,4 +1,5 @@
 @import nib
+@import colors
 
 html
     height 100%
@@ -10,47 +11,46 @@ html
 a
     cursor pointer
 
-a.disabled
-    cursor none
-    pointer-events none
-    color #999
+.container
+    height 100%
 
-a.disabled:hover
-    background-color transparent
+.detail-header
 
-.link-spacer
-    opacity 0.2
-    padding 0px 5px
+    h1, h2, h3, h4, h5
+        margin-top 0
+        white-space nowrap
+        overflow hidden
+        text-overflow ellipsis
+        position relative
+        .btn.copy-link
+            background $white
+            &:hover, &:focus
+                text-decoration none
+            &:focus
+                outline none
 
-.subtle
-    opacity 0.5
+    .button-container
+        text-align right
+        .btn
+            margin-bottom 5px
 
-// Overrides
+code
+    border 1px solid rgba(0, 0, 0, .075)
+    background rgba(0, 0, 0, .05)
+    color rgba(0, 0, 0, .75)
 
-.vex-loading-spinner
-    top 45% !important
+.btn-group, .btn-group .btn
+    -webkit-user-select none
+    -moz-user-select none
+    -ms-user-select none
 
-.messenger-message
-    background #fff !important
-
-.btn[disabled]
-    opacity: .25
-
+// Page
 .page-header
     margin-top 20px
     margin-bottom 10px
 
     h1, h2, h3
         margin 0
-
-.row
-    margin-bottom 1em
-
-#nav-user-name
-    cursor default
-
-table th
-    text-align left
 
 #page, .navbar .container-fluid
     max-width 1500px
@@ -61,29 +61,83 @@ table th
 .page-header small
     margin-left 1em
 
-code
-    border 1px solid rgba(0, 0, 0, .075)
-    background rgba(0, 0, 0, .05)
-    color rgba(0, 0, 0, .75)
+// Vex
+.vex-loading-spinner
+    top 45% !important
 
-.flash-background
-    background: #fbfbfb
-
-    .page-header
-        background: rgba(0, 123, 255, .1)
-
-.btn-group, .btn-group .btn
-    -webkit-user-select none
-    -moz-user-select none
-    -ms-user-select none
-
+// Messenger
 .messenger-message p:last-child
     margin-bottom 0
+.messenger-message
+    background $white !important
 
 // Fix for FF
 @-moz-document url-prefix()
     fieldset
         display table-cell
 
-.container
-    height 100%
+// DataTables
+div.dataTables_paginate li.next a:after
+    display: none !important
+div.dataTables_paginate li.previous a:before
+    display: none !important
+div.dataTables_paginate li.next a
+    padding-right: 12px !important
+div.dataTables_paginate li.previous a
+    padding-left: 12px !important
+div.dataTables_filter
+    text-align: left
+div.dataTables_filter label, div.dataTables_filter label input.form-control
+    width: 90%
+div.dataTables_filter label input.form-control
+    font-family inherit
+    border 0
+    padding 5px 10px !important
+    margin 0
+    color inherit
+    opacity .5
+    background rgba(0, 0, 0, .1)
+    width 100%
+    display inline-block
+    font-weight bold
+
+    &:focus
+        background rgba(0, 0, 0, .05)
+        opacity 1
+        outline none
+
+// 404 Page
+#page-not-found-wrapper
+    position fixed
+    top 0
+    left 0
+    right 0
+    bottom 0
+
+// Search Input
+input.big-search-box
+    height 50px
+    line-height 50px
+    border 0
+    font-size 20px
+    font-family inherit
+    padding 0 10px !important
+    margin 0
+    color inherit
+    opacity .5
+    background rgba(0, 0, 0, .1)
+    margin-bottom 4px
+    width 100%
+    display block
+    font-weight bold
+
+    &:focus
+        background rgba(0, 0, 0, .05)
+        opacity 1
+        outline none
+
+// Navbar
+.navbar
+    .navbar-brand, #navigation-links .global-search-button
+        color $lightestGrey
+

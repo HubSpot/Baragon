@@ -1,10 +1,7 @@
 package com.hubspot.baragon.agent.lbs;
 
-import org.apache.commons.exec.CommandLine;
-import org.apache.commons.exec.DefaultExecutor;
-import org.apache.commons.exec.ExecuteException;
-import org.apache.commons.exec.ExecuteWatchdog;
-import org.apache.commons.exec.PumpStreamHandler;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 
 import com.google.common.base.Charsets;
 import com.google.inject.Inject;
@@ -12,9 +9,11 @@ import com.google.inject.Singleton;
 import com.hubspot.baragon.agent.config.LoadBalancerConfiguration;
 import com.hubspot.baragon.exceptions.InvalidConfigException;
 import com.hubspot.baragon.exceptions.LbAdapterExecuteException;
-
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
+import org.apache.commons.exec.CommandLine;
+import org.apache.commons.exec.DefaultExecutor;
+import org.apache.commons.exec.ExecuteException;
+import org.apache.commons.exec.ExecuteWatchdog;
+import org.apache.commons.exec.PumpStreamHandler;
 
 @Singleton
 public class LocalLbAdapter {

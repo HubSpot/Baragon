@@ -1,11 +1,8 @@
 package com.hubspot.baragon.service.views;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
-import io.dropwizard.views.View;
-
 import com.hubspot.baragon.service.config.BaragonConfiguration;
-import com.google.common.base.Optional;
+import io.dropwizard.views.View;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 public class IndexView extends View {
 

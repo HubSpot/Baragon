@@ -1,19 +1,18 @@
-package com.hubspot.baragon;
-
-import com.hubspot.baragon.models.BaragonAgentEc2Metadata;
-import org.jukito.JukitoModule;
-import org.jukito.JukitoRunner;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+package com.hubspot.baragon.service;
 
 import java.util.Collections;
 
 import com.google.common.base.Optional;
+import com.hubspot.baragon.BaragonServiceTestModule;
 import com.hubspot.baragon.data.BaragonKnownAgentsDatastore;
 import com.hubspot.baragon.exceptions.InvalidAgentMetadataStringException;
+import com.hubspot.baragon.models.BaragonAgentEc2Metadata;
 import com.hubspot.baragon.models.BaragonAgentMetadata;
 import com.hubspot.baragon.models.BaragonKnownAgentMetadata;
-
+import org.jukito.JukitoModule;
+import org.jukito.JukitoRunner;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import static org.junit.Assert.assertEquals;
 
 @RunWith(JukitoRunner.class)
@@ -28,7 +27,7 @@ public class KnownAgentTests {
 
     @Override
     protected void configureTest() {
-      install(new BaragonDataTestModule());
+      install(new BaragonServiceTestModule());
     }
   }
 

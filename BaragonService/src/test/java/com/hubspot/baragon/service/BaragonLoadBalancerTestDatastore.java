@@ -1,8 +1,4 @@
-package com.hubspot.baragon;
-
-import com.hubspot.baragon.models.BaragonAgentMetadata;
-import com.hubspot.baragon.utils.ZkParallelFetcher;
-import org.apache.curator.framework.CuratorFramework;
+package com.hubspot.baragon.service;
 
 import java.util.Collection;
 import java.util.Set;
@@ -11,6 +7,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import com.hubspot.baragon.data.BaragonLoadBalancerDatastore;
+import com.hubspot.baragon.models.BaragonAgentMetadata;
+import org.apache.curator.framework.CuratorFramework;
 
 public class BaragonLoadBalancerTestDatastore extends BaragonLoadBalancerDatastore {
   private Optional<Set<String>> loadBalancerGroupsOverride = Optional.absent();

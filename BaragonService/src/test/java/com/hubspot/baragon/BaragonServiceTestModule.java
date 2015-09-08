@@ -2,11 +2,6 @@ package com.hubspot.baragon;
 
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.apache.curator.framework.CuratorFramework;
-import org.apache.curator.framework.CuratorFrameworkFactory;
-import org.apache.curator.retry.RetryOneTime;
-import org.apache.curator.test.TestingServer;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.guava.GuavaModule;
 import com.google.inject.AbstractModule;
@@ -16,10 +11,16 @@ import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import com.hubspot.baragon.config.HttpClientConfiguration;
 import com.hubspot.baragon.data.BaragonLoadBalancerDatastore;
+import com.hubspot.baragon.service.BaragonLoadBalancerTestDatastore;
+import com.hubspot.baragon.service.BaragonServiceModule;
 import com.ning.http.client.AsyncHttpClient;
 import com.ning.http.client.AsyncHttpClientConfig;
+import org.apache.curator.framework.CuratorFramework;
+import org.apache.curator.framework.CuratorFrameworkFactory;
+import org.apache.curator.retry.RetryOneTime;
+import org.apache.curator.test.TestingServer;
 
-public class BaragonDataTestModule extends AbstractModule {
+public class BaragonServiceTestModule extends AbstractModule {
   @Override
   protected void configure() {
     bind(TestingServer.class).in(Scopes.SINGLETON);
@@ -43,7 +44,7 @@ public class BaragonDataTestModule extends AbstractModule {
 
   @Provides
   @Singleton
-  @Named(BaragonDataModule.BARAGON_SERVICE_HTTP_CLIENT)
+  @Named(BaragonServiceModule.BARAGON_SERVICE_HTTP_CLIENT)
   public AsyncHttpClient providesHttpClient(HttpClientConfiguration config) {
     AsyncHttpClientConfig.Builder builder = new AsyncHttpClientConfig.Builder();
 
