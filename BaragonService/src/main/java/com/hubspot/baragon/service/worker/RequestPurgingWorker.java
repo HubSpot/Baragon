@@ -48,7 +48,7 @@ public class RequestPurgingWorker implements Runnable {
     try {
       long referenceTime = System.currentTimeMillis() - (TimeUnit.DAYS.toMillis(configuration.getHistoryConfiguration().getPurgeOldRequestsAfterDays()));
       cleanUpActiveRequests(referenceTime);
-      if (configuration.getHistoryConfiguration().isPurgeOldRequests()) {
+      if (configuration.getHistoryConfiguration().isPurgeOldRequests() && !Thread.interrupted()) {
         purgeHistoricalRequests(referenceTime);
       }
     } catch (Exception e) {
@@ -77,6 +77,10 @@ public class RequestPurgingWorker implements Runnable {
         case NONE:
         default:
           break;
+      }
+      if (Thread.interrupted()) {
+        LOG.warn("Purger was interrupted, stopping purge");
+        break;
       }
     }
   }
@@ -111,11 +115,19 @@ public class RequestPurgingWorker implements Runnable {
                 LOG.trace(String.format("Updated at time: %s is earlier than reference time: %s, purging request %s", maybeUpdatedAt.get(), referenceTime, requestId));
                 responseHistoryDatastore.deleteResponse(serviceId, requestId);
               }
+              if (Thread.interrupted()) {
+                LOG.warn("Purger was interrupted, stopping purge");
+                break;
+              }
             }
           }
         } else {
           responseHistoryDatastore.deleteResponses(serviceId);
         }
+      }
+      if (Thread.interrupted()) {
+        LOG.warn("Purger was interrupted, stopping purge");
+        break;
       }
     }
   }
