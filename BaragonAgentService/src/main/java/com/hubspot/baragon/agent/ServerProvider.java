@@ -2,9 +2,8 @@ package com.hubspot.baragon.agent;
 
 import java.util.concurrent.atomic.AtomicReference;
 
-import javax.inject.Inject;
-
 import com.google.common.base.Optional;
+import com.google.inject.Inject;
 import com.google.inject.Provider;
 import io.dropwizard.lifecycle.ServerLifecycleListener;
 import org.eclipse.jetty.server.Server;

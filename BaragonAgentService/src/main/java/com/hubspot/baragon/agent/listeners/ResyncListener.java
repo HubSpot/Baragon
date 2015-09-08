@@ -1,40 +1,27 @@
 package com.hubspot.baragon.agent.listeners;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 
+import ch.qos.logback.classic.LoggerContext;
 import com.github.rholder.retry.Retryer;
 import com.github.rholder.retry.RetryerBuilder;
 import com.github.rholder.retry.StopStrategies;
 import com.github.rholder.retry.WaitStrategies;
 import com.google.common.base.Optional;
-import com.google.common.base.Stopwatch;
-import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import com.hubspot.baragon.agent.BaragonAgentServiceModule;
 import com.hubspot.baragon.agent.ServerProvider;
 import com.hubspot.baragon.agent.config.BaragonAgentConfiguration;
-import com.hubspot.baragon.agent.lbs.BootstrapFileChecker;
-import com.hubspot.baragon.agent.lbs.FilesystemConfigHelper;
 import com.hubspot.baragon.agent.managed.LifecycleHelper;
-import com.hubspot.baragon.data.BaragonStateDatastore;
 import com.hubspot.baragon.exceptions.ReapplyFailedException;
-import com.hubspot.baragon.models.BaragonConfigFile;
-import com.hubspot.baragon.models.BaragonServiceState;
-import com.hubspot.baragon.models.ServiceContext;
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.state.ConnectionState;
 import org.apache.curator.framework.state.ConnectionStateListener;
 import org.eclipse.jetty.server.Server;
+import org.slf4j.ILoggerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -95,6 +82,7 @@ public class ResyncListener implements ConnectionStateListener {
 
   private void abort(Exception exception) {
     LOG.error("Caught exception while trying to resync, aborting", exception);
+    flushLogs();
     Optional<Server> server = serverProvider.get();
     if (server.isPresent()) {
       try {
@@ -107,7 +95,23 @@ public class ResyncListener implements ConnectionStateListener {
       }
     } else {
       LOG.warn("Baragon Agent abort called before server has fully initialized!");
-      System.exit(1); // Use the hammer.
+      System.exit(1);
+    }
+  }
+
+  private void flushLogs() {
+    final long millisToWait = 100;
+
+    ILoggerFactory loggerFactory = LoggerFactory.getILoggerFactory();
+    if (loggerFactory instanceof LoggerContext) {
+      LoggerContext context = (LoggerContext) loggerFactory;
+      context.stop();
+    }
+
+    try {
+      Thread.sleep(millisToWait);
+    } catch (Exception e) {
+      LOG.info("While sleeping for log flush", e);
     }
   }
 }
