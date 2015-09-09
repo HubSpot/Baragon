@@ -181,7 +181,7 @@ public class RequestPurgingWorker implements Runnable {
     }
   }
 
-  class ValueComparator implements Comparator<String> {
+  public static class ValueComparator implements Comparator<String> {
 
     Map<String, Long> base;
     public ValueComparator(Map<String, Long> base) {
