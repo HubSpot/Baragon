@@ -1,6 +1,11 @@
 package com.hubspot.baragon.service.worker;
 
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.base.Optional;
@@ -50,6 +55,7 @@ public class RequestPurgingWorker implements Runnable {
       cleanUpActiveRequests(referenceTime);
       if (configuration.getHistoryConfiguration().isPurgeOldRequests() && !Thread.interrupted()) {
         purgeHistoricalRequests(referenceTime);
+        trimNumRequestsPerService();
       }
     } catch (Exception e) {
       LOG.error("Caught exception during old request purging", e);
@@ -138,5 +144,56 @@ public class RequestPurgingWorker implements Runnable {
 
   private boolean shouldPurge(Optional<Long> maybeUpdatedAt, long referenceTime) {
     return (maybeUpdatedAt.isPresent() && maybeUpdatedAt.get() < referenceTime) || (!maybeUpdatedAt.isPresent() && configuration.getHistoryConfiguration().isPurgeWhenDateNotFound());
+  }
+
+  private void trimNumRequestsPerService() {
+    LOG.debug("Checking for services with too many requests");
+    for (String serviceId : responseHistoryDatastore.getServiceIds()) {
+      if (!serviceId.equals("requestIdMapping")) {
+        try {
+          List<String> requestIds = responseHistoryDatastore.getRequestIdsForService(serviceId);
+          if (requestIds.size() > configuration.getHistoryConfiguration().getMaxRequestsPerService()) {
+            LOG.debug(String.format("Service %s has %s requests, over limit of %s, will remove oldest requests", serviceId, requestIds.size(), configuration.getHistoryConfiguration().getMaxRequestsPerService()));
+            HashMap<String, Long> timestampMap = new HashMap<>();
+            ValueComparator bvc = new ValueComparator(timestampMap);
+            TreeMap<String, Long> sortedTimestampMap = new TreeMap<>(bvc);
+            for (String requestId : requestIds) {
+              Optional<Long> maybeUpdatedAt = responseHistoryDatastore.getRequestUpdatedAt(serviceId, requestId);
+              if (maybeUpdatedAt.isPresent()) {
+                timestampMap.put(requestId, maybeUpdatedAt.get());
+              } else {
+                if (configuration.getHistoryConfiguration().isPurgeWhenDateNotFound()) {
+                  responseHistoryDatastore.deleteResponse(serviceId, requestId);
+                }
+              }
+            }
+            sortedTimestampMap.putAll(timestampMap);
+            int numToDelete = sortedTimestampMap.size() - configuration.getHistoryConfiguration().getMaxRequestsPerService();
+            Iterator<String> iterator = sortedTimestampMap.keySet().iterator();
+            for (int i = 0; iterator.hasNext() && i < numToDelete; i++) {
+              responseHistoryDatastore.deleteResponse(serviceId, iterator.next());
+            }
+          }
+        } catch (Exception e) {
+          LOG.error(String.format("Caught exception purging old requests for service %s", serviceId), e);
+        }
+      }
+    }
+  }
+
+  class ValueComparator implements Comparator<String> {
+
+    Map<String, Long> base;
+    public ValueComparator(Map<String, Long> base) {
+      this.base = base;
+    }
+
+    public int compare(String a, String b) {
+      if (base.get(a) >= base.get(b)) {
+        return -1;
+      } else {
+        return 1;
+      }
+    }
   }
 }
