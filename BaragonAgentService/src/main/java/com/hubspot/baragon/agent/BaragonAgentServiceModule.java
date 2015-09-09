@@ -55,7 +55,6 @@ public class BaragonAgentServiceModule extends AbstractModule {
   public static final String DEFAULT_TEMPLATE_NAME = "default";
   public static final String BARAGON_AGENT_HTTP_CLIENT = "baragon.agent.http.client";
 
-
   @Override
   protected void configure() {
     install(new BaragonDataModule());

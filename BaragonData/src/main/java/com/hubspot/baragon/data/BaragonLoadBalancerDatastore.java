@@ -30,6 +30,7 @@ public class BaragonLoadBalancerDatastore extends AbstractDataStore {
 
   public static final String LOAD_BALANCER_GROUPS_FORMAT = "/load-balancer";
   public static final String LOAD_BALANCER_GROUP_FORMAT = LOAD_BALANCER_GROUPS_FORMAT + "/%s";
+  public static final String LOAD_BALANCER_GROUP_LAST_REQUEST_FORMAT = LOAD_BALANCER_GROUP_FORMAT + "/lastRequest";
   public static final String LOAD_BALANCER_GROUP_HOSTS_FORMAT = LOAD_BALANCER_GROUP_FORMAT + "/hosts";
   public static final String LOAD_BALANCER_GROUP_HOST_FORMAT = LOAD_BALANCER_GROUP_HOSTS_FORMAT + "/%s";
 
@@ -195,5 +196,13 @@ public class BaragonLoadBalancerDatastore extends AbstractDataStore {
     }
 
     return decodedPaths;
+  }
+
+  public Optional<String> getLastRequestForGroup(String loadBalancerGroup) {
+    return readFromZk(String.format(LOAD_BALANCER_GROUP_LAST_REQUEST_FORMAT, loadBalancerGroup), String.class);
+  }
+
+  public void setLastRequestId(String loadBalancerGroup, String requestId) {
+    writeToZk(String.format(LOAD_BALANCER_GROUP_LAST_REQUEST_FORMAT, loadBalancerGroup), requestId);
   }
 }
