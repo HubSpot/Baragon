@@ -36,7 +36,7 @@ public class FilesystemConfigHelper {
     this.adapter = adapter;
   }
 
-  public void remove(BaragonService service, boolean reloadConfigs) throws LbAdapterExecuteException, IOException {
+  public void remove(BaragonService service) throws LbAdapterExecuteException, IOException {
     for (String filename : configGenerator.getConfigPathsForProject(service)) {
       File file = new File(filename);
       if (!file.exists()) {
@@ -46,10 +46,6 @@ public class FilesystemConfigHelper {
       if (!file.delete()) {
         throw new RuntimeException(String.format("Failed to remove %s for %s", filename, service.getServiceId()));
       }
-    }
-
-    if (reloadConfigs) {
-      adapter.reloadConfigs();
     }
   }
 
@@ -86,14 +82,14 @@ public class FilesystemConfigHelper {
       if (previousConfigsExist) {
         restoreConfigs(service);
       } else {
-        remove(service, false);
+        remove(service);
       }
       throw Throwables.propagate(e);
     }
     LOG.info(String.format("Apply finished for %s", service.getServiceId()));
   }
 
-  public void apply(ServiceContext context, Optional<BaragonService> maybeOldService, boolean revertOnFailure) throws InvalidConfigException, LbAdapterExecuteException, IOException, MissingTemplateException {
+  public void apply(ServiceContext context, Optional<BaragonService> maybeOldService, boolean revertOnFailure, boolean noReload, boolean noValidate) throws InvalidConfigException, LbAdapterExecuteException, IOException, MissingTemplateException {
     final BaragonService service = context.getService();
     final BaragonService oldService = maybeOldService.or(service);
 
@@ -122,13 +118,17 @@ public class FilesystemConfigHelper {
         writeConfigs(newConfigs);
         //If the new service id for this base path is different, remove the configs for the old service id
         if (oldServiceExists && !oldService.getServiceId().equals(service.getServiceId())) {
-          remove(oldService, false);
+          remove(oldService);
         }
       } else {
-        remove(service, false);
+        remove(service);
       }
 
-      adapter.checkConfigs();
+      if (!noValidate) {
+        adapter.checkConfigs();
+      } else {
+        LOG.debug("Not validating configs due to 'noValidate' specified in request");
+      }
     } catch (Exception e) {
       LOG.error(String.format("Caught exception while writing configs for %s, reverting to backups!", service.getServiceId()), e);
 
@@ -140,32 +140,40 @@ public class FilesystemConfigHelper {
         if (previousConfigsExist) {
           restoreConfigs(service);
         } else {
-          remove(service, false);
+          remove(service);
         }
       }
 
       throw Throwables.propagate(e);
     }
 
-    adapter.reloadConfigs();
+    if (!noReload) {
+      adapter.reloadConfigs();
+    } else {
+      LOG.debug("Not reloading configs due to 'noReload' specified in request");
+    }
 
     removeBackupConfigs(oldService);
     LOG.info(String.format("Apply finished for %s", service.getServiceId()));
   }
 
-  public void delete(BaragonService service, Optional<BaragonService> maybeOldService) throws InvalidConfigException, LbAdapterExecuteException, IOException, MissingTemplateException {
+  public void delete(BaragonService service, Optional<BaragonService> maybeOldService, boolean noReload, boolean noValidate) throws InvalidConfigException, LbAdapterExecuteException, IOException, MissingTemplateException {
     final boolean oldServiceExists = (maybeOldService.isPresent() && configsExist(maybeOldService.get()));
     final boolean previousConfigsExist = configsExist(service);
      try {
-      if (previousConfigsExist) {
-        backupConfigs(service);
-        remove(service, false);
-      }
-      if (oldServiceExists && !maybeOldService.get().equals(service)) {
-        backupConfigs(maybeOldService.get());
-        remove(maybeOldService.get(), false);
-      }
-       adapter.checkConfigs();
+       if (previousConfigsExist) {
+         backupConfigs(service);
+         remove(service);
+       }
+       if (oldServiceExists && !maybeOldService.get().equals(service)) {
+         backupConfigs(maybeOldService.get());
+         remove(maybeOldService.get());
+       }
+       if (!noValidate) {
+         adapter.checkConfigs();
+       } else {
+         LOG.debug("Not validating configs due to 'noValidate' specified in request");
+       }
     } catch (Exception e) {
       LOG.error(String.format("Caught exception while deleting configs for %s, reverting to backups!", service.getServiceId()), e);
       if (oldServiceExists && !maybeOldService.get().equals(service)) {
@@ -174,12 +182,16 @@ public class FilesystemConfigHelper {
       if (previousConfigsExist) {
         restoreConfigs(service);
       } else {
-        remove(service, false);
+        remove(service);
       }
 
       throw Throwables.propagate(e);
      }
-    adapter.reloadConfigs();
+    if (!noReload) {
+      adapter.reloadConfigs();
+    } else {
+      LOG.debug("Not reloading configs due to 'noReload' specified in request");
+    }
   }
 
   private void writeConfigs(Collection<BaragonConfigFile> files) {

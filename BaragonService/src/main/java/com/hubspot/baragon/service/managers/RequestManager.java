@@ -197,6 +197,10 @@ public class RequestManager {
       }
     }
 
+    if (request.isNoReload() && request.getAction().isPresent() && request.getAction().get().equals(RequestAction.RELOAD)) {
+      throw new InvalidRequestActionException("You can not specify 'noReload' on a request with action 'RELOAD'");
+    }
+
     if (!request.getReplaceUpstreams().isEmpty() && (!request.getAddUpstreams().isEmpty() || !request.getRemoveUpstreams().isEmpty())) {
       throw new InvalidUpstreamsException("If overrideUpstreams is specified, addUpstreams and removeUpstreams mustbe empty");
     }
