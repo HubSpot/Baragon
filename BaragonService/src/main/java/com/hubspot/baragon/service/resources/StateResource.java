@@ -3,11 +3,13 @@ package com.hubspot.baragon.service.resources;
 import java.util.Collection;
 
 import javax.ws.rs.DELETE;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
 import com.google.common.base.Optional;
@@ -43,13 +45,13 @@ public class StateResource {
 
   @POST
   @Path("/{serviceId}/reload")
-  public BaragonResponse reloadConfigs(@PathParam("serviceId") String serviceId) {
-    return serviceManager.enqueueReloadServiceConfigs(serviceId);
+  public BaragonResponse reloadConfigs(@PathParam("serviceId") String serviceId, @DefaultValue("false") @QueryParam("noValidate") boolean noValidate) {
+    return serviceManager.enqueueReloadServiceConfigs(serviceId, noValidate);
   }
 
   @DELETE
   @Path("/{serviceId}")
-  public BaragonResponse removeService(@PathParam("serviceId") String serviceId) {
-    return serviceManager.enqueueRemoveService(serviceId);
+  public BaragonResponse removeService(@PathParam("serviceId") String serviceId, @DefaultValue("false") @QueryParam("noValidate") boolean noValidate, @DefaultValue("false") @QueryParam("noReload") boolean noReload) {
+    return serviceManager.enqueueRemoveService(serviceId, noValidate, noReload);
   }
 }
