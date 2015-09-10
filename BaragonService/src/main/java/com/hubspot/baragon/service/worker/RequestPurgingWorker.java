@@ -154,31 +154,35 @@ public class RequestPurgingWorker implements Runnable {
         try {
           List<String> requestIds = responseHistoryDatastore.getRequestIdsForService(serviceId);
           if (requestIds.size() > configuration.getHistoryConfiguration().getMaxRequestsPerService()) {
-            LOG.debug(String.format("Service %s has %s requests, over limit of %s, will remove oldest requests", serviceId, requestIds.size(), configuration.getHistoryConfiguration().getMaxRequestsPerService()));
-            HashMap<String, Long> timestampMap = new HashMap<>();
-            ValueComparator bvc = new ValueComparator(timestampMap);
-            TreeMap<String, Long> sortedTimestampMap = new TreeMap<>(bvc);
-            for (String requestId : requestIds) {
-              Optional<Long> maybeUpdatedAt = responseHistoryDatastore.getRequestUpdatedAt(serviceId, requestId);
-              if (maybeUpdatedAt.isPresent()) {
-                timestampMap.put(requestId, maybeUpdatedAt.get());
-              } else {
-                if (configuration.getHistoryConfiguration().isPurgeWhenDateNotFound()) {
-                  responseHistoryDatastore.deleteResponse(serviceId, requestId);
-                }
-              }
-            }
-            sortedTimestampMap.putAll(timestampMap);
-            int numToDelete = sortedTimestampMap.size() - configuration.getHistoryConfiguration().getMaxRequestsPerService();
-            Iterator<String> iterator = sortedTimestampMap.keySet().iterator();
-            for (int i = 0; iterator.hasNext() && i < numToDelete; i++) {
-              responseHistoryDatastore.deleteResponse(serviceId, iterator.next());
-            }
+            removeOldestRequestIds(serviceId, requestIds);
           }
         } catch (Exception e) {
           LOG.error(String.format("Caught exception purging old requests for service %s", serviceId), e);
         }
       }
+    }
+  }
+
+  private void removeOldestRequestIds(String serviceId, List<String> requestIds) {
+    LOG.debug(String.format("Service %s has %s requests, over limit of %s, will remove oldest requests", serviceId, requestIds.size(), configuration.getHistoryConfiguration().getMaxRequestsPerService()));
+    HashMap<String, Long> timestampMap = new HashMap<>();
+    ValueComparator bvc = new ValueComparator(timestampMap);
+    TreeMap<String, Long> sortedTimestampMap = new TreeMap<>(bvc);
+    for (String requestId : requestIds) {
+      Optional<Long> maybeUpdatedAt = responseHistoryDatastore.getRequestUpdatedAt(serviceId, requestId);
+      if (maybeUpdatedAt.isPresent()) {
+        timestampMap.put(requestId, maybeUpdatedAt.get());
+      } else {
+        if (configuration.getHistoryConfiguration().isPurgeWhenDateNotFound()) {
+          responseHistoryDatastore.deleteResponse(serviceId, requestId);
+        }
+      }
+    }
+    sortedTimestampMap.putAll(timestampMap);
+    int numToDelete = sortedTimestampMap.size() - configuration.getHistoryConfiguration().getMaxRequestsPerService();
+    Iterator<String> iterator = sortedTimestampMap.keySet().iterator();
+    for (int i = 0; iterator.hasNext() && i < numToDelete; i++) {
+      responseHistoryDatastore.deleteResponse(serviceId, iterator.next());
     }
   }
 
