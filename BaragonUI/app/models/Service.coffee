@@ -13,12 +13,13 @@ class Service extends Model
     removeUpstreamsSuccessTemplate: require '../templates/vex/removeUpstreamsSuccess'
 
     noReloadNoValidateInput: """
-            <input name="noValidate" type="checkbox" >Don't validate configs for this request</input>
-            <input name="noReload" type="checkbox" >Don't reload configs for this request</input>
+            <input name="validate" type="checkbox" checked> Validate new configuration after applying changes</input>
+            <br>
+            <input name="reload" type="checkbox" checked> Reload configuration after applying changes</input>
         """
 
     noValidateInput: """
-            <input name="noValidate" type="checkbox" >Don't validate configs for this request</input>
+            <input name="validate" type="checkbox" checked> Validate configuration before reloading</input>
         """
 
     initialize: ({ @serviceId }) ->
@@ -114,7 +115,9 @@ class Service extends Model
             ]
             callback: (data) =>
                 return if data is false
-                @delete(data.noValidate, data.noReload).done callback
+                noValidate = (!data.validate or data.validate != 'on')
+                noReload = (!data.reload or data.reload != 'on')
+                @delete(noValidate, noReload).done callback
 
     promptDeleteSuccess: (callback) =>
         vex.dialog.confirm
@@ -139,7 +142,8 @@ class Service extends Model
             ]
             callback: (data) =>
                 return if data is false
-                @reload(data.noValidate).done callback
+                noValidate = (!data.validate or data.validate != 'on')
+                @reload(noValidate).done callback
 
     promptReloadConfigsSuccess: (callback) =>
         vex.dialog.confirm
@@ -164,7 +168,9 @@ class Service extends Model
             ]
             callback: (data) =>
                 return if data is false
-                @undo(data.noValidate, data.noReload).done callback
+                noValidate = (!data.validate or data.validate != 'on')
+                noReload = (!data.reload or data.reload != 'on')
+                @undo(noValidate, noReload).done callback
 
     promptRemoveUpstreamsSuccess: (callback) =>
         vex.dialog.confirm
@@ -189,6 +195,8 @@ class Service extends Model
             ]
             callback: (data) =>
                 return if data is false
-                @remove(upstream, data.noValidate, data.noReload).done callback
+                noValidate = (!data.validate or data.validate != 'on')
+                noReload = (!data.reload or data.reload != 'on')
+                @remove(upstream, noValidate, noReload).done callback
 
 module.exports = Service
