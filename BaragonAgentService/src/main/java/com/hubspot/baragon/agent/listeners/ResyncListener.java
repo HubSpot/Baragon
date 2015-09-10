@@ -19,6 +19,7 @@ import com.hubspot.baragon.agent.config.BaragonAgentConfiguration;
 import com.hubspot.baragon.agent.managed.LifecycleHelper;
 import com.hubspot.baragon.data.BaragonLoadBalancerDatastore;
 import com.hubspot.baragon.exceptions.ReapplyFailedException;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.state.ConnectionState;
 import org.apache.curator.framework.state.ConnectionStateListener;
@@ -92,6 +93,7 @@ public class ResyncListener implements ConnectionStateListener {
     }
   }
 
+  @SuppressFBWarnings("DM_EXIT")
   private void abort(Exception exception) {
     LOG.error("Caught exception while trying to resync, aborting", exception);
     flushLogs();
@@ -102,13 +104,11 @@ public class ResyncListener implements ConnectionStateListener {
         lifecycleHelper.shutdown();
       } catch (Exception e) {
         LOG.warn("While aborting server", e);
-      } finally {
-        System.exit(1);
       }
     } else {
       LOG.warn("Baragon Agent abort called before server has fully initialized!");
-      System.exit(1);
     }
+    System.exit(1);
   }
 
   private void flushLogs() {
