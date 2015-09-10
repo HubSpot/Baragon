@@ -1,5 +1,6 @@
 package com.hubspot.baragon.service.worker;
 
+import java.io.Serializable;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -181,7 +182,7 @@ public class RequestPurgingWorker implements Runnable {
     }
   }
 
-  public static class ValueComparator implements Comparator<String> {
+  public static class ValueComparator implements Comparator<String>, Serializable {
 
     Map<String, Long> base;
     public ValueComparator(Map<String, Long> base) {
