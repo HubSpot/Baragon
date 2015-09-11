@@ -4,8 +4,8 @@ public class BaragonRequestKey implements Comparable<BaragonRequestKey> {
   private final String requestId;
   private final long updatedAt;
 
-  public BaragonRequestKey(String reqeustId, long updatedAt) {
-    this.requestId = reqeustId;
+  public BaragonRequestKey(String requestId, long updatedAt) {
+    this.requestId = requestId;
     this.updatedAt = updatedAt;
   }
 
