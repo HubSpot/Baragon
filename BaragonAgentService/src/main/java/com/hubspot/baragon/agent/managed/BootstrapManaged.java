@@ -29,6 +29,7 @@ import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import com.hubspot.baragon.agent.BaragonAgentServiceModule;
 import com.hubspot.baragon.agent.config.BaragonAgentConfiguration;
+import com.hubspot.baragon.agent.healthcheck.ConfigChecker;
 import com.hubspot.baragon.agent.lbs.BootstrapFileChecker;
 import com.hubspot.baragon.agent.lbs.FilesystemConfigHelper;
 import com.hubspot.baragon.agent.workers.AgentHeartbeatWorker;
@@ -68,10 +69,12 @@ public class BootstrapManaged implements Managed {
   private final AgentHeartbeatWorker agentHeartbeatWorker;
   private final BaragonWorkerDatastore workerDatastore;
   private final HttpClient httpClient;
+  private final ConfigChecker configChecker;
 
   private static final String SERVICE_CHECKIN_URL_FORMAT = "%s/checkin/%s/%s";
 
   private ScheduledFuture<?> requestWorkerFuture = null;
+  private ScheduledFuture<?> configCheckerFuture = null;
 
   @Inject
   public BootstrapManaged(BaragonStateDatastore stateDatastore,
@@ -83,6 +86,7 @@ public class BootstrapManaged implements Managed {
                           FilesystemConfigHelper configHelper,
                           AgentHeartbeatWorker agentHeartbeatWorker,
                           BaragonAgentMetadata baragonAgentMetadata,
+                          ConfigChecker configChecker,
                           @Named(BaragonAgentServiceModule.AGENT_SCHEDULED_EXECUTOR) ScheduledExecutorService executorService,
                           @Named(BaragonAgentServiceModule.AGENT_LEADER_LATCH) LeaderLatch leaderLatch,
                           @Named(BaragonAgentServiceModule.BARAGON_AGENT_HTTP_CLIENT) HttpClient httpClient) {
@@ -98,6 +102,7 @@ public class BootstrapManaged implements Managed {
     this.workerDatastore = workerDatastore;
     this.authDatastore = authDatastore;
     this.httpClient = httpClient;
+    this.configChecker = configChecker;
   }
 
   private void applyCurrentConfigs() {
@@ -166,6 +171,9 @@ public class BootstrapManaged implements Managed {
 
     LOG.info("Starting agent heartbeat...");
     requestWorkerFuture = executorService.scheduleAtFixedRate(agentHeartbeatWorker, 0, configuration.getHeartbeatIntervalSeconds(), TimeUnit.SECONDS);
+
+    LOG.info("Startign config checker");
+    configCheckerFuture = executorService.scheduleAtFixedRate(configChecker, 0, configuration.getConfigCheckIntervalSecs(), TimeUnit.SECONDS);
 
     if (configuration.getStateFile().isPresent()) {
       LOG.info("Writing state file...");

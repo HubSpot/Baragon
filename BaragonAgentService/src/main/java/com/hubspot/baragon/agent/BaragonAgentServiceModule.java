@@ -49,6 +49,8 @@ public class BaragonAgentServiceModule extends AbstractModule {
   public static final String AGENT_LOCK_TIMEOUT_MS = "baragon.agent.lock.timeoutMs";
   public static final String DEFAULT_TEMPLATE_NAME = "default";
   public static final String BARAGON_AGENT_HTTP_CLIENT = "baragon.agent.http.client";
+  public static final String VALID_CONFIGS = "baragon.agent.valid.configs";
+  public static final String CONFIG_ERROR_MESSAGE = "baragon.agent.config.error.message";
 
 
   @Override
@@ -168,9 +170,24 @@ public class BaragonAgentServiceModule extends AbstractModule {
 
   @Provides
   @Singleton
+  @Named(VALID_CONFIGS)
+  public AtomicReference<Boolean> providesValidConfigs() {
+    return new AtomicReference<>();
+  }
+
+  @Provides
+  @Singleton
+  @Named(CONFIG_ERROR_MESSAGE)
+  public AtomicReference<Optional<String>> providesConfigErrorMessage() {
+    return new AtomicReference<>();
+  }
+
+
+  @Provides
+  @Singleton
   @Named(AGENT_SCHEDULED_EXECUTOR)
   public ScheduledExecutorService providesScheduledExecutor() {
-    return Executors.newScheduledThreadPool(1);
+    return Executors.newScheduledThreadPool(2);
   }
 
   @Provides
