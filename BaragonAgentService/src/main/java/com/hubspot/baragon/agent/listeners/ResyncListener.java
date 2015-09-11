@@ -62,7 +62,7 @@ public class ResyncListener implements ConnectionStateListener {
     if (newState.equals(ConnectionState.RECONNECTED)) {
       LOG.info("Reconnected to zookeeper, checking if configs are still in sync");
       Optional<String> maybeLastReuqestForGroup = loadBalancerDatastore.getLastRequestForGroup(configuration.getLoadBalancerConfiguration().getName());
-      if (!maybeLastReuqestForGroup.isPresent() || maybeLastReuqestForGroup.get().equals(mostRecentRequestId.get())) {
+      if (!maybeLastReuqestForGroup.isPresent() || !maybeLastReuqestForGroup.get().equals(mostRecentRequestId.get())) {
         reapplyConfigsWithRetry();
       }
     }
