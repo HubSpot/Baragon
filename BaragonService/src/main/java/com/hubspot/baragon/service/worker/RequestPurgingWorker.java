@@ -181,8 +181,7 @@ public class RequestPurgingWorker implements Runnable {
       }
     }
     Collections.sort(requestKeyList);
-    int numToDelete = requestKeyList.size() - configuration.getHistoryConfiguration().getMaxRequestsPerService();
-    for (BaragonRequestKey requestKey : requestKeyList.subList(0, numToDelete)) {
+    for (BaragonRequestKey requestKey : requestKeyList.subList(configuration.getHistoryConfiguration().getMaxRequestsPerService(), requestKeyList.size())) {
       responseHistoryDatastore.deleteResponse(serviceId, requestKey.getRequestId());
     }
   }

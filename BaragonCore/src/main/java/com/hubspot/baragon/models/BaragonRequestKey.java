@@ -19,6 +19,6 @@ public class BaragonRequestKey implements Comparable<BaragonRequestKey> {
 
   @Override
   public int compareTo(BaragonRequestKey o) {
-    return updatedAt >= o.updatedAt ? -1 : 1;
+    return Long.compare(updatedAt, o.updatedAt);
   }
 }
