@@ -67,6 +67,8 @@ public class StatusResource {
 
     final String connectionStateString = currentConnectionState == null ? "UNKNOWN" : currentConnectionState.name();
 
-    return new BaragonAgentStatus(loadBalancerConfiguration.getName(), !errorMessage.get().isPresent(), errorMessage.get(), leaderLatch.hasLeadership(), mostRecentRequestId.get(), connectionStateString, agentMetadata);
+    Optional<String> currentErrorMessage = errorMessage.get();
+
+    return new BaragonAgentStatus(loadBalancerConfiguration.getName(), !currentErrorMessage.isPresent(), currentErrorMessage, leaderLatch.hasLeadership(), mostRecentRequestId.get(), connectionStateString, agentMetadata);
   }
 }
