@@ -7,6 +7,7 @@ import java.util.List;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Optional;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -46,9 +47,7 @@ public class BaragonResponseHistoryDatastore extends AbstractDataStore {
   public List<BaragonResponse> getResponsesForService(String serviceId, int limit) {
     final List<String> nodes = getChildren(String.format(RESPONSE_HISTORIES_FOR_SERVICE_FORMAT, serviceId));
     final List<BaragonResponse> responses = Lists.newArrayListWithCapacity(Math.min(nodes.size(), limit));
-    Iterator<String> nodeIterator = nodes.iterator();
-    for (int i = 0; nodeIterator.hasNext() && i < limit; i++) {
-      String requestId = nodeIterator.next();
+    for (String requestId : nodes.subList(0, limit)) {
       try {
         responses.addAll(readFromZk(String.format(RESPONSE_HISTORY_FORMAT, serviceId, requestId), BaragonResponse.class).asSet());
       } catch (Exception e) {
