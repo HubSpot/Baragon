@@ -172,7 +172,7 @@ public class BootstrapManaged implements Managed {
     LOG.info("Starting agent heartbeat...");
     requestWorkerFuture = executorService.scheduleAtFixedRate(agentHeartbeatWorker, 0, configuration.getHeartbeatIntervalSeconds(), TimeUnit.SECONDS);
 
-    LOG.info("Startign config checker");
+    LOG.info("Starting config checker");
     configCheckerFuture = executorService.scheduleAtFixedRate(configChecker, 0, configuration.getConfigCheckIntervalSecs(), TimeUnit.SECONDS);
 
     if (configuration.getStateFile().isPresent()) {
