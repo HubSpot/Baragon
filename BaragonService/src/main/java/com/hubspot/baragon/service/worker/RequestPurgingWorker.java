@@ -1,6 +1,8 @@
 package com.hubspot.baragon.service.worker;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -17,6 +19,7 @@ import com.hubspot.baragon.data.BaragonRequestDatastore;
 import com.hubspot.baragon.data.BaragonResponseHistoryDatastore;
 import com.hubspot.baragon.data.BaragonStateDatastore;
 import com.hubspot.baragon.models.BaragonRequest;
+import com.hubspot.baragon.models.BaragonRequestKey;
 import com.hubspot.baragon.models.BaragonResponse;
 import com.hubspot.baragon.models.InternalRequestStates;
 import com.hubspot.baragon.models.InternalStatesMap;
@@ -166,39 +169,21 @@ public class RequestPurgingWorker implements Runnable {
 
   private void removeOldestRequestIds(String serviceId, List<String> requestIds) {
     LOG.debug(String.format("Service %s has %s requests, over limit of %s, will remove oldest requests", serviceId, requestIds.size(), configuration.getHistoryConfiguration().getMaxRequestsPerService()));
-    HashMap<String, Long> timestampMap = new HashMap<>();
-    ValueComparator bvc = new ValueComparator(timestampMap);
-    TreeMap<String, Long> sortedTimestampMap = new TreeMap<>(bvc);
+    List<BaragonRequestKey> requestKeyList = new ArrayList<>();
     for (String requestId : requestIds) {
       Optional<Long> maybeUpdatedAt = responseHistoryDatastore.getRequestUpdatedAt(serviceId, requestId);
       if (maybeUpdatedAt.isPresent()) {
-        timestampMap.put(requestId, maybeUpdatedAt.get());
+        requestKeyList.add(new BaragonRequestKey(requestId, maybeUpdatedAt.get()));
       } else {
         if (configuration.getHistoryConfiguration().isPurgeWhenDateNotFound()) {
           responseHistoryDatastore.deleteResponse(serviceId, requestId);
         }
       }
     }
-    sortedTimestampMap.putAll(timestampMap);
-    int numToDelete = sortedTimestampMap.size() - configuration.getHistoryConfiguration().getMaxRequestsPerService();
-    for (String requestId : Iterables.limit(sortedTimestampMap.keySet(), numToDelete)) {
-      responseHistoryDatastore.deleteResponse(serviceId, requestId);
-    }
-  }
-
-  public static class ValueComparator implements Comparator<String>, Serializable {
-
-    Map<String, Long> base;
-    public ValueComparator(Map<String, Long> base) {
-      this.base = base;
-    }
-
-    public int compare(String a, String b) {
-      if (base.get(a) >= base.get(b)) {
-        return -1;
-      } else {
-        return 1;
-      }
+    Collections.sort(requestKeyList);
+    int numToDelete = requestKeyList.size() - configuration.getHistoryConfiguration().getMaxRequestsPerService();
+    for (BaragonRequestKey requestKey : requestKeyList.subList(0, numToDelete)) {
+      responseHistoryDatastore.deleteResponse(serviceId, requestKey.getRequestId());
     }
   }
 }
