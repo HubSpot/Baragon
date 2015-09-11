@@ -10,6 +10,7 @@ import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.base.Optional;
+import com.google.common.collect.Iterables;
 import com.google.inject.Inject;
 import com.hubspot.baragon.data.BaragonAgentResponseDatastore;
 import com.hubspot.baragon.data.BaragonRequestDatastore;
@@ -180,9 +181,8 @@ public class RequestPurgingWorker implements Runnable {
     }
     sortedTimestampMap.putAll(timestampMap);
     int numToDelete = sortedTimestampMap.size() - configuration.getHistoryConfiguration().getMaxRequestsPerService();
-    Iterator<String> iterator = sortedTimestampMap.keySet().iterator();
-    for (int i = 0; iterator.hasNext() && i < numToDelete; i++) {
-      responseHistoryDatastore.deleteResponse(serviceId, iterator.next());
+    for (String requestId : Iterables.limit(sortedTimestampMap.keySet(), numToDelete)) {
+      responseHistoryDatastore.deleteResponse(serviceId, requestId);
     }
   }
 
