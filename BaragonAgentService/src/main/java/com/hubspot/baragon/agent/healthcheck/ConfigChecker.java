@@ -12,15 +12,12 @@ import com.hubspot.baragon.exceptions.InvalidConfigException;
 public class ConfigChecker implements Runnable {
 
   private final LocalLbAdapter adapter;
-  private final AtomicReference<Boolean> validConfigs;
   private final AtomicReference<Optional<String>> errorMessage;
 
   @Inject
   public ConfigChecker(LocalLbAdapter adapter,
-                       @Named(BaragonAgentServiceModule.VALID_CONFIGS) AtomicReference<Boolean> validConfigs,
                        @Named(BaragonAgentServiceModule.CONFIG_ERROR_MESSAGE) AtomicReference<Optional<String>> errorMessage) {
     this.adapter = adapter;
-    this.validConfigs = validConfigs;
     this.errorMessage = errorMessage;
   }
 
@@ -28,10 +25,8 @@ public class ConfigChecker implements Runnable {
   public void run() {
     try {
       adapter.checkConfigs();
-      validConfigs.set(true);
       errorMessage.set(Optional.<String>absent());
     } catch (InvalidConfigException e) {
-      validConfigs.set(false);
       errorMessage.set(Optional.of(e.getMessage()));
     }
   }

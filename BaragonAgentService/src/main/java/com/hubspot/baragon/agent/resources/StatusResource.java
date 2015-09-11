@@ -32,7 +32,6 @@ public class StatusResource {
   private final AtomicReference<String> mostRecentRequestId;
   private final AtomicReference<ConnectionState> connectionState;
   private final BaragonAgentMetadata agentMetadata;
-  private final AtomicReference<Boolean> validConfigs;
   private final AtomicReference<Optional<String>> errorMessage;
 
   @Inject
@@ -42,7 +41,6 @@ public class StatusResource {
                         @Named(BaragonAgentServiceModule.AGENT_LEADER_LATCH) LeaderLatch leaderLatch,
                         @Named(BaragonAgentServiceModule.AGENT_MOST_RECENT_REQUEST_ID) AtomicReference<String> mostRecentRequestId,
                         @Named(BaragonDataModule.BARAGON_ZK_CONNECTION_STATE) AtomicReference<ConnectionState> connectionState,
-                        @Named(BaragonAgentServiceModule.VALID_CONFIGS) AtomicReference<Boolean> validConfigs,
                         @Named(BaragonAgentServiceModule.CONFIG_ERROR_MESSAGE) AtomicReference<Optional<String>> errorMessage) {
     this.adapter = adapter;
     this.loadBalancerConfiguration = loadBalancerConfiguration;
@@ -50,7 +48,6 @@ public class StatusResource {
     this.mostRecentRequestId = mostRecentRequestId;
     this.connectionState = connectionState;
     this.agentMetadata = agentMetadata;
-    this.validConfigs = validConfigs;
     this.errorMessage = errorMessage;
   }
 
@@ -60,10 +57,8 @@ public class StatusResource {
     if (skipCache) {
       try {
         adapter.checkConfigs();
-        validConfigs.set(true);
         errorMessage.set(Optional.<String>absent());
       } catch (InvalidConfigException e) {
-        validConfigs.set(false);
         errorMessage.set(Optional.of(e.getMessage()));
       }
     }
@@ -72,6 +67,6 @@ public class StatusResource {
 
     final String connectionStateString = currentConnectionState == null ? "UNKNOWN" : currentConnectionState.name();
 
-    return new BaragonAgentStatus(loadBalancerConfiguration.getName(), validConfigs.get(), errorMessage.get(), leaderLatch.hasLeadership(), mostRecentRequestId.get(), connectionStateString, agentMetadata);
+    return new BaragonAgentStatus(loadBalancerConfiguration.getName(), !errorMessage.get().isPresent(), errorMessage.get(), leaderLatch.hasLeadership(), mostRecentRequestId.get(), connectionStateString, agentMetadata);
   }
 }
