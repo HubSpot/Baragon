@@ -47,7 +47,7 @@ public class BaragonResponseHistoryDatastore extends AbstractDataStore {
   public List<BaragonResponse> getResponsesForService(String serviceId, int limit) {
     final List<String> nodes = getChildren(String.format(RESPONSE_HISTORIES_FOR_SERVICE_FORMAT, serviceId));
     final List<BaragonResponse> responses = Lists.newArrayListWithCapacity(Math.min(nodes.size(), limit));
-    for (String requestId : nodes.subList(0, limit)) {
+    for (String requestId : nodes.subList(0, Math.min(nodes.size(), limit))) {
       try {
         responses.addAll(readFromZk(String.format(RESPONSE_HISTORY_FORMAT, serviceId, requestId), BaragonResponse.class).asSet());
       } catch (Exception e) {
