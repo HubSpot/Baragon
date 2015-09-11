@@ -42,18 +42,6 @@ class Utils
             afterOpen: ($vexContent) ->
                 $vexContent.parents('.vex').scrollTop 0
 
-    # For .horizontal-description-list
-    @setupCopyLinks: ($element) =>
-        $items = $element.find ".horizontal-description-list li"
-        _.each $items, ($item) =>
-            $item = $($item)
-            # Don't do it if there's already a button
-            if not $item.find('a').length
-                text = $item.find('p').html()
-                $copyLink = $ "<a data-clipboard-text='#{ _.escape text }'>Copy</a>"
-                $item.find("h4").append $copyLink
-                new ZeroClipboard $copyLink[0]
-
     @fixTableColumns: ($table) =>
         $headings = $table.find "th"
         if $headings.length and $table.css('table-layout') isnt 'fixed'
@@ -70,16 +58,6 @@ class Utils
 
             # Set the table layout to be fixed based on these new widths
             $table.css "table-layout", "fixed"
-
-    @pathToBreadcrumbs: (path="") ->
-        pathComponents = path.split '/'
-        # [a, b, c] => [a, a/b, a/b/c]
-        results = _.map pathComponents, (crumb, index) =>
-            path = _.first pathComponents, index
-            path.push crumb
-            return { name: crumb, path: path.join '/' }
-        results.unshift { name: "root", path: "" }
-        results
 
     # Will make $el as tall as the page and will attach a scroll event
     # that shrinks it

@@ -1,15 +1,4 @@
-package com.hubspot.baragon;
-
-import com.hubspot.baragon.exceptions.InvalidRequestActionException;
-import com.hubspot.baragon.exceptions.InvalidUpstreamsException;
-import org.jukito.JukitoModule;
-import org.jukito.JukitoRunner;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+package com.hubspot.baragon.service;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -19,19 +8,28 @@ import com.google.common.base.Optional;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.hubspot.baragon.BaragonServiceTestModule;
 import com.hubspot.baragon.data.BaragonLoadBalancerDatastore;
 import com.hubspot.baragon.data.BaragonStateDatastore;
+import com.hubspot.baragon.exceptions.InvalidRequestActionException;
+import com.hubspot.baragon.exceptions.InvalidUpstreamsException;
 import com.hubspot.baragon.exceptions.RequestAlreadyEnqueuedException;
-import com.hubspot.baragon.managers.RequestManager;
 import com.hubspot.baragon.models.BaragonRequest;
 import com.hubspot.baragon.models.BaragonRequestState;
 import com.hubspot.baragon.models.BaragonResponse;
 import com.hubspot.baragon.models.BaragonService;
 import com.hubspot.baragon.models.UpstreamInfo;
-import com.hubspot.baragon.worker.BaragonRequestWorker;
-
+import com.hubspot.baragon.service.managers.RequestManager;
+import com.hubspot.baragon.service.worker.BaragonRequestWorker;
+import org.jukito.JukitoModule;
+import org.jukito.JukitoRunner;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 @RunWith(JukitoRunner.class)
@@ -44,7 +42,7 @@ public class RequestTests {
   public static class Module extends JukitoModule {
     @Override
     protected void configureTest() {
-      install(new BaragonDataTestModule());
+      install(new BaragonServiceTestModule());
     }
   }
 

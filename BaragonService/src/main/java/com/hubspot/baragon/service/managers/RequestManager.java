@@ -1,5 +1,6 @@
-package com.hubspot.baragon.managers;
+package com.hubspot.baragon.service.managers;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -13,6 +14,7 @@ import com.google.inject.Singleton;
 import com.hubspot.baragon.data.BaragonAgentResponseDatastore;
 import com.hubspot.baragon.data.BaragonLoadBalancerDatastore;
 import com.hubspot.baragon.data.BaragonRequestDatastore;
+import com.hubspot.baragon.data.BaragonResponseHistoryDatastore;
 import com.hubspot.baragon.data.BaragonStateDatastore;
 import com.hubspot.baragon.exceptions.InvalidRequestActionException;
 import com.hubspot.baragon.exceptions.InvalidUpstreamsException;
@@ -34,14 +36,17 @@ public class RequestManager {
   private final BaragonLoadBalancerDatastore loadBalancerDatastore;
   private final BaragonStateDatastore stateDatastore;
   private final BaragonAgentResponseDatastore agentResponseDatastore;
+  private final BaragonResponseHistoryDatastore responseHistoryDatastore;
 
   @Inject
   public RequestManager(BaragonRequestDatastore requestDatastore, BaragonLoadBalancerDatastore loadBalancerDatastore,
-                        BaragonStateDatastore stateDatastore, BaragonAgentResponseDatastore agentResponseDatastore) {
+                        BaragonStateDatastore stateDatastore, BaragonAgentResponseDatastore agentResponseDatastore,
+                        BaragonResponseHistoryDatastore responseHistoryDatastore) {
     this.requestDatastore = requestDatastore;
     this.loadBalancerDatastore = loadBalancerDatastore;
     this.stateDatastore = stateDatastore;
     this.agentResponseDatastore = agentResponseDatastore;
+    this.responseHistoryDatastore = responseHistoryDatastore;
   }
 
   public Optional<BaragonRequest> getRequest(String requestId) {
@@ -68,14 +73,61 @@ public class RequestManager {
     requestDatastore.removeQueuedRequest(queuedRequestId);
   }
 
-  public Optional<BaragonResponse> getResponse(String requestId) {
-    final Optional<InternalRequestStates> maybeStatus = requestDatastore.getRequestState(requestId);
+  public List<BaragonResponse> getResponsesForService(String serviceId) {
+    List<BaragonResponse> responses = new ArrayList<>();
+    for (String requestId : requestDatastore.getAllRequestIds()) {
+      Optional<BaragonRequest> maybeRequest = requestDatastore.getRequest(requestId);
+      if (maybeRequest.isPresent() && maybeRequest.get().getLoadBalancerService().getServiceId().equals(serviceId)) {
+        Optional<InternalRequestStates> maybeStatus = requestDatastore.getRequestState(requestId);
+        if (maybeStatus.isPresent()) {
+          responses.add(new BaragonResponse(requestId, InternalStatesMap.getRequestState(maybeStatus.get()), requestDatastore.getRequestMessage(requestId), Optional.of(agentResponseDatastore.getLastResponses(requestId)), maybeRequest));
+        }
+      }
+    }
+    responses.addAll(responseHistoryDatastore.getResponsesForService(serviceId));
+    return responses;
+  }
 
-    if (!maybeStatus.isPresent()) {
+  public Optional<BaragonResponse> getResponse(String requestId) {
+    Optional<BaragonResponse> maybeActiveRequestResponse = getResponseFromActiveRequests(requestId);
+    if (maybeActiveRequestResponse.isPresent()) {
+      return maybeActiveRequestResponse;
+    } else {
+      Optional<String> maybeServiceId = responseHistoryDatastore.getServiceIdForRequestId(requestId);
+      if (maybeServiceId.isPresent()) {
+        return responseHistoryDatastore.getResponse(maybeServiceId.get(), requestId);
+      } else {
+        return Optional.absent();
+      }
+    }
+  }
+
+  public Optional<BaragonResponse> getResponse(String serviceId, String requestId) {
+    Optional<BaragonResponse> maybeActiveRequestResponse = getResponseFromActiveRequests(requestId);
+    if (maybeActiveRequestResponse.isPresent()) {
+      return maybeActiveRequestResponse;
+    } else {
+      return responseHistoryDatastore.getResponse(serviceId, requestId);
+    }
+  }
+
+  private Optional<BaragonResponse> getResponseFromActiveRequests(String requestId) {
+    if (requestDatastore.activeRequestExists(requestId)) {
+      final Optional<InternalRequestStates> maybeStatus = requestDatastore.getRequestState(requestId);
+
+      if (!maybeStatus.isPresent()) {
+        return Optional.absent();
+      }
+
+      final Optional<BaragonRequest> maybeRequest = requestDatastore.getRequest(requestId);
+      if (!maybeRequest.isPresent()) {
+        return Optional.absent();
+      }
+
+      return Optional.of(new BaragonResponse(requestId, InternalStatesMap.getRequestState(maybeStatus.get()), requestDatastore.getRequestMessage(requestId), Optional.of(agentResponseDatastore.getLastResponses(requestId)), maybeRequest));
+    } else {
       return Optional.absent();
     }
-
-    return Optional.of(new BaragonResponse(requestId, InternalStatesMap.getRequestState(maybeStatus.get()), requestDatastore.getRequestMessage(requestId), Optional.of(agentResponseDatastore.getLastResponses(requestId))));
   }
 
   public Map<String, String> getBasePathConflicts(BaragonRequest request) {
@@ -134,7 +186,7 @@ public class RequestManager {
   }
 
   public BaragonResponse enqueueRequest(BaragonRequest request) throws RequestAlreadyEnqueuedException, InvalidRequestActionException, InvalidUpstreamsException {
-    final Optional<BaragonResponse> maybePreexistingResponse = getResponse(request.getLoadBalancerRequestId());
+    final Optional<BaragonResponse> maybePreexistingResponse = getResponse(request.getLoadBalancerService().getServiceId(), request.getLoadBalancerRequestId());
 
     if (maybePreexistingResponse.isPresent()) {
       Optional<BaragonRequest> maybePreexistingRequest = requestDatastore.getRequest(request.getLoadBalancerRequestId());
@@ -160,7 +212,7 @@ public class RequestManager {
 
     requestDatastore.setRequestMessage(request.getLoadBalancerRequestId(), String.format("Queued as %s", queuedRequestId));
 
-    return getResponse(request.getLoadBalancerRequestId()).get();
+    return getResponse(request.getLoadBalancerService().getServiceId(), request.getLoadBalancerRequestId()).get();
   }
 
   public Optional<InternalRequestStates> cancelRequest(String requestId) {
@@ -173,6 +225,15 @@ public class RequestManager {
     requestDatastore.setRequestState(requestId, InternalRequestStates.CANCELLED_SEND_REVERT_REQUESTS);
 
     return Optional.of(InternalRequestStates.CANCELLED_SEND_REVERT_REQUESTS);
+  }
+
+  public void saveResponseToHistory(BaragonRequest request, InternalRequestStates state) {
+    BaragonResponse response = new BaragonResponse(request.getLoadBalancerRequestId(), InternalStatesMap.getRequestState(state), requestDatastore.getRequestMessage(request.getLoadBalancerRequestId()), Optional.of(agentResponseDatastore.getLastResponses(request.getLoadBalancerRequestId())), Optional.of(request));
+    responseHistoryDatastore.addResponse(request.getLoadBalancerService().getServiceId(), request.getLoadBalancerRequestId(), response);
+  }
+
+  public void deleteRequest(String requestId) {
+    requestDatastore.deleteRequest(requestId);
   }
 
   public synchronized void commitRequest(BaragonRequest request) {

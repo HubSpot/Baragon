@@ -11,7 +11,6 @@
         background rgba(0, 200, 20, .15) !important
 
     th, td
-        // Regular links
         &.actions-column
             white-space nowrap
             text-align right
@@ -37,7 +36,7 @@
                 margin 0
 
                 &:hover
-                    color #fff
+                    color $white
                     background $linkBlue
                     box-shadow 0 -1px $linkBlue
                     text-decoration none
@@ -49,25 +48,14 @@
     tr:last-child td.actions-column a
         margin-bottom -8px
 
-    .icon
-        margin-right 10px
-
-    th.half-table
-        width: 50%
-
-    a.long-link
-        max-width: 40em
-        display: inline-block
-        white-space: nowrap
-        text-overflow: ellipsis
-        overflow: hidden
-        line-height: 18px
+table th
+    text-align left
 
 .empty-table-message
     text-align center
-    border 3px dashed #e7e7e7
+    border 3px dashed $lightestGrey
     padding 2.5em
-    color #888
+    color $lighterGrey
     font-size 1.3em
     font-weight 300
     letter-spacing .03em
@@ -77,5 +65,5 @@
 
 .active
     color $green
- .inactive
+.inactive
     color $orange

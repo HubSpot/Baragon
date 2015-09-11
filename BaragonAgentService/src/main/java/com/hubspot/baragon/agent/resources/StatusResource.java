@@ -7,11 +7,6 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-import com.hubspot.baragon.data.BaragonKnownAgentsDatastore;
-import com.hubspot.baragon.models.BaragonAgentMetadata;
-import org.apache.curator.framework.recipes.leader.LeaderLatch;
-import org.apache.curator.framework.state.ConnectionState;
-
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
@@ -21,7 +16,10 @@ import com.hubspot.baragon.agent.config.LoadBalancerConfiguration;
 import com.hubspot.baragon.agent.lbs.LocalLbAdapter;
 import com.hubspot.baragon.auth.NoAuth;
 import com.hubspot.baragon.exceptions.InvalidConfigException;
+import com.hubspot.baragon.models.BaragonAgentMetadata;
 import com.hubspot.baragon.models.BaragonAgentStatus;
+import org.apache.curator.framework.recipes.leader.LeaderLatch;
+import org.apache.curator.framework.state.ConnectionState;
 
 @Path("/status")
 @Produces(MediaType.APPLICATION_JSON)

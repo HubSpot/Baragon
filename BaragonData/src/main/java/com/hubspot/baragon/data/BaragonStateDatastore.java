@@ -8,19 +8,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.apache.curator.framework.CuratorFramework;
-import org.apache.curator.utils.ZKPaths;
-import org.apache.zookeeper.KeeperException;
-import org.apache.zookeeper.data.Stat;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Function;
 import com.google.common.base.Objects;
 import com.google.common.base.Optional;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -30,6 +22,12 @@ import com.hubspot.baragon.models.BaragonService;
 import com.hubspot.baragon.models.BaragonServiceState;
 import com.hubspot.baragon.models.UpstreamInfo;
 import com.hubspot.baragon.utils.ZkParallelFetcher;
+import org.apache.curator.framework.CuratorFramework;
+import org.apache.curator.utils.ZKPaths;
+import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.data.Stat;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Singleton
 public class BaragonStateDatastore extends AbstractDataStore {
@@ -55,6 +53,10 @@ public class BaragonStateDatastore extends AbstractDataStore {
 
   public void addService(BaragonService service) {
     writeToZk(String.format(SERVICE_FORMAT, service.getServiceId()), service);
+  }
+
+  public boolean serviceExists(String serviceId) {
+    return nodeExists(String.format(SERVICE_FORMAT, serviceId));
   }
 
   public Optional<BaragonService> getService(String serviceId) {

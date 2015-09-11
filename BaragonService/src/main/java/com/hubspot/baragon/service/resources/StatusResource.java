@@ -7,11 +7,12 @@ import javax.ws.rs.core.MediaType;
 
 import com.google.inject.Inject;
 import com.hubspot.baragon.auth.NoAuth;
-import com.hubspot.baragon.managers.StatusManager;
 import com.hubspot.baragon.models.BaragonServiceStatus;
+import com.hubspot.baragon.service.managers.StatusManager;
 
 @Path("/status")
 @Produces(MediaType.APPLICATION_JSON)
+@NoAuth
 public class StatusResource {
   private final StatusManager manager;
 
@@ -22,7 +23,6 @@ public class StatusResource {
   }
 
   @GET
-  @NoAuth
   public BaragonServiceStatus getServiceStatus() {
     return manager.getServiceStatus();
   }

@@ -1,7 +1,7 @@
 {{#if synced}}
     <div class="row detail-header">
         <div class="col-md-10">
-            <h3>{{ request.loadBalancerRequestId }}</h3>
+            <h3>Request: {{ request.loadBalancerRequestId }}</h3>
         </div>
         <div class="col-md-2 button-container">
             <a class="btn btn-default" data-service-id="{{ request.loadBalancerRequestId }}" data-action="viewJSON">
@@ -12,12 +12,18 @@
     <div class="row">
         <div class="col-md-12">
             <div class="panel panel-default">
-                <div class="panel-heading"><h4>Load Balancer State: {{ request.loadBalancerState }}</h4></div>
-                <div class="panel-body">
-                    <strong>Message:</strong>
-                    <p>{{ request.message }}</p>
+                <div class="panel-heading">
+                    <h4>Summary</h4>
                 </div>
-            <div>
+                <div class="panel-body">
+                    <div class="col-md-3">
+                        <h4>Service Id: </h4><h4><a href="{{ appRoot }}/services/{{ request.request.loadBalancerService.serviceId }}">{{ request.request.loadBalancerService.serviceId }}</a></h4>
+                    </div>
+                    <div class="col-md-9 list-group-item">
+                        <h4>Message: </h4><p>{{ request.message }}</p>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
     <div class="row">
@@ -72,6 +78,19 @@
             </div>
         </div>
     </div>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel panel-default">
+                <div class="panel-heading"><h4>Original Request</h4></div>
+                <div class="panel-body">
+                    <pre>
+{{jsonStringify request.request}}
+                    </pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
 {{else}}
     <div class="page-loader centered cushy"></div>
 {{/if}}

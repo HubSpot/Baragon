@@ -8,8 +8,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
+import com.google.common.base.Optional;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.hubspot.baragon.client.BaragonServiceClient;
@@ -21,7 +21,6 @@ import com.hubspot.baragon.models.BaragonService;
 import com.hubspot.baragon.models.BaragonServiceState;
 import com.hubspot.baragon.models.BaragonServiceStatus;
 import com.hubspot.baragon.models.UpstreamInfo;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -32,10 +31,10 @@ import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertEquals;
 
-import com.google.common.base.Optional;
-
-import static org.junit.Assert.*;
 
 public class BaragonServiceTestIT {
   
@@ -43,8 +42,7 @@ public class BaragonServiceTestIT {
   public static final String UPSTREAM = "example.com:80";
   public static final String SERVICE_BASE_PATH = "/testservice";
   public static final int MAX_REQUEST_RETRIES = 15;
-  public static final List<BaragonRequestState> TERMINAL_STATES = (List<BaragonRequestState>) Arrays.asList(new BaragonRequestState[] {
-      BaragonRequestState.SUCCESS, BaragonRequestState.INVALID_REQUEST_NOOP, BaragonRequestState.CANCELED});
+  public static final List<BaragonRequestState> TERMINAL_STATES = (Arrays.asList(BaragonRequestState.SUCCESS, BaragonRequestState.INVALID_REQUEST_NOOP, BaragonRequestState.CANCELED));
 	
   private BaragonServiceClient baragonServiceClient;
   

@@ -1,7 +1,5 @@
 package com.hubspot.baragon.service.healthcheck;
 
-import org.apache.curator.framework.state.ConnectionState;
-
 import java.util.concurrent.atomic.AtomicReference;
 
 import com.codahale.metrics.health.HealthCheck;
@@ -9,6 +7,7 @@ import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import com.hubspot.baragon.BaragonDataModule;
 import com.hubspot.dropwizard.guice.InjectableHealthCheck;
+import org.apache.curator.framework.state.ConnectionState;
 
 public class ZooKeeperHealthcheck extends InjectableHealthCheck {
   private final AtomicReference<ConnectionState> connectionState;

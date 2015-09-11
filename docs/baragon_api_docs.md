@@ -2,7 +2,7 @@ BaragonService API
 ==================
 
 <a id="top"></a>
-Listed below are the various endpoints for BaragonService along with example request payloads (where applicable) and responses. All example requests are pointed at the baragon vagrants, and all request examples are written in python.
+Listed below are the various endpoints for BaragonService along with example request payloads (where applicable) and responses. All example requests are pointed at the baragon docker host, and all request examples are written in python.
 
 | [State](#state) | [Workers](#workers) | [Status](#status) | [Requests](#requests) | [Auth](#auth)  | [Load Balancer](#load-balancer) | [Agent API](#agent) |
 <a id="state"></a>

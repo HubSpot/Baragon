@@ -3,12 +3,8 @@ package com.hubspot.baragon.data;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.List;
-
-import org.apache.curator.framework.CuratorFramework;
-import org.apache.curator.framework.api.PathAndBytesable;
-import org.apache.zookeeper.CreateMode;
-import org.apache.zookeeper.KeeperException;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -16,6 +12,11 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Optional;
 import com.google.common.base.Throwables;
 import com.google.common.io.BaseEncoding;
+import org.apache.curator.framework.CuratorFramework;
+import org.apache.curator.framework.api.PathAndBytesable;
+import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.data.Stat;
 
 // because curator is a piece of shit
 public abstract class AbstractDataStore {
@@ -145,8 +146,16 @@ public abstract class AbstractDataStore {
   }
 
   protected boolean deleteNode(String path) {
+    return deleteNode(path, false);
+  }
+
+  protected boolean deleteNode(String path, boolean recursive) {
     try {
-      curatorFramework.delete().forPath(path);
+      if (recursive) {
+        curatorFramework.delete().deletingChildrenIfNeeded().forPath(path);
+      } else {
+        curatorFramework.delete().forPath(path);
+      }
       return true;
     } catch (KeeperException.NoNodeException e) {
       return false;
@@ -160,6 +169,17 @@ public abstract class AbstractDataStore {
       return curatorFramework.getChildren().forPath(path);
     } catch (KeeperException.NoNodeException e) {
       return Collections.emptyList();
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  protected Optional<Long> getUpdatedAt(String path) {
+    try {
+      Stat stat = curatorFramework.checkExists().forPath(path);
+      return Optional.of(stat.getMtime());
+    } catch (KeeperException.NoNodeException e) {
+      return Optional.absent();
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }

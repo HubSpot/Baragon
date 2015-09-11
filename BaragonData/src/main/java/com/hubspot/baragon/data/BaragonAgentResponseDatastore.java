@@ -5,8 +5,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.curator.framework.CuratorFramework;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
@@ -17,6 +15,7 @@ import com.hubspot.baragon.models.AgentRequestId;
 import com.hubspot.baragon.models.AgentRequestType;
 import com.hubspot.baragon.models.AgentResponse;
 import com.hubspot.baragon.models.AgentResponseId;
+import org.apache.curator.framework.CuratorFramework;
 
 @Singleton
 public class BaragonAgentResponseDatastore extends AbstractDataStore {

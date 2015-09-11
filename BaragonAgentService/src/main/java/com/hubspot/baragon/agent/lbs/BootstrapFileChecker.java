@@ -4,14 +4,13 @@ import java.util.Collection;
 import java.util.concurrent.Callable;
 
 import com.google.common.base.Optional;
+import com.hubspot.baragon.models.BaragonConfigFile;
+import com.hubspot.baragon.models.BaragonServiceState;
+import com.hubspot.baragon.models.ServiceContext;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import com.hubspot.baragon.agent.config.LoadBalancerConfiguration;
-import com.hubspot.baragon.models.BaragonConfigFile;
-import com.hubspot.baragon.models.BaragonServiceState;
-import com.hubspot.baragon.models.ServiceContext;
 
 public class BootstrapFileChecker implements Callable<Optional<Pair<ServiceContext, Collection<BaragonConfigFile>>>> {
   private static final Logger LOG = LoggerFactory.getLogger(BootstrapFileChecker.class);

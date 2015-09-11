@@ -1,5 +1,9 @@
 package com.hubspot.baragon.data;
 
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
@@ -10,9 +14,6 @@ import com.hubspot.baragon.models.InternalRequestStates;
 import com.hubspot.baragon.models.QueuedRequestId;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.utils.ZKPaths;
-
-import java.util.Collections;
-import java.util.List;
 
 @Singleton
 public class BaragonRequestDatastore extends AbstractDataStore {
@@ -45,15 +46,27 @@ public class BaragonRequestDatastore extends AbstractDataStore {
     final Optional<BaragonRequest> maybeRequest = getRequest(requestId);
 
     if (maybeRequest.isPresent()) {
-      deleteNode(String.format(REQUEST_FORMAT, requestId));
+      deleteNode(String.format(REQUEST_FORMAT, requestId), true);
     }
 
     return maybeRequest;
   }
 
+  public List<String> getAllRequestIds() {
+    return getChildren(REQUESTS_FORMAT);
+  }
+
+  public Optional<Long> getRequestUpdatedAt(String requestId) {
+    return getUpdatedAt(String.format(String.format(REQUEST_STATE_FORMAT, requestId)));
+  }
+
   //
   // REQUEST STATE
   //
+  public boolean activeRequestExists(String requestId) {
+    return nodeExists(String.format(REQUEST_FORMAT, requestId));
+  }
+
   public Optional<InternalRequestStates> getRequestState(String requestId) {
     return readFromZk(String.format(REQUEST_STATE_FORMAT, requestId), InternalRequestStates.class);
   }

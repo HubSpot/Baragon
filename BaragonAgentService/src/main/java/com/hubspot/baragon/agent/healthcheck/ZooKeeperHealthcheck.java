@@ -2,12 +2,11 @@ package com.hubspot.baragon.agent.healthcheck;
 
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.apache.curator.framework.state.ConnectionState;
-
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import com.hubspot.baragon.BaragonDataModule;
 import com.hubspot.dropwizard.guice.InjectableHealthCheck;
+import org.apache.curator.framework.state.ConnectionState;
 
 public class ZooKeeperHealthcheck extends InjectableHealthCheck {
   private final AtomicReference<ConnectionState> connectionState;

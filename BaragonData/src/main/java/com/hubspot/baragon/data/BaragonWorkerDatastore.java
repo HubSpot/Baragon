@@ -1,5 +1,8 @@
 package com.hubspot.baragon.data;
 
+import java.util.Collection;
+import java.util.Collections;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
@@ -9,9 +12,6 @@ import com.google.inject.Singleton;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.leader.LeaderLatch;
 import org.apache.zookeeper.KeeperException;
-
-import java.util.Collection;
-import java.util.Collections;
 
 @Singleton
 public class BaragonWorkerDatastore extends AbstractDataStore {

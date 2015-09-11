@@ -7,25 +7,24 @@ import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
-import com.google.inject.name.Named;
-import com.hubspot.baragon.agent.BaragonAgentServiceModule;
-import com.hubspot.baragon.exceptions.LockTimeoutException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
-import com.google.common.base.Throwables;
 import com.google.common.base.Optional;
+import com.google.common.base.Throwables;
 import com.google.common.io.Files;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import com.google.inject.name.Named;
+import com.hubspot.baragon.agent.BaragonAgentServiceModule;
 import com.hubspot.baragon.exceptions.InvalidConfigException;
 import com.hubspot.baragon.exceptions.LbAdapterExecuteException;
+import com.hubspot.baragon.exceptions.LockTimeoutException;
 import com.hubspot.baragon.exceptions.MissingTemplateException;
 import com.hubspot.baragon.models.BaragonConfigFile;
 import com.hubspot.baragon.models.BaragonService;
 import com.hubspot.baragon.models.ServiceContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Singleton
 public class FilesystemConfigHelper {

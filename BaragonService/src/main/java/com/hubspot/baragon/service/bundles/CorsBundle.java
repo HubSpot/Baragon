@@ -1,9 +1,5 @@
 package com.hubspot.baragon.service.bundles;
 
-import io.dropwizard.ConfiguredBundle;
-import io.dropwizard.setup.Bootstrap;
-import io.dropwizard.setup.Environment;
-
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Enumeration;
@@ -13,11 +9,13 @@ import javax.servlet.Filter;
 import javax.servlet.FilterConfig;
 import javax.servlet.ServletContext;
 
-import org.eclipse.jetty.servlets.CrossOriginFilter;
-
 import com.google.common.base.Throwables;
 import com.google.common.collect.Iterators;
 import com.hubspot.baragon.service.config.BaragonConfiguration;
+import io.dropwizard.ConfiguredBundle;
+import io.dropwizard.setup.Bootstrap;
+import io.dropwizard.setup.Environment;
+import org.eclipse.jetty.servlets.CrossOriginFilter;
 
 /**
  * Adds a CORS filter.

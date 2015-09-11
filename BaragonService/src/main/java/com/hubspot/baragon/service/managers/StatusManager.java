@@ -1,7 +1,4 @@
-package com.hubspot.baragon.managers;
-
-import org.apache.curator.framework.recipes.leader.LeaderLatch;
-import org.apache.curator.framework.state.ConnectionState;
+package com.hubspot.baragon.service.managers;
 
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
@@ -13,6 +10,8 @@ import com.hubspot.baragon.BaragonDataModule;
 import com.hubspot.baragon.data.BaragonRequestDatastore;
 import com.hubspot.baragon.data.BaragonStateDatastore;
 import com.hubspot.baragon.models.BaragonServiceStatus;
+import org.apache.curator.framework.recipes.leader.LeaderLatch;
+import org.apache.curator.framework.state.ConnectionState;
 
 @Singleton
 public class StatusManager {

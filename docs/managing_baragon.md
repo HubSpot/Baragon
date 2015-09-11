@@ -119,7 +119,8 @@ On startup the Baragon Agent instance will do the following:
   - At this point, the agent is ready to start processing requests and will appear in the list of active agents when the Baragon Request Worker looks for agents in a particular load balancer group
 - Add to Known Agents List
   - while the leader latch entry will disappear if the agent stops running, an additional entry (identical except for an added timestamp) is also added that will persist. This known agents list helps keep track of every agent Baragon has seen at one point or another and can be helpful for debugging.
-
+- Notify BaragonService
+  - Once the agent is ready to process updates, it will notify BaragonService via an http call. This is mostly important when ELB sync is used, because BaragonService will use this to trigger the initial addition of that instance to the ELB
 
 <a id="nginx"></a>
 #### Setting up Baragon Agent with Nginx

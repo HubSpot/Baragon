@@ -1,6 +1,5 @@
 package com.hubspot.baragon.models;
 
-import com.google.common.collect.ImmutableMap;
 import java.util.EnumMap;
 
 public class InternalStatesMap {

@@ -1,7 +1,5 @@
 package com.hubspot.baragon.service.resources;
 
-import java.util.Collection;
-
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -14,10 +12,11 @@ import javax.ws.rs.core.Response;
 
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
+import com.hubspot.baragon.auth.NoAuth;
 import com.hubspot.baragon.data.BaragonLoadBalancerDatastore;
-import com.hubspot.baragon.managers.ElbManager;
 import com.hubspot.baragon.models.BaragonAgentMetadata;
 import com.hubspot.baragon.models.BaragonGroup;
+import com.hubspot.baragon.service.managers.ElbManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -68,6 +67,7 @@ public class AgentCheckinResource {
   }
 
   @GET
+  @NoAuth
   @Produces(MediaType.TEXT_PLAIN)
   @Path("/{clusterName}/can-shutdown")
   public String canShutdownAgent(@PathParam("clusterName") String clusterName, @QueryParam("agentId") String agentId) {

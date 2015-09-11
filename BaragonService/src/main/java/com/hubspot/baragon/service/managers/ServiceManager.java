@@ -1,4 +1,4 @@
-package com.hubspot.baragon.managers;
+package com.hubspot.baragon.service.managers;
 
 import java.util.ArrayList;
 import java.util.Collection;

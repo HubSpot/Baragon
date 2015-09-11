@@ -1,6 +1,7 @@
 package com.hubspot.baragon.service.config;
 
 import javax.validation.constraints.Min;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 
