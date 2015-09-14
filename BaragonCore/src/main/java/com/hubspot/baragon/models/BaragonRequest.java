@@ -36,6 +36,12 @@ public class BaragonRequest {
 
   private final List<UpstreamInfo> replaceUpstreams;
 
+  @NotNull
+  private final boolean noValidate;
+
+  @NotNull
+  private final boolean noReload;
+
   @JsonCreator
   public BaragonRequest(@JsonProperty("loadBalancerRequestId") String loadBalancerRequestId,
                         @JsonProperty("loadBalancerService") BaragonService loadBalancerService,
@@ -43,7 +49,9 @@ public class BaragonRequest {
                         @JsonProperty("removeUpstreams") List<UpstreamInfo> removeUpstreams,
                         @JsonProperty("replaceUpstreams") List<UpstreamInfo> replaceUpstreams,
                         @JsonProperty("replaceServiceId") Optional<String> replaceServiceId,
-                        @JsonProperty("action") Optional<RequestAction> action) {
+                        @JsonProperty("action") Optional<RequestAction> action,
+                        @JsonProperty("noValidate") boolean noValidate,
+                        @JsonProperty("noReload") boolean noReload) {
     this.loadBalancerRequestId = loadBalancerRequestId;
     this.loadBalancerService = loadBalancerService;
     this.addUpstreams = addRequestId(addUpstreams, loadBalancerRequestId);
@@ -51,14 +59,21 @@ public class BaragonRequest {
     this.replaceServiceId = replaceServiceId;
     this.action = action;
     this.replaceUpstreams = Objects.firstNonNull(replaceUpstreams, Collections.<UpstreamInfo>emptyList());
+    this.noValidate = Objects.firstNonNull(noValidate, false);
+    this.noReload = noReload;
+
+  }
+
+  public BaragonRequest(String loadBalancerRequestId, BaragonService loadBalancerService, List<UpstreamInfo> addUpstreams, List<UpstreamInfo> removeUpstreams, List<UpstreamInfo> replaceUpstreams, Optional<String> replaceServiceId, Optional<RequestAction> action) {
+    this(loadBalancerRequestId, loadBalancerService, addUpstreams, removeUpstreams, replaceUpstreams, replaceServiceId, action, false, false);
   }
 
   public BaragonRequest(String loadBalancerRequestId, BaragonService loadBalancerService, List<UpstreamInfo> addUpstreams, List<UpstreamInfo> removeUpstreams) {
-    this(loadBalancerRequestId, loadBalancerService, addUpstreams, removeUpstreams, Collections.<UpstreamInfo>emptyList(),Optional.<String>absent(), Optional.of(RequestAction.UPDATE));
+    this(loadBalancerRequestId, loadBalancerService, addUpstreams, removeUpstreams, Collections.<UpstreamInfo>emptyList(),Optional.<String>absent(), Optional.of(RequestAction.UPDATE), false, false);
   }
 
   public BaragonRequest(String loadBalancerRequestId, BaragonService loadBalancerService, List<UpstreamInfo> addUpstreams, List<UpstreamInfo> removeUpstreams, Optional<String> replaceServiceId) {
-    this(loadBalancerRequestId, loadBalancerService, addUpstreams, removeUpstreams, Collections.<UpstreamInfo>emptyList(), replaceServiceId, Optional.of(RequestAction.UPDATE));
+    this(loadBalancerRequestId, loadBalancerService, addUpstreams, removeUpstreams, Collections.<UpstreamInfo>emptyList(), replaceServiceId, Optional.of(RequestAction.UPDATE), false, false);
   }
 
   public String getLoadBalancerRequestId() {
@@ -110,6 +125,14 @@ public class BaragonRequest {
     }
   }
 
+  public boolean isNoValidate() {
+    return noValidate;
+  }
+
+  public boolean isNoReload() {
+    return noReload;
+  }
+
   @Override
   public String toString() {
     return "BaragonRequest [" +
@@ -119,6 +142,8 @@ public class BaragonRequest {
         ", removeUpstreams=" + removeUpstreams +
         ", replaceServiceId=" + replaceServiceId +
         ", action=" + action +
+        ", noValidate=" + noValidate +
+        ", noReload=" + noReload +
         ']';
   }
 
@@ -151,6 +176,12 @@ public class BaragonRequest {
     if (!action.equals(request.getAction())) {
       return false;
     }
+    if (!noValidate == request.noValidate) {
+      return false;
+    }
+    if (!noReload == request.noReload) {
+      return false;
+    }
 
     return true;
   }
@@ -163,6 +194,8 @@ public class BaragonRequest {
     result = 31 * result + removeUpstreams.hashCode();
     result = 31 * result + replaceServiceId.hashCode();
     result = 31 * result + action.hashCode();
+    result = 31 * result + (noValidate ? 1 : 0);
+    result = 31 * result + (noReload ? 1 : 0);
     return result;
   }
 }

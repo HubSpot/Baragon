@@ -103,7 +103,7 @@ public class AgentRequestManager {
 
   private Response delete(BaragonRequest request, Optional<BaragonService> maybeOldService) throws Exception {
     try {
-      configHelper.delete(request.getLoadBalancerService(), maybeOldService);
+      configHelper.delete(request.getLoadBalancerService(), maybeOldService, request.isNoReload(), request.isNoValidate());
       return Response.ok().build();
     } catch (Exception e) {
       return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
@@ -114,7 +114,7 @@ public class AgentRequestManager {
     final ServiceContext update = getApplyContext(request);
     triggerTesting();
     try {
-      configHelper.apply(update, maybeOldService, true);
+      configHelper.apply(update, maybeOldService, true, request.isNoReload(), request.isNoValidate());
     } catch (Exception e) {
       return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
     }
@@ -134,7 +134,7 @@ public class AgentRequestManager {
 
     LOG.info(String.format("Reverting to %s", update));
     try {
-      configHelper.apply(update, Optional.<BaragonService>absent(), false);
+      configHelper.apply(update, Optional.<BaragonService>absent(), false, request.isNoReload(), request.isNoValidate());
     } catch (MissingTemplateException e) {
       if (serviceDidNotPreviouslyExist(maybeOldService)) {
         return Response.ok().build();
