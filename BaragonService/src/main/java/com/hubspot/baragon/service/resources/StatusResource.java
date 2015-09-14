@@ -26,4 +26,10 @@ public class StatusResource {
   public BaragonServiceStatus getServiceStatus() {
     return manager.getServiceStatus();
   }
+
+  @GET
+  @Path("/master")
+  public BaragonServiceStatus getMasterServiceStatus() {
+    return manager.getMasterServiceStatus();
+  }
 }
