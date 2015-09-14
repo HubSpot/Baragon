@@ -2,10 +2,12 @@ package com.hubspot.baragon.data;
 
 import java.util.Collections;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Optional;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -42,14 +44,14 @@ public class BaragonResponseHistoryDatastore extends AbstractDataStore {
     return readFromZk(String.format(RESPONSE_HISTORY_FORMAT, serviceId, requestId), BaragonResponse.class);
   }
 
-  public List<BaragonResponse> getResponsesForService(String serviceId) {
+  public List<BaragonResponse> getResponsesForService(String serviceId, int limit) {
     final List<String> nodes = getChildren(String.format(RESPONSE_HISTORIES_FOR_SERVICE_FORMAT, serviceId));
-    final List<BaragonResponse> responses = Lists.newArrayListWithCapacity(nodes.size());
-    for (String node : nodes) {
+    final List<BaragonResponse> responses = Lists.newArrayListWithCapacity(Math.min(nodes.size(), limit));
+    for (String requestId : nodes.subList(0, Math.min(nodes.size(), limit))) {
       try {
-        responses.addAll(readFromZk(String.format(RESPONSE_HISTORY_FORMAT, serviceId, node), BaragonResponse.class).asSet());
+        responses.addAll(readFromZk(String.format(RESPONSE_HISTORY_FORMAT, serviceId, requestId), BaragonResponse.class).asSet());
       } catch (Exception e) {
-        LOG.error(String.format("Could not fetch info for group %s due to error %s", node, e));
+        LOG.error(String.format("Could not fetch info for group %s due to error %s", requestId, e));
       }
     }
     return responses;
