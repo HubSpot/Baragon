@@ -26,6 +26,7 @@ import com.hubspot.baragon.models.InternalRequestStates;
 import com.hubspot.baragon.models.InternalStatesMap;
 import com.hubspot.baragon.models.QueuedRequestId;
 import com.hubspot.baragon.models.RequestAction;
+import com.hubspot.baragon.service.config.BaragonConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,16 +38,21 @@ public class RequestManager {
   private final BaragonStateDatastore stateDatastore;
   private final BaragonAgentResponseDatastore agentResponseDatastore;
   private final BaragonResponseHistoryDatastore responseHistoryDatastore;
+  private final BaragonConfiguration configuration;
 
   @Inject
-  public RequestManager(BaragonRequestDatastore requestDatastore, BaragonLoadBalancerDatastore loadBalancerDatastore,
-                        BaragonStateDatastore stateDatastore, BaragonAgentResponseDatastore agentResponseDatastore,
-                        BaragonResponseHistoryDatastore responseHistoryDatastore) {
+  public RequestManager(BaragonRequestDatastore requestDatastore,
+                        BaragonLoadBalancerDatastore loadBalancerDatastore,
+                        BaragonStateDatastore stateDatastore,
+                        BaragonAgentResponseDatastore agentResponseDatastore,
+                        BaragonResponseHistoryDatastore responseHistoryDatastore,
+                        BaragonConfiguration configuration) {
     this.requestDatastore = requestDatastore;
     this.loadBalancerDatastore = loadBalancerDatastore;
     this.stateDatastore = stateDatastore;
     this.agentResponseDatastore = agentResponseDatastore;
     this.responseHistoryDatastore = responseHistoryDatastore;
+    this.configuration = configuration;
   }
 
   public Optional<BaragonRequest> getRequest(String requestId) {
@@ -84,7 +90,7 @@ public class RequestManager {
         }
       }
     }
-    responses.addAll(responseHistoryDatastore.getResponsesForService(serviceId));
+    responses.addAll(responseHistoryDatastore.getResponsesForService(serviceId, configuration.getHistoryConfiguration().getMaxResponsesToFetch()));
     return responses;
   }
 
@@ -195,6 +201,10 @@ public class RequestManager {
       } else {
         return maybePreexistingResponse.get();
       }
+    }
+
+    if (request.isNoReload() && request.getAction().isPresent() && request.getAction().get().equals(RequestAction.RELOAD)) {
+      throw new InvalidRequestActionException("You can not specify 'noReload' on a request with action 'RELOAD'");
     }
 
     if (!request.getReplaceUpstreams().isEmpty() && (!request.getAddUpstreams().isEmpty() || !request.getRemoveUpstreams().isEmpty())) {

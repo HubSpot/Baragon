@@ -29,6 +29,7 @@ import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import com.hubspot.baragon.agent.BaragonAgentServiceModule;
 import com.hubspot.baragon.agent.config.BaragonAgentConfiguration;
+import com.hubspot.baragon.agent.healthcheck.ConfigChecker;
 import com.hubspot.baragon.agent.lbs.BootstrapFileChecker;
 import com.hubspot.baragon.agent.lbs.FilesystemConfigHelper;
 import com.hubspot.baragon.agent.listeners.ResyncListener;
@@ -65,8 +66,10 @@ public class BootstrapManaged implements Managed {
   private final ScheduledExecutorService executorService;
   private final AgentHeartbeatWorker agentHeartbeatWorker;
   private final LifecycleHelper lifecycleHelper;
+  private final ConfigChecker configChecker;
 
   private ScheduledFuture<?> requestWorkerFuture = null;
+  private ScheduledFuture<?> configCheckerFuture = null;
 
   @Inject
   public BootstrapManaged(BaragonKnownAgentsDatastore knownAgentsDatastore,
@@ -75,6 +78,7 @@ public class BootstrapManaged implements Managed {
                           AgentHeartbeatWorker agentHeartbeatWorker,
                           BaragonAgentMetadata baragonAgentMetadata,
                           LifecycleHelper lifecycleHelper,
+                          ConfigChecker configChecker,
                           @Named(BaragonAgentServiceModule.AGENT_SCHEDULED_EXECUTOR) ScheduledExecutorService executorService,
                           @Named(BaragonAgentServiceModule.AGENT_LEADER_LATCH) LeaderLatch leaderLatch) {
     this.configuration = configuration;
@@ -85,6 +89,7 @@ public class BootstrapManaged implements Managed {
     this.executorService = executorService;
     this.agentHeartbeatWorker = agentHeartbeatWorker;
     this.lifecycleHelper = lifecycleHelper;
+    this.configChecker = configChecker;
   }
 
 
@@ -110,6 +115,9 @@ public class BootstrapManaged implements Managed {
 
     LOG.info("Starting agent heartbeat...");
     requestWorkerFuture = executorService.scheduleAtFixedRate(agentHeartbeatWorker, 0, configuration.getHeartbeatIntervalSeconds(), TimeUnit.SECONDS);
+
+    LOG.info("Starting config checker");
+    configCheckerFuture = executorService.scheduleAtFixedRate(configChecker, 0, configuration.getConfigCheckIntervalSecs(), TimeUnit.SECONDS);
 
     lifecycleHelper.writeStateFileIfConfigured();
   }

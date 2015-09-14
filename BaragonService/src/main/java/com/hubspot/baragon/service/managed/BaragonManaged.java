@@ -1,7 +1,9 @@
 package com.hubspot.baragon.service.managed;
 
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.atomic.AtomicReference;
 
 import javax.inject.Named;
 
@@ -27,11 +29,13 @@ public class BaragonManaged implements Managed {
   private final BaragonConfiguration config;
   private final BaragonAuthDatastore authDatastore;
   private final Set<AbstractLatchListener> listeners;
+  private final AtomicReference<Map<String, BaragonAuthKey>> authKeys;
 
   @Inject
   public BaragonManaged(Set<AbstractLatchListener> listeners,
                         @Named(BaragonServiceModule.BARAGON_SERVICE_SCHEDULED_EXECUTOR) ScheduledExecutorService executorService,
                         @Named(BaragonDataModule.BARAGON_SERVICE_LEADER_LATCH) LeaderLatch leaderLatch,
+                        @Named(BaragonDataModule.BARAGON_AUTH_KEY_MAP) AtomicReference<Map<String, BaragonAuthKey>> authKeys,
                         BaragonConfiguration config,
                         BaragonAuthDatastore authDatastore) {
     this.listeners = listeners;
@@ -39,6 +43,7 @@ public class BaragonManaged implements Managed {
     this.leaderLatch = leaderLatch;
     this.config = config;
     this.authDatastore = authDatastore;
+    this.authKeys = authKeys;
   }
 
   @Override
@@ -47,6 +52,7 @@ public class BaragonManaged implements Managed {
       if (!authDatastore.getAuthKeyInfo(config.getAuthConfiguration().getKey().get()).isPresent()) {
         authDatastore.addAuthKey(new BaragonAuthKey(config.getAuthConfiguration().getKey().get(), "baragon", System.currentTimeMillis(), Optional.<Long>absent()));
       }
+      authKeys.set(authDatastore.getAuthKeyMap());
     }
     for (AbstractLatchListener listener : listeners) {
       if (listener.isEnabled()) {
