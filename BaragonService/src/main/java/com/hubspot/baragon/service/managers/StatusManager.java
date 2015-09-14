@@ -74,15 +74,9 @@ public class StatusManager {
       return getServiceStatus();
     } else {
       try {
-        String id = leaderLatch.getLeader().getId();
-        Optional<String> maybeLeaderUri = workerDatastore.getBaseUri(id);
-        if (maybeLeaderUri.isPresent()) {
-          Response response = httpClient.prepareGet(String.format("%s/status", maybeLeaderUri.get())).execute().get();
-          return objectMapper.readValue(response.getResponseBody(), BaragonServiceStatus.class);
-        } else {
-          LOG.warn(String.format("Couldn't get base uri for leader with id %s, returning status from this instance", id));
-          return getServiceStatus();
-        }
+        String leaderUri = leaderLatch.getLeader().getId();
+        Response response = httpClient.prepareGet(String.format("%s/status", leaderUri)).execute().get();
+        return objectMapper.readValue(response.getResponseBody(), BaragonServiceStatus.class);
       } catch (Exception e) {
         LOG.error("Error fetching status from leader", e);
         return getServiceStatus();
