@@ -74,12 +74,13 @@ public class StatusManager {
       return getServiceStatus();
     } else {
       try {
-        Optional<String> maybeLeaderUri = workerDatastore.getBaseUri(leaderLatch.getLeader().getId());
+        String id = leaderLatch.getLeader().getId();
+        Optional<String> maybeLeaderUri = workerDatastore.getBaseUri(id);
         if (maybeLeaderUri.isPresent()) {
           Response response = httpClient.prepareGet(String.format("%s/status", maybeLeaderUri.get())).execute().get();
           return objectMapper.readValue(response.getResponseBody(), BaragonServiceStatus.class);
         } else {
-          LOG.info("Couldn't get base uri for leader, returning status from this instance");
+          LOG.warn(String.format("Couldn't get base uri for leader with id %s, returning status from this instance", id));
           return getServiceStatus();
         }
       } catch (Exception e) {
