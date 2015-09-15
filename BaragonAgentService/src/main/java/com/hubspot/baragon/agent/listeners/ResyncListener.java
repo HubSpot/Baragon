@@ -90,6 +90,8 @@ public class ResyncListener implements ConnectionStateListener {
       retryer.call(callable);
     } catch (Exception e) {
       abort(e);
+    } finally {
+      agentLock.unlock();
     }
   }
 
