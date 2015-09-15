@@ -12,6 +12,7 @@ import com.google.common.base.Throwables;
 import com.google.common.io.Files;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import com.hubspot.baragon.agent.config.BaragonAgentConfiguration;
 import com.hubspot.baragon.exceptions.InvalidConfigException;
 import com.hubspot.baragon.exceptions.LbAdapterExecuteException;
 import com.hubspot.baragon.exceptions.MissingTemplateException;
@@ -30,11 +31,13 @@ public class FilesystemConfigHelper {
 
   private final LbConfigGenerator configGenerator;
   private final LocalLbAdapter adapter;
+  private final BaragonAgentConfiguration configuration;
 
   @Inject
-  public FilesystemConfigHelper(LbConfigGenerator configGenerator, LocalLbAdapter adapter) {
+  public FilesystemConfigHelper(LbConfigGenerator configGenerator, LocalLbAdapter adapter, BaragonAgentConfiguration configuration) {
     this.configGenerator = configGenerator;
     this.adapter = adapter;
+    this.configuration = configuration;
   }
 
   public void remove(BaragonService service) throws LbAdapterExecuteException, IOException {
@@ -263,16 +266,18 @@ public class FilesystemConfigHelper {
   }
 
   private void saveAsFailed(BaragonService service) {
-    for (String filename : configGenerator.getConfigPathsForProject(service)) {
-      try {
-        File src = new File(filename);
-        if (!src.exists()) {
-          continue;
+    if (configuration.isSaveFailedConfigs()) {
+      for (String filename : configGenerator.getConfigPathsForProject(service)) {
+        try {
+          File src = new File(filename);
+          if (!src.exists()) {
+            continue;
+          }
+          File dest = new File(filename + FAILED_CONFIG_SUFFIX);
+          Files.copy(src, dest);
+        } catch (IOException e) {
+          LOG.warn(String.format("Failed to save failed config %s", filename), e);
         }
-        File dest = new File(filename + FAILED_CONFIG_SUFFIX);
-        Files.copy(src, dest);
-      } catch (IOException e) {
-        LOG.warn(String.format("Failed to save failed config %s", filename), e);
       }
     }
   }
