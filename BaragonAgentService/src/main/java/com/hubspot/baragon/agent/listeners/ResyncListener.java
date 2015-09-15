@@ -59,10 +59,10 @@ public class ResyncListener implements ConnectionStateListener {
 
   @Override
   public void stateChanged(CuratorFramework client, ConnectionState newState) {
-    if (newState.equals(ConnectionState.RECONNECTED)) {
+    if (newState == ConnectionState.RECONNECTED) {
       LOG.info("Reconnected to zookeeper, checking if configs are still in sync");
-      Optional<String> maybeLastReuqestForGroup = loadBalancerDatastore.getLastRequestForGroup(configuration.getLoadBalancerConfiguration().getName());
-      if (!maybeLastReuqestForGroup.isPresent() || !maybeLastReuqestForGroup.get().equals(mostRecentRequestId.get())) {
+      Optional<String> maybeLastRequestForGroup = loadBalancerDatastore.getLastRequestForGroup(configuration.getLoadBalancerConfiguration().getName());
+      if (!maybeLastRequestForGroup.isPresent() || !maybeLastRequestForGroup.get().equals(mostRecentRequestId.get())) {
         reapplyConfigsWithRetry();
       }
     }
