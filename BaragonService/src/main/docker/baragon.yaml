@@ -12,6 +12,7 @@ history:
   purgeOldRequestsAfterDays: 1
   purgeWhenDateNotFound: true
   purgeEveryHours: 1
+  maxRequestsPerService: 5
 
 zookeeper:
   quorum: localhost:2181

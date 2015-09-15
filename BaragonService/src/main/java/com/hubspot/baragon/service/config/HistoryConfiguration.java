@@ -27,6 +27,12 @@ public class HistoryConfiguration {
   @Min(1)
   int purgeEveryHours = 24;
 
+  @JsonProperty("maxRequestsPerService")
+  int maxRequestsPerService = 1000;
+
+  @JsonProperty("maxResponsesToFetch")
+  int maxResponsesToFetch = 1000;
+
   public boolean isEnabled() {
     return enabled;
   }
@@ -73,5 +79,21 @@ public class HistoryConfiguration {
 
   public void setPurgeEveryHours(int purgeEveryHours) {
     this.purgeEveryHours = purgeEveryHours;
+  }
+
+  public int getMaxRequestsPerService() {
+    return maxRequestsPerService;
+  }
+
+  public void setMaxRequestsPerService(int maxRequestsPerService) {
+    this.maxRequestsPerService = maxRequestsPerService;
+  }
+
+  public int getMaxResponsesToFetch() {
+    return maxResponsesToFetch;
+  }
+
+  public void setMaxResponsesToFetch(int maxResponsesToFetch) {
+    this.maxResponsesToFetch = maxResponsesToFetch;
   }
 }

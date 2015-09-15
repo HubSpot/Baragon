@@ -12,6 +12,16 @@ class Service extends Model
     removeUpstreamTemplate: require '../templates/vex/removeUpstream'
     removeUpstreamsSuccessTemplate: require '../templates/vex/removeUpstreamsSuccess'
 
+    noReloadNoValidateInput: """
+            <input name="validate" type="checkbox" checked> Validate new configuration after applying changes</input>
+            <br>
+            <input name="reload" type="checkbox" checked> Reload configuration after applying changes</input>
+        """
+
+    noValidateInput: """
+            <input name="validate" type="checkbox" checked> Validate configuration before reloading</input>
+        """
+
     initialize: ({ @serviceId }) ->
 
     ignoreAttributes: ['splitLbGroups', 'splitOwners', 'splitUpstreams']
@@ -26,22 +36,22 @@ class Service extends Model
             data.active = true
         data
 
-    delete: =>
+    delete: (noValidate, noReload) =>
         $.ajax
-            url: "#{ @url() }?authkey=#{ localStorage.getItem 'baragonAuthKey' }"
+            url: "#{ @url() }?authkey=#{ localStorage.getItem 'baragonAuthKey' }&noValidate=#{ noValidate }&noReload=#{ noReload }"
             type: "DELETE"
             success: (data) =>
                 console.dir(data)
                 @set('request', data.loadBalancerRequestId)
 
-    reload: =>
+    reload: (noValidate) =>
         $.ajax
-            url: "#{ @url() }/reload?authkey=#{ localStorage.getItem 'baragonAuthKey' }"
+            url: "#{ @url() }/reload?authkey=#{ localStorage.getItem 'baragonAuthKey' }&noValidate=#{ noValidate }"
             type: "POST"
             success: (data) =>
                 @set('request', data.loadBalancerRequestId)
 
-    undo: =>
+    undo: (noValidate, noReload) =>
         this.fetch({
             success: =>
                 requestId = @requestId()
@@ -54,7 +64,9 @@ class Service extends Model
                         serviceBasePath: @attributes.service.serviceBasePath
                         loadBalancerGroups: @attributes.service.loadBalancerGroups
                     addUpstreams: []
-                    removeUpstreams: @attributes.upstreams
+                    removeUpstreams: @attributes.upstreams,
+                    noValidate: noValidate,
+                    noReload: noReload
                 }
                 $.ajax
                     url: "#{ config.apiRoot }/request?authkey=#{ localStorage.getItem 'baragonAuthKey' }"
@@ -63,7 +75,7 @@ class Service extends Model
                     data: JSON.stringify(serviceData)
         })
 
-    remove: (upstream) =>
+    remove: (upstream, noValidate, noReload) =>
         this.fetch({
             success: =>
                 requestId = @requestId()
@@ -78,6 +90,8 @@ class Service extends Model
                         options: @attributes.options
                     addUpstreams: []
                     removeUpstreams: [{upstream: upstream, request: requestId}]
+                    noValidate: noValidate,
+                    noReload: noReload
                 }
                 $.ajax
                     url: "#{ config.apiRoot }/request?authkey=#{ localStorage.getItem 'baragonAuthKey' }"
@@ -92,6 +106,7 @@ class Service extends Model
     promptDelete: (callback) =>
         vex.dialog.confirm
             message: @deleteTemplate {@serviceId}
+            input: @noReloadNoValidateInput
             buttons: [
                 $.extend {}, vex.dialog.buttons.YES,
                     text: 'DELETE',
@@ -100,7 +115,9 @@ class Service extends Model
             ]
             callback: (data) =>
                 return if data is false
-                @delete().done callback
+                noValidate = (!data.validate or data.validate != 'on')
+                noReload = (!data.reload or data.reload != 'on')
+                @delete(noValidate, noReload).done callback
 
     promptDeleteSuccess: (callback) =>
         vex.dialog.confirm
@@ -116,6 +133,7 @@ class Service extends Model
     promptReloadConfigs: (callback) =>
         vex.dialog.confirm
             message: @reloadTemplate {@serviceId}
+            input: @noValidateInput
             buttons: [
                 $.extend {}, vex.dialog.buttons.YES,
                     text: 'RELOAD',
@@ -124,7 +142,8 @@ class Service extends Model
             ]
             callback: (data) =>
                 return if data is false
-                @reload().done callback
+                noValidate = (!data.validate or data.validate != 'on')
+                @reload(noValidate).done callback
 
     promptReloadConfigsSuccess: (callback) =>
         vex.dialog.confirm
@@ -140,6 +159,7 @@ class Service extends Model
     promptRemoveUpstreams: (callback) =>
         vex.dialog.confirm
             message: @removeUpstreamsTemplate {@serviceId}
+            input: @noReloadNoValidateInput
             buttons: [
                 $.extend {}, vex.dialog.buttons.YES,
                     text: 'REMOVE',
@@ -148,7 +168,9 @@ class Service extends Model
             ]
             callback: (data) =>
                 return if data is false
-                @undo().done callback
+                noValidate = (!data.validate or data.validate != 'on')
+                noReload = (!data.reload or data.reload != 'on')
+                @undo(noValidate, noReload).done callback
 
     promptRemoveUpstreamsSuccess: (callback) =>
         vex.dialog.confirm
@@ -164,6 +186,7 @@ class Service extends Model
     promptRemoveUpstream: (upstream, callback) =>
         vex.dialog.confirm
             message: @removeUpstreamTemplate {upstream: upstream}
+            input: @noReloadNoValidateInput
             buttons: [
                 $.extend {}, vex.dialog.buttons.YES,
                     text: 'REMOVE',
@@ -172,6 +195,8 @@ class Service extends Model
             ]
             callback: (data) =>
                 return if data is false
-                @remove(upstream).done callback
+                noValidate = (!data.validate or data.validate != 'on')
+                noReload = (!data.reload or data.reload != 'on')
+                @remove(upstream, noValidate, noReload).done callback
 
 module.exports = Service
