@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
 @Singleton
 public class FilesystemConfigHelper {
   public static final String BACKUP_FILENAME_SUFFIX = ".old";
+  public static final String FAILED_CONFIG_SUFFIX = ".failed";
 
   private static final Logger LOG = LoggerFactory.getLogger(FilesystemConfigHelper.class);
 
@@ -79,6 +80,7 @@ public class FilesystemConfigHelper {
       adapter.checkConfigs();
     } catch (Exception e) {
       LOG.error(String.format("Caught exception while writing configs for %s, reverting to backups!", service.getServiceId()), e);
+      saveAsFailed(service);
       if (previousConfigsExist) {
         restoreConfigs(service);
       } else {
@@ -131,7 +133,7 @@ public class FilesystemConfigHelper {
       }
     } catch (Exception e) {
       LOG.error(String.format("Caught exception while writing configs for %s, reverting to backups!", service.getServiceId()), e);
-
+      saveAsFailed(service);
       // Restore configs
       if (revertOnFailure) {
         if (oldServiceExists && !oldService.equals(service)) {
@@ -174,18 +176,19 @@ public class FilesystemConfigHelper {
        } else {
          LOG.debug("Not validating configs due to 'noValidate' specified in request");
        }
-    } catch (Exception e) {
-      LOG.error(String.format("Caught exception while deleting configs for %s, reverting to backups!", service.getServiceId()), e);
-      if (oldServiceExists && !maybeOldService.get().equals(service)) {
-        restoreConfigs(maybeOldService.get());
-      }
-      if (previousConfigsExist) {
-        restoreConfigs(service);
-      } else {
-        remove(service);
-      }
+     } catch (Exception e) {
+       LOG.error(String.format("Caught exception while deleting configs for %s, reverting to backups!", service.getServiceId()), e);
+       saveAsFailed(service);
+       if (oldServiceExists && !maybeOldService.get().equals(service)) {
+         restoreConfigs(maybeOldService.get());
+       }
+       if (previousConfigsExist) {
+         restoreConfigs(service);
+       } else {
+         remove(service);
+       }
 
-      throw Throwables.propagate(e);
+       throw Throwables.propagate(e);
      }
     if (!noReload) {
       adapter.reloadConfigs();
@@ -257,6 +260,21 @@ public class FilesystemConfigHelper {
     }
 
     return true;
+  }
+
+  private void saveAsFailed(BaragonService service) {
+    for (String filename : configGenerator.getConfigPathsForProject(service)) {
+      try {
+        File src = new File(filename);
+        if (!src.exists()) {
+          continue;
+        }
+        File dest = new File(filename + FAILED_CONFIG_SUFFIX);
+        Files.copy(src, dest);
+      } catch (IOException e) {
+        LOG.warn(String.format("Failed to save failed config %s", filename), e);
+      }
+    }
   }
 
   private void restoreConfigs(BaragonService service) {
