@@ -269,6 +269,13 @@ public class RequestManager {
         LOG.debug(String.format("No updates to commit for request action %s", action));
         break;
     }
+    updateLastRequestForGroups(request);
+  }
+
+  private void updateLastRequestForGroups(BaragonRequest request) {
+    for (String loadBalancerGroup : request.getLoadBalancerService().getLoadBalancerGroups()) {
+      loadBalancerDatastore.setLastRequestId(loadBalancerGroup, request.getLoadBalancerRequestId());
+    }
   }
 
   private Optional<BaragonService> getOriginalService(BaragonRequest request) {

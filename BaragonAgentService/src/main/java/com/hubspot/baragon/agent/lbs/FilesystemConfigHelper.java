@@ -16,6 +16,7 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import com.hubspot.baragon.agent.BaragonAgentServiceModule;
+import com.hubspot.baragon.agent.config.BaragonAgentConfiguration;
 import com.hubspot.baragon.exceptions.InvalidConfigException;
 import com.hubspot.baragon.exceptions.LbAdapterExecuteException;
 import com.hubspot.baragon.exceptions.LockTimeoutException;
@@ -29,6 +30,7 @@ import org.slf4j.LoggerFactory;
 @Singleton
 public class FilesystemConfigHelper {
   public static final String BACKUP_FILENAME_SUFFIX = ".old";
+  public static final String FAILED_CONFIG_SUFFIX = ".failed";
 
   private static final Logger LOG = LoggerFactory.getLogger(FilesystemConfigHelper.class);
 
@@ -36,14 +38,17 @@ public class FilesystemConfigHelper {
   private final LocalLbAdapter adapter;
   private final ReentrantLock agentLock;
   private final long agentLockTimeoutMs;
+  private final BaragonAgentConfiguration configuration;
 
   @Inject
   public FilesystemConfigHelper(LbConfigGenerator configGenerator,
                                 LocalLbAdapter adapter,
+                                BaragonAgentConfiguration configuration,
                                 @Named(BaragonAgentServiceModule.AGENT_LOCK) ReentrantLock agentLock,
                                 @Named(BaragonAgentServiceModule.AGENT_LOCK_TIMEOUT_MS) long agentLockTimeoutMs) {
     this.configGenerator = configGenerator;
     this.adapter = adapter;
+    this.configuration = configuration;
     this.agentLock = agentLock;
     this.agentLockTimeoutMs = agentLockTimeoutMs;
   }
@@ -102,6 +107,7 @@ public class FilesystemConfigHelper {
       adapter.checkConfigs();
     } catch (Exception e) {
       LOG.error(String.format("Caught exception while writing configs for %s, reverting to backups!", service.getServiceId()), e);
+      saveAsFailed(service);
       if (previousConfigsExist) {
         restoreConfigs(service);
       } else {
@@ -163,7 +169,7 @@ public class FilesystemConfigHelper {
       }
     } catch (Exception e) {
       LOG.error(String.format("Caught exception while writing configs for %s, reverting to backups!", service.getServiceId()), e);
-
+      saveAsFailed(service);
       // Restore configs
       if (revertOnFailure) {
         if (oldServiceExists && !oldService.equals(service)) {
@@ -211,18 +217,19 @@ public class FilesystemConfigHelper {
        } else {
          LOG.debug("Not reloading configs due to 'noReload' specified in request");
        }
-    } catch (Exception e) {
-      LOG.error(String.format("Caught exception while deleting configs for %s, reverting to backups!", service.getServiceId()), e);
-      if (oldServiceExists && !maybeOldService.get().equals(service)) {
-        restoreConfigs(maybeOldService.get());
-      }
-      if (previousConfigsExist) {
-        restoreConfigs(service);
-      } else {
-        remove(service);
-      }
+     } catch (Exception e) {
+       LOG.error(String.format("Caught exception while deleting configs for %s, reverting to backups!", service.getServiceId()), e);
+       saveAsFailed(service);
+       if (oldServiceExists && !maybeOldService.get().equals(service)) {
+         restoreConfigs(maybeOldService.get());
+       }
+       if (previousConfigsExist) {
+         restoreConfigs(service);
+       } else {
+         remove(service);
+       }
 
-      throw Throwables.propagate(e);
+       throw Throwables.propagate(e);
      } finally {
       agentLock.unlock();
      }
@@ -291,6 +298,23 @@ public class FilesystemConfigHelper {
     }
 
     return true;
+  }
+
+  private void saveAsFailed(BaragonService service) {
+    if (configuration.isSaveFailedConfigs()) {
+      for (String filename : configGenerator.getConfigPathsForProject(service)) {
+        try {
+          File src = new File(filename);
+          if (!src.exists()) {
+            continue;
+          }
+          File dest = new File(filename + FAILED_CONFIG_SUFFIX);
+          Files.copy(src, dest);
+        } catch (IOException e) {
+          LOG.warn(String.format("Failed to save failed config %s", filename), e);
+        }
+      }
+    }
   }
 
   private void restoreConfigs(BaragonService service) {

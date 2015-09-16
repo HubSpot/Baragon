@@ -87,8 +87,14 @@ public class BaragonAgentConfiguration extends Configuration {
   @JsonProperty("stateFile")
   private Optional<String> stateFile = Optional.absent();
 
+  @JsonProperty("maxReapplyConfigAttempts")
+  private int maxReapplyConfigAttempts = 3;
+
   @JsonProperty("configCheckIntervalSecs")
   private int configCheckIntervalSecs = 60;
+
+  @JsonProperty("saveFailedConfigs")
+  private boolean saveFailedConfigs = false;
 
   public HttpClientConfiguration getHttpClientConfiguration() {
     return httpClientConfiguration;
@@ -230,11 +236,27 @@ public class BaragonAgentConfiguration extends Configuration {
     this.stateFile = stateFile;
   }
 
+  public int getMaxReapplyConfigAttempts() {
+    return maxReapplyConfigAttempts;
+  }
+
+  public void setMaxReapplyConfigAttempts(int maxReapplyConfigAttempts) {
+    this.maxReapplyConfigAttempts = maxReapplyConfigAttempts;
+  }
+
   public int getConfigCheckIntervalSecs() {
     return configCheckIntervalSecs;
   }
 
   public void setConfigCheckIntervalSecs(int configCheckIntervalSecs) {
     this.configCheckIntervalSecs = configCheckIntervalSecs;
+  }
+
+  public boolean isSaveFailedConfigs() {
+    return saveFailedConfigs;
+  }
+
+  public void setSaveFailedConfigs(boolean saveFailedConfigs) {
+    this.saveFailedConfigs = saveFailedConfigs;
   }
 }
