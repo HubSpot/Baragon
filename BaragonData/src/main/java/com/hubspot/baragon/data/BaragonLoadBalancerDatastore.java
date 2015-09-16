@@ -30,6 +30,7 @@ public class BaragonLoadBalancerDatastore extends AbstractDataStore {
 
   public static final String LOAD_BALANCER_GROUPS_FORMAT = "/load-balancer";
   public static final String LOAD_BALANCER_GROUP_FORMAT = LOAD_BALANCER_GROUPS_FORMAT + "/%s";
+  public static final String LOAD_BALANCER_TARGET_COUNT_FORMAT = LOAD_BALANCER_GROUP_FORMAT + "/targetCount";
   public static final String LOAD_BALANCER_GROUP_LAST_REQUEST_FORMAT = LOAD_BALANCER_GROUP_FORMAT + "/lastRequest";
   public static final String LOAD_BALANCER_GROUP_HOSTS_FORMAT = LOAD_BALANCER_GROUP_FORMAT + "/hosts";
   public static final String LOAD_BALANCER_GROUP_HOST_FORMAT = LOAD_BALANCER_GROUP_HOSTS_FORMAT + "/%s";
@@ -204,5 +205,14 @@ public class BaragonLoadBalancerDatastore extends AbstractDataStore {
 
   public void setLastRequestId(String loadBalancerGroup, String requestId) {
     writeToZk(String.format(LOAD_BALANCER_GROUP_LAST_REQUEST_FORMAT, loadBalancerGroup), requestId);
+  }
+
+  public int setTargetCount(String group, Integer count) {
+    writeToZk(String.format(LOAD_BALANCER_TARGET_COUNT_FORMAT, group), count);
+    return count;
+  }
+
+  public Optional<Integer> getTargetCount(String group) {
+    return readFromZk(String.format(LOAD_BALANCER_TARGET_COUNT_FORMAT, group), Integer.class);
   }
 }

@@ -25,6 +25,7 @@ import com.hubspot.baragon.models.BaragonRequest;
 import com.hubspot.baragon.models.BaragonService;
 import com.hubspot.baragon.models.RequestAction;
 import com.hubspot.baragon.service.BaragonServiceModule;
+import com.hubspot.baragon.service.config.BaragonConfiguration;
 import com.ning.http.client.AsyncCompletionHandler;
 import com.ning.http.client.AsyncHttpClient;
 import com.ning.http.client.AsyncHttpClient.BoundRequestBuilder;
@@ -44,11 +45,13 @@ public class AgentManager {
   private final Integer baragonAgentMaxAttempts;
   private final Optional<String> baragonAuthKey;
   private final Long baragonAgentRequestTimeout;
+  private final BaragonConfiguration configuration;
 
   @Inject
   public AgentManager(BaragonLoadBalancerDatastore loadBalancerDatastore,
                       BaragonStateDatastore stateDatastore,
                       BaragonAgentResponseDatastore agentResponseDatastore,
+                      BaragonConfiguration configuration,
                       @Named(BaragonServiceModule.BARAGON_SERVICE_HTTP_CLIENT) AsyncHttpClient asyncHttpClient,
                       @Named(BaragonDataModule.BARAGON_AGENT_REQUEST_URI_FORMAT) String baragonAgentRequestUriFormat,
                       @Named(BaragonDataModule.BARAGON_AGENT_MAX_ATTEMPTS) Integer baragonAgentMaxAttempts,
@@ -57,6 +60,7 @@ public class AgentManager {
     this.loadBalancerDatastore = loadBalancerDatastore;
     this.stateDatastore = stateDatastore;
     this.agentResponseDatastore = agentResponseDatastore;
+    this.configuration = configuration;
     this.asyncHttpClient = asyncHttpClient;
     this.baragonAgentRequestUriFormat = baragonAgentRequestUriFormat;
     this.baragonAgentMaxAttempts = baragonAgentMaxAttempts;
@@ -199,8 +203,10 @@ public class AgentManager {
     return loadBalancerDatastore.getAgentMetadata(loadBalancerGroups);
   }
 
-  public boolean hasNoAgents(String loadBalancerGroup) {
-    return loadBalancerDatastore.getAgentMetadata(loadBalancerGroup).isEmpty();
+  public boolean invalidAgentCount(String loadBalancerGroup) {
+    int agentCount = loadBalancerDatastore.getAgentMetadata(loadBalancerGroup).size();
+    int targetCount = loadBalancerDatastore.getTargetCount(loadBalancerGroup).or(configuration.getDefaultTargetAgentCount());
+    return (agentCount == 0 || (configuration.isEnforceTargetAgentCount() && agentCount < targetCount));
   }
 
   public boolean hasMissingTemplate(Optional<AgentResponse> maybeLastResponse) {
