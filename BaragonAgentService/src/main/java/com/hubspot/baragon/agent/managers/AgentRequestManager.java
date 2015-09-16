@@ -81,7 +81,7 @@ public class AgentRequestManager {
         case DELETE:
           return delete(request, maybeOldService);
         case RELOAD:
-          return reload();
+          return reload(request);
         case REVERT:
           return revert(request, maybeOldService);
         default:
@@ -96,14 +96,16 @@ public class AgentRequestManager {
     }
   }
 
-  private Response reload() throws Exception {
+  private Response reload(BaragonRequest request) throws Exception {
     configHelper.checkAndReload();
+    mostRecentRequestId.set(request.getLoadBalancerRequestId());
     return Response.ok().build();
   }
 
   private Response delete(BaragonRequest request, Optional<BaragonService> maybeOldService) throws Exception {
     try {
       configHelper.delete(request.getLoadBalancerService(), maybeOldService, request.isNoReload(), request.isNoValidate());
+      mostRecentRequestId.set(request.getLoadBalancerRequestId());
       return Response.ok().build();
     } catch (Exception e) {
       return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();

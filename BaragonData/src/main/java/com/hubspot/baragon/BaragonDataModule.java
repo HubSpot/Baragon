@@ -12,15 +12,11 @@ import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import com.hubspot.baragon.config.AuthConfiguration;
-import com.hubspot.baragon.config.ZooKeeperConfiguration;
 import com.hubspot.baragon.data.BaragonAuthDatastore;
-import com.hubspot.baragon.data.BaragonConnectionStateListener;
 import com.hubspot.baragon.models.BaragonAuthKey;
 import org.apache.curator.framework.CuratorFramework;
-import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.framework.recipes.cache.PathChildrenCache;
 import org.apache.curator.framework.state.ConnectionState;
-import org.apache.curator.retry.ExponentialBackoffRetry;
 
 public class BaragonDataModule extends AbstractModule {
   public static final String BARAGON_AGENT_REQUEST_URI_FORMAT = "baragon.agent.request.uri.format";
@@ -44,22 +40,6 @@ public class BaragonDataModule extends AbstractModule {
   @Override
   protected void configure() {
 
-  }
-
-  @Singleton
-  @Provides
-  public CuratorFramework provideCurator(ZooKeeperConfiguration config, BaragonConnectionStateListener connectionStateListener) {
-    CuratorFramework client = CuratorFrameworkFactory.newClient(
-        config.getQuorum(),
-        config.getSessionTimeoutMillis(),
-        config.getConnectTimeoutMillis(),
-        new ExponentialBackoffRetry(config.getRetryBaseSleepTimeMilliseconds(), config.getRetryMaxTries()));
-
-    client.getConnectionStateListenable().addListener(connectionStateListener);
-
-    client.start();
-
-    return client.usingNamespace(config.getZkNamespace());
   }
 
   @Singleton

@@ -32,6 +32,7 @@ import com.hubspot.baragon.agent.config.BaragonAgentConfiguration;
 import com.hubspot.baragon.agent.healthcheck.ConfigChecker;
 import com.hubspot.baragon.agent.lbs.BootstrapFileChecker;
 import com.hubspot.baragon.agent.lbs.FilesystemConfigHelper;
+import com.hubspot.baragon.agent.listeners.ResyncListener;
 import com.hubspot.baragon.agent.workers.AgentHeartbeatWorker;
 import com.hubspot.baragon.data.BaragonAuthDatastore;
 import com.hubspot.baragon.data.BaragonKnownAgentsDatastore;
@@ -58,109 +59,52 @@ public class BootstrapManaged implements Managed {
   private static final Logger LOG = LoggerFactory.getLogger(BootstrapManaged.class);
 
   private final BaragonAgentConfiguration configuration;
-  private final FilesystemConfigHelper configHelper;
-  private final BaragonStateDatastore stateDatastore;
   private final BaragonLoadBalancerDatastore loadBalancerDatastore;
-  private final BaragonAuthDatastore authDatastore;
   private final LeaderLatch leaderLatch;
   private final BaragonKnownAgentsDatastore knownAgentsDatastore;
   private final BaragonAgentMetadata baragonAgentMetadata;
   private final ScheduledExecutorService executorService;
   private final AgentHeartbeatWorker agentHeartbeatWorker;
-  private final BaragonWorkerDatastore workerDatastore;
-  private final HttpClient httpClient;
+  private final LifecycleHelper lifecycleHelper;
   private final ConfigChecker configChecker;
-
-  private static final String SERVICE_CHECKIN_URL_FORMAT = "%s/checkin/%s/%s";
 
   private ScheduledFuture<?> requestWorkerFuture = null;
   private ScheduledFuture<?> configCheckerFuture = null;
 
   @Inject
-  public BootstrapManaged(BaragonStateDatastore stateDatastore,
-                          BaragonKnownAgentsDatastore knownAgentsDatastore,
+  public BootstrapManaged(BaragonKnownAgentsDatastore knownAgentsDatastore,
                           BaragonLoadBalancerDatastore loadBalancerDatastore,
-                          BaragonWorkerDatastore workerDatastore,
                           BaragonAgentConfiguration configuration,
-                          BaragonAuthDatastore authDatastore,
-                          FilesystemConfigHelper configHelper,
                           AgentHeartbeatWorker agentHeartbeatWorker,
                           BaragonAgentMetadata baragonAgentMetadata,
+                          LifecycleHelper lifecycleHelper,
                           ConfigChecker configChecker,
                           @Named(BaragonAgentServiceModule.AGENT_SCHEDULED_EXECUTOR) ScheduledExecutorService executorService,
-                          @Named(BaragonAgentServiceModule.AGENT_LEADER_LATCH) LeaderLatch leaderLatch,
-                          @Named(BaragonAgentServiceModule.BARAGON_AGENT_HTTP_CLIENT) HttpClient httpClient) {
+                          @Named(BaragonAgentServiceModule.AGENT_LEADER_LATCH) LeaderLatch leaderLatch) {
     this.configuration = configuration;
-    this.configHelper = configHelper;
-    this.stateDatastore = stateDatastore;
     this.leaderLatch = leaderLatch;
     this.knownAgentsDatastore = knownAgentsDatastore;
     this.loadBalancerDatastore = loadBalancerDatastore;
     this.baragonAgentMetadata = baragonAgentMetadata;
     this.executorService = executorService;
     this.agentHeartbeatWorker = agentHeartbeatWorker;
-    this.workerDatastore = workerDatastore;
-    this.authDatastore = authDatastore;
-    this.httpClient = httpClient;
+    this.lifecycleHelper = lifecycleHelper;
     this.configChecker = configChecker;
   }
 
-  private void applyCurrentConfigs() {
-    LOG.info("Loading current state of the world from zookeeper...");
 
-    final Stopwatch stopwatch = Stopwatch.createStarted();
-    final long now = System.currentTimeMillis();
-
-    final Collection<String> services = stateDatastore.getServices();
-    if (services.size() > 0) {
-      ExecutorService executorService = Executors.newFixedThreadPool(services.size());
-      List<Callable<Optional<Pair<ServiceContext, Collection<BaragonConfigFile>>>>> todo = new ArrayList<>(services.size());
-
-      for (BaragonServiceState serviceState : stateDatastore.getGlobalState()) {
-        if (!(serviceState.getService().getLoadBalancerGroups() == null) && serviceState.getService().getLoadBalancerGroups().contains(configuration.getLoadBalancerConfiguration().getName())) {
-          todo.add(new BootstrapFileChecker(configHelper, serviceState, now));
-        }
-      }
-
-      LOG.info("Going to apply {} services...", todo.size());
-
-      try {
-        List<Future<Optional<Pair<ServiceContext, Collection<BaragonConfigFile>>>>> applied = executorService.invokeAll(todo);
-        for (Future<Optional<Pair<ServiceContext, Collection<BaragonConfigFile>>>> serviceFuture : applied) {
-          Optional<Pair<ServiceContext, Collection<BaragonConfigFile>>> maybeToApply = serviceFuture.get();
-          if (maybeToApply.isPresent()) {
-            try {
-              configHelper.bootstrapApply(maybeToApply.get().getKey(), maybeToApply.get().getValue());
-            } catch (Exception e) {
-              LOG.error(String.format("Caught exception while applying %s during bootstrap", maybeToApply.get().getKey().getService().getServiceId()), e);
-            }
-          }
-        }
-        configHelper.checkAndReload();
-      } catch (Exception e) {
-        LOG.error(String.format("Caught exception while applying and parsing configs"), e);
-        if (configuration.isExitOnStartupError()) {
-          Throwables.propagate(e);
-        }
-      }
-
-      LOG.info("Applied {} services in {}ms", todo.size(), stopwatch.elapsed(TimeUnit.MILLISECONDS));
-    } else {
-      LOG.info("No services were found to apply");
-    }
-  }
 
   @Override
   public void start() throws Exception {
     LOG.info("Applying current configs...");
-    applyCurrentConfigs();
+    lifecycleHelper.applyCurrentConfigs();
 
     LOG.info("Starting leader latch...");
     leaderLatch.start();
 
     if (configuration.isRegisterOnStartup()) {
       LOG.info("Notifying BaragonService...");
-      notifyService("startup");
+      lifecycleHelper.notifyService("startup");
     }
 
     LOG.info("Updating BaragonGroup information...");
@@ -175,83 +119,11 @@ public class BootstrapManaged implements Managed {
     LOG.info("Starting config checker");
     configCheckerFuture = executorService.scheduleAtFixedRate(configChecker, 0, configuration.getConfigCheckIntervalSecs(), TimeUnit.SECONDS);
 
-    if (configuration.getStateFile().isPresent()) {
-      LOG.info("Writing state file...");
-      writeStateFile();
-    }
+    lifecycleHelper.writeStateFileIfConfigured();
   }
 
   @Override
   public void stop() throws Exception {
-    leaderLatch.close();
-    executorService.shutdown();
-    if (configuration.isDeregisterOnGracefulShutdown()) {
-      LOG.info("Notifying BaragonService of shutdown...");
-      notifyServiceWithRetry("shutdown");
-    }
-    if (configuration.getStateFile().isPresent()) {
-      removeStateFile();
-    }
-  }
-
-  private void notifyServiceWithRetry(final String action) {
-    Callable<Void> callable = new Callable<Void>() {
-      public Void call() throws Exception {
-        notifyService(action);
-        return null;
-      }
-    };
-
-    Retryer<Void> retryer = RetryerBuilder.<Void>newBuilder()
-      .retryIfException()
-      .withStopStrategy(StopStrategies.stopAfterAttempt(configuration.getMaxNotifyServiceAttempts()))
-      .withWaitStrategy(WaitStrategies.exponentialWait(1, TimeUnit.SECONDS))
-      .build();
-
-    try {
-      retryer.call(callable);
-    } catch (Exception e) {
-      if (action.equals("startup") && !configuration.isExitOnStartupError()) {
-        LOG.error("Could not notify service of startup", e);
-      } else {
-        throw Throwables.propagate(e);
-      }
-    }
-  }
-
-  private void notifyService(String action) throws AgentStartupException {
-    Collection<String> baseUris = workerDatastore.getBaseUris();
-    if (!baseUris.isEmpty()) {
-      HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
-        .setUrl(String.format(SERVICE_CHECKIN_URL_FORMAT, baseUris.iterator().next(), configuration.getLoadBalancerConfiguration().getName(), action))
-        .setMethod(HttpRequest.Method.POST)
-        .setBody(baragonAgentMetadata);
-
-      Map<String, BaragonAuthKey> authKeys = authDatastore.getAuthKeyMap();
-      if (!authKeys.isEmpty()) {
-        requestBuilder.setQueryParam("authkey").to(authKeys.entrySet().iterator().next().getValue().getValue());
-      }
-
-      HttpRequest request = requestBuilder.build();
-      HttpResponse response = httpClient.execute(request);
-      LOG.info(String.format("Got %s response from BaragonService", response.getStatusCode()));
-      if (response.isError()) {
-        throw new AgentStartupException(String.format("Bad response received from BaragonService %s", response.getAsString()));
-      }
-    }
-  }
-
-  private void writeStateFile() throws IOException {
-    Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(configuration.getStateFile().get()), "UTF-8"));
-    try {
-      writer.write("RUNNING");
-    } finally {
-      writer.close();
-    }
-  }
-
-  private boolean removeStateFile() {
-    File stateFile = new File(configuration.getStateFile().get());
-    return (!stateFile.exists() || stateFile.delete());
+    lifecycleHelper.shutdown();
   }
 }

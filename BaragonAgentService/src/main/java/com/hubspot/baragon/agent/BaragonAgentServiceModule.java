@@ -24,10 +24,12 @@ import com.hubspot.baragon.agent.config.TemplateConfiguration;
 import com.hubspot.baragon.agent.config.TestingConfiguration;
 import com.hubspot.baragon.agent.handlebars.FirstOfHelper;
 import com.hubspot.baragon.agent.handlebars.FormatTimestampHelper;
+import com.hubspot.baragon.agent.listeners.ResyncListener;
 import com.hubspot.baragon.agent.models.LbConfigTemplate;
 import com.hubspot.baragon.config.AuthConfiguration;
 import com.hubspot.baragon.config.HttpClientConfiguration;
 import com.hubspot.baragon.config.ZooKeeperConfiguration;
+import com.hubspot.baragon.data.BaragonConnectionStateListener;
 import com.hubspot.baragon.data.BaragonLoadBalancerDatastore;
 import com.hubspot.baragon.models.BaragonAgentEc2Metadata;
 import com.hubspot.baragon.models.BaragonAgentMetadata;
@@ -37,7 +39,10 @@ import com.hubspot.horizon.HttpConfig;
 import com.hubspot.horizon.apache.ApacheHttpClient;
 import io.dropwizard.jetty.HttpConnectorFactory;
 import io.dropwizard.server.SimpleServerFactory;
+import org.apache.curator.framework.CuratorFramework;
+import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.framework.recipes.leader.LeaderLatch;
+import org.apache.curator.retry.ExponentialBackoffRetry;
 
 public class BaragonAgentServiceModule extends AbstractModule {
   public static final String AGENT_SCHEDULED_EXECUTOR = "baragon.service.scheduledExecutor";
@@ -50,7 +55,6 @@ public class BaragonAgentServiceModule extends AbstractModule {
   public static final String DEFAULT_TEMPLATE_NAME = "default";
   public static final String BARAGON_AGENT_HTTP_CLIENT = "baragon.agent.http.client";
   public static final String CONFIG_ERROR_MESSAGE = "baragon.agent.config.error.message";
-
 
   @Override
   protected void configure() {
@@ -197,4 +201,20 @@ public class BaragonAgentServiceModule extends AbstractModule {
     return new ApacheHttpClient(configBuilder.build());
   }
 
+  @Singleton
+  @Provides
+  public CuratorFramework provideCurator(ZooKeeperConfiguration config, BaragonConnectionStateListener connectionStateListener, ResyncListener resyncListener) {
+    CuratorFramework client = CuratorFrameworkFactory.newClient(
+      config.getQuorum(),
+      config.getSessionTimeoutMillis(),
+      config.getConnectTimeoutMillis(),
+      new ExponentialBackoffRetry(config.getRetryBaseSleepTimeMilliseconds(), config.getRetryMaxTries()));
+
+    client.getConnectionStateListenable().addListener(connectionStateListener);
+    client.getConnectionStateListenable().addListener(resyncListener);
+
+    client.start();
+
+    return client.usingNamespace(config.getZkNamespace());
+  }
 }
