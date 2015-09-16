@@ -208,7 +208,7 @@ public class BaragonLoadBalancerDatastore extends AbstractDataStore {
   }
 
   public int setTargetCount(String group, Integer count) {
-    writeToZk(String.format(LOAD_BALANCER_TARGET_COUNT_FORMAT, group), count);
+    writeToZk(String.format(LOAD_BALANCER_TARGET_COUNT_FORMAT, group), count.toString());
     return count;
   }
 

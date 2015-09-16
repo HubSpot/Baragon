@@ -4,6 +4,7 @@ GroupDetailView = require '../views/groupDetail'
 
 BasePathsList = require '../models/BasePathsList'
 Group = require '../models/Group'
+TargetCount = require '../models/TargetCount'
 
 Agents = require '../collections/Agents'
 KnownAgents = require '../collections/KnownAgents'
@@ -15,6 +16,7 @@ class GroupDetailController extends Controller
 
         @models.basePaths = new BasePathsList {@groupId}
         @models.group = new Group {@groupId}
+        @models.targetCount = new TargetCount {@groupId}
         @collections.agents = new Agents [], {@groupId}
         @collections.knownAgents = new KnownAgents [], {@groupId}
 
@@ -25,6 +27,7 @@ class GroupDetailController extends Controller
                 agents: @collections.agents
                 knownAgents: @collections.knownAgents
                 groupId: @groupId
+                targetCount: @models.targetCount
 
         app.showView @view
 
@@ -34,6 +37,7 @@ class GroupDetailController extends Controller
         @models.group.fetch().error =>
             app.caughtError()
         @models.basePaths.fetch()
+        @models.targetCount.fetch()
         @collections.knownAgents.fetch()
         @collections.agents.fetch()
 

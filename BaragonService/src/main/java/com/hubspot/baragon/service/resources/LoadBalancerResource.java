@@ -24,7 +24,6 @@ import com.hubspot.baragon.models.BaragonGroup;
 import com.hubspot.baragon.models.BaragonKnownAgentMetadata;
 import com.hubspot.baragon.models.BaragonService;
 import com.hubspot.baragon.service.config.BaragonConfiguration;
-import com.sun.javaws.exceptions.InvalidArgumentException;
 
 @Path("/load-balancer")
 @Produces(MediaType.APPLICATION_JSON)
@@ -78,6 +77,7 @@ public class LoadBalancerResource {
   }
 
   @GET
+  @NoAuth
   @Path("/{clusterName}/count")
   public Integer getTargetCount(@PathParam("clusterName") String clusterName) {
     return loadBalancerDatastore.getTargetCount(clusterName).or(configuration.getDefaultTargetAgentCount());
