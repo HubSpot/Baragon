@@ -4,6 +4,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicReference;
 
+import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 
 import com.codahale.metrics.MetricRegistry;
@@ -20,6 +21,7 @@ import com.hubspot.baragon.models.BaragonAuthKey;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.cache.PathChildrenCache;
 import org.apache.curator.framework.state.ConnectionState;
+
 
 public class BaragonDataModule extends AbstractModule {
   public static final String BARAGON_AGENT_REQUEST_URI_FORMAT = "baragon.agent.request.uri.format";
@@ -42,7 +44,6 @@ public class BaragonDataModule extends AbstractModule {
 
   @Override
   protected void configure() {
-
   }
 
   @Singleton

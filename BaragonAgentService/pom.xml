@@ -139,10 +139,6 @@
       <groupId>com.codahale.metrics</groupId>
       <artifactId>metrics-graphite</artifactId>
     </dependency>
-    <dependency>
-      <groupId>com.palominolabs.metrics</groupId>
-      <artifactId>metrics-guice</artifactId>
-    </dependency>
   </dependencies>
 
   <build>
