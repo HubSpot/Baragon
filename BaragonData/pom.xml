@@ -112,11 +112,6 @@
     </dependency>
 
     <dependency>
-      <groupId>com.palominolabs.metrics</groupId>
-      <artifactId>metrics-guice</artifactId>
-    </dependency>
-
-    <dependency>
       <groupId>javax.validation</groupId>
       <artifactId>validation-api</artifactId>
     </dependency>
