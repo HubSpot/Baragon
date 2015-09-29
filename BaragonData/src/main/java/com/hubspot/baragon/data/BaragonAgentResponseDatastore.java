@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import com.codahale.metrics.annotation.Timed;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
@@ -31,6 +32,7 @@ public class BaragonAgentResponseDatastore extends AbstractDataStore {
     super(curatorFramework, objectMapper);
   }
 
+  @Timed
   public AgentResponse addAgentResponse(String requestId, AgentRequestType requestType, String baseUrl, String url, Optional<Integer> statusCode, Optional<String> content, Optional<String> exception) {
     final String path = createPersistentSequentialNode(String.format(CREATE_AGENT_RESPONSE_FORMAT, requestId, requestType, encodeUrl(baseUrl), statusCode.or(0), exception.isPresent()));
     final int attempt = Integer.parseInt(path.substring(path.length() - 10));
@@ -42,6 +44,7 @@ public class BaragonAgentResponseDatastore extends AbstractDataStore {
     return agentResponse;
   }
 
+  @Timed
   public Collection<AgentRequestId> getAgentRequestIds(String requestId) {
     final Collection<String> nodes = getChildren(String.format(AGENT_REQUESTS_FORMAT, requestId));
 
@@ -54,10 +57,12 @@ public class BaragonAgentResponseDatastore extends AbstractDataStore {
     return agentRequestIds;
   }
 
+  @Timed
   public List<String> getAgentResponseIds(String requestId, AgentRequestType requestType, String baseUrl) {
     return getChildren(String.format(AGENT_RESPONSES_FORMAT, requestId, requestType, encodeUrl(baseUrl)));
   }
 
+  @Timed
   public void setPendingRequestStatus(String requestId, String baseUrl, boolean value) {
     if (value) {
       writeToZk(String.format(PENDING_REQUEST_FORMAT, requestId, encodeUrl(baseUrl)), System.currentTimeMillis());
@@ -66,10 +71,12 @@ public class BaragonAgentResponseDatastore extends AbstractDataStore {
     }
   }
 
+  @Timed
   public Optional<Long> getPendingRequest(String requestId, String baseUrl) {
     return readFromZk(String.format(PENDING_REQUEST_FORMAT, requestId, encodeUrl(baseUrl)), Long.class);
   }
 
+  @Timed
   public Optional<AgentResponseId> getLastAgentResponseId(String requestId, AgentRequestType requestType, String baseUrl) {
     final List<String> agentResponseIds = getAgentResponseIds(requestId, requestType, baseUrl);
 
@@ -82,6 +89,7 @@ public class BaragonAgentResponseDatastore extends AbstractDataStore {
     return Optional.of(AgentResponseId.fromString(agentResponseIds.get(0)));
   }
 
+  @Timed
   public Map<String, Collection<AgentResponse>> getLastResponses(String requestId) {
     final Map<String, Collection<AgentResponse>> responses = Maps.newHashMap();
 
@@ -101,10 +109,12 @@ public class BaragonAgentResponseDatastore extends AbstractDataStore {
     return responses;
   }
 
+  @Timed
   public Optional<AgentResponse> getAgentResponse(String requestId, AgentRequestType requestType, AgentResponseId agentResponseId, String baseUrl) {
     return readFromZk(String.format(AGENT_RESPONSE_FORMAT, requestId, requestType, encodeUrl(baseUrl), agentResponseId.getId()), AgentResponse.class);
   }
 
+  @Timed
   public Optional<AgentResponse> getAgentResponse(String requestId, AgentRequestId agentRequestId, AgentResponseId agentResponseId) {
     return readFromZk(String.format(AGENT_RESPONSE_FORMAT, requestId, agentRequestId.getType(), encodeUrl(agentRequestId.getBaseUrl()), agentResponseId.getId()), AgentResponse.class);
   }

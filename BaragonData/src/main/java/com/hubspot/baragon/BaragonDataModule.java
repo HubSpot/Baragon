@@ -4,6 +4,9 @@ import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicReference;
 
+import io.dropwizard.setup.Environment;
+
+import com.codahale.metrics.MetricRegistry;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.guava.GuavaModule;
 import com.google.common.base.Optional;
@@ -83,5 +86,11 @@ public class BaragonDataModule extends AbstractModule {
   @Named(BARAGON_AUTH_KEY)
   public Optional<String> providesBaragonAuthKey(AuthConfiguration authConfiguration) {
     return authConfiguration.getKey();
+  }
+
+  @Provides
+  @Singleton
+  public MetricRegistry provideRegistry(Environment environment) {
+    return environment.metrics();
   }
 }

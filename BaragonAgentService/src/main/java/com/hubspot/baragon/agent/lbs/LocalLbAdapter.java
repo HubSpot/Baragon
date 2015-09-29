@@ -3,6 +3,7 @@ package com.hubspot.baragon.agent.lbs;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
+import com.codahale.metrics.annotation.Timed;
 import com.google.common.base.Charsets;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -38,6 +39,7 @@ public class LocalLbAdapter {
     }
   }
 
+  @Timed
   public void checkConfigs() throws InvalidConfigException {
     try {
       executeWithTimeout(CommandLine.parse(loadBalancerConfiguration.getCheckConfigCommand()), loadBalancerConfiguration.getCommandTimeoutMs());
@@ -48,6 +50,7 @@ public class LocalLbAdapter {
     }
   }
 
+  @Timed
   public void reloadConfigs() throws LbAdapterExecuteException, IOException {
     executeWithTimeout(CommandLine.parse(loadBalancerConfiguration.getReloadConfigCommand()), loadBalancerConfiguration.getCommandTimeoutMs());
   }
