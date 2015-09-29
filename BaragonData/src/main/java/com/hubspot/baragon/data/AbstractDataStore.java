@@ -100,7 +100,7 @@ public abstract class AbstractDataStore {
 
     try {
       byte[] bytes = curatorFramework.getData().forPath(path);
-      LOG.trace("Got {} bytes in {} ({})", bytes.length, JavaUtils.duration(start), path);
+      LOG.debug("Got {} bytes in {} ({})", bytes.length, JavaUtils.duration(start), path);
       return Optional.of(deserialize(bytes, klass));
     } catch (KeeperException.NoNodeException nne) {
       return Optional.absent();
