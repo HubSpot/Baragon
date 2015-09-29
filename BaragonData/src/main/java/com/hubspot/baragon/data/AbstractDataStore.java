@@ -89,7 +89,7 @@ public abstract class AbstractDataStore {
       }
 
       builder.forPath(path, serializedInfo);
-      LOG.trace("Wrote {} bytes in {} ({})", serializedInfo.length, JavaUtils.duration(start), path);
+      LOG.debug("Wrote {} bytes in {} ({})", serializedInfo.length, JavaUtils.duration(start), path);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -114,7 +114,7 @@ public abstract class AbstractDataStore {
 
     try {
       byte[] bytes = curatorFramework.getData().forPath(path);
-      LOG.trace("Got {} bytes in {} ({})", bytes.length, JavaUtils.duration(start), path);
+      LOG.debug("Got {} bytes in {} ({})", bytes.length, JavaUtils.duration(start), path);
       return Optional.of(deserialize(bytes, typeReference));
     } catch (KeeperException.NoNodeException nne) {
       return Optional.absent();
@@ -176,10 +176,10 @@ public abstract class AbstractDataStore {
     try {
       if (recursive) {
         curatorFramework.delete().deletingChildrenIfNeeded().forPath(path);
-        LOG.trace("Finished a recursive delete of {} in {}", path, JavaUtils.duration(start));
+        LOG.debug("Finished a recursive delete of {} in {}", path, JavaUtils.duration(start));
       } else {
         curatorFramework.delete().forPath(path);
-        LOG.trace("Deleted {} in {}", path, JavaUtils.duration(start));
+        LOG.debug("Deleted {} in {}", path, JavaUtils.duration(start));
       }
       return true;
     } catch (KeeperException.NoNodeException e) {
