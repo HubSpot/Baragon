@@ -3,16 +3,7 @@ package com.hubspot.baragon.data;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.List;
-
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.base.Charsets;
-import com.google.common.base.Optional;
-import com.google.common.base.Throwables;
-import com.google.common.io.BaseEncoding;
-import com.hubspot.baragon.utils.JavaUtils;
 
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.api.PathAndBytesable;
@@ -21,6 +12,14 @@ import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Charsets;
+import com.google.common.base.Optional;
+import com.google.common.base.Throwables;
+import com.google.common.io.BaseEncoding;
+import com.hubspot.baragon.utils.JavaUtils;
 
 // because curator is a piece of shit
 public abstract class AbstractDataStore {
@@ -48,6 +47,10 @@ public abstract class AbstractDataStore {
     this.objectMapper = objectMapper;
   }
 
+  protected void log(String type, Optional<Integer> numItems, Optional<Integer> bytes, long start, String path) {
+    LOG.debug(String.format("%s (items: %s) (bytes: %s) in %s (%s)", type, numItems.or(1), bytes.or(0), JavaUtils.duration(start), path));
+  }
+
   protected String encodeUrl(String url) {
     return BaseEncoding.base64Url().encode(url.getBytes(Charsets.UTF_8));
   }
@@ -65,7 +68,7 @@ public abstract class AbstractDataStore {
 
     try {
       Stat stat = curatorFramework.checkExists().forPath(path);
-      LOG.trace("Checked node {} in {}", path, JavaUtils.duration(start));
+      log("Fetched", Optional.<Integer>absent(), Optional.<Integer>absent(), start, path);
       return stat != null;
     } catch (KeeperException.NoNodeException e) {
       return false;
@@ -89,7 +92,7 @@ public abstract class AbstractDataStore {
       }
 
       builder.forPath(path, serializedInfo);
-      LOG.debug("Wrote {} bytes in {} ({})", serializedInfo.length, JavaUtils.duration(start), path);
+      log("Saved", Optional.<Integer>absent(), Optional.of(serializedInfo.length), start, path);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -100,7 +103,7 @@ public abstract class AbstractDataStore {
 
     try {
       byte[] bytes = curatorFramework.getData().forPath(path);
-      LOG.debug("Got {} bytes in {} ({})", bytes.length, JavaUtils.duration(start), path);
+      log("Fetched", Optional.<Integer>absent(), Optional.of(bytes.length), start, path);
       return Optional.of(deserialize(bytes, klass));
     } catch (KeeperException.NoNodeException nne) {
       return Optional.absent();
@@ -114,7 +117,7 @@ public abstract class AbstractDataStore {
 
     try {
       byte[] bytes = curatorFramework.getData().forPath(path);
-      LOG.debug("Got {} bytes in {} ({})", bytes.length, JavaUtils.duration(start), path);
+      log("Fetched", Optional.<Integer>absent(), Optional.of(bytes.length), start, path);
       return Optional.of(deserialize(bytes, typeReference));
     } catch (KeeperException.NoNodeException nne) {
       return Optional.absent();
@@ -140,30 +143,40 @@ public abstract class AbstractDataStore {
   }
 
   protected String createNode(String path) {
+    final long start = System.currentTimeMillis();
+
     try {
-      return curatorFramework.create().creatingParentsIfNeeded().forPath(path);
+      final String result = curatorFramework.create().creatingParentsIfNeeded().forPath(path);
+      log("Created", Optional.<Integer>absent(), Optional.<Integer>absent(), start, path);
+      return result;
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
   }
 
   protected String createPersistentSequentialNode(String path) {
+    final long start = System.currentTimeMillis();
+
     try {
-      return curatorFramework.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT_SEQUENTIAL).forPath(path);
+      final String result = curatorFramework.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT_SEQUENTIAL).forPath(path);
+      log("Created", Optional.<Integer>absent(), Optional.<Integer>absent(), start, path);
+      return result;
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
   }
 
   protected <T> String createPersistentSequentialNode(String path, T value) {
+    final long start = System.currentTimeMillis();
+
     try {
       final byte[] serializedValue = objectMapper.writeValueAsBytes(value);
-
-      return curatorFramework.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT_SEQUENTIAL).forPath(path, serializedValue);
+      final String result = curatorFramework.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT_SEQUENTIAL).forPath(path, serializedValue);
+      log("Created", Optional.<Integer>absent(), Optional.of(serializedValue.length), start, path);
+      return result;
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
-
   }
 
   protected boolean deleteNode(String path) {
@@ -176,10 +189,10 @@ public abstract class AbstractDataStore {
     try {
       if (recursive) {
         curatorFramework.delete().deletingChildrenIfNeeded().forPath(path);
-        LOG.debug("Finished a recursive delete of {} in {}", path, JavaUtils.duration(start));
+        log("Deleted", Optional.<Integer>absent(), Optional.<Integer>absent(), start, path);
       } else {
         curatorFramework.delete().forPath(path);
-        LOG.debug("Deleted {} in {}", path, JavaUtils.duration(start));
+        log("Deleted", Optional.<Integer>absent(), Optional.<Integer>absent(), start, path);
       }
       return true;
     } catch (KeeperException.NoNodeException e) {
@@ -194,7 +207,7 @@ public abstract class AbstractDataStore {
 
     try {
       List<String> children = curatorFramework.getChildren().forPath(path);
-      LOG.trace("Found {} children in {} ({})", children.size(), JavaUtils.duration(start), path);
+      log("Fetched", Optional.of(children.size()), Optional.<Integer>absent(), start, path);
       return children;
     } catch (KeeperException.NoNodeException e) {
       return Collections.emptyList();
@@ -208,7 +221,7 @@ public abstract class AbstractDataStore {
 
     try {
       Stat stat = curatorFramework.checkExists().forPath(path);
-      LOG.trace("Got stats for {} in {}", path, JavaUtils.duration(start));
+      log("Fetched", Optional.<Integer>absent(), Optional.<Integer>absent(), start, path);
       return Optional.of(stat.getMtime());
     } catch (KeeperException.NoNodeException e) {
       return Optional.absent();
