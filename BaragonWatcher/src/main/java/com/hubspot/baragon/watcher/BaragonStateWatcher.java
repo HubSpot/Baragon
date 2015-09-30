@@ -1,16 +1,12 @@
 package com.hubspot.baragon.watcher;
 
-import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Function;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -27,8 +23,8 @@ public class BaragonStateWatcher {
   private static final Logger LOG = LoggerFactory.getLogger(BaragonStateWatcher.class);
 
   @Inject
-  public BaragonStateWatcher(final Set<BaragonStateListener> listeners,
-                             final ObjectMapper mapper,
+  public BaragonStateWatcher(final BaragonStateFetcher stateFetcher,
+                             Set<BaragonStateListener> listeners,
                              @Baragon PersistentWatcher watcher) {
     ExecutorService executor = newExecutor();
 
@@ -45,17 +41,8 @@ public class BaragonStateWatcher {
 
         switch (event.getType()) {
           case NODE_UPDATED:
-            byte[] data = event.getData();
-            if (data == null || data.length == 0) {
-              newState = Collections.emptyList();
-            } else {
-              try {
-                newState = mapper.readValue(data, new TypeReference<List<BaragonServiceState>>() {});
-              } catch (IOException e) {
-                LOG.error("Error parsing Baragon data", e);
-                return;
-              }
-            }
+            int version = event.getStat().getVersion();
+            newState = stateFetcher.fetchState(version);
             break;
           case NODE_DELETED:
             newState = Collections.emptyList();
