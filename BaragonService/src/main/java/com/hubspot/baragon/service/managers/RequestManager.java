@@ -6,6 +6,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.google.common.base.Optional;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -27,8 +30,6 @@ import com.hubspot.baragon.models.InternalStatesMap;
 import com.hubspot.baragon.models.QueuedRequestId;
 import com.hubspot.baragon.models.RequestAction;
 import com.hubspot.baragon.service.config.BaragonConfiguration;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @Singleton
 public class RequestManager {
@@ -294,7 +295,11 @@ public class RequestManager {
     if (request.getReplaceServiceId().isPresent() && stateDatastore.getService(request.getReplaceServiceId().get()).isPresent()) {
       stateDatastore.removeService(request.getReplaceServiceId().get());
     }
-    stateDatastore.updateStateNode();
+    if (configuration.isUpdateStateInBackground()) {
+      stateDatastore.incrementStateVersion();  // updateStateNode() will be triggered in the background
+    } else {
+      stateDatastore.updateStateNode();
+    }
   }
 
   private void updateStateDatastore(BaragonRequest request) {
@@ -306,7 +311,11 @@ public class RequestManager {
         stateDatastore.removeUpstreams(request.getLoadBalancerService().getServiceId(), request.getRemoveUpstreams());
         stateDatastore.addUpstreams(request.getLoadBalancerService().getServiceId(), request.getAddUpstreams());
       }
-      stateDatastore.updateStateNode();
+      if (configuration.isUpdateStateInBackground()) {
+        stateDatastore.incrementStateVersion();  // updateStateNode() will be triggered in the background
+      } else {
+        stateDatastore.updateStateNode();
+      }
     } catch (Exception e) {
       LOG.error(String.format("Error updating state datastore %s", e));
     }

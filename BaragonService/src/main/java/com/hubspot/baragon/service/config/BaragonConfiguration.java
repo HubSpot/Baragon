@@ -4,14 +4,16 @@ import javax.validation.Valid;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 
+import org.hibernate.validator.constraints.NotEmpty;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Optional;
 import com.hubspot.baragon.config.AuthConfiguration;
 import com.hubspot.baragon.config.HttpClientConfiguration;
 import com.hubspot.baragon.config.ZooKeeperConfiguration;
+
 import io.dropwizard.Configuration;
-import org.hibernate.validator.constraints.NotEmpty;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class BaragonConfiguration extends Configuration {
@@ -71,6 +73,13 @@ public class BaragonConfiguration extends Configuration {
 
   @JsonProperty("history")
   private HistoryConfiguration historyConfiguration = new HistoryConfiguration();
+
+  @JsonProperty
+  private boolean updateStateInBackground = false;
+
+  @JsonProperty
+  @Min(0)
+  private int backgroundStateUpdateIntervalMs = 5000;
 
   public ZooKeeperConfiguration getZooKeeperConfiguration() {
     return zooKeeperConfiguration;
@@ -174,5 +183,21 @@ public class BaragonConfiguration extends Configuration {
 
   public void setHistoryConfiguration(HistoryConfiguration historyConfiguration) {
     this.historyConfiguration = historyConfiguration;
+  }
+
+  public boolean isUpdateStateInBackground() {
+    return updateStateInBackground;
+  }
+
+  public void setUpdateStateInBackground(boolean updateStateInBackground) {
+    this.updateStateInBackground = updateStateInBackground;
+  }
+
+  public int getBackgroundStateUpdateIntervalMs() {
+    return backgroundStateUpdateIntervalMs;
+  }
+
+  public void setBackgroundStateUpdateIntervalMs(int backgroundStateUpdateIntervalMs) {
+    this.backgroundStateUpdateIntervalMs = backgroundStateUpdateIntervalMs;
   }
 }
