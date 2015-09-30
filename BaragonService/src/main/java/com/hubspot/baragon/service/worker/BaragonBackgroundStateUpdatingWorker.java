@@ -10,7 +10,7 @@ import com.hubspot.baragon.data.BaragonStateDatastore;
 
 @Singleton
 public class BaragonBackgroundStateUpdatingWorker implements Runnable {
-  private static final Logger LOG = LoggerFactory.getLogger(BaragonElbSyncWorker.class);
+  private static final Logger LOG = LoggerFactory.getLogger(BaragonBackgroundStateUpdatingWorker.class);
 
   private final BaragonStateDatastore stateDatastore;
   private Optional<Integer> lastUpdateId;
