@@ -3,12 +3,12 @@ package com.hubspot.baragon.data;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.List;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Charsets;
+import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import com.google.common.base.Throwables;
 import com.google.common.io.BaseEncoding;
@@ -82,19 +82,29 @@ public abstract class AbstractDataStore {
     }
   }
 
-  protected <T> Optional<T> readFromZk(String path, Class<T> klass) {
-    try {
-      return Optional.of(deserialize(curatorFramework.getData().forPath(path), klass));
-    } catch (KeeperException.NoNodeException nne) {
-      return Optional.absent();
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
-    }
+  protected <T> Optional<T> readFromZk(String path, final Class<T> klass) {
+    return readFromZk(path).transform(new Function<byte[], T>() {
+
+      @Override
+      public T apply(byte[] data) {
+        return deserialize(data, klass);
+      }
+    });
   }
 
-  protected <T> Optional<T> readFromZk(String path, TypeReference<T> typeReference) {
+  protected <T> Optional<T> readFromZk(String path, final TypeReference<T> typeReference) {
+    return readFromZk(path).transform(new Function<byte[], T>() {
+
+      @Override
+      public T apply(byte[] data) {
+        return deserialize(data, typeReference);
+      }
+    });
+  }
+
+  protected Optional<byte[]> readFromZk(String path) {
     try {
-      return Optional.of(deserialize(curatorFramework.getData().forPath(path), typeReference));
+      return Optional.of(curatorFramework.getData().forPath(path));
     } catch (KeeperException.NoNodeException nne) {
       return Optional.absent();
     } catch (Exception e) {
