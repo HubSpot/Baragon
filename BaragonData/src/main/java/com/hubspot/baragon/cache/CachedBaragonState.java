@@ -1,5 +1,7 @@
 package com.hubspot.baragon.cache;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -10,16 +12,19 @@ public class CachedBaragonState {
   private final byte[] gzip;
   private final int version;
 
+  @SuppressFBWarnings("EI_EXPOSE_REP2")
   public CachedBaragonState(byte[] uncompressed, int version) {
     this.uncompressed = uncompressed;
     this.gzip = compress(uncompressed);
     this.version = version;
   }
 
+  @SuppressFBWarnings("EI_EXPOSE_REP")
   public byte[] getUncompressed() {
     return uncompressed;
   }
 
+  @SuppressFBWarnings("EI_EXPOSE_REP")
   public byte[] getGzip() {
     return gzip;
   }
