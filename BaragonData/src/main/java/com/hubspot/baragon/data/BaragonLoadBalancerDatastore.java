@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
 
+import com.codahale.metrics.annotation.Timed;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
@@ -50,6 +51,7 @@ public class BaragonLoadBalancerDatastore extends AbstractDataStore {
     }
   }
 
+  @Timed
   public Collection<BaragonGroup> getLoadBalancerGroups() {
     final Collection<String> nodes = getChildren(LOAD_BALANCER_GROUPS_FORMAT);
 
@@ -69,6 +71,7 @@ public class BaragonLoadBalancerDatastore extends AbstractDataStore {
     return groups;
   }
 
+  @Timed
   public Optional<BaragonGroup> getLoadBalancerGroup(String name) {
     try {
       return readFromZk(String.format(LOAD_BALANCER_GROUP_FORMAT, name), BaragonGroup.class);
@@ -80,6 +83,7 @@ public class BaragonLoadBalancerDatastore extends AbstractDataStore {
     }
   }
 
+  @Timed
   public BaragonGroup addSourceToGroup(String name, String source) {
     Optional<BaragonGroup> maybeGroup = getLoadBalancerGroup(name);
     BaragonGroup group;
@@ -93,6 +97,7 @@ public class BaragonLoadBalancerDatastore extends AbstractDataStore {
     return group;
   }
 
+  @Timed
   public Optional<BaragonGroup> removeSourceFromGroup(String name, String source) {
     Optional<BaragonGroup> maybeGroup = getLoadBalancerGroup(name);
     if (maybeGroup.isPresent()) {
@@ -104,6 +109,7 @@ public class BaragonLoadBalancerDatastore extends AbstractDataStore {
     }
   }
 
+  @Timed
   public void updateGroupInfo(String name, Optional<String> domain) {
     Optional<BaragonGroup> maybeGroup = getLoadBalancerGroup(name);
     BaragonGroup group;
@@ -116,14 +122,17 @@ public class BaragonLoadBalancerDatastore extends AbstractDataStore {
     writeToZk(String.format(LOAD_BALANCER_GROUP_FORMAT, name), group);
   }
 
+  @Timed
   public Set<String> getLoadBalancerGroupNames() {
     return ImmutableSet.copyOf(getChildren(LOAD_BALANCER_GROUPS_FORMAT));
   }
 
+  @Timed
   public Optional<BaragonAgentMetadata> getAgent(String path) {
     return readFromZk(path, BaragonAgentMetadata.class);
   }
 
+  @Timed
   public Optional<BaragonAgentMetadata> getAgent(String clusterName, String agentId) {
     Collection<BaragonAgentMetadata> agents = getAgentMetadata(clusterName);
     Optional<BaragonAgentMetadata> maybeAgent = Optional.absent();
@@ -136,6 +145,7 @@ public class BaragonLoadBalancerDatastore extends AbstractDataStore {
     return maybeAgent;
   }
 
+  @Timed
   public Collection<BaragonAgentMetadata> getAgentMetadata(String clusterName) {
     final Collection<String> nodes = getChildren(String.format(LOAD_BALANCER_GROUP_HOSTS_FORMAT, clusterName));
 
@@ -165,6 +175,7 @@ public class BaragonLoadBalancerDatastore extends AbstractDataStore {
     return metadata;
   }
 
+  @Timed
   public Collection<BaragonAgentMetadata> getAgentMetadata(Collection<String> clusterNames) {
     final Set<BaragonAgentMetadata> metadata = Sets.newHashSet();
 
@@ -175,18 +186,22 @@ public class BaragonLoadBalancerDatastore extends AbstractDataStore {
     return metadata;
   }
 
+  @Timed
   public Optional<String> getBasePathServiceId(String loadBalancerGroup, String basePath) {
     return readFromZk(String.format(LOAD_BALANCER_BASE_PATH_FORMAT, loadBalancerGroup, encodeUrl(basePath)), String.class);
   }
 
+  @Timed
   public void clearBasePath(String loadBalancerGroup, String basePath) {
     deleteNode(String.format(LOAD_BALANCER_BASE_PATH_FORMAT, loadBalancerGroup, encodeUrl(basePath)));
   }
 
+  @Timed
   public void setBasePathServiceId(String loadBalancerGroup, String basePath, String serviceId) {
     writeToZk(String.format(LOAD_BALANCER_BASE_PATH_FORMAT, loadBalancerGroup, encodeUrl(basePath)), serviceId);
   }
 
+  @Timed
   public Collection<String> getBasePaths(String loadBalancerGroup) {
     final Collection<String> encodedPaths = getChildren(String.format(LOAD_BALANCER_BASE_PATHS_FORMAT, loadBalancerGroup));
     final Collection<String> decodedPaths = Lists.newArrayListWithCapacity(encodedPaths.size());
@@ -198,10 +213,12 @@ public class BaragonLoadBalancerDatastore extends AbstractDataStore {
     return decodedPaths;
   }
 
+  @Timed
   public Optional<String> getLastRequestForGroup(String loadBalancerGroup) {
     return readFromZk(String.format(LOAD_BALANCER_GROUP_LAST_REQUEST_FORMAT, loadBalancerGroup), String.class);
   }
 
+  @Timed
   public void setLastRequestId(String loadBalancerGroup, String requestId) {
     writeToZk(String.format(LOAD_BALANCER_GROUP_LAST_REQUEST_FORMAT, loadBalancerGroup), requestId);
   }
