@@ -295,9 +295,8 @@ public class RequestManager {
     if (request.getReplaceServiceId().isPresent() && stateDatastore.getService(request.getReplaceServiceId().get()).isPresent()) {
       stateDatastore.removeService(request.getReplaceServiceId().get());
     }
-    if (configuration.isUpdateStateInBackground()) {
-      stateDatastore.incrementStateVersion();  // updateStateNode() will be triggered in the background
-    } else {
+    stateDatastore.incrementStateVersion();
+    if (!configuration.isUpdateStateInBackground()) {
       stateDatastore.updateStateNode();
     }
   }
@@ -311,9 +310,8 @@ public class RequestManager {
         stateDatastore.removeUpstreams(request.getLoadBalancerService().getServiceId(), request.getRemoveUpstreams());
         stateDatastore.addUpstreams(request.getLoadBalancerService().getServiceId(), request.getAddUpstreams());
       }
-      if (configuration.isUpdateStateInBackground()) {
-        stateDatastore.incrementStateVersion();  // updateStateNode() will be triggered in the background
-      } else {
+      stateDatastore.incrementStateVersion();
+      if (!configuration.isUpdateStateInBackground()) {
         stateDatastore.updateStateNode();
       }
     } catch (Exception e) {

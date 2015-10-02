@@ -136,7 +136,7 @@ public class BaragonStateDatastore extends AbstractDataStore {
   }
 
   public byte[] getGlobalStateAsBytes() {
-    return readFromZk(SERVICE_FORMAT).or("[]".getBytes(Charsets.UTF_8));
+    return readFromZk(SERVICES_FORMAT).or("[]".getBytes(Charsets.UTF_8));
   }
 
   @Timed
