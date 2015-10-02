@@ -5,6 +5,8 @@ import com.hubspot.baragon.auth.BaragonAuthUpdater;
 import com.hubspot.baragon.service.bundles.CorsBundle;
 import com.hubspot.baragon.service.config.BaragonConfiguration;
 import com.hubspot.dropwizard.guice.GuiceBundle;
+import com.palominolabs.metrics.guice.MetricsInstrumentationModule;
+
 import io.dropwizard.Application;
 import io.dropwizard.assets.AssetsBundle;
 import io.dropwizard.setup.Bootstrap;
@@ -17,6 +19,7 @@ public class BaragonService extends Application<BaragonConfiguration> {
   public void initialize(Bootstrap<BaragonConfiguration> bootstrap) {
     GuiceBundle<BaragonConfiguration> guiceBundle = GuiceBundle.<BaragonConfiguration>newBuilder()
         .addModule(new BaragonServiceModule())
+        .addModule(new MetricsInstrumentationModule(bootstrap.getMetricRegistry()))
         .enableAutoConfig(getClass().getPackage().getName(), BaragonAuthUpdater.class.getPackage().getName())
         .setConfigClass(BaragonConfiguration.class)
         .build(Stage.DEVELOPMENT);

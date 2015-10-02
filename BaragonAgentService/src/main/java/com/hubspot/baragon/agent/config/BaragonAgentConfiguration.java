@@ -13,6 +13,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Optional;
 import com.google.common.base.Strings;
 import com.hubspot.baragon.config.AuthConfiguration;
+import com.hubspot.baragon.config.GraphiteConfiguration;
 import com.hubspot.baragon.config.HttpClientConfiguration;
 import com.hubspot.baragon.config.ZooKeeperConfiguration;
 import io.dropwizard.Configuration;
@@ -95,6 +96,9 @@ public class BaragonAgentConfiguration extends Configuration {
 
   @JsonProperty("saveFailedConfigs")
   private boolean saveFailedConfigs = false;
+
+  @JsonProperty("graphite")
+  private GraphiteConfiguration graphiteConfiguration = new GraphiteConfiguration();
 
   public HttpClientConfiguration getHttpClientConfiguration() {
     return httpClientConfiguration;
@@ -258,5 +262,13 @@ public class BaragonAgentConfiguration extends Configuration {
 
   public void setSaveFailedConfigs(boolean saveFailedConfigs) {
     this.saveFailedConfigs = saveFailedConfigs;
+  }
+
+  public GraphiteConfiguration getGraphiteConfiguration() {
+    return graphiteConfiguration;
+  }
+
+  public void setGraphiteConfiguration(GraphiteConfiguration graphiteConfiguration) {
+    this.graphiteConfiguration = graphiteConfiguration;
   }
 }
