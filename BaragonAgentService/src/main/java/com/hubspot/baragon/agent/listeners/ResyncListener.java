@@ -4,6 +4,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import ch.qos.logback.classic.LoggerContext;
 import com.github.rholder.retry.Retryer;
@@ -36,7 +37,7 @@ public class ResyncListener implements ConnectionStateListener {
   private final LifecycleHelper lifecycleHelper;
   private final ServerProvider serverProvider;
   private final BaragonLoadBalancerDatastore loadBalancerDatastore;
-  private final Lock agentLock;
+  private final ReentrantLock agentLock;
   private final long agentLockTimeoutMs;
   private final AtomicReference<String> mostRecentRequestId;
 
@@ -45,7 +46,7 @@ public class ResyncListener implements ConnectionStateListener {
                         BaragonAgentConfiguration configuration,
                         ServerProvider serverProvider,
                         BaragonLoadBalancerDatastore loadBalancerDatastore,
-                        @Named(BaragonAgentServiceModule.AGENT_LOCK) Lock agentLock,
+                        @Named(BaragonAgentServiceModule.AGENT_LOCK) ReentrantLock agentLock,
                         @Named(BaragonAgentServiceModule.AGENT_LOCK_TIMEOUT_MS) long agentLockTimeoutMs,
                         @Named(BaragonAgentServiceModule.AGENT_MOST_RECENT_REQUEST_ID) AtomicReference<String> mostRecentRequestId) {
     this.lifecycleHelper = lifecycleHelper;
