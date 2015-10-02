@@ -112,8 +112,28 @@
     </dependency>
 
     <dependency>
+<<<<<<< HEAD
       <groupId>com.google.code.findbugs</groupId>
       <artifactId>annotations</artifactId>
+=======
+      <groupId>javax.validation</groupId>
+      <artifactId>validation-api</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-lang3</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>com.codahale.metrics</groupId>
+      <artifactId>metrics-core</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>com.codahale.metrics</groupId>
+      <artifactId>metrics-annotation</artifactId>
+>>>>>>> background-state-update
     </dependency>
   </dependencies>
 </project>

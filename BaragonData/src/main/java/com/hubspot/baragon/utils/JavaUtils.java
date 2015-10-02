@@ -5,6 +5,8 @@ import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.util.Enumeration;
 
+import org.apache.commons.lang3.time.DurationFormatUtils;
+
 import com.google.common.base.Joiner;
 
 public class JavaUtils {
@@ -38,5 +40,11 @@ public class JavaUtils {
     }
 
     throw new RuntimeException("Couldn't deduce host address");
+  }
+
+  private static final String DURATION_FORMAT = "mm:ss.S";
+
+  public static String duration(final long start) {
+    return DurationFormatUtils.formatDuration(System.currentTimeMillis() - start, DURATION_FORMAT);
   }
 }

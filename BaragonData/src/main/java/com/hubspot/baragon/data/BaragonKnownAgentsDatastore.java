@@ -3,6 +3,7 @@ package com.hubspot.baragon.data;
 import java.util.Collection;
 import java.util.Collections;
 
+import com.codahale.metrics.annotation.Timed;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
@@ -25,6 +26,7 @@ public class BaragonKnownAgentsDatastore extends AbstractDataStore {
     super(curatorFramework, objectMapper);
   }
 
+  @Timed
   public Collection<BaragonKnownAgentMetadata> getKnownAgentsMetadata(String clusterName) {
     final Collection<String> nodes = getChildren(String.format(KNOWN_AGENTS_GROUP_HOSTS_FORMAT, clusterName));
 
@@ -41,18 +43,22 @@ public class BaragonKnownAgentsDatastore extends AbstractDataStore {
     return metadata;
   }
 
+  @Timed
   public Optional<BaragonKnownAgentMetadata> getKnownAgentMetadata(String clusterName, String agentId) {
     return readFromZk(String.format(KNOWN_AGENTS_GROUP_HOST_FORMAT, clusterName, agentId), BaragonKnownAgentMetadata.class);
   }
 
+  @Timed
   public void addKnownAgent(String clusterName, BaragonKnownAgentMetadata agentMetadata) {
     writeToZk(String.format(KNOWN_AGENTS_GROUP_HOST_FORMAT, clusterName, agentMetadata.getAgentId()), agentMetadata);
   }
 
+  @Timed
   public void removeKnownAgent(String clusterName, String agentId) {
     deleteNode(String.format(KNOWN_AGENTS_GROUP_HOST_FORMAT, clusterName, agentId));
   }
 
+  @Timed
   public void updateKnownAgentLastSeenAt(String clusterName, String agentId, long time) {
     Optional<BaragonKnownAgentMetadata> maybeAgent = getKnownAgentMetadata(clusterName, agentId);
     if (maybeAgent.isPresent()) {

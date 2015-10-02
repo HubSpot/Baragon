@@ -4,6 +4,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
+import com.codahale.metrics.annotation.Timed;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
@@ -34,14 +35,17 @@ public class BaragonRequestDatastore extends AbstractDataStore {
   //
   // REQUEST DATA
   //
+  @Timed
   public void addRequest(BaragonRequest request) {
     writeToZk(String.format(REQUEST_FORMAT, request.getLoadBalancerRequestId()), request);
   }
 
+  @Timed
   public Optional<BaragonRequest> getRequest(String requestId) {
     return readFromZk(String.format(REQUEST_FORMAT, requestId), BaragonRequest.class);
   }
 
+  @Timed
   public Optional<BaragonRequest> deleteRequest(String requestId) {
     final Optional<BaragonRequest> maybeRequest = getRequest(requestId);
 
@@ -52,10 +56,12 @@ public class BaragonRequestDatastore extends AbstractDataStore {
     return maybeRequest;
   }
 
+  @Timed
   public List<String> getAllRequestIds() {
     return getChildren(REQUESTS_FORMAT);
   }
 
+  @Timed
   public Optional<Long> getRequestUpdatedAt(String requestId) {
     return getUpdatedAt(String.format(String.format(REQUEST_STATE_FORMAT, requestId)));
   }
@@ -67,19 +73,23 @@ public class BaragonRequestDatastore extends AbstractDataStore {
     return nodeExists(String.format(REQUEST_FORMAT, requestId));
   }
 
+  @Timed
   public Optional<InternalRequestStates> getRequestState(String requestId) {
     return readFromZk(String.format(REQUEST_STATE_FORMAT, requestId), InternalRequestStates.class);
   }
 
+  @Timed
   public void setRequestState(String requestId, InternalRequestStates state) {
     writeToZk(String.format(REQUEST_STATE_FORMAT, requestId), state);
   }
 
   // REQUEST MESSAGE
+  @Timed
   public Optional<String> getRequestMessage(String requestId) {
     return readFromZk(String.format(REQUEST_MESSAGE_FORMAT, requestId), String.class);
   }
 
+  @Timed
   public void setRequestMessage(String requestId, String message) {
     writeToZk(String.format(REQUEST_MESSAGE_FORMAT, requestId), message);
   }
@@ -87,12 +97,14 @@ public class BaragonRequestDatastore extends AbstractDataStore {
   //
   // REQUEST QUEUING
   //
+  @Timed
   public QueuedRequestId enqueueRequest(BaragonRequest request) {
     final String path = createPersistentSequentialNode(String.format(REQUEST_ENQUEUE_FORMAT, request.getLoadBalancerService().getServiceId(), request.getLoadBalancerRequestId()));
 
     return QueuedRequestId.fromString(ZKPaths.getNodeFromPath(path));
   }
 
+  @Timed
   public List<QueuedRequestId> getQueuedRequestIds() {
     final List<String> nodes = getChildren(REQUEST_QUEUE_FORMAT);
 
@@ -107,10 +119,12 @@ public class BaragonRequestDatastore extends AbstractDataStore {
     return queuedRequestIds;
   }
 
+  @Timed
   public int getQueuedRequestCount() {
     return getChildren(REQUEST_QUEUE_FORMAT).size();
   }
 
+  @Timed
   public void removeQueuedRequest(QueuedRequestId queuedRequestId) {
     deleteNode(String.format(REQUEST_QUEUE_ITEM_FORMAT, queuedRequestId.buildZkPath()));
   }
