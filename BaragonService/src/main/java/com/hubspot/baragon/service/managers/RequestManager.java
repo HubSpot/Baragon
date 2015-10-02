@@ -295,10 +295,10 @@ public class RequestManager {
     if (request.getReplaceServiceId().isPresent() && stateDatastore.getService(request.getReplaceServiceId().get()).isPresent()) {
       stateDatastore.removeService(request.getReplaceServiceId().get());
     }
-    stateDatastore.incrementStateVersion();
     if (!configuration.isUpdateStateInBackground()) {
       stateDatastore.updateStateNode();
     }
+    stateDatastore.incrementStateVersion();
   }
 
   private void updateStateDatastore(BaragonRequest request) {
@@ -310,10 +310,10 @@ public class RequestManager {
         stateDatastore.removeUpstreams(request.getLoadBalancerService().getServiceId(), request.getRemoveUpstreams());
         stateDatastore.addUpstreams(request.getLoadBalancerService().getServiceId(), request.getAddUpstreams());
       }
-      stateDatastore.incrementStateVersion();
       if (!configuration.isUpdateStateInBackground()) {
         stateDatastore.updateStateNode();
       }
+      stateDatastore.incrementStateVersion();
     } catch (Exception e) {
       LOG.error(String.format("Error updating state datastore %s", e));
     }
