@@ -8,6 +8,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Optional;
 import com.hubspot.baragon.config.AuthConfiguration;
+import com.hubspot.baragon.config.GraphiteConfiguration;
 import com.hubspot.baragon.config.HttpClientConfiguration;
 import com.hubspot.baragon.config.ZooKeeperConfiguration;
 import io.dropwizard.Configuration;
@@ -71,6 +72,9 @@ public class BaragonConfiguration extends Configuration {
 
   @JsonProperty("history")
   private HistoryConfiguration historyConfiguration = new HistoryConfiguration();
+
+  @JsonProperty("graphite")
+  private GraphiteConfiguration graphiteConfiguration = new GraphiteConfiguration();
 
   public ZooKeeperConfiguration getZooKeeperConfiguration() {
     return zooKeeperConfiguration;
@@ -174,5 +178,13 @@ public class BaragonConfiguration extends Configuration {
 
   public void setHistoryConfiguration(HistoryConfiguration historyConfiguration) {
     this.historyConfiguration = historyConfiguration;
+  }
+
+  public GraphiteConfiguration getGraphiteConfiguration() {
+    return graphiteConfiguration;
+  }
+
+  public void setGraphiteConfiguration(GraphiteConfiguration graphiteConfiguration) {
+    this.graphiteConfiguration = graphiteConfiguration;
   }
 }

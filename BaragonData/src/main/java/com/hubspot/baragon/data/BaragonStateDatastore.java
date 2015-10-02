@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import com.codahale.metrics.annotation.Timed;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Function;
@@ -47,22 +48,27 @@ public class BaragonStateDatastore extends AbstractDataStore {
     this.zkFetcher = zkFetcher;
   }
 
+  @Timed
   public Collection<String> getServices() {
     return getChildren(SERVICES_FORMAT);
   }
 
+  @Timed
   public void addService(BaragonService service) {
     writeToZk(String.format(SERVICE_FORMAT, service.getServiceId()), service);
   }
 
+  @Timed
   public boolean serviceExists(String serviceId) {
     return nodeExists(String.format(SERVICE_FORMAT, serviceId));
   }
 
+  @Timed
   public Optional<BaragonService> getService(String serviceId) {
     return readFromZk(String.format(SERVICE_FORMAT, serviceId), BaragonService.class);
   }
 
+  @Timed
   public void removeService(String serviceId) {
     for (String upstream : getUpstreamNodes(serviceId)) {
       deleteNode(String.format(UPSTREAM_FORMAT, serviceId, upstream));
@@ -71,10 +77,12 @@ public class BaragonStateDatastore extends AbstractDataStore {
     deleteNode(String.format(SERVICE_FORMAT, serviceId));
   }
 
+  @Timed
   private Collection<String> getUpstreamNodes(String serviceId) {
     return getChildren(String.format(SERVICE_FORMAT, serviceId));
   }
 
+  @Timed
   public Map<String, UpstreamInfo> getUpstreamsMap(String serviceId) throws Exception {
     final Collection<String> upstreamNodes = getUpstreamNodes(serviceId);
     final Collection<String> upstreamPaths = new ArrayList<>(upstreamNodes.size());
@@ -85,18 +93,21 @@ public class BaragonStateDatastore extends AbstractDataStore {
     return Maps.uniqueIndex(zkFetcher.fetchDataInParallel(upstreamPaths, new BaragonDeserializer<>(objectMapper, UpstreamInfo.class)).values(), new UpstreamKeyFunction());
   }
 
+  @Timed
   public void removeUpstreams(String serviceId, Collection<UpstreamInfo> upstreams) {
     for (UpstreamInfo upstreamInfo : upstreams) {
       deleteNode(String.format(UPSTREAM_FORMAT, serviceId, sanitizeNodeName(upstreamInfo.getUpstream())));
     }
   }
 
+  @Timed
   public void addUpstreams(String serviceId, Collection<UpstreamInfo> upstreams) {
     for (UpstreamInfo upstreamInfo : upstreams) {
       writeToZk(String.format(UPSTREAM_FORMAT, serviceId, sanitizeNodeName(upstreamInfo.getUpstream())), upstreamInfo);
     }
   }
 
+  @Timed
   public void setUpstreams(String serviceId, Collection<UpstreamInfo> upstreams) throws Exception {
     for (UpstreamInfo upstreamInfo : getUpstreamsMap(serviceId).values()) {
       deleteNode(String.format(UPSTREAM_FORMAT, serviceId, sanitizeNodeName(upstreamInfo.getUpstream())));
@@ -106,6 +117,7 @@ public class BaragonStateDatastore extends AbstractDataStore {
     }
   }
 
+  @Timed
   public void updateStateNode() {
     try {
       LOG.info("Starting state node update");
@@ -116,10 +128,12 @@ public class BaragonStateDatastore extends AbstractDataStore {
     }
   }
 
+  @Timed
   public Collection<BaragonServiceState> getGlobalState() {
     return readFromZk(SERVICES_FORMAT, BARAGON_SERVICE_STATE_COLLECTION).or(Collections.<BaragonServiceState>emptyList());
   }
 
+  @Timed
   public int getGlobalStateSize() {
     final Stat stat = new Stat();
     try {
