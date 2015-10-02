@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import com.google.common.base.Charsets;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.utils.ZKPaths;
 import org.apache.zookeeper.data.Stat;
@@ -131,7 +132,11 @@ public class BaragonStateDatastore extends AbstractDataStore {
 
   @Timed
   public Collection<BaragonServiceState> getGlobalState() {
-    return readFromZk(SERVICES_FORMAT, BARAGON_SERVICE_STATE_COLLECTION).or(Collections.<BaragonServiceState>emptyList());
+    return deserialize(getGlobalStateAsBytes(), BARAGON_SERVICE_STATE_COLLECTION);
+  }
+
+  public byte[] getGlobalStateAsBytes() {
+    return readFromZk(SERVICES_FORMAT).or("[]".getBytes(Charsets.UTF_8));
   }
 
   @Timed
