@@ -6,6 +6,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.elasticloadbalancing.AmazonElasticLoadBalancingClient;
+import com.codahale.metrics.MetricRegistry;
 import com.google.common.base.Optional;
 import com.google.common.base.Strings;
 import com.google.inject.AbstractModule;
@@ -30,6 +31,7 @@ import com.ning.http.client.AsyncHttpClient;
 import com.ning.http.client.AsyncHttpClientConfig;
 import io.dropwizard.jetty.HttpConnectorFactory;
 import io.dropwizard.server.SimpleServerFactory;
+
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.framework.recipes.leader.LeaderLatch;

@@ -71,11 +71,15 @@ public class ResyncListener implements ConnectionStateListener {
   private void reapplyConfigsWithRetry() {
     Callable<Void> callable = new Callable<Void>() {
       public Void call() throws Exception {
-        if (agentLock.tryLock(agentLockTimeoutMs, TimeUnit.MILLISECONDS)) {
-          lifecycleHelper.applyCurrentConfigs();
-          return null;
-        } else {
-          throw new ReapplyFailedException("Failed to acquire lock to reapply most current configs");
+        try {
+          if (agentLock.tryLock(agentLockTimeoutMs, TimeUnit.MILLISECONDS)) {
+            lifecycleHelper.applyCurrentConfigs();
+            return null;
+          } else {
+            throw new ReapplyFailedException("Failed to acquire lock to reapply most current configs");
+          }
+        } finally {
+          agentLock.unlock();
         }
       }
     };
@@ -90,8 +94,6 @@ public class ResyncListener implements ConnectionStateListener {
       retryer.call(callable);
     } catch (Exception e) {
       abort(e);
-    } finally {
-      agentLock.unlock();
     }
   }
 

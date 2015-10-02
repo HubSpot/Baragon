@@ -127,6 +127,22 @@
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
     </dependency>
+    <dependency>
+      <groupId>com.codahale.metrics</groupId>
+      <artifactId>metrics-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.codahale.metrics</groupId>
+      <artifactId>metrics-annotation</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.codahale.metrics</groupId>
+      <artifactId>metrics-graphite</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.palominolabs.metrics</groupId>
+      <artifactId>metrics-guice</artifactId>
+    </dependency>
   </dependencies>
 
   <build>

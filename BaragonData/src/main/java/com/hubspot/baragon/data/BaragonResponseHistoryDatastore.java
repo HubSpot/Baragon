@@ -5,6 +5,7 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
+import com.codahale.metrics.annotation.Timed;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Optional;
 import com.google.common.collect.Iterables;
@@ -31,19 +32,23 @@ public class BaragonResponseHistoryDatastore extends AbstractDataStore {
     super(curatorFramework, objectMapper);
   }
 
+  @Timed
   public void addResponse(String serviceId, String requestId, BaragonResponse response) {
     writeToZk(String.format(RESPONSE_HISTORY_FORMAT, serviceId, requestId), response);
     writeToZk(String.format(SERVICE_ID_FOR_REQUEST_FORMAT, requestId), serviceId);
   }
 
+  @Timed
   public Optional<String> getServiceIdForRequestId(String requestId) {
     return readFromZk(String.format(SERVICE_ID_FOR_REQUEST_FORMAT, requestId), String.class);
   }
 
+  @Timed
   public Optional<BaragonResponse> getResponse(String serviceId, String requestId) {
     return readFromZk(String.format(RESPONSE_HISTORY_FORMAT, serviceId, requestId), BaragonResponse.class);
   }
 
+  @Timed
   public List<BaragonResponse> getResponsesForService(String serviceId, int limit) {
     final List<String> nodes = getChildren(String.format(RESPONSE_HISTORIES_FOR_SERVICE_FORMAT, serviceId));
     final List<BaragonResponse> responses = Lists.newArrayListWithCapacity(Math.min(nodes.size(), limit));
@@ -57,23 +62,28 @@ public class BaragonResponseHistoryDatastore extends AbstractDataStore {
     return responses;
   }
 
+  @Timed
   public Optional<Long> getRequestUpdatedAt(String serviceId, String requestId) {
     return getUpdatedAt(String.format(RESPONSE_HISTORY_FORMAT, serviceId, requestId));
   }
 
+  @Timed
   public List<String> getServiceIds() {
     return getChildren(RESPONSE_HISTORIES_FORMAT);
   }
 
+  @Timed
   public List<String> getRequestIdsForService(String serviceId) {
     return getChildren(String.format(RESPONSE_HISTORIES_FOR_SERVICE_FORMAT, serviceId));
   }
 
+  @Timed
   public void deleteResponse(String serviceId, String requestId) {
     deleteNode(String.format(RESPONSE_HISTORY_FORMAT, serviceId, requestId));
     deleteNode(String.format(SERVICE_ID_FOR_REQUEST_FORMAT, requestId));
   }
 
+  @Timed
   public void deleteResponses(String serviceId) {
     String path = String.format(RESPONSE_HISTORIES_FOR_SERVICE_FORMAT, serviceId);
     List<String> requestIds = getChildren(path);
