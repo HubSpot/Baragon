@@ -79,6 +79,28 @@ public class RequestManager {
     requestDatastore.removeQueuedRequest(queuedRequestId);
   }
 
+  public void reenqueueStuckPendingRequests() {
+    for (String requestId : requestDatastore.getAllRequestIds()) {
+      Optional<InternalRequestStates> maybeState = requestDatastore.getRequestState(requestId);
+      if (!maybeState.isPresent() || (maybeState.get().equals(InternalRequestStates.PENDING) && !hasQueuedRequest(requestId))) {
+        Optional<BaragonRequest> maybeRequest = requestDatastore.getRequest(requestId);
+        if (maybeRequest.isPresent()) {
+          QueuedRequestId queuedRequestId = requestDatastore.enqueueRequest(maybeRequest.get());
+          requestDatastore.setRequestMessage(maybeRequest.get().getLoadBalancerRequestId(), String.format("Queued as %s", queuedRequestId));
+        }
+      }
+    }
+  }
+
+  private boolean hasQueuedRequest(String requestId) {
+    for (QueuedRequestId queuedRequestId : getQueuedRequestIds()) {
+      if (queuedRequestId.getRequestId().equals(requestId)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   public List<BaragonResponse> getResponsesForService(String serviceId) {
     List<BaragonResponse> responses = new ArrayList<>();
     for (String requestId : requestDatastore.getAllRequestIds()) {

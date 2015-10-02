@@ -175,6 +175,7 @@ public class BaragonRequestWorker implements Runnable {
     workerLastStartAt.set(System.currentTimeMillis());
 
     try {
+      requestManager.reenqueueStuckPendingRequests();
 
       final List<QueuedRequestId> queuedRequestIds = requestManager.getQueuedRequestIds();
 
