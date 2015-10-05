@@ -14,6 +14,7 @@ public class BaragonAgentStatus {
   private final String mostRecentRequestId;
   private final String zookeeperState;
   private final BaragonAgentMetadata agentInfo;
+  private final BaragonAgentState agentState;
 
   @JsonCreator
   public BaragonAgentStatus(@JsonProperty("group") String group,
@@ -22,7 +23,8 @@ public class BaragonAgentStatus {
                             @JsonProperty("leader") boolean leader,
                             @JsonProperty("mostRecentRequestId") String mostRecentRequestId,
                             @JsonProperty("zookeeperState") String zookeeperState,
-                            @JsonProperty("agentInfo") BaragonAgentMetadata agentInfo) {
+                            @JsonProperty("agentInfo") BaragonAgentMetadata agentInfo,
+                            @JsonProperty("agentState") BaragonAgentState agentState) {
     this.group = group;
     this.validConfigs = validConfigs;
     this.errorMessage = errorMessage;
@@ -30,6 +32,7 @@ public class BaragonAgentStatus {
     this.mostRecentRequestId = mostRecentRequestId;
     this.zookeeperState = zookeeperState;
     this.agentInfo = agentInfo;
+    this.agentState = agentState;
   }
 
   public String getGroup() {
@@ -58,6 +61,10 @@ public class BaragonAgentStatus {
 
   public BaragonAgentMetadata getAgentInfo() {
     return agentInfo;
+  }
+
+  public BaragonAgentState getAgentState() {
+    return agentState;
   }
 
   @Override
@@ -92,6 +99,9 @@ public class BaragonAgentStatus {
     if (!agentInfo.equals(that.agentInfo)) {
       return false;
     }
+    if (!agentState.equals(that.agentState)) {
+      return false;
+    }
 
     return true;
   }
@@ -105,19 +115,21 @@ public class BaragonAgentStatus {
     result = 31 * result + (mostRecentRequestId != null ? mostRecentRequestId.hashCode() : 0);
     result = 31 * result + zookeeperState.hashCode();
     result = 31 * result + agentInfo.hashCode();
+    result = 31 * result + agentState.hashCode();
     return result;
   }
 
   @Override
   public String toString() {
     return "BaragonAgentStatus [" +
-        "group='" + group + '\'' +
+        "group='" + group +
         ", validConfigs=" + validConfigs +
         ", errorMessage=" + errorMessage +
         ", leader=" + leader +
-        ", mostRecentRequestId='" + mostRecentRequestId + '\'' +
-        ", zookeeperState='" + zookeeperState + '\'' +
-        ", agentInfo='" + agentInfo + '\'' +
+        ", mostRecentRequestId='" + mostRecentRequestId +
+        ", zookeeperState='" + zookeeperState +
+        ", agentInfo='" + agentInfo +
+        ", agentState=" + agentState +
         ']';
   }
 }

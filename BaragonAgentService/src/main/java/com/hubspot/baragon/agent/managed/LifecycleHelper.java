@@ -17,6 +17,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 
 import ch.qos.logback.classic.LoggerContext;
@@ -42,6 +43,7 @@ import com.hubspot.baragon.data.BaragonWorkerDatastore;
 import com.hubspot.baragon.exceptions.AgentStartupException;
 import com.hubspot.baragon.exceptions.LockTimeoutException;
 import com.hubspot.baragon.models.BaragonAgentMetadata;
+import com.hubspot.baragon.models.BaragonAgentState;
 import com.hubspot.baragon.models.BaragonAuthKey;
 import com.hubspot.baragon.models.BaragonConfigFile;
 import com.hubspot.baragon.models.BaragonServiceState;
@@ -68,6 +70,7 @@ public class LifecycleHelper {
   private final FilesystemConfigHelper configHelper;
   private final BaragonStateDatastore stateDatastore;
   private final ServerProvider serverProvider;
+  private final AtomicReference<BaragonAgentState> agentState;
   private final HttpClient httpClient;
   private final ScheduledExecutorService executorService;
   private final LeaderLatch leaderLatch;
@@ -83,6 +86,7 @@ public class LifecycleHelper {
                          FilesystemConfigHelper configHelper,
                          BaragonStateDatastore stateDatastore,
                          ServerProvider serverProvider,
+                         AtomicReference<BaragonAgentState> agentState,
                          @Named(BaragonAgentServiceModule.BARAGON_AGENT_HTTP_CLIENT) HttpClient httpClient,
                          @Named(BaragonAgentServiceModule.AGENT_SCHEDULED_EXECUTOR) ScheduledExecutorService executorService,
                          @Named(BaragonAgentServiceModule.AGENT_LEADER_LATCH) LeaderLatch leaderLatch,
@@ -95,6 +99,7 @@ public class LifecycleHelper {
     this.configHelper = configHelper;
     this.stateDatastore = stateDatastore;
     this.serverProvider = serverProvider;
+    this.agentState = agentState;
     this.httpClient = httpClient;
     this.executorService = executorService;
     this.leaderLatch = leaderLatch;
@@ -235,6 +240,7 @@ public class LifecycleHelper {
   }
 
   public void checkStateNodeVersion() {
+    agentState.set(BaragonAgentState.BOOTSTRAPING);
     try {
       Optional<Integer> maybeStateVersion = stateDatastore.getStateVersion();
       if (maybeStateVersion.isPresent()) {
@@ -254,6 +260,7 @@ public class LifecycleHelper {
     } catch (Exception e) {
       abort("Interrupted while trying to reapply configs, shutting down", e);
     }
+    agentState.set(BaragonAgentState.ACCEPTING);
   }
 
   @SuppressFBWarnings("DM_EXIT")

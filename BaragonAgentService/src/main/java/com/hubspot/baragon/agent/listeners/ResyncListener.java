@@ -21,6 +21,8 @@ import com.hubspot.baragon.agent.managed.LifecycleHelper;
 import com.hubspot.baragon.data.BaragonLoadBalancerDatastore;
 import com.hubspot.baragon.exceptions.LockTimeoutException;
 import com.hubspot.baragon.exceptions.ReapplyFailedException;
+import com.hubspot.baragon.models.BaragonAgentState;
+
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.state.ConnectionState;
@@ -40,17 +42,20 @@ public class ResyncListener implements ConnectionStateListener {
   private final ReentrantLock agentLock;
   private final long agentLockTimeoutMs;
   private final AtomicReference<String> mostRecentRequestId;
+  private final AtomicReference<BaragonAgentState> agentState;
 
   @Inject
   public ResyncListener(LifecycleHelper lifecycleHelper,
                         BaragonAgentConfiguration configuration,
                         BaragonLoadBalancerDatastore loadBalancerDatastore,
+                        AtomicReference<BaragonAgentState> agentState,
                         @Named(BaragonAgentServiceModule.AGENT_LOCK) ReentrantLock agentLock,
                         @Named(BaragonAgentServiceModule.AGENT_LOCK_TIMEOUT_MS) long agentLockTimeoutMs,
                         @Named(BaragonAgentServiceModule.AGENT_MOST_RECENT_REQUEST_ID) AtomicReference<String> mostRecentRequestId) {
     this.lifecycleHelper = lifecycleHelper;
     this.configuration = configuration;
     this.loadBalancerDatastore = loadBalancerDatastore;
+    this.agentState = agentState;
     this.agentLock = agentLock;
     this.agentLockTimeoutMs = agentLockTimeoutMs;
     this.mostRecentRequestId = mostRecentRequestId;
@@ -58,12 +63,16 @@ public class ResyncListener implements ConnectionStateListener {
 
   @Override
   public void stateChanged(CuratorFramework client, ConnectionState newState) {
-    if (newState == ConnectionState.RECONNECTED) {
+    if (newState.equals(ConnectionState.RECONNECTED)) {
       LOG.info("Reconnected to zookeeper, checking if configs are still in sync");
       Optional<String> maybeLastRequestForGroup = loadBalancerDatastore.getLastRequestForGroup(configuration.getLoadBalancerConfiguration().getName());
       if (!maybeLastRequestForGroup.isPresent() || !maybeLastRequestForGroup.get().equals(mostRecentRequestId.get())) {
+        agentState.set(BaragonAgentState.BOOTSTRAPING);
         reapplyConfigsWithRetry();
+        agentState.set(BaragonAgentState.ACCEPTING);
       }
+    } else if (newState.equals(ConnectionState.SUSPENDED) || newState.equals(ConnectionState.LOST)) {
+      agentState.set(BaragonAgentState.DISCONNECTED);
     }
   }
 

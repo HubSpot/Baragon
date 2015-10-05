@@ -17,6 +17,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 import com.github.rholder.retry.Retryer;
 import com.github.rholder.retry.RetryerBuilder;
@@ -41,6 +42,7 @@ import com.hubspot.baragon.data.BaragonStateDatastore;
 import com.hubspot.baragon.data.BaragonWorkerDatastore;
 import com.hubspot.baragon.exceptions.AgentStartupException;
 import com.hubspot.baragon.models.BaragonAgentMetadata;
+import com.hubspot.baragon.models.BaragonAgentState;
 import com.hubspot.baragon.models.BaragonAuthKey;
 import com.hubspot.baragon.models.BaragonConfigFile;
 import com.hubspot.baragon.models.BaragonKnownAgentMetadata;
@@ -67,6 +69,7 @@ public class BootstrapManaged implements Managed {
   private final AgentHeartbeatWorker agentHeartbeatWorker;
   private final LifecycleHelper lifecycleHelper;
   private final ConfigChecker configChecker;
+  private final AtomicReference<BaragonAgentState> agentState;
 
   private ScheduledFuture<?> requestWorkerFuture = null;
   private ScheduledFuture<?> configCheckerFuture = null;
@@ -79,6 +82,7 @@ public class BootstrapManaged implements Managed {
                           BaragonAgentMetadata baragonAgentMetadata,
                           LifecycleHelper lifecycleHelper,
                           ConfigChecker configChecker,
+                          AtomicReference<BaragonAgentState> agentState,
                           @Named(BaragonAgentServiceModule.AGENT_SCHEDULED_EXECUTOR) ScheduledExecutorService executorService,
                           @Named(BaragonAgentServiceModule.AGENT_LEADER_LATCH) LeaderLatch leaderLatch) {
     this.configuration = configuration;
@@ -90,6 +94,7 @@ public class BootstrapManaged implements Managed {
     this.agentHeartbeatWorker = agentHeartbeatWorker;
     this.lifecycleHelper = lifecycleHelper;
     this.configChecker = configChecker;
+    this.agentState = agentState;
   }
 
 
@@ -120,6 +125,8 @@ public class BootstrapManaged implements Managed {
     configCheckerFuture = executorService.scheduleAtFixedRate(configChecker, 0, configuration.getConfigCheckIntervalSecs(), TimeUnit.SECONDS);
 
     lifecycleHelper.writeStateFileIfConfigured();
+
+    agentState.set(BaragonAgentState.ACCEPTING);
   }
 
   @Override
