@@ -40,6 +40,7 @@ import com.hubspot.baragon.data.BaragonAuthDatastore;
 import com.hubspot.baragon.data.BaragonStateDatastore;
 import com.hubspot.baragon.data.BaragonWorkerDatastore;
 import com.hubspot.baragon.exceptions.AgentStartupException;
+import com.hubspot.baragon.exceptions.LockTimeoutException;
 import com.hubspot.baragon.models.BaragonAgentMetadata;
 import com.hubspot.baragon.models.BaragonAuthKey;
 import com.hubspot.baragon.models.BaragonConfigFile;
@@ -238,7 +239,7 @@ public class LifecycleHelper {
       Optional<Integer> maybeStateVersion = stateDatastore.getStateVersion();
       if (maybeStateVersion.isPresent() && getBootstrapStateNodeVersion() < maybeStateVersion.get()) {
         if (!agentLock.tryLock(agentLockTimeoutMs, TimeUnit.MILLISECONDS)) {
-          throw new RuntimeException("Could not acquire lock to reapply configs");
+          throw new LockTimeoutException("Could not acquire lock to reapply configs");
         }
         applyCurrentConfigs();
       }
