@@ -17,7 +17,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import ch.qos.logback.classic.LoggerContext;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -70,7 +70,7 @@ public class LifecycleHelper {
   private final HttpClient httpClient;
   private final ScheduledExecutorService executorService;
   private final LeaderLatch leaderLatch;
-  private final Lock agentLock;
+  private final ReentrantLock agentLock;
   private final long agentLockTimeoutMs;
   private final AtomicInteger bootstrapStateNodeVersion = new AtomicInteger(0);
 
@@ -85,7 +85,7 @@ public class LifecycleHelper {
                          @Named(BaragonAgentServiceModule.BARAGON_AGENT_HTTP_CLIENT) HttpClient httpClient,
                          @Named(BaragonAgentServiceModule.AGENT_SCHEDULED_EXECUTOR) ScheduledExecutorService executorService,
                          @Named(BaragonAgentServiceModule.AGENT_LEADER_LATCH) LeaderLatch leaderLatch,
-                         @Named(BaragonAgentServiceModule.AGENT_LOCK) Lock agentLock,
+                         @Named(BaragonAgentServiceModule.AGENT_LOCK) ReentrantLock agentLock,
                          @Named(BaragonAgentServiceModule.AGENT_LOCK_TIMEOUT_MS) long agentLockTimeoutMs) {
     this.workerDatastore = workerDatastore;
     this.authDatastore = authDatastore;
@@ -245,7 +245,9 @@ public class LifecycleHelper {
     } catch (Exception e) {
       abort("Could not ensure configs are up to date, aborting", e);
     } finally {
-      agentLock.unlock();
+      if (agentLock.isHeldByCurrentThread()) {
+        agentLock.unlock();
+      }
     }
   }
 

@@ -1,6 +1,5 @@
 package com.hubspot.baragon.agent;
 
-import com.google.inject.Inject;
 import com.google.inject.Stage;
 import com.hubspot.baragon.agent.bundles.CorsBundle;
 import com.hubspot.baragon.agent.config.BaragonAgentConfiguration;
