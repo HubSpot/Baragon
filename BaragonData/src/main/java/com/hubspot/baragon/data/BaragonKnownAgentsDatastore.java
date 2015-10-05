@@ -3,16 +3,18 @@ package com.hubspot.baragon.data;
 import java.util.Collection;
 import java.util.Collections;
 
+import org.apache.curator.framework.CuratorFramework;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.codahale.metrics.annotation.Timed;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import com.hubspot.baragon.config.ZooKeeperConfiguration;
 import com.hubspot.baragon.models.BaragonKnownAgentMetadata;
-import org.apache.curator.framework.CuratorFramework;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @Singleton
 public class BaragonKnownAgentsDatastore extends AbstractDataStore {
@@ -22,8 +24,8 @@ public class BaragonKnownAgentsDatastore extends AbstractDataStore {
   public static final String KNOWN_AGENTS_GROUP_HOST_FORMAT = KNOWN_AGENTS_GROUP_HOSTS_FORMAT + "/%s";
 
   @Inject
-  public BaragonKnownAgentsDatastore(CuratorFramework curatorFramework, ObjectMapper objectMapper) {
-    super(curatorFramework, objectMapper);
+  public BaragonKnownAgentsDatastore(CuratorFramework curatorFramework, ObjectMapper objectMapper, ZooKeeperConfiguration zooKeeperConfiguration) {
+    super(curatorFramework, objectMapper, zooKeeperConfiguration);
   }
 
   @Timed

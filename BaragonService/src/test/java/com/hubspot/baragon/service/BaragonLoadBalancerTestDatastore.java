@@ -3,20 +3,22 @@ package com.hubspot.baragon.service;
 import java.util.Collection;
 import java.util.Set;
 
+import org.apache.curator.framework.CuratorFramework;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
+import com.hubspot.baragon.config.ZooKeeperConfiguration;
 import com.hubspot.baragon.data.BaragonLoadBalancerDatastore;
 import com.hubspot.baragon.models.BaragonAgentMetadata;
-import org.apache.curator.framework.CuratorFramework;
 
 public class BaragonLoadBalancerTestDatastore extends BaragonLoadBalancerDatastore {
   private Optional<Set<String>> loadBalancerGroupsOverride = Optional.absent();
   private Optional<Collection<BaragonAgentMetadata>> loadBalancerAgentsOverride = Optional.absent();
 
   @Inject
-  public BaragonLoadBalancerTestDatastore(CuratorFramework curatorFramework, ObjectMapper objectMapper) {
-    super(curatorFramework, objectMapper);
+  public BaragonLoadBalancerTestDatastore(CuratorFramework curatorFramework, ObjectMapper objectMapper, ZooKeeperConfiguration zooKeeperConfiguration) {
+    super(curatorFramework, objectMapper, zooKeeperConfiguration);
   }
 
   public void setLoadBalancerGroupsOverride(Optional<Set<String>> loadBalancerGroupsOverride) {

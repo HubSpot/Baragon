@@ -5,6 +5,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.curator.framework.CuratorFramework;
+
 import com.codahale.metrics.annotation.Timed;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Optional;
@@ -12,11 +14,11 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import com.hubspot.baragon.config.ZooKeeperConfiguration;
 import com.hubspot.baragon.models.AgentRequestId;
 import com.hubspot.baragon.models.AgentRequestType;
 import com.hubspot.baragon.models.AgentResponse;
 import com.hubspot.baragon.models.AgentResponseId;
-import org.apache.curator.framework.CuratorFramework;
 
 @Singleton
 public class BaragonAgentResponseDatastore extends AbstractDataStore {
@@ -28,8 +30,8 @@ public class BaragonAgentResponseDatastore extends AbstractDataStore {
   public static final String AGENT_RESPONSE_FORMAT = AGENT_RESPONSES_FORMAT + "/%s";
 
   @Inject
-  public BaragonAgentResponseDatastore(CuratorFramework curatorFramework, ObjectMapper objectMapper) {
-    super(curatorFramework, objectMapper);
+  public BaragonAgentResponseDatastore(CuratorFramework curatorFramework, ObjectMapper objectMapper, ZooKeeperConfiguration zooKeeperConfiguration) {
+    super(curatorFramework, objectMapper, zooKeeperConfiguration);
   }
 
   @Timed
