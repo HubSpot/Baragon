@@ -38,6 +38,7 @@ public class AgentRequestManager {
   private final Optional<TestingConfiguration> maybeTestingConfiguration;
   private final Random random;
   private final LoadBalancerConfiguration loadBalancerConfiguration;
+  private final long agentLockTimeoutMs;
 
   @Inject
   public AgentRequestManager(BaragonStateDatastore stateDatastore,
@@ -46,7 +47,8 @@ public class AgentRequestManager {
                         Optional<TestingConfiguration> maybeTestingConfiguration,
                         LoadBalancerConfiguration loadBalancerConfiguration,
                         Random random,
-                        @Named(BaragonAgentServiceModule.AGENT_MOST_RECENT_REQUEST_ID) AtomicReference<String> mostRecentRequestId) {
+                        @Named(BaragonAgentServiceModule.AGENT_MOST_RECENT_REQUEST_ID) AtomicReference<String> mostRecentRequestId,
+                        @Named(BaragonAgentServiceModule.AGENT_LOCK_TIMEOUT_MS) long agentLockTimeoutMs) {
     this.stateDatastore = stateDatastore;
     this.configHelper = configHelper;
     this.maybeTestingConfiguration = maybeTestingConfiguration;
@@ -54,6 +56,7 @@ public class AgentRequestManager {
     this.mostRecentRequestId = mostRecentRequestId;
     this.random = random;
     this.loadBalancerConfiguration = loadBalancerConfiguration;
+    this.agentLockTimeoutMs = agentLockTimeoutMs;
   }
 
   public Response processRequest(String requestId, Optional<RequestAction> maybeAction) throws InterruptedException {
@@ -78,8 +81,8 @@ public class AgentRequestManager {
           return apply(request, maybeOldService);
       }
     } catch (LockTimeoutException e) {
-      LOG.warn(String.format("Could not acquire lock before timeout for request %s", requestId), e);
-      return Response.status(Response.Status.CONFLICT).build();
+      LOG.warn(String.format("Couldn't acquire agent lock for %s in %s ms", requestId, agentLockTimeoutMs), e);
+      return Response.status(Response.Status.CONFLICT).entity(String.format("Couldn't acquire agent lock for %s in %s ms. Lock Info: %s", requestId, agentLockTimeoutMs, e.getLockInfo())).build();
     } catch (Exception e) {
       LOG.error(String.format("Caught exception while %sING for request %s", action, requestId), e);
       return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(String.format("Caught exception while %sING for request %s: %s", action, requestId, e.getMessage())).build();

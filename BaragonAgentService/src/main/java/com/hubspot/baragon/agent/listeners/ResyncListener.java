@@ -19,6 +19,7 @@ import com.hubspot.baragon.agent.ServerProvider;
 import com.hubspot.baragon.agent.config.BaragonAgentConfiguration;
 import com.hubspot.baragon.agent.managed.LifecycleHelper;
 import com.hubspot.baragon.data.BaragonLoadBalancerDatastore;
+import com.hubspot.baragon.exceptions.LockTimeoutException;
 import com.hubspot.baragon.exceptions.ReapplyFailedException;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.curator.framework.CuratorFramework;
@@ -69,13 +70,12 @@ public class ResyncListener implements ConnectionStateListener {
   private void reapplyConfigsWithRetry() {
     Callable<Void> callable = new Callable<Void>() {
       public Void call() throws Exception {
+        if (agentLock.tryLock(agentLockTimeoutMs, TimeUnit.MILLISECONDS)) {
+          throw new LockTimeoutException(String.format("Failed to acquire lock to reapply most current configs in %s ms", agentLockTimeoutMs));
+        }
         try {
-          if (agentLock.tryLock(agentLockTimeoutMs, TimeUnit.MILLISECONDS)) {
-            lifecycleHelper.applyCurrentConfigs();
-            return null;
-          } else {
-            throw new ReapplyFailedException("Failed to acquire lock to reapply most current configs");
-          }
+          lifecycleHelper.applyCurrentConfigs();
+          return null;
         } finally {
           if (agentLock.isHeldByCurrentThread()) {
             agentLock.unlock();
