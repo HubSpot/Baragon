@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantLock;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
@@ -12,9 +14,12 @@ import com.google.common.base.Throwables;
 import com.google.common.io.Files;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import com.google.inject.name.Named;
+import com.hubspot.baragon.agent.BaragonAgentServiceModule;
 import com.hubspot.baragon.agent.config.BaragonAgentConfiguration;
 import com.hubspot.baragon.exceptions.InvalidConfigException;
 import com.hubspot.baragon.exceptions.LbAdapterExecuteException;
+import com.hubspot.baragon.exceptions.LockTimeoutException;
 import com.hubspot.baragon.exceptions.MissingTemplateException;
 import com.hubspot.baragon.models.BaragonConfigFile;
 import com.hubspot.baragon.models.BaragonService;
@@ -31,13 +36,21 @@ public class FilesystemConfigHelper {
 
   private final LbConfigGenerator configGenerator;
   private final LocalLbAdapter adapter;
+  private final ReentrantLock agentLock;
+  private final long agentLockTimeoutMs;
   private final BaragonAgentConfiguration configuration;
 
   @Inject
-  public FilesystemConfigHelper(LbConfigGenerator configGenerator, LocalLbAdapter adapter, BaragonAgentConfiguration configuration) {
+  public FilesystemConfigHelper(LbConfigGenerator configGenerator,
+                                LocalLbAdapter adapter,
+                                BaragonAgentConfiguration configuration,
+                                @Named(BaragonAgentServiceModule.AGENT_LOCK) ReentrantLock agentLock,
+                                @Named(BaragonAgentServiceModule.AGENT_LOCK_TIMEOUT_MS) long agentLockTimeoutMs) {
     this.configGenerator = configGenerator;
     this.adapter = adapter;
     this.configuration = configuration;
+    this.agentLock = agentLock;
+    this.agentLockTimeoutMs = agentLockTimeoutMs;
   }
 
   public void remove(BaragonService service) throws LbAdapterExecuteException, IOException {
@@ -53,9 +66,20 @@ public class FilesystemConfigHelper {
     }
   }
 
-  public void checkAndReload() throws InvalidConfigException, LbAdapterExecuteException, IOException {
-    adapter.checkConfigs();
-    adapter.reloadConfigs();
+  public void checkAndReload() throws InvalidConfigException, LbAdapterExecuteException, IOException, InterruptedException, LockTimeoutException {
+    if (!agentLock.tryLock(agentLockTimeoutMs, TimeUnit.MILLISECONDS)) {
+      throw new LockTimeoutException(String.format("Timed out waiting to acquire lock, %s others waiting on agent lock", agentLock.getQueueLength()));
+    }
+
+    try {
+      adapter.checkConfigs();
+      adapter.reloadConfigs();
+    } catch (Exception e) {
+      LOG.error("Caught exception while trying to reload configs", e);
+      throw Throwables.propagate(e);
+    } finally {
+      agentLock.unlock();
+    }
   }
 
   public Optional<Collection<BaragonConfigFile>> configsToApply(ServiceContext context) throws MissingTemplateException {
@@ -94,7 +118,7 @@ public class FilesystemConfigHelper {
     LOG.info(String.format("Apply finished for %s", service.getServiceId()));
   }
 
-  public void apply(ServiceContext context, Optional<BaragonService> maybeOldService, boolean revertOnFailure, boolean noReload, boolean noValidate) throws InvalidConfigException, LbAdapterExecuteException, IOException, MissingTemplateException {
+  public void apply(ServiceContext context, Optional<BaragonService> maybeOldService, boolean revertOnFailure, boolean noReload, boolean noValidate) throws InvalidConfigException, LbAdapterExecuteException, IOException, MissingTemplateException, InterruptedException, LockTimeoutException {
     final BaragonService service = context.getService();
     final BaragonService oldService = maybeOldService.or(service);
 
@@ -117,6 +141,10 @@ public class FilesystemConfigHelper {
       }
     }
 
+    if (!agentLock.tryLock(agentLockTimeoutMs, TimeUnit.MILLISECONDS)) {
+      throw new LockTimeoutException("Timed out waiting to acquire lock");
+    }
+
     // Write & check the configs
     try {
       if (context.isPresent()) {
@@ -134,6 +162,11 @@ public class FilesystemConfigHelper {
       } else {
         LOG.debug("Not validating configs due to 'noValidate' specified in request");
       }
+      if (!noReload) {
+        adapter.reloadConfigs();
+      } else {
+        LOG.debug("Not reloading configs due to 'noReload' specified in request");
+      }
     } catch (Exception e) {
       LOG.error(String.format("Caught exception while writing configs for %s, reverting to backups!", service.getServiceId()), e);
       saveAsFailed(service);
@@ -150,21 +183,21 @@ public class FilesystemConfigHelper {
       }
 
       throw Throwables.propagate(e);
-    }
-
-    if (!noReload) {
-      adapter.reloadConfigs();
-    } else {
-      LOG.debug("Not reloading configs due to 'noReload' specified in request");
+    } finally {
+      agentLock.unlock();
     }
 
     removeBackupConfigs(oldService);
     LOG.info(String.format("Apply finished for %s", service.getServiceId()));
   }
 
-  public void delete(BaragonService service, Optional<BaragonService> maybeOldService, boolean noReload, boolean noValidate) throws InvalidConfigException, LbAdapterExecuteException, IOException, MissingTemplateException {
+  public void delete(BaragonService service, Optional<BaragonService> maybeOldService, boolean noReload, boolean noValidate) throws InvalidConfigException, LbAdapterExecuteException, IOException, MissingTemplateException, InterruptedException, LockTimeoutException {
     final boolean oldServiceExists = (maybeOldService.isPresent() && configsExist(maybeOldService.get()));
     final boolean previousConfigsExist = configsExist(service);
+
+        if (!agentLock.tryLock(agentLockTimeoutMs, TimeUnit.MILLISECONDS)) {
+          throw new LockTimeoutException("Timed out waiting to acquire lock");
+        }
      try {
        if (previousConfigsExist) {
          backupConfigs(service);
@@ -179,6 +212,11 @@ public class FilesystemConfigHelper {
        } else {
          LOG.debug("Not validating configs due to 'noValidate' specified in request");
        }
+       if (!noReload) {
+         adapter.reloadConfigs();
+       } else {
+         LOG.debug("Not reloading configs due to 'noReload' specified in request");
+       }
      } catch (Exception e) {
        LOG.error(String.format("Caught exception while deleting configs for %s, reverting to backups!", service.getServiceId()), e);
        saveAsFailed(service);
@@ -192,12 +230,9 @@ public class FilesystemConfigHelper {
        }
 
        throw Throwables.propagate(e);
+     } finally {
+      agentLock.unlock();
      }
-    if (!noReload) {
-      adapter.reloadConfigs();
-    } else {
-      LOG.debug("Not reloading configs due to 'noReload' specified in request");
-    }
   }
 
   private void writeConfigs(Collection<BaragonConfigFile> files) {
