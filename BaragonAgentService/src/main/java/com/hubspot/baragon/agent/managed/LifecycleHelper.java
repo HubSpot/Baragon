@@ -237,18 +237,22 @@ public class LifecycleHelper {
   public void checkStateNodeVersion() {
     try {
       Optional<Integer> maybeStateVersion = stateDatastore.getStateVersion();
-      if (maybeStateVersion.isPresent() && getBootstrapStateNodeVersion() < maybeStateVersion.get()) {
+      if (maybeStateVersion.isPresent()) {
         if (!agentLock.tryLock(agentLockTimeoutMs, TimeUnit.MILLISECONDS)) {
-          throw new LockTimeoutException("Could not acquire lock to reapply configs");
+          throw new LockTimeoutException("Could not acquire lock to reapply configs", agentLock);
         }
-        applyCurrentConfigs();
+        try {
+          if (getBootstrapStateNodeVersion() < maybeStateVersion.get()) {
+            applyCurrentConfigs();
+          }
+        } catch (Exception e) {
+          abort("Could not ensure configs are up to date, aborting", e);
+        } finally {
+          agentLock.unlock();
+        }
       }
     } catch (Exception e) {
-      abort("Could not ensure configs are up to date, aborting", e);
-    } finally {
-      if (agentLock.isHeldByCurrentThread()) {
-        agentLock.unlock();
-      }
+      abort("Interrupted while trying to reapply configs, shutting down", e);
     }
   }
 
