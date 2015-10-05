@@ -82,7 +82,7 @@ public class AgentRequestManager {
       }
     } catch (LockTimeoutException e) {
       LOG.warn(String.format("Couldn't acquire agent lock for %s in %s ms", requestId, agentLockTimeoutMs), e);
-      return Response.status(Response.Status.CONFLICT).build();
+      return Response.status(Response.Status.CONFLICT).entity(String.format("Couldn't acquire agent lock for %s in %s ms. Lock Info: %s", requestId, agentLockTimeoutMs, e.getLockInfo())).build();
     } catch (Exception e) {
       LOG.error(String.format("Caught exception while %sING for request %s", action, requestId), e);
       return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(String.format("Caught exception while %sING for request %s: %s", action, requestId, e.getMessage())).build();

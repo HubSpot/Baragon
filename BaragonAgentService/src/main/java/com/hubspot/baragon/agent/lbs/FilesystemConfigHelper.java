@@ -68,7 +68,7 @@ public class FilesystemConfigHelper {
 
   public void checkAndReload() throws InvalidConfigException, LbAdapterExecuteException, IOException, InterruptedException, LockTimeoutException {
     if (!agentLock.tryLock(agentLockTimeoutMs, TimeUnit.MILLISECONDS)) {
-      throw new LockTimeoutException(String.format("Timed out waiting to acquire lock, %s others waiting on agent lock", agentLock.getQueueLength()));
+      throw new LockTimeoutException(String.format("Timed out waiting to acquire lock for reload"), agentLock);
     }
 
     try {
@@ -142,7 +142,7 @@ public class FilesystemConfigHelper {
     }
 
     if (!agentLock.tryLock(agentLockTimeoutMs, TimeUnit.MILLISECONDS)) {
-      throw new LockTimeoutException("Timed out waiting to acquire lock");
+      throw new LockTimeoutException("Timed out waiting to acquire lock", agentLock);
     }
 
     // Write & check the configs
@@ -196,7 +196,7 @@ public class FilesystemConfigHelper {
     final boolean previousConfigsExist = configsExist(service);
 
     if (!agentLock.tryLock(agentLockTimeoutMs, TimeUnit.MILLISECONDS)) {
-      throw new LockTimeoutException("Timed out waiting to acquire lock");
+      throw new LockTimeoutException("Timed out waiting to acquire lock for delete", agentLock);
     }
     try {
       if (previousConfigsExist) {
