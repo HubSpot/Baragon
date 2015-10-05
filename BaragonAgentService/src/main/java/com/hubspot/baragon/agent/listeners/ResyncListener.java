@@ -77,7 +77,9 @@ public class ResyncListener implements ConnectionStateListener {
             throw new ReapplyFailedException("Failed to acquire lock to reapply most current configs");
           }
         } finally {
-          agentLock.unlock();
+          if (agentLock.isHeldByCurrentThread()) {
+            agentLock.unlock();
+          }
         }
       }
     };
