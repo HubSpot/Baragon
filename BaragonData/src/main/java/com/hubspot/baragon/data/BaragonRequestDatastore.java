@@ -1,8 +1,10 @@
 package com.hubspot.baragon.data;
 
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
+
+import org.apache.curator.framework.CuratorFramework;
+import org.apache.curator.utils.ZKPaths;
 
 import com.codahale.metrics.annotation.Timed;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -10,11 +12,10 @@ import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import com.hubspot.baragon.config.ZooKeeperConfiguration;
 import com.hubspot.baragon.models.BaragonRequest;
 import com.hubspot.baragon.models.InternalRequestStates;
 import com.hubspot.baragon.models.QueuedRequestId;
-import org.apache.curator.framework.CuratorFramework;
-import org.apache.curator.utils.ZKPaths;
 
 @Singleton
 public class BaragonRequestDatastore extends AbstractDataStore {
@@ -28,8 +29,8 @@ public class BaragonRequestDatastore extends AbstractDataStore {
   public static final String REQUEST_QUEUE_ITEM_FORMAT = REQUEST_QUEUE_FORMAT + "/%s";
 
   @Inject
-  public BaragonRequestDatastore(CuratorFramework curatorFramework, ObjectMapper objectMapper) {
-    super(curatorFramework, objectMapper);
+  public BaragonRequestDatastore(CuratorFramework curatorFramework, ObjectMapper objectMapper, ZooKeeperConfiguration zooKeeperConfiguration) {
+    super(curatorFramework, objectMapper, zooKeeperConfiguration);
   }
 
   //

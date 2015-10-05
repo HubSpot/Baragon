@@ -1,21 +1,19 @@
 package com.hubspot.baragon.data;
 
-import java.util.Collections;
-import java.util.Date;
-import java.util.Iterator;
 import java.util.List;
+
+import org.apache.curator.framework.CuratorFramework;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.codahale.metrics.annotation.Timed;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Optional;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import com.hubspot.baragon.config.ZooKeeperConfiguration;
 import com.hubspot.baragon.models.BaragonResponse;
-import org.apache.curator.framework.CuratorFramework;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @Singleton
 public class BaragonResponseHistoryDatastore extends AbstractDataStore {
@@ -28,8 +26,8 @@ public class BaragonResponseHistoryDatastore extends AbstractDataStore {
 
 
   @Inject
-  public BaragonResponseHistoryDatastore(CuratorFramework curatorFramework, ObjectMapper objectMapper) {
-    super(curatorFramework, objectMapper);
+  public BaragonResponseHistoryDatastore(CuratorFramework curatorFramework, ObjectMapper objectMapper, ZooKeeperConfiguration zooKeeperConfiguration) {
+    super(curatorFramework, objectMapper, zooKeeperConfiguration);
   }
 
   @Timed

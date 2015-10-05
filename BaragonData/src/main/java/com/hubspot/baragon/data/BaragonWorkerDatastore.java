@@ -3,6 +3,10 @@ package com.hubspot.baragon.data;
 import java.util.Collection;
 import java.util.Collections;
 
+import org.apache.curator.framework.CuratorFramework;
+import org.apache.curator.framework.recipes.leader.LeaderLatch;
+import org.apache.zookeeper.KeeperException;
+
 import com.codahale.metrics.annotation.Timed;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Charsets;
@@ -11,9 +15,7 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import org.apache.curator.framework.CuratorFramework;
-import org.apache.curator.framework.recipes.leader.LeaderLatch;
-import org.apache.zookeeper.KeeperException;
+import com.hubspot.baragon.config.ZooKeeperConfiguration;
 
 @Singleton
 public class BaragonWorkerDatastore extends AbstractDataStore {
@@ -21,8 +23,8 @@ public class BaragonWorkerDatastore extends AbstractDataStore {
   public static final String WORKER_FORMAT = WORKERS_FORMAT + "/%s";
 
   @Inject
-  public BaragonWorkerDatastore(CuratorFramework curatorFramework, ObjectMapper objectMapper) {
-    super(curatorFramework, objectMapper);
+  public BaragonWorkerDatastore(CuratorFramework curatorFramework, ObjectMapper objectMapper, ZooKeeperConfiguration zooKeeperConfiguration) {
+    super(curatorFramework, objectMapper, zooKeeperConfiguration);
   }
 
   public LeaderLatch createLeaderLatch(String baseUri) {
