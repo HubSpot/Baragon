@@ -195,44 +195,44 @@ public class FilesystemConfigHelper {
     final boolean oldServiceExists = (maybeOldService.isPresent() && configsExist(maybeOldService.get()));
     final boolean previousConfigsExist = configsExist(service);
 
-        if (!agentLock.tryLock(agentLockTimeoutMs, TimeUnit.MILLISECONDS)) {
-          throw new LockTimeoutException("Timed out waiting to acquire lock");
-        }
-     try {
-       if (previousConfigsExist) {
-         backupConfigs(service);
-         remove(service);
-       }
-       if (oldServiceExists && !maybeOldService.get().equals(service)) {
-         backupConfigs(maybeOldService.get());
-         remove(maybeOldService.get());
-       }
-       if (!noValidate) {
-         adapter.checkConfigs();
-       } else {
-         LOG.debug("Not validating configs due to 'noValidate' specified in request");
-       }
-       if (!noReload) {
-         adapter.reloadConfigs();
-       } else {
-         LOG.debug("Not reloading configs due to 'noReload' specified in request");
-       }
-     } catch (Exception e) {
-       LOG.error(String.format("Caught exception while deleting configs for %s, reverting to backups!", service.getServiceId()), e);
-       saveAsFailed(service);
-       if (oldServiceExists && !maybeOldService.get().equals(service)) {
-         restoreConfigs(maybeOldService.get());
-       }
-       if (previousConfigsExist) {
-         restoreConfigs(service);
-       } else {
-         remove(service);
-       }
+    if (!agentLock.tryLock(agentLockTimeoutMs, TimeUnit.MILLISECONDS)) {
+      throw new LockTimeoutException("Timed out waiting to acquire lock");
+    }
+    try {
+      if (previousConfigsExist) {
+        backupConfigs(service);
+        remove(service);
+      }
+      if (oldServiceExists && !maybeOldService.get().equals(service)) {
+        backupConfigs(maybeOldService.get());
+        remove(maybeOldService.get());
+      }
+      if (!noValidate) {
+        adapter.checkConfigs();
+      } else {
+        LOG.debug("Not validating configs due to 'noValidate' specified in request");
+      }
+      if (!noReload) {
+        adapter.reloadConfigs();
+      } else {
+        LOG.debug("Not reloading configs due to 'noReload' specified in request");
+      }
+    } catch (Exception e) {
+      LOG.error(String.format("Caught exception while deleting configs for %s, reverting to backups!", service.getServiceId()), e);
+      saveAsFailed(service);
+      if (oldServiceExists && !maybeOldService.get().equals(service)) {
+        restoreConfigs(maybeOldService.get());
+      }
+      if (previousConfigsExist) {
+        restoreConfigs(service);
+      } else {
+        remove(service);
+      }
 
-       throw Throwables.propagate(e);
-     } finally {
+      throw Throwables.propagate(e);
+    } finally {
       agentLock.unlock();
-     }
+    }
   }
 
   private void writeConfigs(Collection<BaragonConfigFile> files) {
