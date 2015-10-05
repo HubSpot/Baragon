@@ -34,7 +34,6 @@ public class ResyncListener implements ConnectionStateListener {
   private final BaragonAgentConfiguration configuration;
 
   private final LifecycleHelper lifecycleHelper;
-  private final ServerProvider serverProvider;
   private final BaragonLoadBalancerDatastore loadBalancerDatastore;
   private final Lock agentLock;
   private final long agentLockTimeoutMs;
@@ -43,14 +42,12 @@ public class ResyncListener implements ConnectionStateListener {
   @Inject
   public ResyncListener(LifecycleHelper lifecycleHelper,
                         BaragonAgentConfiguration configuration,
-                        ServerProvider serverProvider,
                         BaragonLoadBalancerDatastore loadBalancerDatastore,
                         @Named(BaragonAgentServiceModule.AGENT_LOCK) Lock agentLock,
                         @Named(BaragonAgentServiceModule.AGENT_LOCK_TIMEOUT_MS) long agentLockTimeoutMs,
                         @Named(BaragonAgentServiceModule.AGENT_MOST_RECENT_REQUEST_ID) AtomicReference<String> mostRecentRequestId) {
     this.lifecycleHelper = lifecycleHelper;
     this.configuration = configuration;
-    this.serverProvider = serverProvider;
     this.loadBalancerDatastore = loadBalancerDatastore;
     this.agentLock = agentLock;
     this.agentLockTimeoutMs = agentLockTimeoutMs;
@@ -93,41 +90,7 @@ public class ResyncListener implements ConnectionStateListener {
     try {
       retryer.call(callable);
     } catch (Exception e) {
-      abort(e);
-    }
-  }
-
-  @SuppressFBWarnings("DM_EXIT")
-  private void abort(Exception exception) {
-    LOG.error("Caught exception while trying to resync, aborting", exception);
-    flushLogs();
-    Optional<Server> server = serverProvider.get();
-    if (server.isPresent()) {
-      try {
-        server.get().stop();
-        lifecycleHelper.shutdown();
-      } catch (Exception e) {
-        LOG.warn("While aborting server", e);
-      }
-    } else {
-      LOG.warn("Baragon Agent abort called before server has fully initialized!");
-    }
-    System.exit(1);
-  }
-
-  private void flushLogs() {
-    final long millisToWait = 100;
-
-    ILoggerFactory loggerFactory = LoggerFactory.getILoggerFactory();
-    if (loggerFactory instanceof LoggerContext) {
-      LoggerContext context = (LoggerContext) loggerFactory;
-      context.stop();
-    }
-
-    try {
-      Thread.sleep(millisToWait);
-    } catch (Exception e) {
-      LOG.info("While sleeping for log flush", e);
+      lifecycleHelper.abort("Caught exception while trying to resync, aborting", e);
     }
   }
 }

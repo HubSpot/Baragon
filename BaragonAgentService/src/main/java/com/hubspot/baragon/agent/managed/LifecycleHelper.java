@@ -16,6 +16,11 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.Lock;
+
+import ch.qos.logback.classic.LoggerContext;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import com.github.rholder.retry.Retryer;
 import com.github.rholder.retry.RetryerBuilder;
@@ -27,10 +32,10 @@ import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import com.hubspot.baragon.agent.BaragonAgentServiceModule;
+import com.hubspot.baragon.agent.ServerProvider;
 import com.hubspot.baragon.agent.config.BaragonAgentConfiguration;
 import com.hubspot.baragon.agent.lbs.BootstrapFileChecker;
 import com.hubspot.baragon.agent.lbs.FilesystemConfigHelper;
-import com.hubspot.baragon.agent.workers.AgentHeartbeatWorker;
 import com.hubspot.baragon.data.BaragonAuthDatastore;
 import com.hubspot.baragon.data.BaragonStateDatastore;
 import com.hubspot.baragon.data.BaragonWorkerDatastore;
@@ -45,6 +50,8 @@ import com.hubspot.horizon.HttpRequest;
 import com.hubspot.horizon.HttpResponse;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.curator.framework.recipes.leader.LeaderLatch;
+import org.eclipse.jetty.server.Server;
+import org.slf4j.ILoggerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,9 +66,13 @@ public class LifecycleHelper {
   private final BaragonAgentMetadata baragonAgentMetadata;
   private final FilesystemConfigHelper configHelper;
   private final BaragonStateDatastore stateDatastore;
+  private final ServerProvider serverProvider;
   private final HttpClient httpClient;
   private final ScheduledExecutorService executorService;
   private final LeaderLatch leaderLatch;
+  private final Lock agentLock;
+  private final long agentLockTimeoutMs;
+  private final AtomicInteger bootstrapStateNodeVersion = new AtomicInteger(0);
 
   @Inject
   public LifecycleHelper(BaragonWorkerDatastore workerDatastore,
@@ -70,19 +81,24 @@ public class LifecycleHelper {
                          BaragonAgentMetadata baragonAgentMetadata,
                          FilesystemConfigHelper configHelper,
                          BaragonStateDatastore stateDatastore,
+                         ServerProvider serverProvider,
                          @Named(BaragonAgentServiceModule.BARAGON_AGENT_HTTP_CLIENT) HttpClient httpClient,
                          @Named(BaragonAgentServiceModule.AGENT_SCHEDULED_EXECUTOR) ScheduledExecutorService executorService,
-                         @Named(BaragonAgentServiceModule.AGENT_LEADER_LATCH) LeaderLatch leaderLatch) {
+                         @Named(BaragonAgentServiceModule.AGENT_LEADER_LATCH) LeaderLatch leaderLatch,
+                         @Named(BaragonAgentServiceModule.AGENT_LOCK) Lock agentLock,
+                         @Named(BaragonAgentServiceModule.AGENT_LOCK_TIMEOUT_MS) long agentLockTimeoutMs) {
     this.workerDatastore = workerDatastore;
     this.authDatastore = authDatastore;
     this.configuration = configuration;
     this.baragonAgentMetadata = baragonAgentMetadata;
     this.configHelper = configHelper;
     this.stateDatastore = stateDatastore;
+    this.serverProvider = serverProvider;
     this.httpClient = httpClient;
     this.executorService = executorService;
     this.leaderLatch = leaderLatch;
-
+    this.agentLock = agentLock;
+    this.agentLockTimeoutMs = agentLockTimeoutMs;
   }
 
   public void notifyServiceWithRetry(final String action) {
@@ -160,6 +176,7 @@ public class LifecycleHelper {
       ExecutorService executorService = Executors.newFixedThreadPool(services.size());
       List<Callable<Optional<Pair<ServiceContext, Collection<BaragonConfigFile>>>>> todo = new ArrayList<>(services.size());
 
+      setBootstrapStateNodeVersion(stateDatastore.getStateVersion());
       for (BaragonServiceState serviceState : stateDatastore.getGlobalState()) {
         if (!(serviceState.getService().getLoadBalancerGroups() == null) && serviceState.getService().getLoadBalancerGroups().contains(configuration.getLoadBalancerConfiguration().getName())) {
           todo.add(new BootstrapFileChecker(configHelper, serviceState, now));
@@ -203,6 +220,66 @@ public class LifecycleHelper {
     }
     if (configuration.getStateFile().isPresent()) {
       removeStateFile();
+    }
+  }
+
+  public void setBootstrapStateNodeVersion(Optional<Integer> version) {
+    if (version.isPresent()) {
+      bootstrapStateNodeVersion.set(version.get());
+    }
+  }
+
+  public int getBootstrapStateNodeVersion() {
+    return bootstrapStateNodeVersion.get();
+  }
+
+  public void checkStateNodeVersion() {
+    try {
+      Optional<Integer> maybeStateVersion = stateDatastore.getStateVersion();
+      if (maybeStateVersion.isPresent() && getBootstrapStateNodeVersion() < maybeStateVersion.get()) {
+        if (!agentLock.tryLock(agentLockTimeoutMs, TimeUnit.MILLISECONDS)) {
+          throw new RuntimeException("Could not acquire lock to reapply configs");
+        }
+        applyCurrentConfigs();
+      }
+    } catch (Exception e) {
+      abort("Could not ensure configs are up to date, aborting", e);
+    } finally {
+      agentLock.unlock();
+    }
+  }
+
+  @SuppressFBWarnings("DM_EXIT")
+  public void abort(String message, Exception exception) {
+    LOG.error(message, exception);
+    flushLogs();
+    Optional<Server> server = serverProvider.get();
+    if (server.isPresent()) {
+      try {
+        server.get().stop();
+        shutdown();
+      } catch (Exception e) {
+        LOG.warn("While aborting server", e);
+      }
+    } else {
+      LOG.warn("Baragon Agent abort called before server has fully initialized!");
+    }
+    System.exit(1);
+  }
+
+  private void flushLogs() {
+    final long millisToWait = 100;
+
+    ILoggerFactory loggerFactory = LoggerFactory.getILoggerFactory();
+    if (loggerFactory instanceof LoggerContext) {
+      LoggerContext context = (LoggerContext) loggerFactory;
+      context.stop();
+    }
+
+    try {
+      Thread.sleep(millisToWait);
+    } catch (Exception e) {
+      LOG.info("While sleeping for log flush", e);
     }
   }
 }
