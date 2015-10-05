@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Charsets;
+import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import com.google.common.base.Throwables;
 import com.google.common.io.BaseEncoding;
@@ -98,27 +99,35 @@ public abstract class AbstractDataStore {
     }
   }
 
-  protected <T> Optional<T> readFromZk(String path, Class<T> klass) {
+  protected <T> Optional<T> readFromZk(final String path, final Class<T> klass) {
     final long start = System.currentTimeMillis();
 
-    try {
-      byte[] bytes = curatorFramework.getData().forPath(path);
-      log("Fetched", Optional.<Integer>absent(), Optional.of(bytes.length), start, path);
-      return Optional.of(deserialize(bytes, klass));
-    } catch (KeeperException.NoNodeException nne) {
-      return Optional.absent();
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
-    }
+    return readFromZk(path).transform(new Function<byte[], T>() {
+
+      @Override
+      public T apply(byte[] data) {
+        log("Fetched", Optional.<Integer>absent(), Optional.of(data.length), start, path);
+        return deserialize(data, klass);
+      }
+    });
   }
 
-  protected <T> Optional<T> readFromZk(String path, TypeReference<T> typeReference) {
+  protected <T> Optional<T> readFromZk(final String path, final TypeReference<T> typeReference) {
     final long start = System.currentTimeMillis();
 
+    return readFromZk(path).transform(new Function<byte[], T>() {
+
+      @Override
+      public T apply(byte[] data) {
+        log("Fetched", Optional.<Integer>absent(), Optional.of(data.length), start, path);
+        return deserialize(data, typeReference);
+      }
+    });
+  }
+
+  protected Optional<byte[]> readFromZk(String path) {
     try {
-      byte[] bytes = curatorFramework.getData().forPath(path);
-      log("Fetched", Optional.<Integer>absent(), Optional.of(bytes.length), start, path);
-      return Optional.of(deserialize(bytes, typeReference));
+      return Optional.of(curatorFramework.getData().forPath(path));
     } catch (KeeperException.NoNodeException nne) {
       return Optional.absent();
     } catch (Exception e) {

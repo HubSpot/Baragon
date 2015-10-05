@@ -8,6 +8,13 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import com.google.common.base.Charsets;
+import org.apache.curator.framework.CuratorFramework;
+import org.apache.curator.utils.ZKPaths;
+import org.apache.zookeeper.data.Stat;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.codahale.metrics.annotation.Timed;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -23,18 +30,13 @@ import com.hubspot.baragon.models.BaragonService;
 import com.hubspot.baragon.models.BaragonServiceState;
 import com.hubspot.baragon.models.UpstreamInfo;
 import com.hubspot.baragon.utils.ZkParallelFetcher;
-import org.apache.curator.framework.CuratorFramework;
-import org.apache.curator.utils.ZKPaths;
-import org.apache.zookeeper.KeeperException;
-import org.apache.zookeeper.data.Stat;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @Singleton
 public class BaragonStateDatastore extends AbstractDataStore {
   private static final Logger LOG = LoggerFactory.getLogger(BaragonStateDatastore.class);
 
   public static final String SERVICES_FORMAT = "/state";
+  public static final String LAST_UPDATED_FORMAT = "/state-last-updated";
   public static final String SERVICE_FORMAT = SERVICES_FORMAT + "/%s";
   public static final String UPSTREAM_FORMAT = SERVICE_FORMAT + "/%s";
 
@@ -130,17 +132,41 @@ public class BaragonStateDatastore extends AbstractDataStore {
 
   @Timed
   public Collection<BaragonServiceState> getGlobalState() {
-    return readFromZk(SERVICES_FORMAT, BARAGON_SERVICE_STATE_COLLECTION).or(Collections.<BaragonServiceState>emptyList());
+    return deserialize(getGlobalStateAsBytes(), BARAGON_SERVICE_STATE_COLLECTION);
+  }
+
+  public byte[] getGlobalStateAsBytes() {
+    return readFromZk(SERVICES_FORMAT).or("[]".getBytes(Charsets.UTF_8));
   }
 
   @Timed
   public int getGlobalStateSize() {
-    final Stat stat = new Stat();
     try {
-      curatorFramework.getData().storingStatIn(stat).forPath(SERVICES_FORMAT);
-      return stat.getDataLength();
-    } catch (KeeperException.NoNodeException nne) {
-      return 0;
+      final Stat stat = curatorFramework.checkExists().forPath(SERVICES_FORMAT);
+
+      if (stat != null) {
+        return stat.getDataLength();
+      } else {
+        return 0;
+      }
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  public void incrementStateVersion() {
+    writeToZk(LAST_UPDATED_FORMAT, System.currentTimeMillis());
+  }
+
+  public Optional<Integer> getStateVersion() {
+    try {
+      final Stat stat = curatorFramework.checkExists().forPath(LAST_UPDATED_FORMAT);
+
+      if (stat != null) {
+        return Optional.of(stat.getVersion());
+      } else {
+        return Optional.absent();
+      }
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }

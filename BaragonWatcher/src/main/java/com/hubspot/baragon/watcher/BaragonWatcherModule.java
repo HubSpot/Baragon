@@ -46,6 +46,6 @@ public class BaragonWatcherModule extends AbstractModule {
       public CuratorFramework get() {
         return curatorProvider.get();
       }
-    }).dataWatcher("/state");
+    }).dataWatcher("/state-last-updated");
   }
 }
