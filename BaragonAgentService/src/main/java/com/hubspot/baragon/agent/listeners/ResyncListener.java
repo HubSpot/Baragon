@@ -4,6 +4,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import ch.qos.logback.classic.LoggerContext;
 import com.github.rholder.retry.Retryer;
@@ -18,6 +19,7 @@ import com.hubspot.baragon.agent.ServerProvider;
 import com.hubspot.baragon.agent.config.BaragonAgentConfiguration;
 import com.hubspot.baragon.agent.managed.LifecycleHelper;
 import com.hubspot.baragon.data.BaragonLoadBalancerDatastore;
+import com.hubspot.baragon.exceptions.LockTimeoutException;
 import com.hubspot.baragon.exceptions.ReapplyFailedException;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.curator.framework.CuratorFramework;
@@ -36,7 +38,7 @@ public class ResyncListener implements ConnectionStateListener {
   private final LifecycleHelper lifecycleHelper;
   private final ServerProvider serverProvider;
   private final BaragonLoadBalancerDatastore loadBalancerDatastore;
-  private final Lock agentLock;
+  private final ReentrantLock agentLock;
   private final long agentLockTimeoutMs;
   private final AtomicReference<String> mostRecentRequestId;
 
@@ -45,7 +47,7 @@ public class ResyncListener implements ConnectionStateListener {
                         BaragonAgentConfiguration configuration,
                         ServerProvider serverProvider,
                         BaragonLoadBalancerDatastore loadBalancerDatastore,
-                        @Named(BaragonAgentServiceModule.AGENT_LOCK) Lock agentLock,
+                        @Named(BaragonAgentServiceModule.AGENT_LOCK) ReentrantLock agentLock,
                         @Named(BaragonAgentServiceModule.AGENT_LOCK_TIMEOUT_MS) long agentLockTimeoutMs,
                         @Named(BaragonAgentServiceModule.AGENT_MOST_RECENT_REQUEST_ID) AtomicReference<String> mostRecentRequestId) {
     this.lifecycleHelper = lifecycleHelper;
@@ -71,13 +73,12 @@ public class ResyncListener implements ConnectionStateListener {
   private void reapplyConfigsWithRetry() {
     Callable<Void> callable = new Callable<Void>() {
       public Void call() throws Exception {
+        if (agentLock.tryLock(agentLockTimeoutMs, TimeUnit.MILLISECONDS)) {
+          throw new LockTimeoutException(String.format("Failed to acquire lock to reapply most current configs in %s ms", agentLockTimeoutMs), agentLock);
+        }
         try {
-          if (agentLock.tryLock(agentLockTimeoutMs, TimeUnit.MILLISECONDS)) {
-            lifecycleHelper.applyCurrentConfigs();
-            return null;
-          } else {
-            throw new ReapplyFailedException("Failed to acquire lock to reapply most current configs");
-          }
+          lifecycleHelper.applyCurrentConfigs();
+          return null;
         } finally {
           agentLock.unlock();
         }

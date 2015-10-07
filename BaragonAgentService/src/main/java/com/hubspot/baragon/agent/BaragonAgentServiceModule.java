@@ -6,7 +6,6 @@ import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -160,7 +159,7 @@ public class BaragonAgentServiceModule extends AbstractModule {
   @Provides
   @Singleton
   @Named(AGENT_LOCK)
-  public Lock providesAgentLock() {
+  public ReentrantLock providesAgentLock() {
     return new ReentrantLock();
   }
 

@@ -28,7 +28,7 @@ ui:
 
 auth:
   key: test-key
-  enabled: true
+  enabled: false
 
 masterAuthKey: test-master-key
 

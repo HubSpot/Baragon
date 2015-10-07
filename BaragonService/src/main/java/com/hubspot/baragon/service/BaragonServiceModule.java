@@ -4,9 +4,13 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.apache.curator.framework.CuratorFramework;
+import org.apache.curator.framework.CuratorFrameworkFactory;
+import org.apache.curator.framework.recipes.leader.LeaderLatch;
+import org.apache.curator.retry.ExponentialBackoffRetry;
+
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.elasticloadbalancing.AmazonElasticLoadBalancingClient;
-import com.codahale.metrics.MetricRegistry;
 import com.google.common.base.Optional;
 import com.google.common.base.Strings;
 import com.google.inject.AbstractModule;
@@ -23,19 +27,16 @@ import com.hubspot.baragon.data.BaragonWorkerDatastore;
 import com.hubspot.baragon.service.config.BaragonConfiguration;
 import com.hubspot.baragon.service.config.ElbConfiguration;
 import com.hubspot.baragon.service.listeners.AbstractLatchListener;
+import com.hubspot.baragon.service.listeners.BackgroundStateUpdatingListener;
 import com.hubspot.baragon.service.listeners.ElbSyncWorkerListener;
 import com.hubspot.baragon.service.listeners.RequestPurgingListener;
 import com.hubspot.baragon.service.listeners.RequestWorkerListener;
 import com.hubspot.baragon.utils.JavaUtils;
 import com.ning.http.client.AsyncHttpClient;
 import com.ning.http.client.AsyncHttpClientConfig;
+
 import io.dropwizard.jetty.HttpConnectorFactory;
 import io.dropwizard.server.SimpleServerFactory;
-
-import org.apache.curator.framework.CuratorFramework;
-import org.apache.curator.framework.CuratorFrameworkFactory;
-import org.apache.curator.framework.recipes.leader.LeaderLatch;
-import org.apache.curator.retry.ExponentialBackoffRetry;
 
 public class BaragonServiceModule extends AbstractModule {
   public static final String BARAGON_SERVICE_SCHEDULED_EXECUTOR = "baragon.service.scheduledExecutor";
@@ -58,6 +59,7 @@ public class BaragonServiceModule extends AbstractModule {
     latchBinder.addBinding().to(RequestWorkerListener.class);
     latchBinder.addBinding().to(ElbSyncWorkerListener.class);
     latchBinder.addBinding().to(RequestPurgingListener.class);
+    latchBinder.addBinding().to(BackgroundStateUpdatingListener.class);
   }
 
   @Provides
@@ -102,7 +104,7 @@ public class BaragonServiceModule extends AbstractModule {
   @Singleton
   @Named(BARAGON_SERVICE_SCHEDULED_EXECUTOR)
   public ScheduledExecutorService providesScheduledExecutor() {
-    return Executors.newScheduledThreadPool(3);
+    return Executors.newScheduledThreadPool(4);
   }
 
   @Provides

@@ -159,6 +159,7 @@ public class AgentManager {
       if (maybePendingRequestTime.isPresent()) {
         if ((System.currentTimeMillis() - maybePendingRequestTime.get()) > baragonAgentRequestTimeout) {
           LOG.info(String.format("Request %s reached maximum pending request time", request.getLoadBalancerRequestId()));
+          agentResponseDatastore.setPendingRequestStatus(request.getLoadBalancerRequestId(), baseUrl, false);
           return AgentRequestsStatus.FAILURE;
         } else {
           return AgentRequestsStatus.WAITING;

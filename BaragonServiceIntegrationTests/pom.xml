@@ -10,6 +10,11 @@
 
   <artifactId>BaragonServiceIntegrationTests</artifactId>
 
+  <properties>
+    <baragon.service.auth.enabled>true</baragon.service.auth.enabled>
+    <baragon.service.auth.key>integration-test-authkey</baragon.service.auth.key>
+  </properties>
+
   <dependencies>
 
     <dependency>
@@ -94,6 +99,7 @@
                      Maven, you little sneaky beast ... -->
                 <zk.port>${zk.port}</zk.port>
                 <baragon.service.port>${baragon.service.port}</baragon.service.port>
+                <baragon.service.auth.key>${baragon.service.auth.key}</baragon.service.auth.key>
                 <baragon.agent.nginx.port>${baragon.agent.nginx.port}</baragon.agent.nginx.port>
                 <baragon.agent.port>${baragon.agent.nginx.port}</baragon.agent.port>
               </systemPropertyVariables>
@@ -129,6 +135,8 @@
                     <namingStrategy>alias</namingStrategy>
                     <env>
                       <BARAGON_ZK_QUORUM>baragon-test-zk:2181</BARAGON_ZK_QUORUM>
+                      <BARAGON_AUTH_ENABLED>${baragon.service.auth.enabled}</BARAGON_AUTH_ENABLED>
+                      <BARAGON_AUTH_KEY>${baragon.service.auth.key}</BARAGON_AUTH_KEY>
                     </env>
                     <ports>
                       <port>baragon.service.port:8080</port>

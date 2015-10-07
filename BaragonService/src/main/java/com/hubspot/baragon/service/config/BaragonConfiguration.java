@@ -4,6 +4,8 @@ import javax.validation.Valid;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 
+import org.hibernate.validator.constraints.NotEmpty;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Optional;
@@ -11,8 +13,8 @@ import com.hubspot.baragon.config.AuthConfiguration;
 import com.hubspot.baragon.config.GraphiteConfiguration;
 import com.hubspot.baragon.config.HttpClientConfiguration;
 import com.hubspot.baragon.config.ZooKeeperConfiguration;
+
 import io.dropwizard.Configuration;
-import org.hibernate.validator.constraints.NotEmpty;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class BaragonConfiguration extends Configuration {
@@ -78,6 +80,13 @@ public class BaragonConfiguration extends Configuration {
 
   @JsonProperty("defaultTargetAgentCount")
   private int defaultTargetAgentCount = 1;
+
+  @JsonProperty
+  private boolean updateStateInBackground = false;
+
+  @JsonProperty
+  @Min(0)
+  private int backgroundStateUpdateIntervalMs = 5000;
 
   @JsonProperty("graphite")
   private GraphiteConfiguration graphiteConfiguration = new GraphiteConfiguration();
@@ -200,6 +209,22 @@ public class BaragonConfiguration extends Configuration {
 
   public void setDefaultTargetAgentCount(int defaultTargetAgentCount) {
     this.defaultTargetAgentCount = defaultTargetAgentCount;
+  }
+
+  public boolean isUpdateStateInBackground() {
+    return updateStateInBackground;
+  }
+
+  public void setUpdateStateInBackground(boolean updateStateInBackground) {
+    this.updateStateInBackground = updateStateInBackground;
+  }
+
+  public int getBackgroundStateUpdateIntervalMs() {
+    return backgroundStateUpdateIntervalMs;
+  }
+
+  public void setBackgroundStateUpdateIntervalMs(int backgroundStateUpdateIntervalMs) {
+    this.backgroundStateUpdateIntervalMs = backgroundStateUpdateIntervalMs;
   }
 
   public GraphiteConfiguration getGraphiteConfiguration() {
