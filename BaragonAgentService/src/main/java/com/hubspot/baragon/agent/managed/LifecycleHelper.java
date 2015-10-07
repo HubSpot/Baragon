@@ -182,7 +182,11 @@ public class LifecycleHelper {
       ExecutorService executorService = Executors.newFixedThreadPool(services.size());
       List<Callable<Optional<Pair<ServiceContext, Collection<BaragonConfigFile>>>>> todo = new ArrayList<>(services.size());
 
-      setBootstrapStateNodeVersion(stateDatastore.getStateVersion());
+      Optional<Integer> maybeVersion = stateDatastore.getStateVersion();
+      if (maybeVersion.isPresent()) {
+        bootstrapStateNodeVersion.set(maybeVersion.get());
+      }
+
       for (BaragonServiceState serviceState : stateDatastore.getGlobalState()) {
         if (!(serviceState.getService().getLoadBalancerGroups() == null) && serviceState.getService().getLoadBalancerGroups().contains(configuration.getLoadBalancerConfiguration().getName())) {
           todo.add(new BootstrapFileChecker(configHelper, serviceState, now));
@@ -229,16 +233,6 @@ public class LifecycleHelper {
     }
   }
 
-  public void setBootstrapStateNodeVersion(Optional<Integer> version) {
-    if (version.isPresent()) {
-      bootstrapStateNodeVersion.set(version.get());
-    }
-  }
-
-  public int getBootstrapStateNodeVersion() {
-    return bootstrapStateNodeVersion.get();
-  }
-
   public void checkStateNodeVersion() {
     agentState.set(BaragonAgentState.BOOTSTRAPING);
     try {
@@ -248,8 +242,9 @@ public class LifecycleHelper {
           throw new LockTimeoutException("Could not acquire lock to reapply configs", agentLock);
         }
         try {
-          if (getBootstrapStateNodeVersion() < maybeStateVersion.get()) {
+          if (bootstrapStateNodeVersion.get() < maybeStateVersion.get()) {
             applyCurrentConfigs();
+            bootstrapStateNodeVersion.set(maybeStateVersion.get());
           }
         } catch (Exception e) {
           abort("Could not ensure configs are up to date, aborting", e);
