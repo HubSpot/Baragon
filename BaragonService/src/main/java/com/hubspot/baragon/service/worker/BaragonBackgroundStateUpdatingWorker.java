@@ -24,7 +24,7 @@ public class BaragonBackgroundStateUpdatingWorker implements Runnable {
   @Override
   public void run() {
     try {
-      LOG.info("Updating state node in ZK...");
+      LOG.trace("Updating state node in ZK...");
 
       final long start = System.currentTimeMillis();
 
@@ -32,10 +32,10 @@ public class BaragonBackgroundStateUpdatingWorker implements Runnable {
 
       if (!currentUpdateId.equals(lastUpdateId)) {
         stateDatastore.updateStateNode();
-        LOG.info("Updated state node in ZK in {}ms (version: {} -> {})", System.currentTimeMillis() - start, lastUpdateId, currentUpdateId);
+        LOG.debug("Updated state node in ZK in {}ms (version: {} -> {})", System.currentTimeMillis() - start, lastUpdateId, currentUpdateId);
         lastUpdateId = currentUpdateId;
       } else {
-        LOG.info("State node unchanged in {}ms (version: {})", System.currentTimeMillis() - start, lastUpdateId);
+        LOG.trace("State node unchanged in {}ms (version: {})", System.currentTimeMillis() - start, lastUpdateId);
       }
     } catch (Exception e) {
       LOG.error("Caught exception during state node update", e);
