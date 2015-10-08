@@ -63,7 +63,7 @@ public class ResyncListener implements ConnectionStateListener {
 
   @Override
   public void stateChanged(CuratorFramework client, ConnectionState newState) {
-    if (newState.equals(ConnectionState.RECONNECTED)) {
+    if (newState == ConnectionState.RECONNECTED) {
       LOG.info("Reconnected to zookeeper, checking if configs are still in sync");
       Optional<String> maybeLastRequestForGroup = loadBalancerDatastore.getLastRequestForGroup(configuration.getLoadBalancerConfiguration().getName());
       if (!maybeLastRequestForGroup.isPresent() || !maybeLastRequestForGroup.get().equals(mostRecentRequestId.get())) {
@@ -71,7 +71,7 @@ public class ResyncListener implements ConnectionStateListener {
         reapplyConfigsWithRetry();
         agentState.set(BaragonAgentState.ACCEPTING);
       }
-    } else if (newState.equals(ConnectionState.SUSPENDED) || newState.equals(ConnectionState.LOST)) {
+    } else if (newState == ConnectionState.SUSPENDED || newState.equals(ConnectionState.LOST)) {
       agentState.set(BaragonAgentState.DISCONNECTED);
     }
   }
