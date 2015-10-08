@@ -84,6 +84,7 @@ public class RequestManager {
       Optional<InternalRequestStates> maybeState = requestDatastore.getRequestState(requestId);
       if (!maybeState.isPresent() || (maybeState.get().equals(InternalRequestStates.PENDING) && !hasQueuedRequest(requestId))) {
         setRequestState(requestId, InternalRequestStates.FAILED_REVERTED);
+        setRequestMessage(requestId, "Request failed due to being stuck in PENDING state");
       }
     }
   }
