@@ -80,6 +80,8 @@ public class ResyncListener implements ConnectionStateListener {
       case CONNECTED:
         agentState.set(BaragonAgentState.ACCEPTING);
         break;
+      default:
+        break;
     }
   }
 
