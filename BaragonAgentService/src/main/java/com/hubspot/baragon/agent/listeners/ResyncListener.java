@@ -63,16 +63,23 @@ public class ResyncListener implements ConnectionStateListener {
 
   @Override
   public void stateChanged(CuratorFramework client, ConnectionState newState) {
-    if (newState == ConnectionState.RECONNECTED) {
-      LOG.info("Reconnected to zookeeper, checking if configs are still in sync");
-      Optional<String> maybeLastRequestForGroup = loadBalancerDatastore.getLastRequestForGroup(configuration.getLoadBalancerConfiguration().getName());
-      if (!maybeLastRequestForGroup.isPresent() || !maybeLastRequestForGroup.get().equals(mostRecentRequestId.get())) {
-        agentState.set(BaragonAgentState.BOOTSTRAPING);
-        reapplyConfigsWithRetry();
+    switch (newState) {
+      case RECONNECTED:
+        LOG.info("Reconnected to zookeeper, checking if configs are still in sync");
+        Optional<String> maybeLastRequestForGroup = loadBalancerDatastore.getLastRequestForGroup(configuration.getLoadBalancerConfiguration().getName());
+        if (!maybeLastRequestForGroup.isPresent() || !maybeLastRequestForGroup.get().equals(mostRecentRequestId.get())) {
+          agentState.set(BaragonAgentState.BOOTSTRAPING);
+          reapplyConfigsWithRetry();
+        }
         agentState.set(BaragonAgentState.ACCEPTING);
-      }
-    } else if (newState == ConnectionState.SUSPENDED || newState.equals(ConnectionState.LOST)) {
-      agentState.set(BaragonAgentState.DISCONNECTED);
+        break;
+      case SUSPENDED:
+      case LOST:
+        agentState.set(BaragonAgentState.DISCONNECTED);
+        break;
+      case CONNECTED:
+        agentState.set(BaragonAgentState.ACCEPTING);
+        break;
     }
   }
 
