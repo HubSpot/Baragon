@@ -189,8 +189,6 @@ public class BaragonRequestWorker implements Runnable {
           }
         }
       }
-
-      requestManager.failStuckPendingRequests();
     } catch (Exception e) {
       LOG.warn("Caught exception", e);
     }

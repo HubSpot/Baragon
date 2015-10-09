@@ -79,25 +79,6 @@ public class RequestManager {
     requestDatastore.removeQueuedRequest(queuedRequestId);
   }
 
-  public void failStuckPendingRequests() {
-    for (String requestId : requestDatastore.getAllRequestIds()) {
-      Optional<InternalRequestStates> maybeState = requestDatastore.getRequestState(requestId);
-      if (!maybeState.isPresent() || (maybeState.get().equals(InternalRequestStates.PENDING) && !hasQueuedRequest(requestId))) {
-        setRequestState(requestId, InternalRequestStates.FAILED_REVERTED);
-        setRequestMessage(requestId, "Request failed due to being stuck in PENDING state");
-      }
-    }
-  }
-
-  private boolean hasQueuedRequest(String requestId) {
-    for (QueuedRequestId queuedRequestId : getQueuedRequestIds()) {
-      if (queuedRequestId.getRequestId().equals(requestId)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
   public List<BaragonResponse> getResponsesForService(String serviceId) {
     List<BaragonResponse> responses = new ArrayList<>();
     for (String requestId : requestDatastore.getAllRequestIds()) {

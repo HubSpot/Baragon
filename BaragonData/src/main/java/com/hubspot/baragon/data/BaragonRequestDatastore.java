@@ -15,6 +15,7 @@ import com.hubspot.baragon.models.InternalRequestStates;
 import com.hubspot.baragon.models.QueuedRequestId;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.utils.ZKPaths;
+import org.apache.zookeeper.CreateMode;
 
 @Singleton
 public class BaragonRequestDatastore extends AbstractDataStore {
@@ -99,6 +100,16 @@ public class BaragonRequestDatastore extends AbstractDataStore {
   //
   @Timed
   public QueuedRequestId enqueueRequest(BaragonRequest request) {
+    try {
+      curatorFramework.inTransaction()
+          .create().withMode(CreateMode.PERSISTENT_SEQUENTIAL).forPath(String.format(REQUEST_ENQUEUE_FORMAT, request.getLoadBalancerService().getServiceId(), request.getLoadBalancerRequestId()))
+          .and().commit();
+    } catch (Exception e) {
+      // do stuff here
+    }
+
+
+
     final String path = createPersistentSequentialNode(String.format(REQUEST_ENQUEUE_FORMAT, request.getLoadBalancerService().getServiceId(), request.getLoadBalancerRequestId()));
 
     return QueuedRequestId.fromString(ZKPaths.getNodeFromPath(path));
