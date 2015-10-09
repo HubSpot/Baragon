@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.api.PathAndBytesable;
 import org.apache.zookeeper.CreateMode;
@@ -13,7 +14,6 @@ import org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
@@ -98,7 +98,7 @@ public abstract class AbstractDataStore {
     final long start = System.currentTimeMillis();
 
     try {
-      final byte[] serializedInfo = objectMapper.writeValueAsBytes(data);
+      final byte[] serializedInfo = serialize(data);
 
       final PathAndBytesable<?> builder;
 
@@ -115,6 +115,14 @@ public abstract class AbstractDataStore {
     }
   }
 
+  protected <T> byte[] serialize(T data) {
+    try {
+      return objectMapper.writeValueAsBytes(data);
+    } catch (JsonProcessingException e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
   protected <T> Optional<T> readFromZk(final String path, final Class<T> klass) {
     final long start = System.currentTimeMillis();
 
@@ -124,19 +132,6 @@ public abstract class AbstractDataStore {
       public T apply(byte[] data) {
         log(OperationType.READ, Optional.<Integer>absent(), Optional.of(data.length), start, path);
         return deserialize(data, klass);
-      }
-    });
-  }
-
-  protected <T> Optional<T> readFromZk(final String path, final TypeReference<T> typeReference) {
-    final long start = System.currentTimeMillis();
-
-    return readFromZk(path).transform(new Function<byte[], T>() {
-
-      @Override
-      public T apply(byte[] data) {
-        log(OperationType.READ, Optional.<Integer>absent(), Optional.of(data.length), start, path);
-        return deserialize(data, typeReference);
       }
     });
   }
@@ -159,45 +154,12 @@ public abstract class AbstractDataStore {
     }
   }
 
-  protected <T> T deserialize(byte[] data, TypeReference<T> typeReference) {
-    try {
-      return objectMapper.readValue(data, typeReference);
-    } catch (IOException e) {
-      throw Throwables.propagate(e);
-    }
-  }
-
-  protected String createNode(String path) {
-    final long start = System.currentTimeMillis();
-
-    try {
-      final String result = curatorFramework.create().creatingParentsIfNeeded().forPath(path);
-      log(OperationType.WRITE, Optional.<Integer>absent(), Optional.<Integer>absent(), start, path);
-      return result;
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
-    }
-  }
-
   protected String createPersistentSequentialNode(String path) {
     final long start = System.currentTimeMillis();
 
     try {
       final String result = curatorFramework.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT_SEQUENTIAL).forPath(path);
       log(OperationType.WRITE, Optional.<Integer>absent(), Optional.<Integer>absent(), start, path);
-      return result;
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
-    }
-  }
-
-  protected <T> String createPersistentSequentialNode(String path, T value) {
-    final long start = System.currentTimeMillis();
-
-    try {
-      final byte[] serializedValue = objectMapper.writeValueAsBytes(value);
-      final String result = curatorFramework.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT_SEQUENTIAL).forPath(path, serializedValue);
-      log(OperationType.WRITE, Optional.<Integer>absent(), Optional.of(serializedValue.length), start, path);
       return result;
     } catch (Exception e) {
       throw Throwables.propagate(e);
