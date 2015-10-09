@@ -45,11 +45,6 @@ public class BaragonRequestDatastore extends AbstractDataStore {
   // REQUEST DATA
   //
   @Timed
-  public void addRequest(BaragonRequest request) {
-    writeToZk(String.format(REQUEST_FORMAT, request.getLoadBalancerRequestId()), request);
-  }
-
-  @Timed
   public Optional<BaragonRequest> getRequest(String requestId) {
     return readFromZk(String.format(REQUEST_FORMAT, requestId), BaragonRequest.class);
   }
@@ -108,8 +103,13 @@ public class BaragonRequestDatastore extends AbstractDataStore {
   //
   @Timed
   public QueuedRequestId enqueueRequest(BaragonRequest request, InternalRequestStates state) {
+    final long start = System.currentTimeMillis();
+
     try {
       final String queuedRequestPath = String.format(REQUEST_ENQUEUE_FORMAT, request.getLoadBalancerService().getServiceId(), request.getLoadBalancerRequestId());
+      final String requestPath = String.format(REQUEST_FORMAT, request.getLoadBalancerRequestId());
+      final String requestStatePath = String.format(REQUEST_STATE_FORMAT, request.getLoadBalancerRequestId());
+
       if (!nodeExists(REQUESTS_FORMAT)) {
         createNode(REQUESTS_FORMAT);
       }
@@ -117,11 +117,16 @@ public class BaragonRequestDatastore extends AbstractDataStore {
         createNode(REQUEST_QUEUE_FORMAT);
       }
 
+      byte [] requestBytes = objectMapper.writeValueAsBytes(request);
+      byte [] stateBytes = objectMapper.writeValueAsBytes(state);
+
       Collection<CuratorTransactionResult> results = curatorFramework.inTransaction()
-          .create().forPath(String.format(REQUEST_FORMAT, request.getLoadBalancerRequestId()), objectMapper.writeValueAsBytes(request)).and()
-          .create().forPath(String.format(REQUEST_STATE_FORMAT, request.getLoadBalancerRequestId()), objectMapper.writeValueAsBytes(state)).and()
+          .create().forPath(requestPath, requestBytes).and()
+          .create().forPath(requestStatePath, stateBytes).and()
           .create().withMode(CreateMode.PERSISTENT_SEQUENTIAL).forPath(queuedRequestPath)
           .and().commit();
+
+      log("Created in transaction", Optional.of(3), Optional.of(requestBytes.length + stateBytes.length), start, String.format("%s + %s + %s", requestPath, requestStatePath, queuedRequestPath));
 
       return QueuedRequestId.fromString(ZKPaths.getNodeFromPath(Iterables.find(results, CuratorTransactionResult.ofTypeAndPath(OperationType.CREATE, queuedRequestPath)).getResultPath()));
     } catch (Exception e) {
