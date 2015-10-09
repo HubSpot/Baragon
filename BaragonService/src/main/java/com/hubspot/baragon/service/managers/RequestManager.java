@@ -215,10 +215,7 @@ public class RequestManager {
       throw new InvalidRequestActionException("The REVERT action may only be used internally by Baragon, you may specify UPDATE, DELETE, RELOAD, or leave the action blank(UPDATE)");
     }
 
-    requestDatastore.addRequest(request);
-    requestDatastore.setRequestState(request.getLoadBalancerRequestId(), InternalRequestStates.PENDING);
-
-    final QueuedRequestId queuedRequestId = requestDatastore.enqueueRequest(request);
+    final QueuedRequestId queuedRequestId = requestDatastore.enqueueRequest(request, InternalRequestStates.PENDING);
 
     requestDatastore.setRequestMessage(request.getLoadBalancerRequestId(), String.format("Queued as %s", queuedRequestId));
 

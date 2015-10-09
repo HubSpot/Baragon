@@ -7,6 +7,7 @@ import java.util.List;
 import com.codahale.metrics.annotation.Timed;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Optional;
+import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -14,6 +15,7 @@ import com.hubspot.baragon.models.BaragonRequest;
 import com.hubspot.baragon.models.InternalRequestStates;
 import com.hubspot.baragon.models.QueuedRequestId;
 import org.apache.curator.framework.CuratorFramework;
+import org.apache.curator.framework.api.transaction.CuratorTransaction;
 import org.apache.curator.utils.ZKPaths;
 import org.apache.zookeeper.CreateMode;
 
@@ -99,20 +101,29 @@ public class BaragonRequestDatastore extends AbstractDataStore {
   // REQUEST QUEUING
   //
   @Timed
-  public QueuedRequestId enqueueRequest(BaragonRequest request) {
+  public QueuedRequestId enqueueRequest(BaragonRequest request, InternalRequestStates state) {
     try {
-      curatorFramework.inTransaction()
-          .create().withMode(CreateMode.PERSISTENT_SEQUENTIAL).forPath(String.format(REQUEST_ENQUEUE_FORMAT, request.getLoadBalancerService().getServiceId(), request.getLoadBalancerRequestId()))
+      final String queuedRequestPath = String.format(REQUEST_ENQUEUE_FORMAT, request.getLoadBalancerService().getServiceId(), request.getLoadBalancerRequestId());
+      if (!nodeExists(REQUESTS_FORMAT)) {
+        createNode(REQUESTS_FORMAT);
+      }
+      if (!nodeExists(REQUEST_QUEUE_FORMAT)) {
+        createNode(REQUEST_QUEUE_FORMAT);
+      }
+
+      CuratorTransaction enqueueTransaction = curatorFramework.inTransaction();
+
+      enqueueTransaction
+          .create().forPath(String.format(REQUEST_FORMAT, request.getLoadBalancerRequestId()), objectMapper.writeValueAsBytes(request)).and()
+          .create().forPath(String.format(REQUEST_STATE_FORMAT, request.getLoadBalancerRequestId()), objectMapper.writeValueAsBytes(state)).and()
+          .create().withMode(CreateMode.PERSISTENT_SEQUENTIAL).forPath(queuedRequestPath)
           .and().commit();
+
+      return QueuedRequestId.fromString(ZKPaths.getNodeFromPath(queuedRequestPath));
+
     } catch (Exception e) {
-      // do stuff here
+      throw Throwables.propagate(e);
     }
-
-
-
-    final String path = createPersistentSequentialNode(String.format(REQUEST_ENQUEUE_FORMAT, request.getLoadBalancerService().getServiceId(), request.getLoadBalancerRequestId()));
-
-    return QueuedRequestId.fromString(ZKPaths.getNodeFromPath(path));
   }
 
   @Timed
