@@ -1,5 +1,6 @@
 package com.hubspot.baragon.data;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -8,6 +9,7 @@ import com.codahale.metrics.annotation.Timed;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Optional;
 import com.google.common.base.Throwables;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -16,8 +18,12 @@ import com.hubspot.baragon.models.InternalRequestStates;
 import com.hubspot.baragon.models.QueuedRequestId;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.api.transaction.CuratorTransaction;
+import org.apache.curator.framework.api.transaction.CuratorTransactionResult;
+import org.apache.curator.framework.api.transaction.OperationType;
 import org.apache.curator.utils.ZKPaths;
 import org.apache.zookeeper.CreateMode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Singleton
 public class BaragonRequestDatastore extends AbstractDataStore {
@@ -111,16 +117,13 @@ public class BaragonRequestDatastore extends AbstractDataStore {
         createNode(REQUEST_QUEUE_FORMAT);
       }
 
-      CuratorTransaction enqueueTransaction = curatorFramework.inTransaction();
-
-      enqueueTransaction
+      Collection<CuratorTransactionResult> results = curatorFramework.inTransaction()
           .create().forPath(String.format(REQUEST_FORMAT, request.getLoadBalancerRequestId()), objectMapper.writeValueAsBytes(request)).and()
           .create().forPath(String.format(REQUEST_STATE_FORMAT, request.getLoadBalancerRequestId()), objectMapper.writeValueAsBytes(state)).and()
           .create().withMode(CreateMode.PERSISTENT_SEQUENTIAL).forPath(queuedRequestPath)
           .and().commit();
 
-      return QueuedRequestId.fromString(ZKPaths.getNodeFromPath(queuedRequestPath));
-
+      return QueuedRequestId.fromString(ZKPaths.getNodeFromPath(Iterables.find(results, CuratorTransactionResult.ofTypeAndPath(OperationType.CREATE, queuedRequestPath)).getResultPath()));
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
