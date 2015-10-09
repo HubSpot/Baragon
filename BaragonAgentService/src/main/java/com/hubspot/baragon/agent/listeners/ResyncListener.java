@@ -86,7 +86,7 @@ public class ResyncListener implements ConnectionStateListener {
   private void reapplyConfigsWithRetry() {
     Callable<Void> callable = new Callable<Void>() {
       public Void call() throws Exception {
-        if (agentLock.tryLock(agentLockTimeoutMs, TimeUnit.MILLISECONDS)) {
+        if (!agentLock.tryLock(agentLockTimeoutMs, TimeUnit.MILLISECONDS)) {
           throw new LockTimeoutException(String.format("Failed to acquire lock to reapply most current configs in %s ms", agentLockTimeoutMs), agentLock);
         }
         try {

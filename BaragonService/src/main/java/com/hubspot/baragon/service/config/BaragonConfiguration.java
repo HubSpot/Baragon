@@ -75,6 +75,12 @@ public class BaragonConfiguration extends Configuration {
   @JsonProperty("history")
   private HistoryConfiguration historyConfiguration = new HistoryConfiguration();
 
+  @JsonProperty("enforceTargetAgentCount")
+  private boolean enforceTargetAgentCount = false;
+
+  @JsonProperty("defaultTargetAgentCount")
+  private int defaultTargetAgentCount = 1;
+
   @JsonProperty
   private boolean updateStateInBackground = false;
 
@@ -187,6 +193,22 @@ public class BaragonConfiguration extends Configuration {
 
   public void setHistoryConfiguration(HistoryConfiguration historyConfiguration) {
     this.historyConfiguration = historyConfiguration;
+  }
+
+  public boolean isEnforceTargetAgentCount() {
+    return enforceTargetAgentCount;
+  }
+
+  public void setEnforceTargetAgentCount(boolean enforceTargetAgentCount) {
+    this.enforceTargetAgentCount = enforceTargetAgentCount;
+  }
+
+  public int getDefaultTargetAgentCount() {
+    return defaultTargetAgentCount;
+  }
+
+  public void setDefaultTargetAgentCount(int defaultTargetAgentCount) {
+    this.defaultTargetAgentCount = defaultTargetAgentCount;
   }
 
   public boolean isUpdateStateInBackground() {

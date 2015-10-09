@@ -14,13 +14,15 @@ class GroupDetailView extends View
         @listenTo @options.agents, 'sync', @render
         @listenTo @options.knownAgents, 'sync', @render
         @listenTo @options.basePaths, 'sync', @render
+        @listenTo @options.targetCount, 'sync', @render
 
     events: =>
         _.extend super,
-            'click [data-action="remove"]':         'removeKnownAgent'
-            'click [data-action="removeBasePath"]': 'removeBasePath'
-            'click [data-action="removeSource"]':   'removeSource'
-            'click [data-action="addSource"]':      'addSource'
+            'click [data-action="remove"]':            'removeKnownAgent'
+            'click [data-action="removeBasePath"]':    'removeBasePath'
+            'click [data-action="removeSource"]':      'removeSource'
+            'click [data-action="addSource"]':         'addSource'
+            'click [data-action="updateTargetCount"]': 'updateTargetCount'
 
     render: =>
         @$el.html @template
@@ -30,6 +32,7 @@ class GroupDetailView extends View
             agents: @options.agents.toJSON()
             config: config
             synced: @model.synced || @options.agents.synced
+            targetCount: @options.targetCount.toJSON()
 
     removeKnownAgent: (e) ->
         id = $(e.target).parents('tr').data 'agent-id'
@@ -63,6 +66,9 @@ class GroupDetailView extends View
 
     addSource: (e) ->
         @model.promptAddSource => @trigger 'refreshrequest'
+
+    updateTargetCount: (e) ->
+        @options.targetCount.promptUpdateTargetCount => @trigger 'refreshrequest'
 
 
 module.exports = GroupDetailView
