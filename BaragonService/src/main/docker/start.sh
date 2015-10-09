@@ -10,6 +10,8 @@ DEFAULT_URI_BASE="http://${HOST_IP:=localhost}:${BARAGON_PORT:=8080}${BARAGON_UI
 [[ ! ${BARAGON_ZK_NAMESPACE:-} ]] || args+=( -Ddw.zookeeper.zkNamespace="$BARAGON_ZK_NAMESPACE" )
 [[ ! ${BARAGON_ZK_QUORUM:-} ]] || args+=( -Ddw.zookeeper.quorum="$BARAGON_ZK_QUORUM" )
 [[ ! ${BARAGON_PORT:-} ]] || args+=( -Ddw.server.connector.port="$BARAGON_PORT" )
+[[ ! ${BARAGON_AUTH_ENABLED:-} ]] || args+=( -Ddw.auth.enabled="$BARAGON_AUTH_ENABLED" )
+[[ ! ${BARAGON_AUTH_KEY:-} ]] || args+=( -Ddw.auth.key="$BARAGON_AUTH_KEY" )
 
 args+=( -Ddw.ui.baseUrl="${BARAGON_UI_BASE_URL:=$DEFAULT_URI_BASE}" )
 

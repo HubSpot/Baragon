@@ -88,8 +88,8 @@ public class BaragonRequestWorker implements Runnable {
         }
 
         for (String loadBalancerGroup : request.getLoadBalancerService().getLoadBalancerGroups()) {
-          if (agentManager.hasNoAgents(loadBalancerGroup)) {
-            requestManager.setRequestMessage(request.getLoadBalancerRequestId(), String.format("Invalid request due to no agents present for group: %s", loadBalancerGroup));
+          if (agentManager.invalidAgentCount(loadBalancerGroup)) {
+            requestManager.setRequestMessage(request.getLoadBalancerRequestId(), String.format("Invalid request due to not enough agents present for group: %s", loadBalancerGroup));
             return InternalRequestStates.INVALID_REQUEST_NOOP;
           }
         }

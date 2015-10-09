@@ -16,17 +16,25 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Charsets;
+import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import com.google.common.base.Throwables;
 import com.google.common.io.BaseEncoding;
+import com.hubspot.baragon.config.ZooKeeperConfiguration;
 import com.hubspot.baragon.utils.JavaUtils;
 
 // because curator is a piece of shit
 public abstract class AbstractDataStore {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractDataStore.class);
 
+  public enum OperationType {
+    READ,
+    WRITE;
+  }
+
   protected final CuratorFramework curatorFramework;
   protected final ObjectMapper objectMapper;
+  protected final ZooKeeperConfiguration zooKeeperConfiguration;
 
   public static final Comparator<String> SEQUENCE_NODE_COMPARATOR_LOW_TO_HIGH = new Comparator<String>() {
     @Override
@@ -42,13 +50,22 @@ public abstract class AbstractDataStore {
     }
   };
 
-  public AbstractDataStore(CuratorFramework curatorFramework, ObjectMapper objectMapper) {
+  public AbstractDataStore(CuratorFramework curatorFramework, ObjectMapper objectMapper, ZooKeeperConfiguration zooKeeperConfiguration) {
     this.curatorFramework = curatorFramework;
     this.objectMapper = objectMapper;
+    this.zooKeeperConfiguration = zooKeeperConfiguration;
   }
 
-  protected void log(String type, Optional<Integer> numItems, Optional<Integer> bytes, long start, String path) {
-    LOG.debug(String.format("%s (items: %s) (bytes: %s) in %s (%s)", type, numItems.or(1), bytes.or(0), JavaUtils.duration(start), path));
+  protected void log(OperationType type, Optional<Integer> numItems, Optional<Integer> bytes, long start, String path) {
+    final String message = String.format("%s (items: %s) (bytes: %s) in %s (%s)", type, numItems.or(1), bytes.or(0), JavaUtils.duration(start), path);
+
+    final long duration = System.currentTimeMillis() - start;
+
+    if ((bytes.isPresent() && bytes.get() > zooKeeperConfiguration.getDebugCuratorCallOverBytes()) || (duration > zooKeeperConfiguration.getDebugCuratorCallOverMillis())) {
+      LOG.debug(message);
+    } else {
+      LOG.trace(message);
+    }
   }
 
   protected String encodeUrl(String url) {
@@ -68,7 +85,7 @@ public abstract class AbstractDataStore {
 
     try {
       Stat stat = curatorFramework.checkExists().forPath(path);
-      log("Fetched", Optional.<Integer>absent(), Optional.<Integer>absent(), start, path);
+      log(OperationType.READ, Optional.<Integer>absent(), Optional.<Integer>absent(), start, path);
       return stat != null;
     } catch (KeeperException.NoNodeException e) {
       return false;
@@ -92,33 +109,41 @@ public abstract class AbstractDataStore {
       }
 
       builder.forPath(path, serializedInfo);
-      log("Saved", Optional.<Integer>absent(), Optional.of(serializedInfo.length), start, path);
+      log(OperationType.WRITE, Optional.<Integer>absent(), Optional.of(serializedInfo.length), start, path);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
   }
 
-  protected <T> Optional<T> readFromZk(String path, Class<T> klass) {
+  protected <T> Optional<T> readFromZk(final String path, final Class<T> klass) {
     final long start = System.currentTimeMillis();
 
-    try {
-      byte[] bytes = curatorFramework.getData().forPath(path);
-      log("Fetched", Optional.<Integer>absent(), Optional.of(bytes.length), start, path);
-      return Optional.of(deserialize(bytes, klass));
-    } catch (KeeperException.NoNodeException nne) {
-      return Optional.absent();
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
-    }
+    return readFromZk(path).transform(new Function<byte[], T>() {
+
+      @Override
+      public T apply(byte[] data) {
+        log(OperationType.READ, Optional.<Integer>absent(), Optional.of(data.length), start, path);
+        return deserialize(data, klass);
+      }
+    });
   }
 
-  protected <T> Optional<T> readFromZk(String path, TypeReference<T> typeReference) {
+  protected <T> Optional<T> readFromZk(final String path, final TypeReference<T> typeReference) {
     final long start = System.currentTimeMillis();
 
+    return readFromZk(path).transform(new Function<byte[], T>() {
+
+      @Override
+      public T apply(byte[] data) {
+        log(OperationType.READ, Optional.<Integer>absent(), Optional.of(data.length), start, path);
+        return deserialize(data, typeReference);
+      }
+    });
+  }
+
+  protected Optional<byte[]> readFromZk(String path) {
     try {
-      byte[] bytes = curatorFramework.getData().forPath(path);
-      log("Fetched", Optional.<Integer>absent(), Optional.of(bytes.length), start, path);
-      return Optional.of(deserialize(bytes, typeReference));
+      return Optional.of(curatorFramework.getData().forPath(path));
     } catch (KeeperException.NoNodeException nne) {
       return Optional.absent();
     } catch (Exception e) {
@@ -147,7 +172,7 @@ public abstract class AbstractDataStore {
 
     try {
       final String result = curatorFramework.create().creatingParentsIfNeeded().forPath(path);
-      log("Created", Optional.<Integer>absent(), Optional.<Integer>absent(), start, path);
+      log(OperationType.WRITE, Optional.<Integer>absent(), Optional.<Integer>absent(), start, path);
       return result;
     } catch (Exception e) {
       throw Throwables.propagate(e);
@@ -159,7 +184,7 @@ public abstract class AbstractDataStore {
 
     try {
       final String result = curatorFramework.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT_SEQUENTIAL).forPath(path);
-      log("Created", Optional.<Integer>absent(), Optional.<Integer>absent(), start, path);
+      log(OperationType.WRITE, Optional.<Integer>absent(), Optional.<Integer>absent(), start, path);
       return result;
     } catch (Exception e) {
       throw Throwables.propagate(e);
@@ -172,7 +197,7 @@ public abstract class AbstractDataStore {
     try {
       final byte[] serializedValue = objectMapper.writeValueAsBytes(value);
       final String result = curatorFramework.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT_SEQUENTIAL).forPath(path, serializedValue);
-      log("Created", Optional.<Integer>absent(), Optional.of(serializedValue.length), start, path);
+      log(OperationType.WRITE, Optional.<Integer>absent(), Optional.of(serializedValue.length), start, path);
       return result;
     } catch (Exception e) {
       throw Throwables.propagate(e);
@@ -189,10 +214,10 @@ public abstract class AbstractDataStore {
     try {
       if (recursive) {
         curatorFramework.delete().deletingChildrenIfNeeded().forPath(path);
-        log("Deleted", Optional.<Integer>absent(), Optional.<Integer>absent(), start, path);
+        log(OperationType.WRITE, Optional.<Integer>absent(), Optional.<Integer>absent(), start, path);
       } else {
         curatorFramework.delete().forPath(path);
-        log("Deleted", Optional.<Integer>absent(), Optional.<Integer>absent(), start, path);
+        log(OperationType.WRITE, Optional.<Integer>absent(), Optional.<Integer>absent(), start, path);
       }
       return true;
     } catch (KeeperException.NoNodeException e) {
@@ -207,7 +232,7 @@ public abstract class AbstractDataStore {
 
     try {
       List<String> children = curatorFramework.getChildren().forPath(path);
-      log("Fetched", Optional.of(children.size()), Optional.<Integer>absent(), start, path);
+      log(OperationType.READ, Optional.of(children.size()), Optional.<Integer>absent(), start, path);
       return children;
     } catch (KeeperException.NoNodeException e) {
       return Collections.emptyList();
@@ -221,7 +246,7 @@ public abstract class AbstractDataStore {
 
     try {
       Stat stat = curatorFramework.checkExists().forPath(path);
-      log("Fetched", Optional.<Integer>absent(), Optional.<Integer>absent(), start, path);
+      log(OperationType.READ, Optional.<Integer>absent(), Optional.<Integer>absent(), start, path);
       return Optional.of(stat.getMtime());
     } catch (KeeperException.NoNodeException e) {
       return Optional.absent();

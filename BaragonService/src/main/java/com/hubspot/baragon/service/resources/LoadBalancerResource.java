@@ -23,6 +23,7 @@ import com.hubspot.baragon.models.BaragonAgentMetadata;
 import com.hubspot.baragon.models.BaragonGroup;
 import com.hubspot.baragon.models.BaragonKnownAgentMetadata;
 import com.hubspot.baragon.models.BaragonService;
+import com.hubspot.baragon.service.config.BaragonConfiguration;
 
 @Path("/load-balancer")
 @Produces(MediaType.APPLICATION_JSON)
@@ -31,14 +32,17 @@ public class LoadBalancerResource {
   private final BaragonLoadBalancerDatastore loadBalancerDatastore;
   private final BaragonKnownAgentsDatastore knownAgentsDatastore;
   private final BaragonStateDatastore stateDatastore;
+  private final BaragonConfiguration configuration;
 
   @Inject
   public LoadBalancerResource(BaragonLoadBalancerDatastore loadBalancerDatastore,
                               BaragonKnownAgentsDatastore knownAgentsDatastore,
-                              BaragonStateDatastore stateDatastore) {
+                              BaragonStateDatastore stateDatastore,
+                              BaragonConfiguration configuration) {
     this.loadBalancerDatastore = loadBalancerDatastore;
     this.knownAgentsDatastore = knownAgentsDatastore;
     this.stateDatastore = stateDatastore;
+    this.configuration = configuration;
   }
 
   @GET
@@ -64,6 +68,19 @@ public class LoadBalancerResource {
   @Path("/{clusterName}/sources")
   public Optional<BaragonGroup> removeSource(@PathParam("clusterName") String clusterName, @QueryParam("source") String source) {
     return loadBalancerDatastore.removeSourceFromGroup(clusterName, source);
+  }
+
+  @POST
+  @Path("/{clusterName}/count")
+  public Integer setTargetCount(@PathParam("clusterName") String clusterName, @QueryParam("count") int count) {
+    return loadBalancerDatastore.setTargetCount(clusterName, count);
+  }
+
+  @GET
+  @NoAuth
+  @Path("/{clusterName}/count")
+  public Integer getTargetCount(@PathParam("clusterName") String clusterName) {
+    return loadBalancerDatastore.getTargetCount(clusterName).or(configuration.getDefaultTargetAgentCount());
   }
 
   @GET

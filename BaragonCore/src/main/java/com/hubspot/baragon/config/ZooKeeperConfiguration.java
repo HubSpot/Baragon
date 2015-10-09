@@ -16,6 +16,8 @@ public class ZooKeeperConfiguration {
   private Integer retryMaxTries;
   @NotNull
   private String zkNamespace;
+  private long debugCuratorCallOverBytes = 25000;
+  private long debugCuratorCallOverMillis = 250;
 
   public String getQuorum() {
     return quorum;
@@ -65,4 +67,19 @@ public class ZooKeeperConfiguration {
     this.zkNamespace = zkNamespace;
   }
 
+  public long getDebugCuratorCallOverBytes() {
+    return debugCuratorCallOverBytes;
+  }
+
+  public void setDebugCuratorCallOverBytes(long debugCuratorCallOverBytes) {
+    this.debugCuratorCallOverBytes = debugCuratorCallOverBytes;
+  }
+
+  public long getDebugCuratorCallOverMillis() {
+    return debugCuratorCallOverMillis;
+  }
+
+  public void setDebugCuratorCallOverMillis(long debugCuratorCallOverMillis) {
+    this.debugCuratorCallOverMillis = debugCuratorCallOverMillis;
+  }
 }

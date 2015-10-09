@@ -4,9 +4,14 @@
             <div class="col-md-4">
                 <h3>Group: {{ group.name }}</h3>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-5">
                 <h3>Domain: <a href="http://{{ group.domain }}">{{ group.domain }}<a/></h3>
             </div>
+            {{#if targetCount.count}}
+                <div class="col-md-3">
+                    <h3>Target Count: {{ targetCount.count }} {{#if config.allowEdit }} <a data-action="updateTargetCount"><span class="glyphicon glyphicon-edit"></span></a>{{/if}}</h3>
+                </div>
+            {{/if}}
         </div>
     {{/if}}
     {{#if group.sources}}
