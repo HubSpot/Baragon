@@ -22,7 +22,7 @@ public class BaragonService {
   private final Collection<String> owners;
 
   @NotNull
-  @Pattern(regexp = "/(?:[A-Za-z0-9\\-._~!$&'()*+,;=:@/?]|%[0-9A-Fa-f]{2})*", message = "must be an absolute URL path")
+  @Pattern(regexp = "[a-zA-Z_0-9\\-]+(\\.\\w[a-zA-Z_0-9\\-]+)+(/[#&\\n\\-=?\\+\\%/\\.\\w]+)?|/(?:[A-Za-z0-9\\-._~!$&'()*+,;=:@/?]|%[0-9A-Fa-f]{2})*", message = "must be an absolute URL path")
   private final String serviceBasePath;
 
   @NotNull
