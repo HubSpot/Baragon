@@ -23,6 +23,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import ch.qos.logback.classic.LoggerContext;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.github.rholder.retry.Retryer;
 import com.github.rholder.retry.RetryerBuilder;
 import com.github.rholder.retry.StopStrategies;
@@ -240,7 +241,7 @@ public class LifecycleHelper {
     if (response.isError()) {
       throw new AgentStartupException(String.format("Bad response received from BaragonService %s", response.getAsString()));
     }
-    return response.getAs(new com.fasterxml.jackson.core.type.TypeReference<Collection<BaragonServiceState>>() {});
+    return response.getAs(new TypeReference<Collection<BaragonServiceState>>() {});
   }
 
   public void shutdown() throws Exception {
