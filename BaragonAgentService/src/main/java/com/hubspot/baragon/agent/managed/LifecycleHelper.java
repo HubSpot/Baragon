@@ -149,7 +149,7 @@ public class LifecycleHelper {
     return (!stateFile.exists() || stateFile.delete());
   }
 
-  public void applyCurrentConfigs() {
+  public void applyCurrentConfigs(boolean refreshState) {
     LOG.info("Loading current state of the world from zookeeper...");
 
     final Stopwatch stopwatch = Stopwatch.createStarted();
@@ -160,7 +160,7 @@ public class LifecycleHelper {
       ExecutorService executorService = Executors.newFixedThreadPool(services.size());
       List<Callable<Optional<Pair<ServiceContext, Collection<BaragonConfigFile>>>>> todo = new ArrayList<>(services.size());
 
-      for (BaragonServiceState serviceState : stateDatastore.getGlobalState()) {
+      for (BaragonServiceState serviceState : stateDatastore.getGlobalState(refreshState)) {
         if (!(serviceState.getService().getLoadBalancerGroups() == null) && serviceState.getService().getLoadBalancerGroups().contains(configuration.getLoadBalancerConfiguration().getName())) {
           todo.add(new BootstrapFileChecker(configHelper, serviceState, now));
         }

@@ -17,30 +17,30 @@ public class BaragonStateCache {
     this.currentState = new AtomicReference<>(new CachedBaragonState(new byte[0], -2));
   }
 
-  public CachedBaragonState getState() {
+  public CachedBaragonState getState(boolean refresh) {
     CachedBaragonState previousState = currentState.get();
     int version = stateDatastore.getStateVersion().or(-1);
 
-    if (previousState.getVersion() == version) {
+    if (!refresh && previousState.getVersion() == version) {
       return previousState;
     } else {
-      return updateState(version);
+      return updateState(version, refresh);
     }
   }
 
-  private synchronized CachedBaragonState updateState(int version) {
+  private synchronized CachedBaragonState updateState(int version, boolean refresh) {
     CachedBaragonState previousState = currentState.get();
 
-    if (previousState.getVersion() >= version) {
+    if (!refresh && previousState.getVersion() >= version) {
       return previousState;
     } else {
-      CachedBaragonState newState = fetchState(version);
+      CachedBaragonState newState = fetchState(version, refresh);
       currentState.set(newState);
       return newState;
     }
   }
 
-  private CachedBaragonState fetchState(int version) {
-    return new CachedBaragonState(stateDatastore.getGlobalStateAsBytes(), version);
+  private CachedBaragonState fetchState(int version, boolean refresh) {
+    return new CachedBaragonState(stateDatastore.getGlobalStateAsBytes(refresh), version);
   }
 }

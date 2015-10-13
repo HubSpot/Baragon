@@ -13,6 +13,7 @@ import org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Charsets;
@@ -147,6 +148,14 @@ public abstract class AbstractDataStore {
     } catch (KeeperException.NoNodeException nne) {
       return Optional.absent();
     } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  protected <T> byte[] serialize(T data) {
+    try {
+      return objectMapper.writeValueAsBytes(data);
+    } catch (JsonProcessingException e) {
       throw Throwables.propagate(e);
     }
   }
