@@ -209,7 +209,7 @@
                 <image>
                   <name>hubspot/baragonagent-aurora:${project.version}</name>
                   <build>
-                    <from>hubspot/baragonaurorabase</from>
+                    <from>hubspot/baragonagentbase-aurora</from>
                     <maintainer>ssalinas@hubspot.com</maintainer>
                     <cmd>
                       <exec>
