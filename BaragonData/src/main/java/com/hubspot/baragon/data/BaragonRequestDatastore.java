@@ -1,14 +1,19 @@
 package com.hubspot.baragon.data;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
 import org.apache.curator.framework.CuratorFramework;
+import org.apache.curator.framework.api.transaction.CuratorTransactionResult;
 import org.apache.curator.utils.ZKPaths;
+import org.apache.zookeeper.CreateMode;
 
 import com.codahale.metrics.annotation.Timed;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Optional;
+import com.google.common.base.Throwables;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -36,11 +41,6 @@ public class BaragonRequestDatastore extends AbstractDataStore {
   //
   // REQUEST DATA
   //
-  @Timed
-  public void addRequest(BaragonRequest request) {
-    writeToZk(String.format(REQUEST_FORMAT, request.getLoadBalancerRequestId()), request);
-  }
-
   @Timed
   public Optional<BaragonRequest> getRequest(String requestId) {
     return readFromZk(String.format(REQUEST_FORMAT, requestId), BaragonRequest.class);
@@ -99,10 +99,36 @@ public class BaragonRequestDatastore extends AbstractDataStore {
   // REQUEST QUEUING
   //
   @Timed
-  public QueuedRequestId enqueueRequest(BaragonRequest request) {
-    final String path = createPersistentSequentialNode(String.format(REQUEST_ENQUEUE_FORMAT, request.getLoadBalancerService().getServiceId(), request.getLoadBalancerRequestId()));
+  public QueuedRequestId enqueueRequest(BaragonRequest request, InternalRequestStates state) {
+    final long start = System.currentTimeMillis();
 
-    return QueuedRequestId.fromString(ZKPaths.getNodeFromPath(path));
+    try {
+      final String queuedRequestPath = String.format(REQUEST_ENQUEUE_FORMAT, request.getLoadBalancerService().getServiceId(), request.getLoadBalancerRequestId());
+      final String requestPath = String.format(REQUEST_FORMAT, request.getLoadBalancerRequestId());
+      final String requestStatePath = String.format(REQUEST_STATE_FORMAT, request.getLoadBalancerRequestId());
+
+      if (!nodeExists(REQUESTS_FORMAT)) {
+        createNode(REQUESTS_FORMAT);
+      }
+      if (!nodeExists(REQUEST_QUEUE_FORMAT)) {
+        createNode(REQUEST_QUEUE_FORMAT);
+      }
+
+      byte[] requestBytes = objectMapper.writeValueAsBytes(request);
+      byte[] stateBytes = objectMapper.writeValueAsBytes(state);
+
+      Collection<CuratorTransactionResult> results = curatorFramework.inTransaction()
+          .create().forPath(requestPath, requestBytes).and()
+          .create().forPath(requestStatePath, stateBytes).and()
+          .create().withMode(CreateMode.PERSISTENT_SEQUENTIAL).forPath(queuedRequestPath)
+          .and().commit();
+
+      log(OperationType.WRITE, Optional.of(3), Optional.of(requestBytes.length + stateBytes.length), start, String.format("Transaction Paths [%s + %s + %s]", requestPath, requestStatePath, queuedRequestPath));
+
+      return QueuedRequestId.fromString(ZKPaths.getNodeFromPath(Iterables.find(results, CuratorTransactionResult.ofTypeAndPath(org.apache.curator.framework.api.transaction.OperationType.CREATE, queuedRequestPath)).getResultPath()));
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
   }
 
   @Timed
