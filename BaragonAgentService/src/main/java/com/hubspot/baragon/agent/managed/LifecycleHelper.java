@@ -174,7 +174,7 @@ public class LifecycleHelper {
   }
 
   public void applyCurrentConfigs() throws AgentStartupException {
-    LOG.info("Loading current state of the world from zookeeper...");
+    LOG.info("Getting current state of the world from Baragon Service...");
 
     final Stopwatch stopwatch = Stopwatch.createStarted();
     final long now = System.currentTimeMillis();
@@ -227,8 +227,7 @@ public class LifecycleHelper {
     Collection<String> baseUris = workerDatastore.getBaseUris();
     HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
         .setUrl(String.format(GLOBAL_STATE_FORMAT, baseUris.iterator().next()))
-        .setMethod(Method.GET)
-        .setBody(baragonAgentMetadata);
+        .setMethod(Method.GET);
 
     Map<String, BaragonAuthKey> authKeys = authDatastore.getAuthKeyMap();
     if (!authKeys.isEmpty()) {
