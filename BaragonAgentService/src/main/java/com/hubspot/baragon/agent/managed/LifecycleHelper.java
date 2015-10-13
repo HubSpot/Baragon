@@ -50,6 +50,7 @@ import com.hubspot.baragon.models.BaragonServiceState;
 import com.hubspot.baragon.models.ServiceContext;
 import com.hubspot.horizon.HttpClient;
 import com.hubspot.horizon.HttpRequest;
+import com.hubspot.horizon.HttpRequest.Method;
 import com.hubspot.horizon.HttpResponse;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.curator.framework.recipes.leader.LeaderLatch;
@@ -62,6 +63,7 @@ public class LifecycleHelper {
   private static final Logger LOG = LoggerFactory.getLogger(LifecycleHelper.class);
 
   private static final String SERVICE_CHECKIN_URL_FORMAT = "%s/checkin/%s/%s";
+  private static final String GLOBAL_STATE_FORMAT = "%s/state";
 
   private final BaragonAuthDatastore authDatastore;
   private final BaragonWorkerDatastore workerDatastore;
@@ -171,7 +173,7 @@ public class LifecycleHelper {
     return (!stateFile.exists() || stateFile.delete());
   }
 
-  public void applyCurrentConfigs() {
+  public void applyCurrentConfigs() throws AgentStartupException {
     LOG.info("Loading current state of the world from zookeeper...");
 
     final Stopwatch stopwatch = Stopwatch.createStarted();
@@ -187,7 +189,7 @@ public class LifecycleHelper {
         bootstrapStateNodeVersion.set(maybeVersion.get());
       }
 
-      for (BaragonServiceState serviceState : stateDatastore.getGlobalState()) {
+      for (BaragonServiceState serviceState : getGlobalState()) {
         if (!(serviceState.getService().getLoadBalancerGroups() == null) && serviceState.getService().getLoadBalancerGroups().contains(configuration.getLoadBalancerConfiguration().getName())) {
           todo.add(new BootstrapFileChecker(configHelper, serviceState, now));
         }
@@ -209,7 +211,7 @@ public class LifecycleHelper {
         }
         configHelper.checkAndReload();
       } catch (Exception e) {
-        LOG.error(String.format("Caught exception while applying and parsing configs"), e);
+        LOG.error("Caught exception while applying and parsing configs", e);
         if (configuration.isExitOnStartupError()) {
           Throwables.propagate(e);
         }
@@ -219,6 +221,27 @@ public class LifecycleHelper {
     } else {
       LOG.info("No services were found to apply");
     }
+  }
+
+  private Collection<BaragonServiceState> getGlobalState() throws AgentStartupException {
+    Collection<String> baseUris = workerDatastore.getBaseUris();
+    HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
+        .setUrl(String.format(GLOBAL_STATE_FORMAT, baseUris.iterator().next()))
+        .setMethod(Method.GET)
+        .setBody(baragonAgentMetadata);
+
+    Map<String, BaragonAuthKey> authKeys = authDatastore.getAuthKeyMap();
+    if (!authKeys.isEmpty()) {
+      requestBuilder.setQueryParam("authkey").to(authKeys.entrySet().iterator().next().getValue().getValue());
+    }
+
+    HttpRequest request = requestBuilder.build();
+    HttpResponse response = httpClient.execute(request);
+    LOG.info(String.format("Got %s response from BaragonService", response.getStatusCode()));
+    if (response.isError()) {
+      throw new AgentStartupException(String.format("Bad response received from BaragonService %s", response.getAsString()));
+    }
+    return response.getAs(new com.fasterxml.jackson.core.type.TypeReference<Collection<BaragonServiceState>>() {});
   }
 
   public void shutdown() throws Exception {
