@@ -114,8 +114,8 @@ public class BaragonRequestDatastore extends AbstractDataStore {
         createNode(REQUEST_QUEUE_FORMAT);
       }
 
-      byte [] requestBytes = objectMapper.writeValueAsBytes(request);
-      byte [] stateBytes = objectMapper.writeValueAsBytes(state);
+      byte[] requestBytes = objectMapper.writeValueAsBytes(request);
+      byte[] stateBytes = objectMapper.writeValueAsBytes(state);
 
       Collection<CuratorTransactionResult> results = curatorFramework.inTransaction()
           .create().forPath(requestPath, requestBytes).and()
