@@ -206,6 +206,39 @@
                     </assembly>
                   </build>
                 </image>
+                <image>
+                  <name>hubspot/baragonagent-aurora:${project.version}</name>
+                  <build>
+                    <from>hubspot/baragonaurorabase</from>
+                    <maintainer>ssalinas@hubspot.com</maintainer>
+                    <cmd>
+                      <exec>
+                        <args>/usr/local/bin/supervisord</args>
+                        <args>-c</args>
+                        <args>/etc/supervisor/supervisord.conf</args>
+                      </exec>
+                    </cmd>
+                    <assembly>
+                      <mode>dir</mode>
+                      <basedir>/</basedir>
+                      <inline>
+                        <fileSets>
+                          <fileSet>
+                            <directory>${project.basedir}/src/main/docker</directory>
+                            <outputDirectory>/etc/baragon</outputDirectory>
+                          </fileSet>
+                        </fileSets>
+                        <files>
+                          <file>
+                            <source>${project.basedir}/target/${baragon.jar.name.format}-shaded.jar</source>
+                            <destName>/etc/baragon/${project.name}.jar</destName>
+                            <outputDirectory>/</outputDirectory>
+                          </file>
+                        </files>
+                      </inline>
+                    </assembly>
+                  </build>
+                </image>
               </images>
             </configuration>
           </plugin>

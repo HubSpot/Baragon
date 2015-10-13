@@ -1,5 +1,5 @@
 FROM java:8u45-jre
-MAINTAINER HubSpot <platform-infrastructure-groups@hubspot.com>
+MAINTAINER HubSpot <paas@hubspot.com>
 
 # Used to build hubspot/baragonagentbase image
 
