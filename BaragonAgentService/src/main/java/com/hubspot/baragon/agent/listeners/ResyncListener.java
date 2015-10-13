@@ -77,7 +77,7 @@ public class ResyncListener implements ConnectionStateListener {
           throw new LockTimeoutException(String.format("Failed to acquire lock to reapply most current configs in %s ms", agentLockTimeoutMs), agentLock);
         }
         try {
-          lifecycleHelper.applyCurrentConfigs();
+          lifecycleHelper.applyCurrentConfigs(true);
           return null;
         } finally {
           agentLock.unlock();

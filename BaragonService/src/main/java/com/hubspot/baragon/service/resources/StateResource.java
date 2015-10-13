@@ -40,8 +40,8 @@ public class StateResource {
 
   @GET
   @NoAuth
-  public Response getAllServices() {
-    CachedBaragonState state = stateCache.getState();
+  public Response getAllServices(@DefaultValue("false") @QueryParam("refresh") boolean refresh) {
+    CachedBaragonState state = stateCache.getState(refresh);
 
     ResponseBuilder builder = Response.ok();
 

@@ -97,7 +97,7 @@ public class BootstrapManaged implements Managed {
   @Override
   public void start() throws Exception {
     LOG.info("Applying current configs...");
-    lifecycleHelper.applyCurrentConfigs();
+    lifecycleHelper.applyCurrentConfigs(false);
 
     LOG.info("Starting leader latch...");
     leaderLatch.start();

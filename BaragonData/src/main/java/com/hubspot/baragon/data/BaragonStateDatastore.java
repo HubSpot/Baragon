@@ -133,12 +133,27 @@ public class BaragonStateDatastore extends AbstractDataStore {
   }
 
   @Timed
-  public Collection<BaragonServiceState> getGlobalState() {
-    return deserialize(getGlobalStateAsBytes(), BARAGON_SERVICE_STATE_COLLECTION);
+  public Collection<BaragonServiceState> getGlobalState(boolean refresh) {
+    if (refresh) {
+      try {
+        LOG.info("Starting to compute all service states");
+        return computeAllServiceStates();
+      } catch (Exception e) {
+        throw Throwables.propagate(e);
+      } finally {
+        LOG.info("Finished computing all service states");
+      }
+    } else {
+      return deserialize(getGlobalStateAsBytes(false), BARAGON_SERVICE_STATE_COLLECTION);
+    }
   }
 
-  public byte[] getGlobalStateAsBytes() {
-    return readFromZk(SERVICES_FORMAT).or("[]".getBytes(Charsets.UTF_8));
+  public byte[] getGlobalStateAsBytes(boolean refresh) {
+    if (refresh) {
+      return serialize(getGlobalState(true));
+    } else {
+      return readFromZk(SERVICES_FORMAT).or("[]".getBytes(Charsets.UTF_8));
+    }
   }
 
   @Timed
