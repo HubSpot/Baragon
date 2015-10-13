@@ -21,6 +21,8 @@ import com.hubspot.baragon.agent.managed.LifecycleHelper;
 import com.hubspot.baragon.data.BaragonLoadBalancerDatastore;
 import com.hubspot.baragon.exceptions.LockTimeoutException;
 import com.hubspot.baragon.exceptions.ReapplyFailedException;
+import com.hubspot.baragon.models.BaragonAgentState;
+
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.state.ConnectionState;
@@ -36,24 +38,24 @@ public class ResyncListener implements ConnectionStateListener {
   private final BaragonAgentConfiguration configuration;
 
   private final LifecycleHelper lifecycleHelper;
-  private final ServerProvider serverProvider;
   private final BaragonLoadBalancerDatastore loadBalancerDatastore;
   private final ReentrantLock agentLock;
   private final long agentLockTimeoutMs;
   private final AtomicReference<String> mostRecentRequestId;
+  private final AtomicReference<BaragonAgentState> agentState;
 
   @Inject
   public ResyncListener(LifecycleHelper lifecycleHelper,
                         BaragonAgentConfiguration configuration,
-                        ServerProvider serverProvider,
                         BaragonLoadBalancerDatastore loadBalancerDatastore,
+                        AtomicReference<BaragonAgentState> agentState,
                         @Named(BaragonAgentServiceModule.AGENT_LOCK) ReentrantLock agentLock,
                         @Named(BaragonAgentServiceModule.AGENT_LOCK_TIMEOUT_MS) long agentLockTimeoutMs,
                         @Named(BaragonAgentServiceModule.AGENT_MOST_RECENT_REQUEST_ID) AtomicReference<String> mostRecentRequestId) {
     this.lifecycleHelper = lifecycleHelper;
     this.configuration = configuration;
-    this.serverProvider = serverProvider;
     this.loadBalancerDatastore = loadBalancerDatastore;
+    this.agentState = agentState;
     this.agentLock = agentLock;
     this.agentLockTimeoutMs = agentLockTimeoutMs;
     this.mostRecentRequestId = mostRecentRequestId;
@@ -61,12 +63,25 @@ public class ResyncListener implements ConnectionStateListener {
 
   @Override
   public void stateChanged(CuratorFramework client, ConnectionState newState) {
-    if (newState == ConnectionState.RECONNECTED) {
-      LOG.info("Reconnected to zookeeper, checking if configs are still in sync");
-      Optional<String> maybeLastRequestForGroup = loadBalancerDatastore.getLastRequestForGroup(configuration.getLoadBalancerConfiguration().getName());
-      if (!maybeLastRequestForGroup.isPresent() || !maybeLastRequestForGroup.get().equals(mostRecentRequestId.get())) {
-        reapplyConfigsWithRetry();
-      }
+    switch (newState) {
+      case RECONNECTED:
+        LOG.info("Reconnected to zookeeper, checking if configs are still in sync");
+        Optional<String> maybeLastRequestForGroup = loadBalancerDatastore.getLastRequestForGroup(configuration.getLoadBalancerConfiguration().getName());
+        if (!maybeLastRequestForGroup.isPresent() || !maybeLastRequestForGroup.get().equals(mostRecentRequestId.get())) {
+          agentState.set(BaragonAgentState.BOOTSTRAPING);
+          reapplyConfigsWithRetry();
+        }
+        agentState.set(BaragonAgentState.ACCEPTING);
+        break;
+      case SUSPENDED:
+      case LOST:
+        agentState.set(BaragonAgentState.DISCONNECTED);
+        break;
+      case CONNECTED:
+        agentState.set(BaragonAgentState.ACCEPTING);
+        break;
+      default:
+        break;
     }
   }
 
@@ -80,7 +95,9 @@ public class ResyncListener implements ConnectionStateListener {
           lifecycleHelper.applyCurrentConfigs();
           return null;
         } finally {
-          agentLock.unlock();
+          if (agentLock.isHeldByCurrentThread()) {
+            agentLock.unlock();
+          }
         }
       }
     };
@@ -94,41 +111,7 @@ public class ResyncListener implements ConnectionStateListener {
     try {
       retryer.call(callable);
     } catch (Exception e) {
-      abort(e);
-    }
-  }
-
-  @SuppressFBWarnings("DM_EXIT")
-  private void abort(Exception exception) {
-    LOG.error("Caught exception while trying to resync, aborting", exception);
-    flushLogs();
-    Optional<Server> server = serverProvider.get();
-    if (server.isPresent()) {
-      try {
-        server.get().stop();
-        lifecycleHelper.shutdown();
-      } catch (Exception e) {
-        LOG.warn("While aborting server", e);
-      }
-    } else {
-      LOG.warn("Baragon Agent abort called before server has fully initialized!");
-    }
-    System.exit(1);
-  }
-
-  private void flushLogs() {
-    final long millisToWait = 100;
-
-    ILoggerFactory loggerFactory = LoggerFactory.getILoggerFactory();
-    if (loggerFactory instanceof LoggerContext) {
-      LoggerContext context = (LoggerContext) loggerFactory;
-      context.stop();
-    }
-
-    try {
-      Thread.sleep(millisToWait);
-    } catch (Exception e) {
-      LOG.info("While sleeping for log flush", e);
+      lifecycleHelper.abort("Caught exception while trying to resync, aborting", e);
     }
   }
 }

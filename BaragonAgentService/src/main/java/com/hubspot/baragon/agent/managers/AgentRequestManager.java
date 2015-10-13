@@ -20,6 +20,7 @@ import com.hubspot.baragon.data.BaragonRequestDatastore;
 import com.hubspot.baragon.data.BaragonStateDatastore;
 import com.hubspot.baragon.exceptions.LockTimeoutException;
 import com.hubspot.baragon.exceptions.MissingTemplateException;
+import com.hubspot.baragon.models.BaragonAgentState;
 import com.hubspot.baragon.models.BaragonRequest;
 import com.hubspot.baragon.models.BaragonService;
 import com.hubspot.baragon.models.RequestAction;
@@ -37,6 +38,7 @@ public class AgentRequestManager {
   private final AtomicReference<String> mostRecentRequestId;
   private final Optional<TestingConfiguration> maybeTestingConfiguration;
   private final Random random;
+  private final AtomicReference<BaragonAgentState> agentState;
   private final LoadBalancerConfiguration loadBalancerConfiguration;
   private final long agentLockTimeoutMs;
 
@@ -47,6 +49,7 @@ public class AgentRequestManager {
                         Optional<TestingConfiguration> maybeTestingConfiguration,
                         LoadBalancerConfiguration loadBalancerConfiguration,
                         Random random,
+                        AtomicReference<BaragonAgentState> agentState,
                         @Named(BaragonAgentServiceModule.AGENT_MOST_RECENT_REQUEST_ID) AtomicReference<String> mostRecentRequestId,
                         @Named(BaragonAgentServiceModule.AGENT_LOCK_TIMEOUT_MS) long agentLockTimeoutMs) {
     this.stateDatastore = stateDatastore;
@@ -55,6 +58,7 @@ public class AgentRequestManager {
     this.requestDatastore = requestDatastore;
     this.mostRecentRequestId = mostRecentRequestId;
     this.random = random;
+    this.agentState = agentState;
     this.loadBalancerConfiguration = loadBalancerConfiguration;
     this.agentLockTimeoutMs = agentLockTimeoutMs;
   }
@@ -69,6 +73,7 @@ public class AgentRequestManager {
     Optional<BaragonService> maybeOldService = getOldService(request);
 
     try {
+      agentState.set(BaragonAgentState.APPLYING);
       LOG.info(String.format("Received request to %s with id %s", action, requestId));
       switch (action) {
         case DELETE:
@@ -88,6 +93,7 @@ public class AgentRequestManager {
       return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(String.format("Caught exception while %sING for request %s: %s", action, requestId, e.getMessage())).build();
     } finally {
       LOG.info(String.format("Done processing %s request: %s", action, requestId));
+      agentState.set(BaragonAgentState.ACCEPTING);
     }
   }
 

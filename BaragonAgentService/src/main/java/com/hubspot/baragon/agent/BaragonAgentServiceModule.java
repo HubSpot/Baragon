@@ -32,6 +32,7 @@ import com.hubspot.baragon.data.BaragonConnectionStateListener;
 import com.hubspot.baragon.data.BaragonLoadBalancerDatastore;
 import com.hubspot.baragon.models.BaragonAgentEc2Metadata;
 import com.hubspot.baragon.models.BaragonAgentMetadata;
+import com.hubspot.baragon.models.BaragonAgentState;
 import com.hubspot.baragon.utils.JavaUtils;
 import com.hubspot.horizon.HttpClient;
 import com.hubspot.horizon.HttpConfig;
@@ -215,5 +216,11 @@ public class BaragonAgentServiceModule extends AbstractModule {
     client.start();
 
     return client.usingNamespace(config.getZkNamespace());
+  }
+
+  @Singleton
+  @Provides
+  public AtomicReference<BaragonAgentState> providesAgentState() {
+    return new AtomicReference<>(BaragonAgentState.BOOTSTRAPING);
   }
 }

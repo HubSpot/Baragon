@@ -19,6 +19,7 @@ import com.hubspot.baragon.agent.lbs.LocalLbAdapter;
 import com.hubspot.baragon.auth.NoAuth;
 import com.hubspot.baragon.exceptions.InvalidConfigException;
 import com.hubspot.baragon.models.BaragonAgentMetadata;
+import com.hubspot.baragon.models.BaragonAgentState;
 import com.hubspot.baragon.models.BaragonAgentStatus;
 import org.apache.curator.framework.recipes.leader.LeaderLatch;
 import org.apache.curator.framework.state.ConnectionState;
@@ -33,11 +34,13 @@ public class StatusResource {
   private final AtomicReference<ConnectionState> connectionState;
   private final BaragonAgentMetadata agentMetadata;
   private final AtomicReference<Optional<String>> errorMessage;
+  private final AtomicReference<BaragonAgentState> agentState;
 
   @Inject
   public StatusResource(LocalLbAdapter adapter,
                         LoadBalancerConfiguration loadBalancerConfiguration,
                         BaragonAgentMetadata agentMetadata,
+                        AtomicReference<BaragonAgentState> agentState,
                         @Named(BaragonAgentServiceModule.AGENT_LEADER_LATCH) LeaderLatch leaderLatch,
                         @Named(BaragonAgentServiceModule.AGENT_MOST_RECENT_REQUEST_ID) AtomicReference<String> mostRecentRequestId,
                         @Named(BaragonDataModule.BARAGON_ZK_CONNECTION_STATE) AtomicReference<ConnectionState> connectionState,
@@ -49,6 +52,7 @@ public class StatusResource {
     this.connectionState = connectionState;
     this.agentMetadata = agentMetadata;
     this.errorMessage = errorMessage;
+    this.agentState = agentState;
   }
 
   @GET
@@ -69,6 +73,6 @@ public class StatusResource {
 
     Optional<String> currentErrorMessage = errorMessage.get();
 
-    return new BaragonAgentStatus(loadBalancerConfiguration.getName(), !currentErrorMessage.isPresent(), currentErrorMessage, leaderLatch.hasLeadership(), mostRecentRequestId.get(), connectionStateString, agentMetadata);
+    return new BaragonAgentStatus(loadBalancerConfiguration.getName(), !currentErrorMessage.isPresent(), currentErrorMessage, leaderLatch.hasLeadership(), mostRecentRequestId.get(), connectionStateString, agentMetadata, agentState.get());
   }
 }
