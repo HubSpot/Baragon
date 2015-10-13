@@ -7,7 +7,7 @@
   <parent>
     <groupId>com.hubspot</groupId>
     <artifactId>basepom</artifactId>
-    <version>12.5</version>
+    <version>12.7</version>
   </parent>
 
   <artifactId>Baragon</artifactId>
@@ -95,17 +95,7 @@
       <dependency>
         <groupId>com.hubspot.dropwizard</groupId>
         <artifactId>dropwizard-guice</artifactId>
-        <version>${dropwizard.version}</version>
-        <exclusions>
-          <exclusion>
-            <groupId>com.google.inject</groupId>
-            <artifactId>guice</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>com.google.inject.extensions</groupId>
-            <artifactId>guice-servlet</artifactId>
-          </exclusion>
-        </exclusions>
+        <version>0.7.2.1</version>
       </dependency>
 
       <!-- Horizon -->
