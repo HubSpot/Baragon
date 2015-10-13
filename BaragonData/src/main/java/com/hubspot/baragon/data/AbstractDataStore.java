@@ -154,6 +154,18 @@ public abstract class AbstractDataStore {
     }
   }
 
+  protected String createNode(String path) {
+    final long start = System.currentTimeMillis();
+
+    try {
+      final String result = curatorFramework.create().creatingParentsIfNeeded().forPath(path);
+      log(OperationType.WRITE, Optional.<Integer>absent(), Optional.<Integer>absent(), start, path);
+      return result;
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
   protected String createPersistentSequentialNode(String path) {
     final long start = System.currentTimeMillis();
 
