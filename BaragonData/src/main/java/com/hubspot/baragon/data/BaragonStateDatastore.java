@@ -17,7 +17,6 @@ import org.slf4j.LoggerFactory;
 import com.codahale.metrics.annotation.Timed;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.base.Objects;
 import com.google.common.base.Optional;
@@ -134,11 +133,18 @@ public class BaragonStateDatastore extends AbstractDataStore {
 
   @Timed
   public Collection<BaragonServiceState> getGlobalState() {
-    return deserialize(getGlobalStateAsBytes(), BARAGON_SERVICE_STATE_COLLECTION);
+    try {
+      LOG.info("Starting to compute all service states");
+      return computeAllServiceStates();
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    } finally {
+      LOG.info("Finished computing all service states");
+    }
   }
 
   public byte[] getGlobalStateAsBytes() {
-    return readFromZk(SERVICES_FORMAT).or("[]".getBytes(Charsets.UTF_8));
+    return serialize(getGlobalState());
   }
 
   @Timed
