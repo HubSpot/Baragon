@@ -100,6 +100,9 @@ public class BaragonAgentConfiguration extends Configuration {
   @JsonProperty("graphite")
   private GraphiteConfiguration graphiteConfiguration = new GraphiteConfiguration();
 
+  @JsonProperty("maxGetGloablStateAttempts")
+  private int maxGetGloablStateAttempts = 3;
+
   public HttpClientConfiguration getHttpClientConfiguration() {
     return httpClientConfiguration;
   }
@@ -270,5 +273,13 @@ public class BaragonAgentConfiguration extends Configuration {
 
   public void setGraphiteConfiguration(GraphiteConfiguration graphiteConfiguration) {
     this.graphiteConfiguration = graphiteConfiguration;
+  }
+
+  public int getMaxGetGloablStateAttempts() {
+    return maxGetGloablStateAttempts;
+  }
+
+  public void setMaxGetGloablStateAttempts(int maxGetGloablStateAttempts) {
+    this.maxGetGloablStateAttempts = maxGetGloablStateAttempts;
   }
 }

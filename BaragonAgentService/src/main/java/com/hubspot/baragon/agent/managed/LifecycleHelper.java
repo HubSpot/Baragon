@@ -190,7 +190,7 @@ public class LifecycleHelper {
         bootstrapStateNodeVersion.set(maybeVersion.get());
       }
 
-      for (BaragonServiceState serviceState : getGlobalState()) {
+      for (BaragonServiceState serviceState : getGlobalStateWithRetry()) {
         if (!(serviceState.getService().getLoadBalancerGroups() == null) && serviceState.getService().getLoadBalancerGroups().contains(configuration.getLoadBalancerConfiguration().getName())) {
           todo.add(new BootstrapFileChecker(configHelper, serviceState, now));
         }
@@ -221,6 +221,27 @@ public class LifecycleHelper {
       LOG.info("Applied {} services in {}ms", todo.size(), stopwatch.elapsed(TimeUnit.MILLISECONDS));
     } else {
       LOG.info("No services were found to apply");
+    }
+  }
+
+  private Collection<BaragonServiceState> getGlobalStateWithRetry() throws AgentStartupException {
+    Callable<Collection<BaragonServiceState>> callable = new Callable<Collection<BaragonServiceState>>() {
+      public Collection<BaragonServiceState> call() throws Exception {
+        return getGlobalState();
+      }
+    };
+
+    Retryer<Collection<BaragonServiceState>> retryer = RetryerBuilder.<Collection<BaragonServiceState>>newBuilder()
+        .retryIfException()
+        .withStopStrategy(StopStrategies.stopAfterAttempt(configuration.getMaxGetGloablStateAttempts()))
+        .withWaitStrategy(WaitStrategies.exponentialWait(1, TimeUnit.SECONDS))
+        .build();
+
+    try {
+      return retryer.call(callable);
+    } catch (Exception e) {
+      LOG.error("Could not get global state from Baragon Service");
+      throw Throwables.propagate(e);
     }
   }
 
