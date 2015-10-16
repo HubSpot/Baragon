@@ -23,6 +23,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import ch.qos.logback.classic.LoggerContext;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.github.rholder.retry.Retryer;
 import com.github.rholder.retry.RetryerBuilder;
 import com.github.rholder.retry.StopStrategies;
@@ -50,6 +51,7 @@ import com.hubspot.baragon.models.BaragonServiceState;
 import com.hubspot.baragon.models.ServiceContext;
 import com.hubspot.horizon.HttpClient;
 import com.hubspot.horizon.HttpRequest;
+import com.hubspot.horizon.HttpRequest.Method;
 import com.hubspot.horizon.HttpResponse;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.curator.framework.recipes.leader.LeaderLatch;
@@ -62,6 +64,7 @@ public class LifecycleHelper {
   private static final Logger LOG = LoggerFactory.getLogger(LifecycleHelper.class);
 
   private static final String SERVICE_CHECKIN_URL_FORMAT = "%s/checkin/%s/%s";
+  private static final String GLOBAL_STATE_FORMAT = "%s/state";
 
   private final BaragonAuthDatastore authDatastore;
   private final BaragonWorkerDatastore workerDatastore;
@@ -171,8 +174,8 @@ public class LifecycleHelper {
     return (!stateFile.exists() || stateFile.delete());
   }
 
-  public void applyCurrentConfigs() {
-    LOG.info("Loading current state of the world from zookeeper...");
+  public void applyCurrentConfigs() throws AgentStartupException {
+    LOG.info("Getting current state of the world from Baragon Service...");
 
     final Stopwatch stopwatch = Stopwatch.createStarted();
     final long now = System.currentTimeMillis();
@@ -182,8 +185,12 @@ public class LifecycleHelper {
       ExecutorService executorService = Executors.newFixedThreadPool(services.size());
       List<Callable<Optional<Pair<ServiceContext, Collection<BaragonConfigFile>>>>> todo = new ArrayList<>(services.size());
 
-      setBootstrapStateNodeVersion(stateDatastore.getStateVersion());
-      for (BaragonServiceState serviceState : stateDatastore.getGlobalState()) {
+      Optional<Integer> maybeVersion = stateDatastore.getStateVersion();
+      if (maybeVersion.isPresent()) {
+        bootstrapStateNodeVersion.set(maybeVersion.get());
+      }
+
+      for (BaragonServiceState serviceState : getGlobalStateWithRetry()) {
         if (!(serviceState.getService().getLoadBalancerGroups() == null) && serviceState.getService().getLoadBalancerGroups().contains(configuration.getLoadBalancerConfiguration().getName())) {
           todo.add(new BootstrapFileChecker(configHelper, serviceState, now));
         }
@@ -205,7 +212,7 @@ public class LifecycleHelper {
         }
         configHelper.checkAndReload();
       } catch (Exception e) {
-        LOG.error(String.format("Caught exception while applying and parsing configs"), e);
+        LOG.error("Caught exception while applying and parsing configs", e);
         if (configuration.isExitOnStartupError()) {
           Throwables.propagate(e);
         }
@@ -215,6 +222,47 @@ public class LifecycleHelper {
     } else {
       LOG.info("No services were found to apply");
     }
+  }
+
+  private Collection<BaragonServiceState> getGlobalStateWithRetry() throws AgentStartupException {
+    Callable<Collection<BaragonServiceState>> callable = new Callable<Collection<BaragonServiceState>>() {
+      public Collection<BaragonServiceState> call() throws Exception {
+        return getGlobalState();
+      }
+    };
+
+    Retryer<Collection<BaragonServiceState>> retryer = RetryerBuilder.<Collection<BaragonServiceState>>newBuilder()
+        .retryIfException()
+        .withStopStrategy(StopStrategies.stopAfterAttempt(configuration.getMaxGetGloablStateAttempts()))
+        .withWaitStrategy(WaitStrategies.exponentialWait(1, TimeUnit.SECONDS))
+        .build();
+
+    try {
+      return retryer.call(callable);
+    } catch (Exception e) {
+      LOG.error("Could not get global state from Baragon Service");
+      throw Throwables.propagate(e);
+    }
+  }
+
+  private Collection<BaragonServiceState> getGlobalState() throws AgentStartupException {
+    Collection<String> baseUris = workerDatastore.getBaseUris();
+    HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
+        .setUrl(String.format(GLOBAL_STATE_FORMAT, baseUris.iterator().next()))
+        .setMethod(Method.GET);
+
+    Map<String, BaragonAuthKey> authKeys = authDatastore.getAuthKeyMap();
+    if (!authKeys.isEmpty()) {
+      requestBuilder.setQueryParam("authkey").to(authKeys.entrySet().iterator().next().getValue().getValue());
+    }
+
+    HttpRequest request = requestBuilder.build();
+    HttpResponse response = httpClient.execute(request);
+    LOG.info(String.format("Got %s response from BaragonService", response.getStatusCode()));
+    if (response.isError()) {
+      throw new AgentStartupException(String.format("Bad response received from BaragonService %s", response.getAsString()));
+    }
+    return response.getAs(new TypeReference<Collection<BaragonServiceState>>() {});
   }
 
   public void shutdown() throws Exception {
@@ -229,16 +277,6 @@ public class LifecycleHelper {
     }
   }
 
-  public void setBootstrapStateNodeVersion(Optional<Integer> version) {
-    if (version.isPresent()) {
-      bootstrapStateNodeVersion.set(version.get());
-    }
-  }
-
-  public int getBootstrapStateNodeVersion() {
-    return bootstrapStateNodeVersion.get();
-  }
-
   public void checkStateNodeVersion() {
     agentState.set(BaragonAgentState.BOOTSTRAPING);
     try {
@@ -248,8 +286,9 @@ public class LifecycleHelper {
           throw new LockTimeoutException("Could not acquire lock to reapply configs", agentLock);
         }
         try {
-          if (getBootstrapStateNodeVersion() < maybeStateVersion.get()) {
+          if (bootstrapStateNodeVersion.get() < maybeStateVersion.get()) {
             applyCurrentConfigs();
+            bootstrapStateNodeVersion.set(maybeStateVersion.get());
           }
         } catch (Exception e) {
           abort("Could not ensure configs are up to date, aborting", e);
