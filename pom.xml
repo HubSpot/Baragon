@@ -6,7 +6,7 @@
   <parent>
     <groupId>com.hubspot</groupId>
     <artifactId>basepom</artifactId>
-    <version>10.7</version>
+    <version>12.7</version>
   </parent>
 
   <artifactId>Baragon</artifactId>
@@ -95,7 +95,7 @@
       <dependency>
         <groupId>com.hubspot.dropwizard</groupId>
         <artifactId>dropwizard-guice</artifactId>
-        <version>${dropwizard.version}</version>
+        <version>0.7.2.1</version>
       </dependency>
 
       <!-- Horizon -->
@@ -134,6 +134,12 @@
         <groupId>org.jukito</groupId>
         <artifactId>jukito</artifactId>
         <version>${jukito.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>com.google.inject</groupId>
+            <artifactId>guice</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
 
       <!-- metrics -->
