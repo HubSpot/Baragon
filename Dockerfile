@@ -5,8 +5,9 @@ MAINTAINER HubSpot <paas@hubspot.com>
 
 RUN apt-get update && \
     apt-get upgrade -y && \
-    apt-get install -y python-setuptools nginx sed && \
+    apt-get install -y python-setuptools sed && \
     easy_install supervisor && \
+    apt-get install -y -t jessie-backports nginx=1.9.4-1~bpo8+1 && \
     mkdir -p /etc/nginx/conf.d/custom && \
     mkdir -p /etc/nginx/conf.d/proxy && \
     mkdir -p /etc/nginx/conf.d/upstreams
