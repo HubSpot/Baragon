@@ -48,6 +48,10 @@
       <artifactId>metrics-graphite</artifactId>
     </dependency>
     <dependency>
+      <groupId>com.codahale.metrics</groupId>
+      <artifactId>metrics-annotation</artifactId>
+    </dependency>
+    <dependency>
       <groupId>com.hubspot</groupId>
       <artifactId>BaragonCore</artifactId>
     </dependency>
