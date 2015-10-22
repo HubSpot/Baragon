@@ -15,8 +15,10 @@ import com.google.common.base.Optional;
 import com.google.common.base.Strings;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import com.hubspot.baragon.service.config.BaragonConfiguration;
+import com.google.inject.name.Named;
 import com.hubspot.baragon.config.GraphiteConfiguration;
+import com.hubspot.baragon.service.BaragonServiceModule;
+import com.hubspot.baragon.service.config.BaragonConfiguration;
 import com.hubspot.baragon.utils.JavaUtils;
 
 import io.dropwizard.lifecycle.Managed;
@@ -29,12 +31,14 @@ public class BaragonGraphiteReporterManaged implements Managed {
   private final GraphiteConfiguration graphiteConfiguration;
   private final MetricRegistry registry;
   private Optional<GraphiteReporter> reporter;
+  private final String hostname;
 
   @Inject
-  public BaragonGraphiteReporterManaged(BaragonConfiguration configuration, MetricRegistry registry) {
+  public BaragonGraphiteReporterManaged(BaragonConfiguration configuration, MetricRegistry registry, @Named(BaragonServiceModule.BARAGON_SERVICE_HOSTNAME) String hostname) {
     this.graphiteConfiguration = configuration.getGraphiteConfiguration();
     this.registry = registry;
     this.reporter = Optional.absent();
+    this.hostname = hostname;
   }
 
   private String buildGraphitePrefix() {
