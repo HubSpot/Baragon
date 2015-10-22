@@ -49,7 +49,7 @@ public class LocalLbAdapter {
     try {
       final long start = System.currentTimeMillis();
       final int exitCode = executeWithTimeout(CommandLine.parse(loadBalancerConfiguration.getCheckConfigCommand()), loadBalancerConfiguration.getCommandTimeoutMs());
-      LOG.debug("Checked configs via '{}' in {}ms (exit code = {})", loadBalancerConfiguration.getCheckConfigCommand(), System.currentTimeMillis() - start, exitCode);
+      LOG.info("Checked configs via '{}' in {}ms (exit code = {})", loadBalancerConfiguration.getCheckConfigCommand(), System.currentTimeMillis() - start, exitCode);
     } catch (LbAdapterExecuteException e) {
       throw new InvalidConfigException(e.getOutput());
     } catch (IOException e) {
@@ -61,6 +61,6 @@ public class LocalLbAdapter {
   public void reloadConfigs() throws LbAdapterExecuteException, IOException {
     final long start = System.currentTimeMillis();
     final int exitCode = executeWithTimeout(CommandLine.parse(loadBalancerConfiguration.getReloadConfigCommand()), loadBalancerConfiguration.getCommandTimeoutMs());
-    LOG.debug("Reloaded configs via '{}' in {}ms (exit code = {})", loadBalancerConfiguration.getReloadConfigCommand(), System.currentTimeMillis() - start, exitCode);
+    LOG.info("Reloaded configs via '{}' in {}ms (exit code = {})", loadBalancerConfiguration.getReloadConfigCommand(), System.currentTimeMillis() - start, exitCode);
   }
 }
