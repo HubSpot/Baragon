@@ -5,9 +5,12 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
+import com.google.common.collect.Iterables;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.utils.ZKPaths;
 import org.apache.zookeeper.data.Stat;
@@ -207,15 +210,32 @@ public class BaragonStateDatastore extends AbstractDataStore {
 
     Map<String, Collection<UpstreamInfo>> serviceToUpstreamInfo = new HashMap<>(services.size());
 
+    // Services modified while we fetched upstream information
+    Set<String> modifiedServices = new HashSet<>();
     for (Entry<String, Collection<String>> entry : serviceToUpstreams.entrySet()) {
+      String service = entry.getKey();
+
+      for (String upstream : entry.getValue()) {
+        if (!upstreamToInfo.containsKey(upstream)) {
+          modifiedServices.add(service);
+        }
+      }
+
+      if (modifiedServices.contains(service)) {
+        continue;
+      }
+
       for (String upstream : entry.getValue()) {
         if (!serviceToUpstreamInfo.containsKey(entry.getKey())) {
-          serviceToUpstreamInfo.put(entry.getKey(), Lists.<UpstreamInfo>newArrayList(upstreamToInfo.get(upstream)));
+          serviceToUpstreamInfo.put(entry.getKey(), Lists.newArrayList(upstreamToInfo.get(upstream)));
         } else {
           serviceToUpstreamInfo.get(entry.getKey()).add(upstreamToInfo.get(upstream));
         }
       }
     }
+
+    // Fetch upstream info for the modified services
+    serviceToUpstreamInfo.putAll(fetchServiceToUpstreamInfoMap(modifiedServices));
 
     return serviceToUpstreamInfo;
   }
