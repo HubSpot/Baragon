@@ -217,7 +217,7 @@ public class BaragonStateDatastore extends AbstractDataStore {
 
       for (String upstream : entry.getValue()) {
         if (!serviceToUpstreamInfo.containsKey(entry.getKey())) {
-          serviceToUpstreamInfo.put(entry.getKey(), new ArrayList<UpstreamInfo>());
+          serviceToUpstreamInfo.put(service, new ArrayList<UpstreamInfo>());
         }
 
         Optional<UpstreamInfo> upstreamInfo = Optional.fromNullable(upstreamToInfo.get(upstream));
