@@ -235,7 +235,9 @@ public class BaragonStateDatastore extends AbstractDataStore {
     }
 
     // Fetch upstream info for the modified services
-    serviceToUpstreamInfo.putAll(fetchServiceToUpstreamInfoMap(modifiedServices));
+    if (!modifiedServices.isEmpty()) {
+      serviceToUpstreamInfo.putAll(fetchServiceToUpstreamInfoMap(modifiedServices));
+    }
 
     return serviceToUpstreamInfo;
   }
