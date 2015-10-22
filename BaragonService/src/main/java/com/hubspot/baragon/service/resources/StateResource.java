@@ -13,6 +13,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 
+import com.codahale.metrics.annotation.Timed;
 import com.google.common.base.Optional;
 import com.google.common.net.HttpHeaders;
 import com.google.inject.Inject;
@@ -40,6 +41,7 @@ public class StateResource {
 
   @GET
   @NoAuth
+  @Timed
   public Response getAllServices() {
     CachedBaragonState state = stateCache.getState();
 
