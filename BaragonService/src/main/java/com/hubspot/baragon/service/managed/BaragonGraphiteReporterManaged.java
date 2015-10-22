@@ -34,7 +34,7 @@ public class BaragonGraphiteReporterManaged implements Managed {
   private final String hostname;
 
   @Inject
-  public BaragonGraphiteReporterManaged(BaragonConfiguration configuration, MetricRegistry registry, @Named(BaragonServiceModule.BARAGON_SERVICE_HOSTNAME) String hostname) {
+  public BaragonGraphiteReporterManaged(BaragonConfiguration configuration, MetricRegistry registry, @Named(BaragonServiceModule.BARAGON_SERVICE_LOCAL_HOSTNAME) String hostname) {
     this.graphiteConfiguration = configuration.getGraphiteConfiguration();
     this.registry = registry;
     this.reporter = Optional.absent();
