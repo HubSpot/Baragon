@@ -216,20 +216,15 @@ public class BaragonStateDatastore extends AbstractDataStore {
       String service = entry.getKey();
 
       for (String upstream : entry.getValue()) {
-        if (!upstreamToInfo.containsKey(upstream)) {
-          modifiedServices.add(service);
-        }
-      }
-
-      if (modifiedServices.contains(service)) {
-        continue;
-      }
-
-      for (String upstream : entry.getValue()) {
         if (!serviceToUpstreamInfo.containsKey(entry.getKey())) {
-          serviceToUpstreamInfo.put(entry.getKey(), Lists.newArrayList(upstreamToInfo.get(upstream)));
+          serviceToUpstreamInfo.put(entry.getKey(), new ArrayList<UpstreamInfo>());
+        }
+
+        Optional<UpstreamInfo> upstreamInfo = Optional.fromNullable(upstreamToInfo.get(upstream));
+        if (upstreamInfo.isPresent()) {
+          serviceToUpstreamInfo.get(service).add(upstreamInfo.get());
         } else {
-          serviceToUpstreamInfo.get(entry.getKey()).add(upstreamToInfo.get(upstream));
+          modifiedServices.add(service);
         }
       }
     }
