@@ -1,5 +1,7 @@
 package com.hubspot.baragon.service;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicLong;
@@ -43,6 +45,7 @@ public class BaragonServiceModule extends AbstractModule {
 
   public static final String BARAGON_SERVICE_HTTP_PORT = "baragon.service.http.port";
   public static final String BARAGON_SERVICE_HOSTNAME = "baragon.service.hostname";
+  public static final String BARAGON_SERVICE_LOCAL_HOSTNAME = "baragon.service.local.hostname";
   public static final String BARAGON_SERVICE_HTTP_CLIENT = "baragon.service.http.client";
 
   public static final String BARAGON_MASTER_AUTH_KEY = "baragon.master.auth.key";
@@ -135,6 +138,22 @@ public class BaragonServiceModule extends AbstractModule {
   @Named(BARAGON_SERVICE_HOSTNAME)
   public String providesHostnameProperty(BaragonConfiguration config) throws Exception {
     return Strings.isNullOrEmpty(config.getHostname()) ? JavaUtils.getHostAddress() : config.getHostname();
+  }
+
+  @Provides
+  @Named(BARAGON_SERVICE_LOCAL_HOSTNAME)
+  public String providesLocalHostnameProperty(BaragonConfiguration config) {
+    if (!Strings.isNullOrEmpty(config.getHostname())) {
+      return config.getHostname();
+    }
+
+    try {
+      final InetAddress addr = InetAddress.getLocalHost();
+
+      return addr.getHostName();
+    } catch (UnknownHostException e) {
+      throw new RuntimeException("No local hostname found, unable to start without functioning local networking (or configured hostname)", e);
+    }
   }
 
   @Provides
