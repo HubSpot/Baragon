@@ -37,12 +37,24 @@ public class BaragonGraphiteReporterManaged implements Managed {
     this.reporter = Optional.absent();
   }
 
+  private String buildGraphitePrefix() {
+    if (Strings.isNullOrEmpty(graphiteConfiguration.getPrefix())) {
+      return "";
+    }
+
+    final String trimmedHostname = !Strings.isNullOrEmpty(graphiteConfiguration.getHostnameOmitSuffix()) && hostname.endsWith(graphiteConfiguration.getHostnameOmitSuffix()) ? hostname.substring(0, hostname.length() - graphiteConfiguration.getHostnameOmitSuffix().length()) : hostname;
+
+    return graphiteConfiguration.getPrefix().replace("{hostname}", trimmedHostname);
+  }
+
   @Override
   public void start() throws Exception {
     if (!graphiteConfiguration.isEnabled()) {
       LOG.info("Not reporting data points to graphite.");
       return;
     }
+
+    final String prefix = buildGraphitePrefix();
 
     LOG.info("Reporting data points to graphite server {}:{} every {} seconds with prefix '{}' and predicates '{}'.", graphiteConfiguration.getHostname(),
         graphiteConfiguration.getPort(), graphiteConfiguration.getPeriodSeconds(), graphiteConfiguration.getPrefix(), JavaUtils.COMMA_JOINER.join(graphiteConfiguration.getPredicates()));
@@ -52,7 +64,7 @@ public class BaragonGraphiteReporterManaged implements Managed {
     final GraphiteReporter.Builder reporterBuilder = GraphiteReporter.forRegistry(registry);
 
     if (!Strings.isNullOrEmpty(graphiteConfiguration.getPrefix())) {
-      reporterBuilder.prefixedWith(graphiteConfiguration.getPrefix());
+      reporterBuilder.prefixedWith(prefix);
     }
 
     if (!graphiteConfiguration.getPredicates().isEmpty()) {
