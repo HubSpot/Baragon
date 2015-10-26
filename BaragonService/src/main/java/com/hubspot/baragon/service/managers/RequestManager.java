@@ -300,13 +300,7 @@ public class RequestManager {
 
   private void updateStateDatastore(BaragonRequest request) {
     try {
-      stateDatastore.addService(request.getLoadBalancerService());
-      if (!request.getReplaceUpstreams().isEmpty()) {
-        stateDatastore.setUpstreams(request.getLoadBalancerService().getServiceId(), request.getReplaceUpstreams());
-      } else {
-        stateDatastore.removeUpstreams(request.getLoadBalancerService().getServiceId(), request.getRemoveUpstreams());
-        stateDatastore.addUpstreams(request.getLoadBalancerService().getServiceId(), request.getAddUpstreams());
-      }
+      stateDatastore.updateService(request);
       if (!configuration.isUpdateStateInBackground()) {
         stateDatastore.updateStateNode();
       }
@@ -324,7 +318,7 @@ public class RequestManager {
 
   private void clearBasePathsWithNoUpstreams(BaragonRequest request) {
     try {
-      if (stateDatastore.getUpstreamsMap(request.getLoadBalancerService().getServiceId()).isEmpty()) {
+      if (stateDatastore.getUpstreams(request.getLoadBalancerService().getServiceId()).isEmpty()) {
         for (String loadbalancerGroup : request.getLoadBalancerService().getLoadBalancerGroups()) {
           loadBalancerDatastore.clearBasePath(loadbalancerGroup, request.getLoadBalancerService().getServiceBasePath());
         }

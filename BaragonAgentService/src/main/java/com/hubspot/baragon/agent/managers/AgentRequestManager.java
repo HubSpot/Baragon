@@ -1,8 +1,9 @@
 package com.hubspot.baragon.agent.managers;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -130,7 +131,7 @@ public class AgentRequestManager {
     if (movedOffLoadBalancer(maybeOldService)) {
       update = new ServiceContext(request.getLoadBalancerService(), Collections.<UpstreamInfo>emptyList(), System.currentTimeMillis(), false);
     } else {
-      update = new ServiceContext(maybeOldService.get(), stateDatastore.getUpstreamsMap(maybeOldService.get().getServiceId()).values(), System.currentTimeMillis(), true);
+      update = new ServiceContext(maybeOldService.get(), stateDatastore.getUpstreams(maybeOldService.get().getServiceId()), System.currentTimeMillis(), true);
     }
 
     triggerTesting();
@@ -157,18 +158,22 @@ public class AgentRequestManager {
     } else if (!request.getReplaceUpstreams().isEmpty()) {
       return new ServiceContext(request.getLoadBalancerService(), request.getReplaceUpstreams(), System.currentTimeMillis(), true);
     } else {
-      final Map<String, UpstreamInfo> upstreamsMap = new HashMap<>();
-      upstreamsMap.putAll(stateDatastore.getUpstreamsMap(request.getLoadBalancerService().getServiceId()));
+      List<UpstreamInfo> upstreams = new ArrayList<>();
+      upstreams.addAll(stateDatastore.getUpstreams(request.getLoadBalancerService().getServiceId()));
 
+      List<UpstreamInfo> toRemove = new ArrayList<>();
       for (UpstreamInfo removeUpstreamInfo : request.getRemoveUpstreams()) {
-        upstreamsMap.remove(removeUpstreamInfo.getUpstream());
+        for (UpstreamInfo upstreamInfo : upstreams) {
+          if (upstreamInfo.getUpstream().equals(removeUpstreamInfo.getUpstream())) {
+            toRemove.add(upstreamInfo);
+          }
+        }
       }
 
-      for (UpstreamInfo addUpstreamInfo : request.getAddUpstreams()) {
-        upstreamsMap.put(addUpstreamInfo.getUpstream(), addUpstreamInfo);
-      }
+      upstreams.removeAll(toRemove);
+      upstreams.addAll(request.getAddUpstreams());
 
-      return new ServiceContext(request.getLoadBalancerService(), upstreamsMap.values(), System.currentTimeMillis(), true);
+      return new ServiceContext(request.getLoadBalancerService(), upstreams, System.currentTimeMillis(), true);
     }
   }
 

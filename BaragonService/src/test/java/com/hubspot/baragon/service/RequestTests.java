@@ -141,7 +141,7 @@ public class RequestTests {
 
       assertSuccessfulRequestLifecycle(requestManager, requestWorker, requestId);
 
-      assertEquals(ImmutableSet.of(httpUrlUpstream.getUpstream()), stateDatastore.getUpstreamsMap(serviceId).keySet());
+      assertEquals(ImmutableSet.of(httpUrlUpstream), stateDatastore.getUpstreams(serviceId));
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }

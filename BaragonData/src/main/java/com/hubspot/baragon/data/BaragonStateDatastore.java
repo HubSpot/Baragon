@@ -9,23 +9,23 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import org.apache.curator.framework.CuratorFramework;
+import org.apache.curator.framework.api.transaction.CuratorTransactionFinal;
 import org.apache.curator.utils.ZKPaths;
 import org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codahale.metrics.annotation.Timed;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Function;
 import com.google.common.base.Objects;
 import com.google.common.base.Optional;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.hubspot.baragon.config.ZooKeeperConfiguration;
+import com.hubspot.baragon.models.BaragonRequest;
 import com.hubspot.baragon.models.BaragonService;
 import com.hubspot.baragon.models.BaragonServiceState;
 import com.hubspot.baragon.models.UpstreamInfo;
@@ -57,11 +57,6 @@ public class BaragonStateDatastore extends AbstractDataStore {
   }
 
   @Timed
-  public void addService(BaragonService service) {
-    writeToZk(String.format(SERVICE_FORMAT, service.getServiceId()), service);
-  }
-
-  @Timed
   public boolean serviceExists(String serviceId) {
     return nodeExists(String.format(SERVICE_FORMAT, serviceId));
   }
@@ -86,38 +81,40 @@ public class BaragonStateDatastore extends AbstractDataStore {
   }
 
   @Timed
-  public Map<String, UpstreamInfo> getUpstreamsMap(String serviceId) throws Exception {
+  public Collection<UpstreamInfo> getUpstreams(String serviceId) throws Exception {
     final Collection<String> upstreamNodes = getUpstreamNodes(serviceId);
-    final Collection<String> upstreamPaths = new ArrayList<>(upstreamNodes.size());
-    for (String upstreamNode : upstreamNodes) {
-      upstreamPaths.add(String.format(UPSTREAM_FORMAT, serviceId, upstreamNode));
+    final Collection<UpstreamInfo> upstreams = new ArrayList<>(upstreamNodes.size());
+    for (String node : upstreamNodes) {
+      upstreams.add(UpstreamInfo.fromString(node));
     }
-
-    return Maps.uniqueIndex(zkFetcher.fetchDataInParallel(upstreamPaths, new BaragonDeserializer<>(objectMapper, UpstreamInfo.class)).values(), new UpstreamKeyFunction());
+    return upstreams;
   }
 
   @Timed
-  public void removeUpstreams(String serviceId, Collection<UpstreamInfo> upstreams) {
-    for (UpstreamInfo upstreamInfo : upstreams) {
-      deleteNode(String.format(UPSTREAM_FORMAT, serviceId, sanitizeNodeName(upstreamInfo.getUpstream())));
+  public void updateService(BaragonRequest request) throws Exception {
+    if (!nodeExists(SERVICES_FORMAT)) {
+      createNode(SERVICES_FORMAT);
     }
-  }
 
-  @Timed
-  public void addUpstreams(String serviceId, Collection<UpstreamInfo> upstreams) {
-    for (UpstreamInfo upstreamInfo : upstreams) {
-      writeToZk(String.format(UPSTREAM_FORMAT, serviceId, sanitizeNodeName(upstreamInfo.getUpstream())), upstreamInfo);
-    }
-  }
+    String serviceId = request.getLoadBalancerService().getServiceId();
+    CuratorTransactionFinal transaction = curatorFramework.inTransaction().create().forPath(String.format(SERVICE_FORMAT, serviceId), serialize(request.getLoadBalancerService())).and();
 
-  @Timed
-  public void setUpstreams(String serviceId, Collection<UpstreamInfo> upstreams) throws Exception {
-    for (UpstreamInfo upstreamInfo : getUpstreamsMap(serviceId).values()) {
-      deleteNode(String.format(UPSTREAM_FORMAT, serviceId, sanitizeNodeName(upstreamInfo.getUpstream())));
+    if (!request.getReplaceUpstreams().isEmpty()) {
+      for (UpstreamInfo upstreamInfo : getUpstreams(serviceId)) {
+        transaction.delete().forPath(String.format(UPSTREAM_FORMAT, serviceId, upstreamInfo.toPath())).and();
+      }
+      for (UpstreamInfo upstreamInfo : request.getReplaceUpstreams()) {
+        transaction.create().forPath(String.format(UPSTREAM_FORMAT, serviceId,upstreamInfo.toPath())).and();
+      }
+    } else {
+      for (UpstreamInfo upstreamInfo : request.getRemoveUpstreams()) {
+        transaction.delete().forPath(String.format(UPSTREAM_FORMAT, serviceId, upstreamInfo.toPath())).and();
+      }
+      for (UpstreamInfo upstreamInfo : request.getAddUpstreams()) {
+        transaction.create().forPath(String.format(UPSTREAM_FORMAT, serviceId, upstreamInfo.toPath())).and();
+      }
     }
-    for (UpstreamInfo upstreamInfo : upstreams) {
-      writeToZk(String.format(UPSTREAM_FORMAT, serviceId, sanitizeNodeName(upstreamInfo.getUpstream())), upstreamInfo);
-    }
+    transaction.commit();
   }
 
   @Timed
@@ -194,7 +191,6 @@ public class BaragonStateDatastore extends AbstractDataStore {
     for (final Entry<String, BaragonService> serviceEntry : serviceMap.entrySet()) {
       BaragonService service = serviceEntry.getValue();
       Collection<UpstreamInfo> upstreams = serviceToUpstreamInfoMap.get(serviceEntry.getKey());
-
       serviceStates.add(new BaragonServiceState(service, Objects.firstNonNull(upstreams, Collections.<UpstreamInfo>emptyList())));
     }
 
@@ -203,16 +199,14 @@ public class BaragonStateDatastore extends AbstractDataStore {
 
   private Map<String, Collection<UpstreamInfo>> fetchServiceToUpstreamInfoMap(Collection<String> services) throws Exception {
     Map<String, Collection<String>> serviceToUpstreams = zkFetcher.fetchChildrenInParallel(services);
-    Map<String, UpstreamInfo> upstreamToInfo = zkFetcher.fetchDataInParallel(upstreamPaths(serviceToUpstreams), new BaragonDeserializer<>(objectMapper, UpstreamInfo.class));
-
     Map<String, Collection<UpstreamInfo>> serviceToUpstreamInfo = new HashMap<>(services.size());
 
     for (Entry<String, Collection<String>> entry : serviceToUpstreams.entrySet()) {
       for (String upstream : entry.getValue()) {
         if (!serviceToUpstreamInfo.containsKey(entry.getKey())) {
-          serviceToUpstreamInfo.put(entry.getKey(), Lists.<UpstreamInfo>newArrayList(upstreamToInfo.get(upstream)));
+          serviceToUpstreamInfo.put(entry.getKey(), Lists.newArrayList(UpstreamInfo.fromString(upstream)));
         } else {
-          serviceToUpstreamInfo.get(entry.getKey()).add(upstreamToInfo.get(upstream));
+          serviceToUpstreamInfo.get(entry.getKey()).add(UpstreamInfo.fromString(upstream));
         }
       }
     }
@@ -220,14 +214,8 @@ public class BaragonStateDatastore extends AbstractDataStore {
     return serviceToUpstreamInfo;
   }
 
-  private Collection<String> upstreamPaths(Map<String, Collection<String>> serviceToUpstreams) {
-    Collection<String> allUpstreamPaths = new ArrayList<>();
-    for (Entry<String, Collection<String>> entry : serviceToUpstreams.entrySet()) {
-      for (String upstream : entry.getValue()) {
-        allUpstreamPaths.add(String.format(UPSTREAM_FORMAT, entry.getKey(), upstream));
-      }
-    }
-    return allUpstreamPaths;
+  public Optional<UpstreamInfo> getUpstreamInfo(String serviceId, String upstream) {
+    return readFromZk(String.format(UPSTREAM_FORMAT,serviceId, upstream), UpstreamInfo.class);
   }
 
   public static class BaragonDeserializer<T> implements Function<byte[], T> {
@@ -248,13 +236,4 @@ public class BaragonStateDatastore extends AbstractDataStore {
       }
     }
   }
-
-  private static class UpstreamKeyFunction implements Function<UpstreamInfo, String> {
-    @Override
-    public String apply(UpstreamInfo input) {
-      return input.getUpstream();
-    }
-  }
-
-  private static final TypeReference<Collection<BaragonServiceState>> BARAGON_SERVICE_STATE_COLLECTION = new TypeReference<Collection<BaragonServiceState>>() {};
 }

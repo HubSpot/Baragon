@@ -3,7 +3,9 @@ package com.hubspot.baragon.models;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.base.Charsets;
 import com.google.common.base.Optional;
+import com.google.common.io.BaseEncoding;
 
 @JsonIgnoreProperties( ignoreUnknown = true )
 public class UpstreamInfo {
@@ -13,7 +15,19 @@ public class UpstreamInfo {
 
   @JsonCreator
   public static UpstreamInfo fromString(String value) {
-    return new UpstreamInfo(value, Optional.<String>absent(), Optional.<String>absent());
+    String[] split = value.split("\\|", -1);
+    if (split[0].contains(".") && split.length == 1) {
+      return fromUnEncodedString(value);
+    } else {
+      String upstream = new String(BaseEncoding.base64Url().decode(split[0]), Charsets.UTF_8);
+      Optional<String> requestId = split.length > 1 ? Optional.of(split[1]) : Optional.<String>absent();
+      Optional<String> rackId = split.length > 2 ? Optional.of(split[2]) : Optional.<String>absent();
+      return new UpstreamInfo(upstream, requestId, rackId);
+    }
+  }
+
+  public static UpstreamInfo fromUnEncodedString(String upstream) {
+    return new UpstreamInfo(upstream, Optional.<String>absent(), Optional.<String>absent());
   }
 
   @JsonCreator
@@ -40,6 +54,21 @@ public class UpstreamInfo {
   @Override
   public String toString() {
     return upstream;
+  }
+
+  public String toPath() {
+    String upstreamInfo = sanitizeUpstream(upstream);
+    if(requestId.isPresent()) {
+      upstreamInfo = String.format("%s|%s", upstreamInfo, requestId.get());
+    }
+    if (rackId.isPresent()) {
+      upstreamInfo = String.format("%s|%s", upstreamInfo, rackId.get());
+    }
+    return upstreamInfo;
+  }
+
+  protected String sanitizeUpstream(String name) {
+    return BaseEncoding.base64Url().encode(name.getBytes(Charsets.UTF_8));
   }
 
   @Override
