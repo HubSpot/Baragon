@@ -92,37 +92,31 @@ public class BaragonStateDatastore extends AbstractDataStore {
 
   @Timed
   public void updateService(BaragonRequest request) throws Exception {
-    String serviceId = request.getLoadBalancerService().getServiceId();
-
-    if (!request.getReplaceUpstreams().isEmpty()) {
-      for (UpstreamInfo upstreamInfo : getUpstreams(serviceId)) {
-        deleteNode(String.format(UPSTREAM_FORMAT, serviceId, upstreamInfo.toPath()));
-      }
-      for (UpstreamInfo upstreamInfo : request.getReplaceUpstreams()) {
-        createNode(String.format(UPSTREAM_FORMAT, serviceId,upstreamInfo.toPath()));
-      }
-    } else {
-      for (UpstreamInfo upstreamInfo : request.getRemoveUpstreams()) {
-        deleteNode(String.format(UPSTREAM_FORMAT, serviceId, upstreamInfo.toPath()));
-      }
-      for (UpstreamInfo upstreamInfo : request.getAddUpstreams()) {
-        createNode(String.format(UPSTREAM_FORMAT, serviceId, upstreamInfo.toPath()));
-      }
-    }
-
-/*    if (!nodeExists(SERVICES_FORMAT)) {
+    if (!nodeExists(SERVICES_FORMAT)) {
       createNode(SERVICES_FORMAT);
     }
 
     String serviceId = request.getLoadBalancerService().getServiceId();
-    CuratorTransactionFinal transaction = curatorFramework.inTransaction().create().forPath(String.format(SERVICE_FORMAT, serviceId), serialize(request.getLoadBalancerService())).and();
+    String servicePath = String.format(SERVICE_FORMAT, serviceId);
+    CuratorTransactionFinal transaction;
+    if (nodeExists(servicePath)) {
+      transaction = curatorFramework.inTransaction().setData().forPath(String.format(SERVICE_FORMAT, serviceId), serialize(request.getLoadBalancerService())).and();
+    } else {
+      transaction = curatorFramework.inTransaction().create().forPath(String.format(SERVICE_FORMAT, serviceId), serialize(request.getLoadBalancerService())).and();
+    }
 
     if (!request.getReplaceUpstreams().isEmpty()) {
       for (UpstreamInfo upstreamInfo : getUpstreams(serviceId)) {
-        transaction.delete().forPath(String.format(UPSTREAM_FORMAT, serviceId, upstreamInfo.toPath())).and();
+        String removePath = String.format(UPSTREAM_FORMAT, serviceId, upstreamInfo.toPath());
+        if (nodeExists(removePath)) {
+          transaction.delete().forPath(removePath).and();
+        }
       }
       for (UpstreamInfo upstreamInfo : request.getReplaceUpstreams()) {
-        transaction.create().forPath(String.format(UPSTREAM_FORMAT, serviceId,upstreamInfo.toPath())).and();
+        String addPath = String.format(UPSTREAM_FORMAT, serviceId, upstreamInfo.toPath());
+        if (!nodeExists(addPath)) {
+          transaction.create().forPath(addPath).and();
+        }
       }
     } else {
       for (UpstreamInfo upstreamInfo : request.getRemoveUpstreams()) {
@@ -138,7 +132,7 @@ public class BaragonStateDatastore extends AbstractDataStore {
         }
       }
     }
-    transaction.commit();*/
+    transaction.commit();
   }
 
   @Timed
