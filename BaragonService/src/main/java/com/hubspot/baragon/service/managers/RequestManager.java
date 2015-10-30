@@ -244,17 +244,17 @@ public class RequestManager {
     requestDatastore.deleteRequest(requestId);
   }
 
-  public synchronized void commitRequest(BaragonRequest request) {
+  public synchronized void commitRequest(BaragonRequest request) throws Exception {
     RequestAction action = request.getAction().or(RequestAction.UPDATE);
     Optional<BaragonService> maybeOriginalService = getOriginalService(request);
 
     switch(action) {
       case UPDATE:
       case REVERT:
+        updateStateDatastore(request);
         clearChangedBasePaths(request, maybeOriginalService);
         clearBasePathsFromUnusedLbs(request, maybeOriginalService);
         removeOldService(request, maybeOriginalService);
-        updateStateDatastore(request);
         clearBasePathsWithNoUpstreams(request);
         break;
       case DELETE:
@@ -298,9 +298,9 @@ public class RequestManager {
     stateDatastore.incrementStateVersion();
   }
 
-  private void updateStateDatastore(BaragonRequest request) {
+  private void updateStateDatastore(BaragonRequest request) throws Exception {
+    stateDatastore.updateService(request);
     try {
-      stateDatastore.updateService(request);
       if (!configuration.isUpdateStateInBackground()) {
         stateDatastore.updateStateNode();
       }
