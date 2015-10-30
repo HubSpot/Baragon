@@ -92,7 +92,25 @@ public class BaragonStateDatastore extends AbstractDataStore {
 
   @Timed
   public void updateService(BaragonRequest request) throws Exception {
-    if (!nodeExists(SERVICES_FORMAT)) {
+    String serviceId = request.getLoadBalancerService().getServiceId();
+
+    if (!request.getReplaceUpstreams().isEmpty()) {
+      for (UpstreamInfo upstreamInfo : getUpstreams(serviceId)) {
+        deleteNode(String.format(UPSTREAM_FORMAT, serviceId, upstreamInfo.toPath()));
+      }
+      for (UpstreamInfo upstreamInfo : request.getReplaceUpstreams()) {
+        createNode(String.format(UPSTREAM_FORMAT, serviceId,upstreamInfo.toPath()));
+      }
+    } else {
+      for (UpstreamInfo upstreamInfo : request.getRemoveUpstreams()) {
+        deleteNode(String.format(UPSTREAM_FORMAT, serviceId, upstreamInfo.toPath()));
+      }
+      for (UpstreamInfo upstreamInfo : request.getAddUpstreams()) {
+        createNode(String.format(UPSTREAM_FORMAT, serviceId, upstreamInfo.toPath()));
+      }
+    }
+
+/*    if (!nodeExists(SERVICES_FORMAT)) {
       createNode(SERVICES_FORMAT);
     }
 
@@ -120,7 +138,7 @@ public class BaragonStateDatastore extends AbstractDataStore {
         }
       }
     }
-    transaction.commit();
+    transaction.commit();*/
   }
 
   @Timed
