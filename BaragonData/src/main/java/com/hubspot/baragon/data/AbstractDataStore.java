@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
+import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.api.PathAndBytesable;
@@ -149,6 +150,13 @@ public abstract class AbstractDataStore {
   protected <T> T deserialize(byte[] data, Class<T> klass) {
     try {
       return objectMapper.readValue(data, klass);
+    } catch (JsonParseException jpe) {
+      try {
+        LOG.error(String.format("Invalid Json: %s", objectMapper.readValue(data, String.class)));
+      } catch (Exception e) {
+        LOG.error("Could not get raw json string", e);
+      }
+      throw Throwables.propagate(jpe);
     } catch (IOException e) {
       throw Throwables.propagate(e);
     }
