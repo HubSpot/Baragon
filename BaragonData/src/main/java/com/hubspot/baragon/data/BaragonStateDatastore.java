@@ -96,6 +96,8 @@ public class BaragonStateDatastore extends AbstractDataStore {
       createNode(SERVICES_FORMAT);
     }
 
+    Collection<UpstreamInfo> currentUpstreams = getUpstreams(request.getLoadBalancerService().getServiceId());
+
     String serviceId = request.getLoadBalancerService().getServiceId();
     String servicePath = String.format(SERVICE_FORMAT, serviceId);
     CuratorTransactionFinal transaction;
@@ -107,7 +109,7 @@ public class BaragonStateDatastore extends AbstractDataStore {
 
     if (!request.getReplaceUpstreams().isEmpty()) {
       for (UpstreamInfo upstreamInfo : getUpstreams(serviceId)) {
-        String removePath = String.format(UPSTREAM_FORMAT, serviceId, upstreamInfo.toPath());
+        String removePath = String.format(UPSTREAM_FORMAT, serviceId, getRemovePath(currentUpstreams, upstreamInfo));
         if (nodeExists(removePath)) {
           transaction.delete().forPath(removePath).and();
         }
@@ -120,7 +122,7 @@ public class BaragonStateDatastore extends AbstractDataStore {
       }
     } else {
       for (UpstreamInfo upstreamInfo : request.getRemoveUpstreams()) {
-        String removePath = String.format(UPSTREAM_FORMAT, serviceId, upstreamInfo.toPath());
+        String removePath = String.format(UPSTREAM_FORMAT, serviceId, getRemovePath(currentUpstreams, upstreamInfo));
         if (nodeExists(removePath)) {
           transaction.delete().forPath(removePath).and();
         }
@@ -133,6 +135,15 @@ public class BaragonStateDatastore extends AbstractDataStore {
       }
     }
     transaction.commit();
+  }
+
+  private String getRemovePath(Collection<UpstreamInfo> currentUpstreams, UpstreamInfo toRemove) {
+    for (UpstreamInfo upstreamInfo : currentUpstreams) {
+      if (upstreamInfo.getUpstream().equals(toRemove.getUpstream())) {
+        return upstreamInfo.toPath();
+      }
+    }
+    return toRemove.toPath();
   }
 
   @Timed
