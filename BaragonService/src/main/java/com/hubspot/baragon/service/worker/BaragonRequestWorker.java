@@ -22,6 +22,8 @@ import com.hubspot.baragon.models.RequestAction;
 import com.hubspot.baragon.service.managers.AgentManager;
 import com.hubspot.baragon.service.managers.RequestManager;
 import com.hubspot.baragon.utils.JavaUtils;
+
+import org.apache.zookeeper.KeeperException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -109,6 +111,11 @@ public class BaragonRequestWorker implements Runnable {
               requestManager.setRequestMessage(request.getLoadBalancerRequestId(), String.format("%s request succeeded! Added upstreams: %s, Removed upstreams: %s", request.getAction().or(RequestAction.UPDATE), request.getAddUpstreams(), request.getRemoveUpstreams()));
               requestManager.commitRequest(request);
               return InternalRequestStates.COMPLETED;
+            } catch (KeeperException ke) {
+              String message = String.format("Caught zookeeper error for path %s: %s", ke.getPath(), ke);
+              LOG.error(message);
+              requestManager.setRequestMessage(request.getLoadBalancerRequestId(), message);
+              return InternalRequestStates.FAILED_SEND_REVERT_REQUESTS;
             } catch (Exception e) {
               LOG.warn(String.format("Request %s was successful, but failed to commit!", request.getLoadBalancerRequestId()), e);
               return InternalRequestStates.FAILED_SEND_REVERT_REQUESTS;
