@@ -119,7 +119,7 @@ public class BaragonStateDatastore extends AbstractDataStore {
         if (!nodeExists(addPath)) {
           Optional<String> matchingUpstreamPath = matchingUpstreamPath(currentUpstreams, upstreamInfo);
           if (matchingUpstreamPath.isPresent()) {
-            transaction.delete().forPath(matchingUpstreamPath.get());
+            transaction.delete().forPath(String.format(UPSTREAM_FORMAT, serviceId, matchingUpstreamPath.get()));
           }
           transaction.create().forPath(addPath).and();
         }
@@ -136,7 +136,7 @@ public class BaragonStateDatastore extends AbstractDataStore {
         if (!nodeExists(addPath)) {
           Optional<String> matchingUpstreamPath = matchingUpstreamPath(currentUpstreams, upstreamInfo);
           if (matchingUpstreamPath.isPresent()) {
-            transaction.delete().forPath(matchingUpstreamPath.get());
+            transaction.delete().forPath(String.format(UPSTREAM_FORMAT, serviceId, matchingUpstreamPath.get()));
           }
           transaction.create().forPath(addPath).and();
         }
