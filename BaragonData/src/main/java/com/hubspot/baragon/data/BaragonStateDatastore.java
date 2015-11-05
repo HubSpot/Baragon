@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -108,9 +109,11 @@ public class BaragonStateDatastore extends AbstractDataStore {
     }
 
     if (!request.getReplaceUpstreams().isEmpty()) {
+      List<String> pathsToDelete = new ArrayList<>();
       for (UpstreamInfo upstreamInfo : getUpstreams(serviceId)) {
         String removePath = String.format(UPSTREAM_FORMAT, serviceId, getRemovePath(currentUpstreams, upstreamInfo));
         if (nodeExists(removePath)) {
+          pathsToDelete.add(removePath);
           transaction.delete().forPath(removePath).and();
         }
       }
@@ -120,7 +123,7 @@ public class BaragonStateDatastore extends AbstractDataStore {
           Optional<String> matchingUpstreamPath = matchingUpstreamPath(currentUpstreams, upstreamInfo);
           if (matchingUpstreamPath.isPresent()) {
             String matchingPath = String.format(UPSTREAM_FORMAT, serviceId, matchingUpstreamPath.get());
-            if (nodeExists(matchingPath)) {
+            if (nodeExists(matchingPath) && !pathsToDelete.contains(matchingPath)) {
               transaction.delete().forPath(matchingPath);
             }
           }
@@ -128,9 +131,11 @@ public class BaragonStateDatastore extends AbstractDataStore {
         }
       }
     } else {
+      List<String> pathsToDelete = new ArrayList<>();
       for (UpstreamInfo upstreamInfo : request.getRemoveUpstreams()) {
         String removePath = String.format(UPSTREAM_FORMAT, serviceId, getRemovePath(currentUpstreams, upstreamInfo));
         if (nodeExists(removePath)) {
+          pathsToDelete.add(removePath);
           transaction.delete().forPath(removePath).and();
         }
       }
@@ -140,7 +145,7 @@ public class BaragonStateDatastore extends AbstractDataStore {
           Optional<String> matchingUpstreamPath = matchingUpstreamPath(currentUpstreams, upstreamInfo);
           if (matchingUpstreamPath.isPresent()) {
             String matchingPath = String.format(UPSTREAM_FORMAT, serviceId, matchingUpstreamPath.get());
-            if (nodeExists(matchingPath)) {
+            if (nodeExists(matchingPath) && !pathsToDelete.contains(matchingPath)) {
               transaction.delete().forPath(matchingPath);
             }
           }
