@@ -108,8 +108,8 @@ public class BaragonStateDatastore extends AbstractDataStore {
       transaction = curatorFramework.inTransaction().create().forPath(servicePath, serialize(request.getLoadBalancerService())).and();
     }
 
+    List<String> pathsToDelete = new ArrayList<>();
     if (!request.getReplaceUpstreams().isEmpty()) {
-      List<String> pathsToDelete = new ArrayList<>();
       for (UpstreamInfo upstreamInfo : getUpstreams(serviceId)) {
         String removePath = String.format(UPSTREAM_FORMAT, serviceId, getRemovePath(currentUpstreams, upstreamInfo));
         if (nodeExists(removePath)) {
@@ -119,19 +119,19 @@ public class BaragonStateDatastore extends AbstractDataStore {
       }
       for (UpstreamInfo upstreamInfo : request.getReplaceUpstreams()) {
         String addPath = String.format(UPSTREAM_FORMAT, serviceId, upstreamInfo.toPath());
-        if (!nodeExists(addPath)) {
-          Optional<String> matchingUpstreamPath = matchingUpstreamPath(currentUpstreams, upstreamInfo);
-          if (matchingUpstreamPath.isPresent()) {
-            String matchingPath = String.format(UPSTREAM_FORMAT, serviceId, matchingUpstreamPath.get());
-            if (nodeExists(matchingPath) && !pathsToDelete.contains(matchingPath)) {
-              transaction.delete().forPath(matchingPath);
-            }
+        List<String> matchingUpstreamPaths = matchingUpstreamPaths(currentUpstreams, upstreamInfo);
+        for (String matchingPath : matchingUpstreamPaths) {
+          String fullPath = String.format(UPSTREAM_FORMAT, serviceId, matchingPath);
+          if (nodeExists(fullPath) && !pathsToDelete.contains(fullPath)) {
+            pathsToDelete.add(fullPath);
+            transaction.delete().forPath(fullPath);
           }
+        }
+        if (!nodeExists(addPath)) {
           transaction.create().forPath(addPath).and();
         }
       }
     } else {
-      List<String> pathsToDelete = new ArrayList<>();
       for (UpstreamInfo upstreamInfo : request.getRemoveUpstreams()) {
         String removePath = String.format(UPSTREAM_FORMAT, serviceId, getRemovePath(currentUpstreams, upstreamInfo));
         if (nodeExists(removePath)) {
@@ -141,14 +141,15 @@ public class BaragonStateDatastore extends AbstractDataStore {
       }
       for (UpstreamInfo upstreamInfo : request.getAddUpstreams()) {
         String addPath = String.format(UPSTREAM_FORMAT, serviceId, upstreamInfo.toPath());
-        if (!nodeExists(addPath)) {
-          Optional<String> matchingUpstreamPath = matchingUpstreamPath(currentUpstreams, upstreamInfo);
-          if (matchingUpstreamPath.isPresent()) {
-            String matchingPath = String.format(UPSTREAM_FORMAT, serviceId, matchingUpstreamPath.get());
-            if (nodeExists(matchingPath) && !pathsToDelete.contains(matchingPath)) {
-              transaction.delete().forPath(matchingPath);
-            }
+        List<String> matchingUpstreamPaths = matchingUpstreamPaths(currentUpstreams, upstreamInfo);
+        for (String matchingPath : matchingUpstreamPaths) {
+          String fullPath = String.format(UPSTREAM_FORMAT, serviceId, matchingPath);
+          if (nodeExists(fullPath) && !pathsToDelete.contains(fullPath)) {
+            pathsToDelete.add(fullPath);
+            transaction.delete().forPath(fullPath);
           }
+        }
+        if (!nodeExists(addPath)) {
           transaction.create().forPath(addPath).and();
         }
       }
@@ -156,13 +157,14 @@ public class BaragonStateDatastore extends AbstractDataStore {
     transaction.commit();
   }
 
-  private Optional<String> matchingUpstreamPath(Collection<UpstreamInfo> currentUpstreams, UpstreamInfo toAdd) {
+  private List<String> matchingUpstreamPaths(Collection<UpstreamInfo> currentUpstreams, UpstreamInfo toAdd) {
+    List<String> matchingPaths = new ArrayList<>();
     for (UpstreamInfo upstreamInfo : currentUpstreams) {
       if (upstreamInfo.getUpstream().equals(toAdd.getUpstream())) {
-        return Optional.of(upstreamInfo.toPath());
+        matchingPaths.add(upstreamInfo.getOriginalPath().or(upstreamInfo.getUpstream()));
       }
     }
-    return Optional.absent();
+    return matchingPaths;
   }
 
   private String getRemovePath(Collection<UpstreamInfo> currentUpstreams, UpstreamInfo toRemove) {
