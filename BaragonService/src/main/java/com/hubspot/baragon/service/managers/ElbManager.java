@@ -19,6 +19,7 @@ import com.amazonaws.services.elasticloadbalancing.model.InstanceState;
 import com.amazonaws.services.elasticloadbalancing.model.LoadBalancerDescription;
 import com.amazonaws.services.elasticloadbalancing.model.RegisterInstancesWithLoadBalancerRequest;
 import com.google.common.base.Optional;
+import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
@@ -97,7 +98,8 @@ public class ElbManager {
             elbClient.registerInstancesWithLoadBalancer(request);
             LOG.info(String.format("Registered instances %s with ELB %s", request.getInstances(), request.getLoadBalancerName()));
           } catch (AmazonClientException e) {
-            LOG.error("Could not register %s with elb %s due to error %s", request.getInstances(), request.getLoadBalancerName(), e);
+            LOG.error(String.format("Could not register %s with elb %s due to error %s", request.getInstances(), request.getLoadBalancerName(), e.getMessage()), e);
+            Throwables.propagate(e);
           }
         } else {
           LOG.debug(String.format("Agent %s already registered with ELB %s", agent.getAgentId(), elbName));
