@@ -66,19 +66,15 @@ public class ElbManager {
     return false;
   }
 
-  public void attemptRemoveAgent(BaragonAgentMetadata agent, Optional<BaragonGroup> group, String groupName) {
+  public void attemptRemoveAgent(BaragonAgentMetadata agent, Optional<BaragonGroup> group, String groupName) throws AmazonClientException {
     if (elbEnabledAgent(agent, group, groupName)) {
       for (String elbName : group.get().getSources()) {
         Instance instance = new Instance(agent.getEc2().getInstanceId().get());
         LoadBalancerDescription elb = elbByName(elbName);
         if (elb.getInstances().contains(instance)) {
           DeregisterInstancesFromLoadBalancerRequest request = new DeregisterInstancesFromLoadBalancerRequest(elbName, Arrays.asList(instance));
-          try {
-            elbClient.deregisterInstancesFromLoadBalancer(request);
-            LOG.info(String.format("Deregistered instance %s from ELB %s", request.getInstances(), request.getLoadBalancerName()));
-          } catch (AmazonClientException e) {
-            LOG.error("Could not register %s with elb %s due to error %s", request.getInstances(), request.getLoadBalancerName(), e);
-          }
+          elbClient.deregisterInstancesFromLoadBalancer(request);
+          LOG.info(String.format("Deregistered instance %s from ELB %s", request.getInstances(), request.getLoadBalancerName()));
         } else {
           LOG.debug(String.format("Agent %s already registered with ELB %s", agent.getAgentId(), elbName));
         }
@@ -86,7 +82,7 @@ public class ElbManager {
     }
   }
 
-  public void attemptAddAgent(BaragonAgentMetadata agent, Optional<BaragonGroup> group, String groupName) {
+  public void attemptAddAgent(BaragonAgentMetadata agent, Optional<BaragonGroup> group, String groupName) throws AmazonClientException {
     if (elbEnabledAgent(agent, group, groupName)) {
       for (String elbName : group.get().getSources()) {
         Instance instance = new Instance(agent.getEc2().getInstanceId().get());
@@ -94,13 +90,8 @@ public class ElbManager {
         if (!elb.getInstances().contains(instance)) {
           checkAZEnabled(agent, elbName, elb);
           RegisterInstancesWithLoadBalancerRequest request = new RegisterInstancesWithLoadBalancerRequest(elbName, Arrays.asList(instance));
-          try {
-            elbClient.registerInstancesWithLoadBalancer(request);
-            LOG.info(String.format("Registered instances %s with ELB %s", request.getInstances(), request.getLoadBalancerName()));
-          } catch (AmazonClientException e) {
-            LOG.error(String.format("Could not register %s with elb %s due to error %s", request.getInstances(), request.getLoadBalancerName(), e.getMessage()), e);
-            Throwables.propagate(e);
-          }
+          elbClient.registerInstancesWithLoadBalancer(request);
+          LOG.info(String.format("Registered instances %s with ELB %s", request.getInstances(), request.getLoadBalancerName()));
         } else {
           LOG.debug(String.format("Agent %s already registered with ELB %s", agent.getAgentId(), elbName));
         }

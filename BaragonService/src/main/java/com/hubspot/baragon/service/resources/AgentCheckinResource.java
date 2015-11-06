@@ -9,6 +9,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
 
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
@@ -46,7 +47,7 @@ public class AgentCheckinResource {
       }
     } catch (Exception e) {
       LOG.error("Could not register agent startup", e);
-      return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
+      return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
     }
     return Response.ok().build();
   }
@@ -61,7 +62,7 @@ public class AgentCheckinResource {
       }
     } catch (Exception e) {
       LOG.error("Could not register agent shutdown", e);
-      return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
+      return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
     }
     return Response.ok().build();
   }
