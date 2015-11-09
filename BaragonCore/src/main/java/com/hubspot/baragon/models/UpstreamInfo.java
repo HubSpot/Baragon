@@ -14,10 +14,10 @@ import com.google.common.io.BaseEncoding;
 public class UpstreamInfo {
   private final String upstream;
   @Size(max=250)
-  @Pattern(regexp = "[^\\s/|]+", message = "cannot contain whitespace, '/', or '|'", flags = Pattern.Flag.MULTILINE)
+  @Pattern(regexp = "[^\\s/|]+", message = "cannot contain whitespace, '/', or '|'")
   private final Optional<String> requestId;
   @Size(max=100)
-  @Pattern(regexp = "[^\\s/|]+", message = "cannot contain whitespace, '/', or '|'", flags = Pattern.Flag.MULTILINE)
+  @Pattern(regexp = "[^\\s/|]+", message = "cannot contain whitespace, '/', or '|'")
   private final Optional<String> rackId;
   private final Optional<String> originalPath;
 
