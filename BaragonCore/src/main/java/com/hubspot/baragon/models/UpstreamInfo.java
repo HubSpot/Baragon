@@ -11,7 +11,7 @@ import com.google.common.base.Optional;
 import com.google.common.base.Strings;
 import com.google.common.io.BaseEncoding;
 
-@JsonIgnoreProperties( ignoreUnknown = true )
+@JsonIgnoreProperties( value = "originalPath", ignoreUnknown = true )
 public class UpstreamInfo {
   private final String upstream;
 
