@@ -16,11 +16,11 @@ public class UpstreamInfo {
   private final String upstream;
 
   @Size(max=250)
-  @Pattern(regexp = "[^\\s/|]+", message = "cannot contain whitespace, '/', or '|'")
+  @Pattern(regexp = "^$|[^\\s/|]+", message = "cannot contain whitespace, '/', or '|'")
   private final String requestId;
 
   @Size(max=100)
-  @Pattern(regexp = "[^\\s/|]+", message = "cannot contain whitespace, '/', or '|'")
+  @Pattern(regexp = "^$|[^\\s|]+", message = "cannot contain whitespace, '/', or '|'")
   private final String rackId;
   private final Optional<String> originalPath;
 
