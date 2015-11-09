@@ -152,6 +152,10 @@
       <artifactId>annotations</artifactId>
     </dependency>
     <dependency>
+      <groupId>org.apache.zookeeper</groupId>
+      <artifactId>zookeeper</artifactId>
+    </dependency>
+    <dependency>
       <groupId>org.jukito</groupId>
       <artifactId>jukito</artifactId>
       <scope>test</scope>

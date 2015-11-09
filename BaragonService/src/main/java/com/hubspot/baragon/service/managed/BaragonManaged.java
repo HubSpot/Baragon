@@ -11,6 +11,7 @@ import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import com.hubspot.baragon.BaragonDataModule;
 import com.hubspot.baragon.data.BaragonAuthDatastore;
+import com.hubspot.baragon.migrations.ZkDataMigrationRunner;
 import com.hubspot.baragon.models.BaragonAuthKey;
 import com.hubspot.baragon.service.BaragonServiceModule;
 import com.hubspot.baragon.service.config.BaragonConfiguration;

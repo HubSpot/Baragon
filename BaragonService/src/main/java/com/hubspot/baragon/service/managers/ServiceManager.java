@@ -33,7 +33,7 @@ public class ServiceManager {
     }
 
     try {
-      return Optional.of(new BaragonServiceState(maybeServiceInfo.get(), stateDatastore.getUpstreamsMap(serviceId).values()));
+      return Optional.of(new BaragonServiceState(maybeServiceInfo.get(), stateDatastore.getUpstreams(serviceId)));
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -70,7 +70,7 @@ public class ServiceManager {
   private BaragonRequest buildRemoveRequest(BaragonService service, String requestId, boolean noValidate, boolean noReload) throws Exception {
     List<UpstreamInfo> empty = Collections.emptyList();
     List<UpstreamInfo> remove;
-    remove =  new ArrayList<>(stateDatastore.getUpstreamsMap(service.getServiceId()).values());
+    remove =  new ArrayList<>(stateDatastore.getUpstreams(service.getServiceId()));
     return new BaragonRequest(requestId, service, empty, remove, empty, Optional.<String>absent(), Optional.of(RequestAction.DELETE), noValidate, noReload);
   }
 

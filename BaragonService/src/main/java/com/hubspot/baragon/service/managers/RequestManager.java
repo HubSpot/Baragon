@@ -244,17 +244,17 @@ public class RequestManager {
     requestDatastore.deleteRequest(requestId);
   }
 
-  public synchronized void commitRequest(BaragonRequest request) {
+  public synchronized void commitRequest(BaragonRequest request) throws Exception {
     RequestAction action = request.getAction().or(RequestAction.UPDATE);
     Optional<BaragonService> maybeOriginalService = getOriginalService(request);
 
     switch(action) {
       case UPDATE:
       case REVERT:
+        updateStateDatastore(request);
         clearChangedBasePaths(request, maybeOriginalService);
         clearBasePathsFromUnusedLbs(request, maybeOriginalService);
         removeOldService(request, maybeOriginalService);
-        updateStateDatastore(request);
         clearBasePathsWithNoUpstreams(request);
         break;
       case DELETE:
@@ -298,15 +298,9 @@ public class RequestManager {
     stateDatastore.incrementStateVersion();
   }
 
-  private void updateStateDatastore(BaragonRequest request) {
+  private void updateStateDatastore(BaragonRequest request) throws Exception {
+    stateDatastore.updateService(request);
     try {
-      stateDatastore.addService(request.getLoadBalancerService());
-      if (!request.getReplaceUpstreams().isEmpty()) {
-        stateDatastore.setUpstreams(request.getLoadBalancerService().getServiceId(), request.getReplaceUpstreams());
-      } else {
-        stateDatastore.removeUpstreams(request.getLoadBalancerService().getServiceId(), request.getRemoveUpstreams());
-        stateDatastore.addUpstreams(request.getLoadBalancerService().getServiceId(), request.getAddUpstreams());
-      }
       if (!configuration.isUpdateStateInBackground()) {
         stateDatastore.updateStateNode();
       }
@@ -324,7 +318,7 @@ public class RequestManager {
 
   private void clearBasePathsWithNoUpstreams(BaragonRequest request) {
     try {
-      if (stateDatastore.getUpstreamsMap(request.getLoadBalancerService().getServiceId()).isEmpty()) {
+      if (stateDatastore.getUpstreams(request.getLoadBalancerService().getServiceId()).isEmpty()) {
         for (String loadbalancerGroup : request.getLoadBalancerService().getLoadBalancerGroups()) {
           loadBalancerDatastore.clearBasePath(loadbalancerGroup, request.getLoadBalancerService().getServiceBasePath());
         }

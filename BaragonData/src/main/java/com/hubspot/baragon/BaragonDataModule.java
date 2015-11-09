@@ -14,9 +14,12 @@ import com.google.common.base.Optional;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
+import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Named;
 import com.hubspot.baragon.config.AuthConfiguration;
 import com.hubspot.baragon.data.BaragonAuthDatastore;
+import com.hubspot.baragon.migrations.UpstreamsMigration;
+import com.hubspot.baragon.migrations.ZkDataMigration;
 import com.hubspot.baragon.models.BaragonAuthKey;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.cache.PathChildrenCache;
@@ -44,6 +47,8 @@ public class BaragonDataModule extends AbstractModule {
 
   @Override
   protected void configure() {
+    Multibinder<ZkDataMigration> zkMigrationBinder = Multibinder.newSetBinder(binder(), ZkDataMigration.class);
+    zkMigrationBinder.addBinding().to(UpstreamsMigration.class);
   }
 
   @Singleton
