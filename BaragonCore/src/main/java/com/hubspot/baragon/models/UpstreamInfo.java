@@ -4,6 +4,7 @@ import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Charsets;
@@ -11,7 +12,7 @@ import com.google.common.base.Optional;
 import com.google.common.base.Strings;
 import com.google.common.io.BaseEncoding;
 
-@JsonIgnoreProperties( value = "originalPath", ignoreUnknown = true )
+@JsonIgnoreProperties( ignoreUnknown = true )
 public class UpstreamInfo {
   private final String upstream;
 
@@ -68,6 +69,7 @@ public class UpstreamInfo {
     return Strings.isNullOrEmpty(rackId) ? Optional.<String>absent() : Optional.of(rackId);
   }
 
+  @JsonIgnore
   public Optional<String> getOriginalPath() {
     return originalPath;
   }
