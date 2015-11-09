@@ -25,15 +25,18 @@ public class BaragonRequest {
   private final BaragonService loadBalancerService;
 
   @NotNull
+  @Valid
   private final List<UpstreamInfo> addUpstreams;
 
   @NotNull
+  @Valid
   private final List<UpstreamInfo> removeUpstreams;
 
   private final Optional<String> replaceServiceId;
 
   private final Optional<RequestAction> action;
 
+  @Valid
   private final List<UpstreamInfo> replaceUpstreams;
 
   @NotNull

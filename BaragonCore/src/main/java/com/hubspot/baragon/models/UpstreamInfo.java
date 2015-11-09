@@ -8,17 +8,20 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Charsets;
 import com.google.common.base.Optional;
+import com.google.common.base.Strings;
 import com.google.common.io.BaseEncoding;
 
 @JsonIgnoreProperties( ignoreUnknown = true )
 public class UpstreamInfo {
   private final String upstream;
+
   @Size(max=250)
   @Pattern(regexp = "[^\\s/|]+", message = "cannot contain whitespace, '/', or '|'")
-  private final Optional<String> requestId;
+  private final String requestId;
+
   @Size(max=100)
   @Pattern(regexp = "[^\\s/|]+", message = "cannot contain whitespace, '/', or '|'")
-  private final Optional<String> rackId;
+  private final String rackId;
   private final Optional<String> originalPath;
 
   @JsonCreator
@@ -48,8 +51,8 @@ public class UpstreamInfo {
                       @JsonProperty("rackId") Optional<String> rackId,
                       @JsonProperty("originalPath") Optional<String> originalPath) {
     this.upstream = upstream;
-    this.requestId = requestId;
-    this.rackId = rackId;
+    this.requestId = requestId.or("");
+    this.rackId = rackId.or("");
     this.originalPath = originalPath;
   }
 
@@ -58,11 +61,11 @@ public class UpstreamInfo {
   }
 
   public Optional<String> getRequestId() {
-    return requestId;
+    return Strings.isNullOrEmpty(requestId) ? Optional.<String>absent() : Optional.of(requestId);
   }
 
   public Optional<String> getRackId() {
-    return rackId;
+    return Strings.isNullOrEmpty(rackId) ? Optional.<String>absent() : Optional.of(rackId);
   }
 
   public Optional<String> getOriginalPath() {
@@ -75,7 +78,7 @@ public class UpstreamInfo {
   }
 
   public String toPath() {
-    return String.format("%s|%s|%s", sanitizeUpstream(upstream), requestId.or(""), rackId.or(""));
+    return String.format("%s|%s|%s", sanitizeUpstream(upstream), requestId, rackId);
   }
 
   protected String sanitizeUpstream(String name) {
