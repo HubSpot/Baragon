@@ -138,7 +138,12 @@ public abstract class AbstractDataStore {
 
   protected Optional<byte[]> readFromZk(String path) {
     try {
-      return Optional.of(curatorFramework.getData().forPath(path));
+      byte[] data = curatorFramework.getData().forPath(path);
+      if (data.length > 0) {
+        return Optional.of(curatorFramework.getData().forPath(path));
+      } else {
+        return Optional.absent();
+      }
     } catch (KeeperException.NoNodeException nne) {
       return Optional.absent();
     } catch (Exception e) {
