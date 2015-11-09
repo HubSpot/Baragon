@@ -1,5 +1,8 @@
 package com.hubspot.baragon.models;
 
+import javax.validation.constraints.Pattern;
+import javax.validation.constraints.Size;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -10,7 +13,11 @@ import com.google.common.io.BaseEncoding;
 @JsonIgnoreProperties( ignoreUnknown = true )
 public class UpstreamInfo {
   private final String upstream;
+  @Size(max=250)
+  @Pattern(regexp = "[^\\s/|]+", message = "cannot contain whitespace, '/', or '|'", flags = Pattern.Flag.MULTILINE)
   private final Optional<String> requestId;
+  @Size(max=100)
+  @Pattern(regexp = "[^\\s/|]+", message = "cannot contain whitespace, '/', or '|'", flags = Pattern.Flag.MULTILINE)
   private final Optional<String> rackId;
   private final Optional<String> originalPath;
 
