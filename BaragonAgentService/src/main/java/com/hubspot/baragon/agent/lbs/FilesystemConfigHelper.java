@@ -292,12 +292,12 @@ public class FilesystemConfigHelper {
 
   private boolean configsExist(BaragonService service) {
     for (String filename : configGenerator.getConfigPathsForProject(service)) {
-      if (!new File(filename).exists()) {
-        return false;
+      if (new File(filename).exists()) {
+        return true;
       }
     }
 
-    return true;
+    return false;
   }
 
   private void saveAsFailed(BaragonService service) {
