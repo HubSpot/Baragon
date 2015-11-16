@@ -47,7 +47,7 @@ public class AgentCheckinResource {
       }
     } catch (Exception e) {
       LOG.error("Could not register agent startup", e);
-      return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
+      return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e).build();
     }
     return Response.ok().build();
   }
@@ -62,7 +62,7 @@ public class AgentCheckinResource {
       }
     } catch (Exception e) {
       LOG.error("Could not register agent shutdown", e);
-      return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
+      return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e).build();
     }
     return Response.ok().build();
   }

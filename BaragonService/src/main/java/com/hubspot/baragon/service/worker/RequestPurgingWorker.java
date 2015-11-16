@@ -1,18 +1,12 @@
 package com.hubspot.baragon.service.worker;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.base.Optional;
-import com.google.common.collect.Iterables;
+import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import com.hubspot.baragon.data.BaragonAgentResponseDatastore;
 import com.hubspot.baragon.data.BaragonRequestDatastore;
@@ -24,6 +18,8 @@ import com.hubspot.baragon.models.BaragonResponse;
 import com.hubspot.baragon.models.InternalRequestStates;
 import com.hubspot.baragon.models.InternalStatesMap;
 import com.hubspot.baragon.service.config.BaragonConfiguration;
+import com.hubspot.baragon.service.exceptions.BaragonExceptionNotifier;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,18 +31,21 @@ public class RequestPurgingWorker implements Runnable {
   private final BaragonAgentResponseDatastore agentResponseDatastore;
   private final BaragonResponseHistoryDatastore responseHistoryDatastore;
   private final BaragonStateDatastore stateDatastore;
+  private final BaragonExceptionNotifier exceptionNotifier;
 
   @Inject
   public RequestPurgingWorker(BaragonRequestDatastore requestDatastore,
                               BaragonConfiguration configuration,
                               BaragonAgentResponseDatastore agentResponseDatastore,
                               BaragonResponseHistoryDatastore responseHistoryDatastore,
-                              BaragonStateDatastore stateDatastore) {
+                              BaragonStateDatastore stateDatastore,
+                              BaragonExceptionNotifier exceptionNotifier) {
     this.requestDatastore = requestDatastore;
     this.configuration = configuration;
     this.agentResponseDatastore = agentResponseDatastore;
     this.responseHistoryDatastore = responseHistoryDatastore;
     this.stateDatastore = stateDatastore;
+    this.exceptionNotifier = exceptionNotifier;
   }
 
   private enum PurgeAction {
@@ -64,6 +63,7 @@ public class RequestPurgingWorker implements Runnable {
       }
     } catch (Exception e) {
       LOG.error("Caught exception during old request purging", e);
+      exceptionNotifier.notify(e, Collections.<String, String>emptyMap());
     }
   }
 
@@ -92,6 +92,7 @@ public class RequestPurgingWorker implements Runnable {
         }
       } catch (Exception e) {
         LOG.error(String.format("Caught exception trying to clean up request %s", requestId));
+        exceptionNotifier.notify(e, ImmutableMap.of("requestId", requestId));
       }
       if (Thread.interrupted()) {
         LOG.warn("Purger was interrupted, stopping purge");
@@ -162,6 +163,7 @@ public class RequestPurgingWorker implements Runnable {
           }
         } catch (Exception e) {
           LOG.error(String.format("Caught exception purging old requests for service %s", serviceId), e);
+          exceptionNotifier.notify(e, ImmutableMap.of("serviceId", serviceId));
         }
       }
     }

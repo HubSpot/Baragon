@@ -19,7 +19,7 @@ import com.amazonaws.services.elasticloadbalancing.model.InstanceState;
 import com.amazonaws.services.elasticloadbalancing.model.LoadBalancerDescription;
 import com.amazonaws.services.elasticloadbalancing.model.RegisterInstancesWithLoadBalancerRequest;
 import com.google.common.base.Optional;
-import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
@@ -30,6 +30,8 @@ import com.hubspot.baragon.models.BaragonGroup;
 import com.hubspot.baragon.models.BaragonKnownAgentMetadata;
 import com.hubspot.baragon.service.BaragonServiceModule;
 import com.hubspot.baragon.service.config.ElbConfiguration;
+import com.hubspot.baragon.service.exceptions.BaragonExceptionNotifier;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,16 +43,19 @@ public class ElbManager {
   private final Optional<ElbConfiguration> configuration;
   private final BaragonLoadBalancerDatastore loadBalancerDatastore;
   private final BaragonKnownAgentsDatastore knownAgentsDatastore;
+  private final BaragonExceptionNotifier exceptionNotifier;
 
   @Inject
   public ElbManager(BaragonLoadBalancerDatastore loadBalancerDatastore,
-                              BaragonKnownAgentsDatastore knownAgentsDatastore,
-                              Optional<ElbConfiguration> configuration,
-                              @Named(BaragonServiceModule.BARAGON_AWS_ELB_CLIENT) AmazonElasticLoadBalancingClient elbClient) {
+                    BaragonKnownAgentsDatastore knownAgentsDatastore,
+                    Optional<ElbConfiguration> configuration,
+                    BaragonExceptionNotifier exceptionNotifier,
+                    @Named(BaragonServiceModule.BARAGON_AWS_ELB_CLIENT) AmazonElasticLoadBalancingClient elbClient) {
     this.elbClient = elbClient;
     this.configuration = configuration;
     this.loadBalancerDatastore = loadBalancerDatastore;
     this.knownAgentsDatastore = knownAgentsDatastore;
+    this.exceptionNotifier = exceptionNotifier;
   }
 
   public boolean isElbConfigured() {
@@ -123,7 +128,7 @@ public class ElbManager {
 
   public void syncAll() {
     List<LoadBalancerDescription> elbs;
-    Collection<BaragonGroup> groups;
+    Collection<BaragonGroup> groups = null;
     try {
       groups = loadBalancerDatastore.getLoadBalancerGroups();
       for (BaragonGroup group : groups) {
@@ -142,8 +147,10 @@ public class ElbManager {
       }
     } catch (AmazonClientException e) {
       LOG.error(String.format("Could not retrieve elb information due to amazon client error %s", e));
+      exceptionNotifier.notify(e, ImmutableMap.of("groups", groups == null ? "" : groups.toString()));
     } catch (Exception e) {
       LOG.error(String.format("Could not process elb sync due to error %s", e));
+      exceptionNotifier.notify(e, ImmutableMap.of("groups", groups == null ? "" : groups.toString()));
     }
   }
 
@@ -162,6 +169,7 @@ public class ElbManager {
           LOG.info(String.format("Registered instances %s with ELB %s", request.getInstances(), request.getLoadBalancerName()));
         } catch (AmazonClientException e) {
           LOG.error("Could not register %s with elb %s due to error %s", request.getInstances(), request.getLoadBalancerName(), e);
+          exceptionNotifier.notify(e, ImmutableMap.of("elb", request.getLoadBalancerName(), "toAdd", request.getInstances().toString()));
         }
       }
     } else {
@@ -212,6 +220,7 @@ public class ElbManager {
           }
         } catch (AmazonClientException e) {
           LOG.error("Could not enable availability zone %s for elb %s due to error", availabilityZone, elb.getLoadBalancerName(), e);
+          exceptionNotifier.notify(e, ImmutableMap.of("elb", elbName, "subnet", agent.getEc2().getSubnetId().toString(), "availabilityZone", availabilityZone));
         }
       }
     } else {
@@ -264,6 +273,7 @@ public class ElbManager {
           LOG.info(String.format("Deregistered instances %s from ELB %s", request.getInstances(), request.getLoadBalancerName()));
         } catch (AmazonClientException e) {
           LOG.error("Could not deregister %s from elb %s due to error %s", request.getInstances(), request.getLoadBalancerName(), e);
+          exceptionNotifier.notify(e, ImmutableMap.of("elb", request.getLoadBalancerName(), "toRemove", request.getInstances().toString()));
         }
       }
     } catch (Exception e) {
