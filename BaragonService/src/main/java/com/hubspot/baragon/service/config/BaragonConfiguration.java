@@ -91,6 +91,9 @@ public class BaragonConfiguration extends Configuration {
   @JsonProperty("graphite")
   private GraphiteConfiguration graphiteConfiguration = new GraphiteConfiguration();
 
+  @JsonProperty("sentry")
+  private Optional<SentryConfiguration> sentryConfiguration;
+
   public ZooKeeperConfiguration getZooKeeperConfiguration() {
     return zooKeeperConfiguration;
   }
@@ -233,5 +236,13 @@ public class BaragonConfiguration extends Configuration {
 
   public void setGraphiteConfiguration(GraphiteConfiguration graphiteConfiguration) {
     this.graphiteConfiguration = graphiteConfiguration;
+  }
+
+  public Optional<SentryConfiguration> getSentryConfiguration() {
+    return sentryConfiguration;
+  }
+
+  public void setSentryConfiguration(Optional<SentryConfiguration> sentryConfiguration) {
+    this.sentryConfiguration = sentryConfiguration;
   }
 }

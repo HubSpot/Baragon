@@ -28,6 +28,7 @@ import com.hubspot.baragon.data.BaragonConnectionStateListener;
 import com.hubspot.baragon.data.BaragonWorkerDatastore;
 import com.hubspot.baragon.service.config.BaragonConfiguration;
 import com.hubspot.baragon.service.config.ElbConfiguration;
+import com.hubspot.baragon.service.config.SentryConfiguration;
 import com.hubspot.baragon.service.listeners.AbstractLatchListener;
 import com.hubspot.baragon.service.listeners.BackgroundStateUpdatingListener;
 import com.hubspot.baragon.service.listeners.ElbSyncWorkerListener;
@@ -221,5 +222,11 @@ public class BaragonServiceModule extends AbstractModule {
     client.start();
 
     return client.usingNamespace(config.getZkNamespace());
+  }
+
+  @Provides
+  @Singleton
+  public Optional<SentryConfiguration> sentryConfiguration(final BaragonConfiguration config) {
+    return config.getSentryConfiguration();
   }
 }

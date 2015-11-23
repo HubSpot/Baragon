@@ -1,12 +1,14 @@
 package com.hubspot.baragon.service.worker;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
 import com.google.common.base.Optional;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -19,6 +21,7 @@ import com.hubspot.baragon.models.InternalRequestStates;
 import com.hubspot.baragon.models.InternalStatesMap;
 import com.hubspot.baragon.models.QueuedRequestId;
 import com.hubspot.baragon.models.RequestAction;
+import com.hubspot.baragon.service.exceptions.BaragonExceptionNotifier;
 import com.hubspot.baragon.service.managers.AgentManager;
 import com.hubspot.baragon.service.managers.RequestManager;
 import com.hubspot.baragon.utils.JavaUtils;
@@ -34,14 +37,17 @@ public class BaragonRequestWorker implements Runnable {
   private final AgentManager agentManager;
   private final RequestManager requestManager;
   private final AtomicLong workerLastStartAt;
+  private final BaragonExceptionNotifier exceptionNotifier;
 
   @Inject
   public BaragonRequestWorker(AgentManager agentManager,
                               RequestManager requestManager,
+                              BaragonExceptionNotifier exceptionNotifier,
                               @Named(BaragonDataModule.BARAGON_SERVICE_WORKER_LAST_START) AtomicLong workerLastStartAt) {
     this.agentManager = agentManager;
     this.requestManager = requestManager;
     this.workerLastStartAt = workerLastStartAt;
+    this.exceptionNotifier = exceptionNotifier;
   }
 
   private String buildResponseString(Map<String, Collection<AgentResponse>> agentResponses, AgentRequestType requestType) {
@@ -118,6 +124,7 @@ public class BaragonRequestWorker implements Runnable {
               return InternalRequestStates.FAILED_SEND_REVERT_REQUESTS;
             } catch (Exception e) {
               LOG.warn(String.format("Request %s was successful, but failed to commit!", request.getLoadBalancerRequestId()), e);
+              exceptionNotifier.notify(e, ImmutableMap.of("requestId", request.getLoadBalancerRequestId(), "serviceId", request.getLoadBalancerService().getServiceId()));
               return InternalRequestStates.FAILED_SEND_REVERT_REQUESTS;
             }
           case RETRY:
@@ -198,6 +205,7 @@ public class BaragonRequestWorker implements Runnable {
       }
     } catch (Exception e) {
       LOG.warn("Caught exception", e);
+      exceptionNotifier.notify(e, Collections.<String, String>emptyMap());
     }
   }
 }
