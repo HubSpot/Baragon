@@ -4,14 +4,11 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import com.hubspot.baragon.BaragonDataModule;
 import com.hubspot.baragon.data.BaragonRequestDatastore;
-import com.hubspot.baragon.data.BaragonStateDatastore;
-import com.hubspot.baragon.data.BaragonWorkerDatastore;
 import com.hubspot.baragon.models.BaragonServiceStatus;
 import com.hubspot.baragon.service.BaragonServiceModule;
 import com.ning.http.client.AsyncHttpClient;
@@ -26,19 +23,15 @@ public class StatusManager {
   private static final Logger LOG = LoggerFactory.getLogger(StatusManager.class);
 
   private final BaragonRequestDatastore requestDatastore;
-  private final BaragonStateDatastore stateDatastore;
   private final LeaderLatch leaderLatch;
   private final AtomicLong workerLastStart;
   private final AtomicLong elbWorkerLastStart;
   private final AtomicReference<ConnectionState> connectionState;
-  private final BaragonWorkerDatastore workerDatastore;
   private final AsyncHttpClient httpClient;
   private final ObjectMapper objectMapper;
 
   @Inject
   public StatusManager(BaragonRequestDatastore requestDatastore,
-                       BaragonStateDatastore stateDatastore,
-                       BaragonWorkerDatastore workerDatastore,
                        ObjectMapper objectMapper,
                        @Named(BaragonDataModule.BARAGON_SERVICE_LEADER_LATCH) LeaderLatch leaderLatch,
                        @Named(BaragonDataModule.BARAGON_SERVICE_WORKER_LAST_START) AtomicLong workerLastStart,
@@ -46,8 +39,6 @@ public class StatusManager {
                        @Named(BaragonDataModule.BARAGON_ZK_CONNECTION_STATE) AtomicReference<ConnectionState> connectionState,
                        @Named(BaragonServiceModule.BARAGON_SERVICE_HTTP_CLIENT)AsyncHttpClient httpClient) {
     this.requestDatastore = requestDatastore;
-    this.stateDatastore = stateDatastore;
-    this.workerDatastore = workerDatastore;
     this.leaderLatch = leaderLatch;
     this.workerLastStart = workerLastStart;
     this.elbWorkerLastStart = elbWorkerLastStart;
@@ -62,10 +53,9 @@ public class StatusManager {
     final long workerLagMs = System.currentTimeMillis() - workerLastStart.get();
     final long elbWorkerLagMs = System.currentTimeMillis() - elbWorkerLastStart.get();
     if (connectionStateString.equals("CONNECTED") || connectionStateString.equals("RECONNECTED")) {
-      final int globalStateNodeSize = stateDatastore.getGlobalStateSize();
-      return new BaragonServiceStatus(leaderLatch.hasLeadership(), requestDatastore.getQueuedRequestCount(), workerLagMs, elbWorkerLagMs,connectionStateString, globalStateNodeSize);
+      return new BaragonServiceStatus(leaderLatch.hasLeadership(), requestDatastore.getQueuedRequestCount(), workerLagMs, elbWorkerLagMs,connectionStateString);
     } else {
-      return new BaragonServiceStatus(leaderLatch.hasLeadership(), 0, workerLagMs, elbWorkerLagMs, connectionStateString, 0);
+      return new BaragonServiceStatus(leaderLatch.hasLeadership(), 0, workerLagMs, elbWorkerLagMs, connectionStateString);
     }
   }
 
