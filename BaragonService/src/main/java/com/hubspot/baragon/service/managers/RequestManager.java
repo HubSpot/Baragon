@@ -292,18 +292,12 @@ public class RequestManager {
     if (request.getReplaceServiceId().isPresent() && stateDatastore.getService(request.getReplaceServiceId().get()).isPresent()) {
       stateDatastore.removeService(request.getReplaceServiceId().get());
     }
-    if (!configuration.isUpdateStateInBackground()) {
-      stateDatastore.updateStateNode();
-    }
     stateDatastore.incrementStateVersion();
   }
 
   private void updateStateDatastore(BaragonRequest request) throws Exception {
     stateDatastore.updateService(request);
     try {
-      if (!configuration.isUpdateStateInBackground()) {
-        stateDatastore.updateStateNode();
-      }
       stateDatastore.incrementStateVersion();
     } catch (Exception e) {
       LOG.error(String.format("Error updating state datastore %s", e));

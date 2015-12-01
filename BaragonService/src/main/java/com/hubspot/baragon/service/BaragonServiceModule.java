@@ -30,7 +30,6 @@ import com.hubspot.baragon.service.config.BaragonConfiguration;
 import com.hubspot.baragon.service.config.ElbConfiguration;
 import com.hubspot.baragon.service.config.SentryConfiguration;
 import com.hubspot.baragon.service.listeners.AbstractLatchListener;
-import com.hubspot.baragon.service.listeners.BackgroundStateUpdatingListener;
 import com.hubspot.baragon.service.listeners.ElbSyncWorkerListener;
 import com.hubspot.baragon.service.listeners.RequestPurgingListener;
 import com.hubspot.baragon.service.listeners.RequestWorkerListener;
@@ -63,7 +62,6 @@ public class BaragonServiceModule extends AbstractModule {
     latchBinder.addBinding().to(RequestWorkerListener.class);
     latchBinder.addBinding().to(ElbSyncWorkerListener.class);
     latchBinder.addBinding().to(RequestPurgingListener.class);
-    latchBinder.addBinding().to(BackgroundStateUpdatingListener.class);
   }
 
   @Provides
