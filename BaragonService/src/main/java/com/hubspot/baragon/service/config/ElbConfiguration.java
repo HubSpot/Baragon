@@ -38,10 +38,10 @@ public class ElbConfiguration {
   private boolean deregisterEnabled = false;
 
   @JsonProperty("failWhenNoElbForVpc")
-  private boolean failWhenNoElbForVpc = true;
+  private boolean failWhenNoElbForVpc = false;
 
   @JsonProperty("checkForCorrectVpc")
-  private boolean checkForCorrectVpc = true;
+  private boolean checkForCorrectVpc = false;
 
   public boolean isEnabled() {
     return enabled;
