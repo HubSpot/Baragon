@@ -37,6 +37,12 @@ public class ElbConfiguration {
   @JsonProperty("deregisterEnabled")
   private boolean deregisterEnabled = false;
 
+  @JsonProperty("failWhenNoElbForVpc")
+  private boolean failWhenNoElbForVpc = false;
+
+  @JsonProperty("checkForCorrectVpc")
+  private boolean checkForCorrectVpc = false;
+
   public boolean isEnabled() {
     return enabled;
   }
@@ -107,5 +113,21 @@ public class ElbConfiguration {
 
   public void setRemoveKnownAgentMinutes(int removeKnownAgentMinutes) {
     this.removeKnownAgentMinutes = removeKnownAgentMinutes;
+  }
+
+  public boolean isFailWhenNoElbForVpc() {
+    return failWhenNoElbForVpc;
+  }
+
+  public void setFailWhenNoElbForVpc(boolean failWhenNoElbForVpc) {
+    this.failWhenNoElbForVpc = failWhenNoElbForVpc;
+  }
+
+  public boolean isCheckForCorrectVpc() {
+    return checkForCorrectVpc;
+  }
+
+  public void setCheckForCorrectVpc(boolean checkForCorrectVpc) {
+    this.checkForCorrectVpc = checkForCorrectVpc;
   }
 }

@@ -13,21 +13,25 @@ public class BaragonAgentEc2Metadata {
   private final Optional<String> instanceId;
   private final Optional<String> availabilityZone;
   private final Optional<String> subnetId;
+  private final Optional<String> vpcId;
 
   @JsonCreator
   public BaragonAgentEc2Metadata(@JsonProperty("instanceId") Optional<String> instanceId,
                                  @JsonProperty("availabilityZone") Optional<String> availabilityZone,
-                                 @JsonProperty("subnetId") Optional<String> subnetId) {
+                                 @JsonProperty("subnetId") Optional<String> subnetId,
+                                 @JsonProperty("vpcId") Optional<String> vpcId) {
     this.instanceId = instanceId;
     this.availabilityZone = availabilityZone;
     this.subnetId = subnetId;
+    this.vpcId = vpcId;
   }
 
   public static BaragonAgentEc2Metadata fromEnvironment() {
     return new BaragonAgentEc2Metadata(
       findInstanceId(),
       findAvailabilityZone(),
-      findSubnet());
+      findSubnet(),
+      findVpc());
   }
 
   public static Optional<String> findInstanceId() {
@@ -59,6 +63,19 @@ public class BaragonAgentEc2Metadata {
     }
   }
 
+  private static Optional<String> findVpc() {
+    try {
+      List<EC2MetadataUtils.NetworkInterface> networkInterfaces = EC2MetadataUtils.getNetworkInterfaces();
+      if (EC2MetadataUtils.getNetworkInterfaces().isEmpty()) {
+        return Optional.absent();
+      } else {
+        return Optional.fromNullable(networkInterfaces.get(0).getVpcId());
+      }
+    } catch (Exception e) {
+      return Optional.absent();
+    }
+  }
+
   public Optional<String> getInstanceId() {
     return instanceId;
   }
@@ -69,5 +86,9 @@ public class BaragonAgentEc2Metadata {
 
   public Optional<String> getSubnetId() {
     return subnetId;
+  }
+
+  public Optional<String> getVpcId() {
+    return vpcId;
   }
 }
