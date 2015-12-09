@@ -85,7 +85,7 @@ public class FilesystemConfigHelper {
   public Optional<Collection<BaragonConfigFile>> configsToApply(ServiceContext context) throws MissingTemplateException {
     final BaragonService service = context.getService();
     final boolean previousConfigsExist = configsExist(service);
-    Collection<BaragonConfigFile> newConfigs = configGenerator.generateConfigsForProject(context);
+    Collection<BaragonConfigFile> newConfigs = configGenerator.generateConfigsForProject(context, configuration.getExtraAgentData());
     if (previousConfigsExist && configsMatch(newConfigs, readConfigs(service))) {
       return Optional.absent();
     } else {
@@ -126,7 +126,7 @@ public class FilesystemConfigHelper {
     final boolean oldServiceExists = configsExist(oldService);
     final boolean previousConfigsExist = configsExist(service);
 
-    Collection<BaragonConfigFile> newConfigs = configGenerator.generateConfigsForProject(context);
+    Collection<BaragonConfigFile> newConfigs = configGenerator.generateConfigsForProject(context, configuration.getExtraAgentData());
 
 
     if (!agentLock.tryLock(agentLockTimeoutMs, TimeUnit.MILLISECONDS)) {

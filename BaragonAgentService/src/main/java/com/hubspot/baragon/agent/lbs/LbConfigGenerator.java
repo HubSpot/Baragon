@@ -19,6 +19,7 @@ import com.hubspot.baragon.exceptions.MissingTemplateException;
 import com.hubspot.baragon.models.BaragonConfigFile;
 import com.hubspot.baragon.models.BaragonService;
 import com.hubspot.baragon.models.ServiceContext;
+import com.github.jknack.handlebars.Context;
 
 @Singleton
 public class LbConfigGenerator {
@@ -32,7 +33,7 @@ public class LbConfigGenerator {
     this.templates = templates;
   }
 
-  public Collection<BaragonConfigFile> generateConfigsForProject(ServiceContext snapshot) throws MissingTemplateException {
+  public Collection<BaragonConfigFile> generateConfigsForProject(ServiceContext snapshot, Map<String, String> extraAgentData) throws MissingTemplateException {
     final Collection<BaragonConfigFile> files = Lists.newArrayList();
     String templateName = snapshot.getService().getTemplateName().or(BaragonAgentServiceModule.DEFAULT_TEMPLATE_NAME);
 
@@ -43,8 +44,9 @@ public class LbConfigGenerator {
         final String filename = String.format(template.getFilename(), snapshot.getService().getServiceId());
 
         final StringWriter sw = new StringWriter();
+        final Context context = Context.newBuilder(snapshot).combine("agentProperties", extraAgentData).build();
         try {
-          template.getTemplate().apply(snapshot, sw);
+          template.getTemplate().apply(context, sw);
         } catch (Exception e) {
           throw Throwables.propagate(e);
         }
