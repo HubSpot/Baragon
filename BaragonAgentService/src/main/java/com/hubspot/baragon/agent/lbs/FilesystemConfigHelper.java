@@ -128,6 +128,10 @@ public class FilesystemConfigHelper {
 
     Collection<BaragonConfigFile> newConfigs = configGenerator.generateConfigsForProject(context);
 
+    if (!agentLock.tryLock(agentLockTimeoutMs, TimeUnit.MILLISECONDS)) {
+      throw new LockTimeoutException("Timed out waiting to acquire lock", agentLock);
+    }
+
     if (configsMatch(newConfigs, readConfigs(oldService))) {
       LOG.info("    Configs are unchanged, skipping apply");
       return;
@@ -139,10 +143,6 @@ public class FilesystemConfigHelper {
       if (oldServiceExists) {
         backupConfigs(oldService);
       }
-    }
-
-    if (!agentLock.tryLock(agentLockTimeoutMs, TimeUnit.MILLISECONDS)) {
-      throw new LockTimeoutException("Timed out waiting to acquire lock", agentLock);
     }
 
     // Write & check the configs
