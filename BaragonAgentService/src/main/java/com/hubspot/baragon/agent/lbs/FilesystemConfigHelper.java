@@ -128,25 +128,26 @@ public class FilesystemConfigHelper {
 
     Collection<BaragonConfigFile> newConfigs = configGenerator.generateConfigsForProject(context);
 
+
     if (!agentLock.tryLock(agentLockTimeoutMs, TimeUnit.MILLISECONDS)) {
       throw new LockTimeoutException("Timed out waiting to acquire lock", agentLock);
     }
 
-    if (configsMatch(newConfigs, readConfigs(oldService))) {
-      LOG.info("    Configs are unchanged, skipping apply");
-      return;
-    }
-
-    // Backup configs
-    if (revertOnFailure) {
-      backupConfigs(service);
-      if (oldServiceExists) {
-        backupConfigs(oldService);
-      }
-    }
-
-    // Write & check the configs
     try {
+      if (configsMatch(newConfigs, readConfigs(oldService))) {
+        LOG.info("    Configs are unchanged, skipping apply");
+        return;
+      }
+
+      // Backup configs
+      if (revertOnFailure) {
+        backupConfigs(service);
+        if (oldServiceExists) {
+          backupConfigs(oldService);
+        }
+      }
+
+      // Write & check the configs
       if (context.isPresent()) {
         writeConfigs(newConfigs);
         //If the new service id for this base path is different, remove the configs for the old service id
