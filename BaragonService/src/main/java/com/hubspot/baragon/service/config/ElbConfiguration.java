@@ -43,6 +43,15 @@ public class ElbConfiguration {
   @JsonProperty("checkForCorrectVpc")
   private boolean checkForCorrectVpc = false;
 
+  @JsonProperty("maxDescriptionCacheAgeMinutes")
+  private int maxDescriptionCacheAgeMinutes = 5;
+
+  @JsonProperty("maxInstanceStateCacheAgeMinutes")
+  private int maxInstanceStateCacheAgeMinutes = 2;
+
+  @JsonProperty("updateCacheOnSync")
+  private boolean updateCacheOnSync = true;
+
   public boolean isEnabled() {
     return enabled;
   }
@@ -129,5 +138,29 @@ public class ElbConfiguration {
 
   public void setCheckForCorrectVpc(boolean checkForCorrectVpc) {
     this.checkForCorrectVpc = checkForCorrectVpc;
+  }
+
+  public int getMaxDescriptionCacheAgeMinutes() {
+    return maxDescriptionCacheAgeMinutes;
+  }
+
+  public void setMaxDescriptionCacheAgeMinutes(int maxDescriptionCacheAgeMinutes) {
+    this.maxDescriptionCacheAgeMinutes = maxDescriptionCacheAgeMinutes;
+  }
+
+  public int getMaxInstanceStateCacheAgeMinutes() {
+    return maxInstanceStateCacheAgeMinutes;
+  }
+
+  public void setMaxInstanceStateCacheAgeMinutes(int maxInstanceStateCacheAgeMinutes) {
+    this.maxInstanceStateCacheAgeMinutes = maxInstanceStateCacheAgeMinutes;
+  }
+
+  public boolean isUpdateCacheOnSync() {
+    return updateCacheOnSync;
+  }
+
+  public void setUpdateCacheOnSync(boolean updateCacheOnSync) {
+    this.updateCacheOnSync = updateCacheOnSync;
   }
 }
