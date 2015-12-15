@@ -16,6 +16,7 @@ import com.hubspot.baragon.agent.BaragonAgentServiceModule;
 import com.hubspot.baragon.agent.config.LoadBalancerConfiguration;
 import com.hubspot.baragon.agent.models.LbConfigTemplate;
 import com.hubspot.baragon.exceptions.MissingTemplateException;
+import com.hubspot.baragon.models.BaragonAgentMetadata;
 import com.hubspot.baragon.models.BaragonConfigFile;
 import com.hubspot.baragon.models.BaragonService;
 import com.hubspot.baragon.models.ServiceContext;
@@ -25,15 +26,18 @@ import com.github.jknack.handlebars.Context;
 public class LbConfigGenerator {
   private final LoadBalancerConfiguration loadBalancerConfiguration;
   private final Map<String, List<LbConfigTemplate>> templates;
+  private final BaragonAgentMetadata agentMetadata;
 
   @Inject
   public LbConfigGenerator(LoadBalancerConfiguration loadBalancerConfiguration,
+                           BaragonAgentMetadata agentMetadata,
                            @Named(BaragonAgentServiceModule.AGENT_TEMPLATES) Map<String, List<LbConfigTemplate>> templates) {
     this.loadBalancerConfiguration = loadBalancerConfiguration;
+    this.agentMetadata = agentMetadata;
     this.templates = templates;
   }
 
-  public Collection<BaragonConfigFile> generateConfigsForProject(ServiceContext snapshot, Map<String, String> extraAgentData) throws MissingTemplateException {
+  public Collection<BaragonConfigFile> generateConfigsForProject(ServiceContext snapshot) throws MissingTemplateException {
     final Collection<BaragonConfigFile> files = Lists.newArrayList();
     String templateName = snapshot.getService().getTemplateName().or(BaragonAgentServiceModule.DEFAULT_TEMPLATE_NAME);
 
@@ -44,7 +48,7 @@ public class LbConfigGenerator {
         final String filename = String.format(template.getFilename(), snapshot.getService().getServiceId());
 
         final StringWriter sw = new StringWriter();
-        final Context context = Context.newBuilder(snapshot).combine("agentProperties", extraAgentData).build();
+        final Context context = Context.newBuilder(snapshot).combine("agentProperties", agentMetadata).build();
         try {
           template.getTemplate().apply(context, sw);
         } catch (Exception e) {

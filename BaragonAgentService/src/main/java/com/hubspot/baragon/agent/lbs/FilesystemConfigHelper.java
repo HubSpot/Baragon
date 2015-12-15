@@ -21,6 +21,7 @@ import com.hubspot.baragon.exceptions.InvalidConfigException;
 import com.hubspot.baragon.exceptions.LbAdapterExecuteException;
 import com.hubspot.baragon.exceptions.LockTimeoutException;
 import com.hubspot.baragon.exceptions.MissingTemplateException;
+import com.hubspot.baragon.models.BaragonAgentMetadata;
 import com.hubspot.baragon.models.BaragonConfigFile;
 import com.hubspot.baragon.models.BaragonService;
 import com.hubspot.baragon.models.ServiceContext;
@@ -85,7 +86,7 @@ public class FilesystemConfigHelper {
   public Optional<Collection<BaragonConfigFile>> configsToApply(ServiceContext context) throws MissingTemplateException {
     final BaragonService service = context.getService();
     final boolean previousConfigsExist = configsExist(service);
-    Collection<BaragonConfigFile> newConfigs = configGenerator.generateConfigsForProject(context, configuration.getExtraAgentData());
+    Collection<BaragonConfigFile> newConfigs = configGenerator.generateConfigsForProject(context);
     if (previousConfigsExist && configsMatch(newConfigs, readConfigs(service))) {
       return Optional.absent();
     } else {
@@ -126,7 +127,7 @@ public class FilesystemConfigHelper {
     final boolean oldServiceExists = configsExist(oldService);
     final boolean previousConfigsExist = configsExist(service);
 
-    Collection<BaragonConfigFile> newConfigs = configGenerator.generateConfigsForProject(context, configuration.getExtraAgentData());
+    Collection<BaragonConfigFile> newConfigs = configGenerator.generateConfigsForProject(context);
 
 
     if (!agentLock.tryLock(agentLockTimeoutMs, TimeUnit.MILLISECONDS)) {
