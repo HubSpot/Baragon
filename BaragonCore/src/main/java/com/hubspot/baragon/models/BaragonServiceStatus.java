@@ -45,11 +45,6 @@ public class BaragonServiceStatus {
     return zookeeperState;
   }
 
-  public long getGlobalStateNodeSize() {
-    // TODO remove?
-    return 0;
-  }
-
   @Override
   public boolean equals(Object o) {
     if (this == o) {
