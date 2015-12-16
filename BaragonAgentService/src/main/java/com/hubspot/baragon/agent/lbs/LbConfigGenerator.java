@@ -16,19 +16,24 @@ import com.hubspot.baragon.agent.BaragonAgentServiceModule;
 import com.hubspot.baragon.agent.config.LoadBalancerConfiguration;
 import com.hubspot.baragon.agent.models.LbConfigTemplate;
 import com.hubspot.baragon.exceptions.MissingTemplateException;
+import com.hubspot.baragon.models.BaragonAgentMetadata;
 import com.hubspot.baragon.models.BaragonConfigFile;
 import com.hubspot.baragon.models.BaragonService;
 import com.hubspot.baragon.models.ServiceContext;
+import com.github.jknack.handlebars.Context;
 
 @Singleton
 public class LbConfigGenerator {
   private final LoadBalancerConfiguration loadBalancerConfiguration;
   private final Map<String, List<LbConfigTemplate>> templates;
+  private final BaragonAgentMetadata agentMetadata;
 
   @Inject
   public LbConfigGenerator(LoadBalancerConfiguration loadBalancerConfiguration,
+                           BaragonAgentMetadata agentMetadata,
                            @Named(BaragonAgentServiceModule.AGENT_TEMPLATES) Map<String, List<LbConfigTemplate>> templates) {
     this.loadBalancerConfiguration = loadBalancerConfiguration;
+    this.agentMetadata = agentMetadata;
     this.templates = templates;
   }
 
@@ -43,8 +48,9 @@ public class LbConfigGenerator {
         final String filename = String.format(template.getFilename(), snapshot.getService().getServiceId());
 
         final StringWriter sw = new StringWriter();
+        final Context context = Context.newBuilder(snapshot).combine("agentProperties", agentMetadata).build();
         try {
-          template.getTemplate().apply(snapshot, sw);
+          template.getTemplate().apply(context, sw);
         } catch (Exception e) {
           throw Throwables.propagate(e);
         }
