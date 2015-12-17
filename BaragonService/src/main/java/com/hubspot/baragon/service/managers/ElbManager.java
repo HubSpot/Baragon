@@ -138,18 +138,17 @@ public class ElbManager {
     if (configuration.get().isUpdateCacheOnSync()) {
       elbCache.updateAllDescriptions();
     }
-    List<LoadBalancerDescription> elbs;
     Collection<BaragonGroup> groups = null;
     try {
       groups = loadBalancerDatastore.getLoadBalancerGroups();
       for (BaragonGroup group : groups) {
         if (!group.getSources().isEmpty()) {
-          elbs = elbCache.descriptionsForGroup(group);
+          List<LoadBalancerDescription> elbsForGroup = elbCache.descriptionsForGroup(group);
           LOG.debug(String.format("Registering new instances for group %s...", group.getName()));
-          registerNewInstances(elbs, group);
+          registerNewInstances(elbsForGroup, group);
           if (configuration.get().isDeregisterEnabled()) {
             LOG.debug(String.format("Deregistering old instances for group %s...", group.getName()));
-            deregisterOldInstances(elbs, group);
+            deregisterOldInstances(elbsForGroup, group);
           }
           LOG.debug(String.format("ELB sync complete for group: %s", group.getName()));
         } else {
@@ -174,7 +173,7 @@ public class ElbManager {
           elbCache.addToElb(request);
           LOG.info(String.format("Registered instances %s with ELB %s", request.getInstances(), request.getLoadBalancerName()));
         } catch (AmazonClientException e) {
-          LOG.error("Could not register %s with elb %s due to error %s", request.getInstances(), request.getLoadBalancerName(), e);
+          LOG.error(String.format("Could not register %s with elb %s due to error", request.getInstances(), request.getLoadBalancerName()), e);
           exceptionNotifier.notify(e, ImmutableMap.of("elb", request.getLoadBalancerName(), "toAdd", request.getInstances().toString()));
         }
       }

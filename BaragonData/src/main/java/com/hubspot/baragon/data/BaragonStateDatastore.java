@@ -177,17 +177,6 @@ public class BaragonStateDatastore extends AbstractDataStore {
   }
 
   @Timed
-  public void updateStateNode() {
-    try {
-      LOG.info("Starting state node update");
-      writeToZk(SERVICES_FORMAT, computeAllServiceStates());
-      LOG.info("Finished state node update");
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
-    }
-  }
-
-  @Timed
   public Collection<BaragonServiceState> getGlobalState() {
     try {
       LOG.info("Starting to compute all service states");
@@ -201,21 +190,6 @@ public class BaragonStateDatastore extends AbstractDataStore {
 
   public byte[] getGlobalStateAsBytes() {
     return serialize(getGlobalState());
-  }
-
-  @Timed
-  public int getGlobalStateSize() {
-    try {
-      final Stat stat = curatorFramework.checkExists().forPath(SERVICES_FORMAT);
-
-      if (stat != null) {
-        return stat.getDataLength();
-      } else {
-        return 0;
-      }
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
-    }
   }
 
   public void incrementStateVersion() {

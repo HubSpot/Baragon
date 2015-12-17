@@ -81,13 +81,6 @@ public class BaragonConfiguration extends Configuration {
   @JsonProperty("defaultTargetAgentCount")
   private int defaultTargetAgentCount = 1;
 
-  @JsonProperty
-  private boolean updateStateInBackground = false;
-
-  @JsonProperty
-  @Min(0)
-  private int backgroundStateUpdateIntervalMs = 5000;
-
   @JsonProperty("graphite")
   private GraphiteConfiguration graphiteConfiguration = new GraphiteConfiguration();
 
@@ -212,22 +205,6 @@ public class BaragonConfiguration extends Configuration {
 
   public void setDefaultTargetAgentCount(int defaultTargetAgentCount) {
     this.defaultTargetAgentCount = defaultTargetAgentCount;
-  }
-
-  public boolean isUpdateStateInBackground() {
-    return updateStateInBackground;
-  }
-
-  public void setUpdateStateInBackground(boolean updateStateInBackground) {
-    this.updateStateInBackground = updateStateInBackground;
-  }
-
-  public int getBackgroundStateUpdateIntervalMs() {
-    return backgroundStateUpdateIntervalMs;
-  }
-
-  public void setBackgroundStateUpdateIntervalMs(int backgroundStateUpdateIntervalMs) {
-    this.backgroundStateUpdateIntervalMs = backgroundStateUpdateIntervalMs;
   }
 
   public GraphiteConfiguration getGraphiteConfiguration() {
