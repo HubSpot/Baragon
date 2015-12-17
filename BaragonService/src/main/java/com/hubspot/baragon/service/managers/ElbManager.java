@@ -299,11 +299,7 @@ public class ElbManager {
       }
     }
 
-    if (!alreadyRegistered) {
-      return isVpcOk(agent, matchingElb.get()) || !configuration.get().isCheckForCorrectVpc();
-    } else {
-      return true;
-    }
+    return !alreadyRegistered && (isVpcOk(agent, matchingElb.get()) || !configuration.get().isCheckForCorrectVpc());
   }
 
   private void deregisterOldInstances(List<LoadBalancerDescription> elbs, BaragonGroup group) {
