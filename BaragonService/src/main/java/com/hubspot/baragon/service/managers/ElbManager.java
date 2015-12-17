@@ -155,18 +155,18 @@ public class ElbManager {
   }
 
   public void syncAll() {
-    List<LoadBalancerDescription> elbs;
+    List<LoadBalancerDescription> elbs = elbClient.describeLoadBalancers().getLoadBalancerDescriptions();
     Collection<BaragonGroup> groups = null;
     try {
       groups = loadBalancerDatastore.getLoadBalancerGroups();
       for (BaragonGroup group : groups) {
         if (!group.getSources().isEmpty()) {
-          elbs = elbsForGroup(group);
+          List<LoadBalancerDescription> elbsForGroup = getElbsForGroup(elbs, group);
           LOG.debug(String.format("Registering new instances for group %s...", group.getName()));
-          registerNewInstances(elbs, group);
+          registerNewInstances(elbsForGroup, group);
           if (configuration.get().isDeregisterEnabled()) {
             LOG.debug(String.format("Deregistering old instances for group %s...", group.getName()));
-            deregisterOldInstances(elbs, group);
+            deregisterOldInstances(elbsForGroup, group);
           }
           LOG.debug(String.format("ELB sync complete for group: %s", group.getName()));
         } else {
@@ -182,9 +182,14 @@ public class ElbManager {
     }
   }
 
-  private List<LoadBalancerDescription> elbsForGroup(BaragonGroup group) {
-    DescribeLoadBalancersRequest request = new DescribeLoadBalancersRequest(new ArrayList<>(group.getSources()));
-    return elbClient.describeLoadBalancers(request).getLoadBalancerDescriptions();
+  private List<LoadBalancerDescription> getElbsForGroup(List<LoadBalancerDescription> elbs, BaragonGroup group) {
+    List<LoadBalancerDescription> elbsForGroup = new ArrayList<>();
+    for (LoadBalancerDescription elb : elbs) {
+      if (group.getSources().contains(elb.getLoadBalancerName())) {
+        elbsForGroup.add(elb);
+      }
+    }
+    return elbsForGroup;
   }
 
   private void registerNewInstances(List<LoadBalancerDescription> elbs, BaragonGroup group) {
