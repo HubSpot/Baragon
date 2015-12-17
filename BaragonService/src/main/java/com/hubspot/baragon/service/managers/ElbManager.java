@@ -155,18 +155,18 @@ public class ElbManager {
   }
 
   public void syncAll() {
-    List<LoadBalancerDescription> elbs;
+    List<LoadBalancerDescription> elbs = elbClient.describeLoadBalancers().getLoadBalancerDescriptions();
     Collection<BaragonGroup> groups = null;
     try {
       groups = loadBalancerDatastore.getLoadBalancerGroups();
       for (BaragonGroup group : groups) {
         if (!group.getSources().isEmpty()) {
-          elbs = elbsForGroup(group);
+          List<LoadBalancerDescription> elbsForGroup = getElbsForGroup(elbs, group);
           LOG.debug(String.format("Registering new instances for group %s...", group.getName()));
-          registerNewInstances(elbs, group);
+          registerNewInstances(elbsForGroup, group);
           if (configuration.get().isDeregisterEnabled()) {
             LOG.debug(String.format("Deregistering old instances for group %s...", group.getName()));
-            deregisterOldInstances(elbs, group);
+            deregisterOldInstances(elbsForGroup, group);
           }
           LOG.debug(String.format("ELB sync complete for group: %s", group.getName()));
         } else {
@@ -182,9 +182,14 @@ public class ElbManager {
     }
   }
 
-  private List<LoadBalancerDescription> elbsForGroup(BaragonGroup group) {
-    DescribeLoadBalancersRequest request = new DescribeLoadBalancersRequest(new ArrayList<>(group.getSources()));
-    return elbClient.describeLoadBalancers(request).getLoadBalancerDescriptions();
+  private List<LoadBalancerDescription> getElbsForGroup(List<LoadBalancerDescription> elbs, BaragonGroup group) {
+    List<LoadBalancerDescription> elbsForGroup = new ArrayList<>();
+    for (LoadBalancerDescription elb : elbs) {
+      if (group.getSources().contains(elb.getLoadBalancerName())) {
+        elbsForGroup.add(elb);
+      }
+    }
+    return elbsForGroup;
   }
 
   private void registerNewInstances(List<LoadBalancerDescription> elbs, BaragonGroup group) {
@@ -196,7 +201,7 @@ public class ElbManager {
           elbClient.registerInstancesWithLoadBalancer(request);
           LOG.info(String.format("Registered instances %s with ELB %s", request.getInstances(), request.getLoadBalancerName()));
         } catch (AmazonClientException e) {
-          LOG.error("Could not register %s with elb %s due to error %s", request.getInstances(), request.getLoadBalancerName(), e);
+          LOG.error(String.format("Could not register %s with elb %s due to error", request.getInstances(), request.getLoadBalancerName()), e);
           exceptionNotifier.notify(e, ImmutableMap.of("elb", request.getLoadBalancerName(), "toAdd", request.getInstances().toString()));
         }
       }
@@ -294,11 +299,7 @@ public class ElbManager {
       }
     }
 
-    if (!alreadyRegistered) {
-      return isVpcOk(agent, matchingElb.get()) || !configuration.get().isCheckForCorrectVpc();
-    } else {
-      return true;
-    }
+    return !alreadyRegistered && (isVpcOk(agent, matchingElb.get()) || !configuration.get().isCheckForCorrectVpc());
   }
 
   private void deregisterOldInstances(List<LoadBalancerDescription> elbs, BaragonGroup group) {
