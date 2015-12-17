@@ -11,21 +11,18 @@ public class BaragonServiceStatus {
   private final long workerLagMs;
   private final long elbWorkerLagMs;
   private final String zookeeperState;
-  private final int globalStateNodeSize;
 
   @JsonCreator
   public BaragonServiceStatus(@JsonProperty("leader") boolean leader,
                               @JsonProperty("pendingRequestCount") int pendingRequestCount,
                               @JsonProperty("workerLagMs") long workerLagMs,
                               @JsonProperty("elbWorkerLagMs") long elbWorkerLagMs,
-                              @JsonProperty("zookeeperState") String zookeeperState,
-                              @JsonProperty("globalStateNodeSize") int globalStateNodeSize) {
+                              @JsonProperty("zookeeperState") String zookeeperState) {
     this.leader = leader;
     this.pendingRequestCount = pendingRequestCount;
     this.workerLagMs = workerLagMs;
     this.elbWorkerLagMs = elbWorkerLagMs;
     this.zookeeperState = zookeeperState;
-    this.globalStateNodeSize = globalStateNodeSize;
   }
 
   public boolean isLeader() {
@@ -46,10 +43,6 @@ public class BaragonServiceStatus {
 
   public String getZookeeperState() {
     return zookeeperState;
-  }
-
-  public long getGlobalStateNodeSize() {
-    return globalStateNodeSize;
   }
 
   @Override
@@ -89,7 +82,6 @@ public class BaragonServiceStatus {
     result = 31 * result + (int) (workerLagMs ^ (workerLagMs >>> 32));
     result = 31 * result + (int) (elbWorkerLagMs ^ (elbWorkerLagMs >>> 32));
     result = 31 * result + zookeeperState.hashCode();
-    result = 31 * result + globalStateNodeSize;
     return result;
   }
 
@@ -101,7 +93,6 @@ public class BaragonServiceStatus {
         ", workerLagMs=" + workerLagMs +
         ",  elbWorkerLagMs=" + elbWorkerLagMs +
         ", zookeeperState='" + zookeeperState + '\'' +
-        ", globalStateNodeSize='" + globalStateNodeSize + '\'' +
         ']';
   }
 }
