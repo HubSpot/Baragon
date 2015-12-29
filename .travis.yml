@@ -6,3 +6,9 @@ jdk:
 git:
   depth: 100
 sudo: false
+
+cache:
+  directories:
+  - $HOME/.m2
+  - BaragonUI/bower_components
+  - BaragonUI/node_modules
