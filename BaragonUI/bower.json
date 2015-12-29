@@ -34,7 +34,8 @@
     "datatables-bootstrap3-plugin": "~0.4.0"
   },
   "resolutions": {
-    "backbone": "~1.1.2"
+    "backbone": "~1.1.2",
+    "underscore": "~1.6.0"
   },
   "overrides": {
     "vex": {
