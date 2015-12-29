@@ -8,7 +8,7 @@ zk:
     - "2181"
 
 service:
-  image: hubspot/baragonservice:0.1.10
+  image: hubspot/baragonservice:0.1.11
   net: host
   environment:
     - DOCKER_HOST
@@ -16,7 +16,7 @@ service:
     - BARAGON_UI_BASE=/baragon/v2
 
 agent1:
-  image: hubspot/baragonagent:0.1.10
+  image: hubspot/baragonagent:0.1.11
   net: host
   environment:
     NGINX_PORT: 80
@@ -28,7 +28,7 @@ agent1:
     - ./docker/configs/1/upstreams:/etc/nginx/conf.d/upstreams
 
 agent2:
-  image: hubspot/baragonagent:0.1.10
+  image: hubspot/baragonagent:0.1.11
   net: host
   environment:
     NGINX_PORT: 81
