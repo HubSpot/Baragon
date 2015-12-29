@@ -25,15 +25,17 @@ public class BaragonWatcherModule extends AbstractModule {
   @Baragon
   @Provides
   public CuratorFramework provideCurator(ZooKeeperConfiguration config) {
-    CuratorFramework client = CuratorFrameworkFactory.newClient(
-            config.getQuorum(),
-            config.getSessionTimeoutMillis(),
-            config.getConnectTimeoutMillis(),
-            new ExponentialBackoffRetry(config.getRetryBaseSleepTimeMilliseconds(), config.getRetryMaxTries()));
+    CuratorFramework client = CuratorFrameworkFactory.builder()
+        .connectString(config.getQuorum())
+        .sessionTimeoutMs(config.getSessionTimeoutMillis())
+        .connectionTimeoutMs(config.getConnectTimeoutMillis())
+        .retryPolicy(new ExponentialBackoffRetry(config.getRetryBaseSleepTimeMilliseconds(), config.getRetryMaxTries()))
+        .namespace(config.getZkNamespace())
+        .build();
 
     client.start();
 
-    return client.usingNamespace(config.getZkNamespace());
+    return client;
   }
 
   @Baragon
