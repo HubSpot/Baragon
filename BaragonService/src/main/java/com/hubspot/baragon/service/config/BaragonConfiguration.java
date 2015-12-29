@@ -85,7 +85,7 @@ public class BaragonConfiguration extends Configuration {
   private GraphiteConfiguration graphiteConfiguration = new GraphiteConfiguration();
 
   @JsonProperty("sentry")
-  private Optional<SentryConfiguration> sentryConfiguration;
+  private Optional<SentryConfiguration> sentryConfiguration = Optional.absent();
 
   public ZooKeeperConfiguration getZooKeeperConfiguration() {
     return zooKeeperConfiguration;
