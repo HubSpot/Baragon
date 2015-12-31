@@ -10,7 +10,7 @@
   </parent>
 
   <artifactId>Baragon</artifactId>
-  <version>0.1.12-SNAPSHOT</version>
+  <version>0.1.13-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <scm>
