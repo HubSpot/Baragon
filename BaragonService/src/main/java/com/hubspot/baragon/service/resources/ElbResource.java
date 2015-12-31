@@ -1,6 +1,6 @@
 package com.hubspot.baragon.service.resources;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import javax.ws.rs.DELETE;
@@ -13,20 +13,16 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
 import com.amazonaws.AmazonClientException;
-import com.amazonaws.services.elasticloadbalancing.AmazonElasticLoadBalancingClient;
 import com.amazonaws.services.elasticloadbalancing.model.DeregisterInstancesFromLoadBalancerRequest;
 import com.amazonaws.services.elasticloadbalancing.model.DeregisterInstancesFromLoadBalancerResult;
-import com.amazonaws.services.elasticloadbalancing.model.DescribeLoadBalancersRequest;
-import com.amazonaws.services.elasticloadbalancing.model.DescribeLoadBalancersResult;
 import com.amazonaws.services.elasticloadbalancing.model.Instance;
 import com.amazonaws.services.elasticloadbalancing.model.LoadBalancerDescription;
 import com.amazonaws.services.elasticloadbalancing.model.RegisterInstancesWithLoadBalancerRequest;
 import com.amazonaws.services.elasticloadbalancing.model.RegisterInstancesWithLoadBalancerResult;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
-import com.google.inject.name.Named;
 import com.hubspot.baragon.auth.NoAuth;
-import com.hubspot.baragon.service.BaragonServiceModule;
+import com.hubspot.baragon.service.cache.ElbCache;
 import com.hubspot.baragon.service.config.ElbConfiguration;
 import com.hubspot.baragon.service.exceptions.BaragonNotFoundException;
 import com.hubspot.baragon.service.exceptions.BaragonWebException;
@@ -34,14 +30,14 @@ import com.hubspot.baragon.service.exceptions.BaragonWebException;
 @Path("/elbs")
 @Produces(MediaType.APPLICATION_JSON)
 public class ElbResource {
-  private final AmazonElasticLoadBalancingClient elbClient;
   private final Optional<ElbConfiguration> config;
+  private final ElbCache elbCache;
 
   @Inject
-  public ElbResource(@Named(BaragonServiceModule.BARAGON_AWS_ELB_CLIENT)AmazonElasticLoadBalancingClient elbClient,
-                     Optional<ElbConfiguration> config) {
-    this.elbClient = elbClient;
+  public ElbResource(Optional<ElbConfiguration> config,
+                     ElbCache elbCache) {
     this.config = config;
+    this.elbCache = elbCache;
   }
 
 
@@ -49,7 +45,7 @@ public class ElbResource {
   @NoAuth
   public List<LoadBalancerDescription> getAllElbs() {
     if (config.isPresent()) {
-      return elbClient.describeLoadBalancers().getLoadBalancerDescriptions();
+      return elbCache.getAllDescriptions();
     } else {
       throw new BaragonWebException("ElbSync and related actions are not currently enabled");
     }
@@ -61,19 +57,17 @@ public class ElbResource {
   public LoadBalancerDescription getElb(@PathParam("elbName") String elbName) {
     if (config.isPresent()) {
       try {
-        DescribeLoadBalancersRequest request = new DescribeLoadBalancersRequest(Arrays.asList(elbName));
-        DescribeLoadBalancersResult result = elbClient.describeLoadBalancers(request);
-        for (LoadBalancerDescription elb : result.getLoadBalancerDescriptions()) {
-          if (elb.getLoadBalancerName().equals(elbName)) {
-            return elb;
-          }
+        Optional<LoadBalancerDescription> maybeLoadBalancerDescription = elbCache.getElbInfo(elbName);
+        if (!maybeLoadBalancerDescription.isPresent()) {
+          throw new BaragonNotFoundException(String.format("ELB with name %s not found", elbName));
+        } else {
+          return maybeLoadBalancerDescription.get();
         }
       } catch (AmazonClientException e) {
         throw new BaragonWebException(String.format("AWS Client Error: %s", e));
       }
-      throw new BaragonNotFoundException(String.format("ELB with name %s not found", elbName));
     } else {
-      throw new BaragonWebException("EElbSync and related actions are not currently enabled");
+      throw new BaragonWebException("ElbSync and related actions are not currently enabled");
     }
   }
 
@@ -81,8 +75,8 @@ public class ElbResource {
   @Path("/{elbName}/update")
   public RegisterInstancesWithLoadBalancerResult addToElb(@PathParam("elbName") String elbName, @QueryParam("instanceId") String instanceId) {
     if (config.isPresent()) {
-      RegisterInstancesWithLoadBalancerRequest request = new RegisterInstancesWithLoadBalancerRequest(elbName, Arrays.asList(new Instance(instanceId)));
-      return elbClient.registerInstancesWithLoadBalancer(request);
+      RegisterInstancesWithLoadBalancerRequest request = new RegisterInstancesWithLoadBalancerRequest(elbName, Collections.singletonList(new Instance(instanceId)));
+      return elbCache.addToElb(request);
     } else {
       throw new BaragonWebException("ElbSync and related actions are not currently enabled");
     }
@@ -92,10 +86,16 @@ public class ElbResource {
   @Path("/{elbName}/update")
   public DeregisterInstancesFromLoadBalancerResult removeFromElb(@PathParam("elbName") String elbName, @QueryParam("instanceId") String instanceId) {
     if (config.isPresent()) {
-      DeregisterInstancesFromLoadBalancerRequest request = new DeregisterInstancesFromLoadBalancerRequest(elbName, Arrays.asList(new Instance(instanceId)));
-      return elbClient.deregisterInstancesFromLoadBalancer(request);
+      DeregisterInstancesFromLoadBalancerRequest request = new DeregisterInstancesFromLoadBalancerRequest(elbName, Collections.singletonList(new Instance(instanceId)));
+      return elbCache.removeFromElb(request);
     } else {
       throw new BaragonWebException("ElbSync and related actions are not currently enabled");
     }
+  }
+
+  @DELETE
+  @Path("/cache")
+  public void clearCache() {
+    elbCache.clear();
   }
 }

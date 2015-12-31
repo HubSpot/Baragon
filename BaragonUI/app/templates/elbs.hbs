@@ -1,5 +1,14 @@
-<h2>Current Services</h2>
 {{#if synced}}
+    <div class="row">
+        <div class="col-md-10"><h2>Current Services</h2></div>
+        {{#if config.allowEdit}}
+            <div class="col-md-2 button-container">
+                <a class="btn btn-warning" data-action="clearCache">
+                    Clear Cache
+                </a>
+            </div>
+        {{/if}}
+    </div>
     <div class="row">
         <div class="col-md-12">
             <div id="elbsTable">

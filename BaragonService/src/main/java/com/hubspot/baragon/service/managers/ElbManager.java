@@ -1,20 +1,13 @@
 package com.hubspot.baragon.service.managers;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
 import com.amazonaws.AmazonClientException;
-import com.amazonaws.services.elasticloadbalancing.AmazonElasticLoadBalancingClient;
-import com.amazonaws.services.elasticloadbalancing.model.AttachLoadBalancerToSubnetsRequest;
 import com.amazonaws.services.elasticloadbalancing.model.DeregisterInstancesFromLoadBalancerRequest;
-import com.amazonaws.services.elasticloadbalancing.model.DescribeInstanceHealthRequest;
-import com.amazonaws.services.elasticloadbalancing.model.DescribeInstanceHealthResult;
-import com.amazonaws.services.elasticloadbalancing.model.DescribeLoadBalancersRequest;
-import com.amazonaws.services.elasticloadbalancing.model.DescribeLoadBalancersResult;
-import com.amazonaws.services.elasticloadbalancing.model.EnableAvailabilityZonesForLoadBalancerRequest;
 import com.amazonaws.services.elasticloadbalancing.model.Instance;
 import com.amazonaws.services.elasticloadbalancing.model.InstanceState;
 import com.amazonaws.services.elasticloadbalancing.model.LoadBalancerDescription;
@@ -23,13 +16,12 @@ import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import com.google.inject.name.Named;
 import com.hubspot.baragon.data.BaragonKnownAgentsDatastore;
 import com.hubspot.baragon.data.BaragonLoadBalancerDatastore;
 import com.hubspot.baragon.models.BaragonAgentMetadata;
 import com.hubspot.baragon.models.BaragonGroup;
 import com.hubspot.baragon.models.BaragonKnownAgentMetadata;
-import com.hubspot.baragon.service.BaragonServiceModule;
+import com.hubspot.baragon.service.cache.ElbCache;
 import com.hubspot.baragon.service.config.ElbConfiguration;
 import com.hubspot.baragon.service.exceptions.BaragonExceptionNotifier;
 import com.hubspot.baragon.service.exceptions.NoMatchingElbForVpcException;
@@ -41,22 +33,22 @@ import org.slf4j.LoggerFactory;
 public class ElbManager {
   private static final Logger LOG = LoggerFactory.getLogger(ElbManager.class);
 
-  private final AmazonElasticLoadBalancingClient elbClient;
   private final Optional<ElbConfiguration> configuration;
   private final BaragonLoadBalancerDatastore loadBalancerDatastore;
   private final BaragonKnownAgentsDatastore knownAgentsDatastore;
   private final BaragonExceptionNotifier exceptionNotifier;
+  private final ElbCache elbCache;
 
   @Inject
   public ElbManager(BaragonLoadBalancerDatastore loadBalancerDatastore,
                     BaragonKnownAgentsDatastore knownAgentsDatastore,
                     Optional<ElbConfiguration> configuration,
                     BaragonExceptionNotifier exceptionNotifier,
-                    @Named(BaragonServiceModule.BARAGON_AWS_ELB_CLIENT) AmazonElasticLoadBalancingClient elbClient) {
-    this.elbClient = elbClient;
+                    ElbCache elbCache) {
     this.configuration = configuration;
     this.loadBalancerDatastore = loadBalancerDatastore;
     this.knownAgentsDatastore = knownAgentsDatastore;
+    this.elbCache = elbCache;
     this.exceptionNotifier = exceptionNotifier;
   }
 
@@ -77,17 +69,16 @@ public class ElbManager {
     if (elbEnabledAgent(agent, group, groupName)) {
       for (String elbName : group.get().getSources()) {
         Instance instance = new Instance(agent.getEc2().getInstanceId().get());
-        Optional<LoadBalancerDescription> elb = elbByName(elbName);
+        Optional<LoadBalancerDescription> elb = elbCache.getElbInfo(elbName);
         if (elb.isPresent()) {
           if (elb.get().getInstances().contains(instance)) {
-            DeregisterInstancesFromLoadBalancerRequest request = new DeregisterInstancesFromLoadBalancerRequest(elbName, Arrays.asList(instance));
-            elbClient.deregisterInstancesFromLoadBalancer(request);
-            LOG.info(String.format("Deregistered instance %s from ELB %s", request.getInstances(), request.getLoadBalancerName()));
+            elbCache.removeFromElb(elbName, instance);
+            LOG.info(String.format("Deregistered instance %s from ELB %s", instance, elbName));
           } else {
-            LOG.debug(String.format("Agent %s already registered with ELB %s", agent.getAgentId(), elbName));
+            LOG.debug(String.format("Agent %s already deregistered from ELB %s", agent.getAgentId(), elbName));
           }
         } else {
-
+          LOG.debug(String.format("No ELB found matching name %s", elbName));
         }
       }
     }
@@ -99,15 +90,14 @@ public class ElbManager {
       boolean matchingElbAndVpcFound = false;
       for (String elbName : group.get().getSources()) {
         Instance instance = new Instance(agent.getEc2().getInstanceId().get());
-        Optional<LoadBalancerDescription> elb = elbByName(elbName);
+        Optional<LoadBalancerDescription> elb = elbCache.getElbInfo(elbName);
         if (elb.isPresent()) {
           matchingElbFound = true;
           if (isVpcOk(agent, elb.get()) && !elb.get().getInstances().contains(instance)) {
             matchingElbAndVpcFound = true;
             checkAZEnabled(agent, elbName, elb.get());
-            RegisterInstancesWithLoadBalancerRequest request = new RegisterInstancesWithLoadBalancerRequest(elbName, Arrays.asList(instance));
-            elbClient.registerInstancesWithLoadBalancer(request);
-            LOG.info(String.format("Registered instances %s with ELB %s", request.getInstances(), request.getLoadBalancerName()));
+            elbCache.addToElb(elbName, instance);
+            LOG.info(String.format("Registered instances %s with ELB %s", instance, elbName));
           } else {
             LOG.debug(String.format("Agent %s already registered with ELB %s", agent.getAgentId(), elbName));
           }
@@ -136,16 +126,6 @@ public class ElbManager {
     return false;
   }
 
-  private Optional<LoadBalancerDescription> elbByName(String elbName) {
-    DescribeLoadBalancersRequest request = new DescribeLoadBalancersRequest(Arrays.asList(elbName));
-    DescribeLoadBalancersResult result = elbClient.describeLoadBalancers(request);
-    if (!result.getLoadBalancerDescriptions().isEmpty()) {
-      return Optional.of(result.getLoadBalancerDescriptions().get(0));
-    } else {
-      return Optional.absent();
-    }
-  }
-
   private boolean isVpcOk(BaragonAgentMetadata agent, LoadBalancerDescription elb) {
     if (agent.getEc2().getVpcId().isPresent()) {
       return agent.getEc2().getVpcId().get().equals(elb.getVPCId()) || !configuration.get().isCheckForCorrectVpc();
@@ -155,13 +135,15 @@ public class ElbManager {
   }
 
   public void syncAll() {
-    List<LoadBalancerDescription> elbs = elbClient.describeLoadBalancers().getLoadBalancerDescriptions();
+    if (configuration.get().isUpdateCacheOnSync()) {
+      elbCache.updateAllDescriptions();
+    }
     Collection<BaragonGroup> groups = null;
     try {
       groups = loadBalancerDatastore.getLoadBalancerGroups();
       for (BaragonGroup group : groups) {
         if (!group.getSources().isEmpty()) {
-          List<LoadBalancerDescription> elbsForGroup = getElbsForGroup(elbs, group);
+          List<LoadBalancerDescription> elbsForGroup = elbCache.descriptionsForGroup(group);
           LOG.debug(String.format("Registering new instances for group %s...", group.getName()));
           registerNewInstances(elbsForGroup, group);
           if (configuration.get().isDeregisterEnabled()) {
@@ -182,23 +164,13 @@ public class ElbManager {
     }
   }
 
-  private List<LoadBalancerDescription> getElbsForGroup(List<LoadBalancerDescription> elbs, BaragonGroup group) {
-    List<LoadBalancerDescription> elbsForGroup = new ArrayList<>();
-    for (LoadBalancerDescription elb : elbs) {
-      if (group.getSources().contains(elb.getLoadBalancerName())) {
-        elbsForGroup.add(elb);
-      }
-    }
-    return elbsForGroup;
-  }
-
   private void registerNewInstances(List<LoadBalancerDescription> elbs, BaragonGroup group) {
     Collection<BaragonAgentMetadata> agents = loadBalancerDatastore.getAgentMetadata(group.getName());
     List<RegisterInstancesWithLoadBalancerRequest> requests = registerRequests(group, agents, elbs);
     if (!requests.isEmpty()) {
       for (RegisterInstancesWithLoadBalancerRequest request : requests) {
         try {
-          elbClient.registerInstancesWithLoadBalancer(request);
+          elbCache.addToElb(request);
           LOG.info(String.format("Registered instances %s with ELB %s", request.getInstances(), request.getLoadBalancerName()));
         } catch (AmazonClientException e) {
           LOG.error(String.format("Could not register %s with elb %s due to error", request.getInstances(), request.getLoadBalancerName()), e);
@@ -218,7 +190,7 @@ public class ElbManager {
           if (agent.getEc2().getInstanceId().isPresent()) {
             if (shouldRegister(agent, elbName, elbs)) {
               Instance instance = new Instance(agent.getEc2().getInstanceId().get());
-              requests.add(new RegisterInstancesWithLoadBalancerRequest(elbName, Arrays.asList(instance)));
+              requests.add(new RegisterInstancesWithLoadBalancerRequest(elbName, Collections.singletonList(instance)));
               checkAZEnabled(agent, elbName, elbs);
               LOG.info(String.format("Will register %s-%s with ELB %s", agent.getAgentId(), agent.getEc2().getInstanceId().get(), elbName));
             } else {
@@ -241,7 +213,7 @@ public class ElbManager {
     }
   }
 
-  private void checkAZEnabled(BaragonAgentMetadata agent, String elbName,LoadBalancerDescription elb) {
+  private void checkAZEnabled(BaragonAgentMetadata agent, String elbName, LoadBalancerDescription elb) {
     if (agent.getEc2().getAvailabilityZone().isPresent()) {
       String availabilityZone = agent.getEc2().getAvailabilityZone().get();
       if (elb.getLoadBalancerName().equals(elbName) && !elb.getAvailabilityZones().contains(availabilityZone)) {
@@ -249,7 +221,7 @@ public class ElbManager {
           if (agent.getEc2().getSubnetId().isPresent()) {
             addSubnet(agent, elb);
           } else {
-            enabledAZ(agent, availabilityZone, elb);
+            enableAZ(agent, availabilityZone, elb);
           }
         } catch (AmazonClientException e) {
           LOG.error("Could not enable availability zone %s for elb %s due to error", availabilityZone, elb.getLoadBalancerName(), e);
@@ -261,24 +233,14 @@ public class ElbManager {
     }
   }
 
-  private void addSubnet(BaragonAgentMetadata agent, LoadBalancerDescription elb) {
+  private void addSubnet(BaragonAgentMetadata agent, LoadBalancerDescription description) {
     LOG.info(String.format("Enabling subnet %s in preparation for agent %s", agent.getEc2().getSubnetId().get(), agent.getAgentId()));
-    AttachLoadBalancerToSubnetsRequest request = new AttachLoadBalancerToSubnetsRequest();
-    request.setLoadBalancerName(elb.getLoadBalancerName());
-    List<String> subnets = elb.getSubnets();
-    subnets.add(agent.getEc2().getSubnetId().get());
-    request.setSubnets(subnets);
-    elbClient.attachLoadBalancerToSubnets(request);
+    elbCache.addSubnet(agent, description);
   }
 
-  private void enabledAZ(BaragonAgentMetadata agent, String availabilityZone, LoadBalancerDescription elb) {
+  private void enableAZ(BaragonAgentMetadata agent, String availabilityZone, LoadBalancerDescription description) {
     LOG.info(String.format("Enabling availability zone %s in preparation for agent %s", availabilityZone, agent.getAgentId()));
-    List<String> availabilityZones = elb.getAvailabilityZones();
-    availabilityZones.add(availabilityZone);
-    EnableAvailabilityZonesForLoadBalancerRequest request = new EnableAvailabilityZonesForLoadBalancerRequest();
-    request.setAvailabilityZones(availabilityZones);
-    request.setLoadBalancerName(elb.getLoadBalancerName());
-    elbClient.enableAvailabilityZonesForLoadBalancer(request);
+    elbCache.enableAZ(availabilityZone, description);
   }
 
   private boolean shouldRegister(BaragonAgentMetadata agent, String elbName, List<LoadBalancerDescription> elbs) {
@@ -309,7 +271,7 @@ public class ElbManager {
       for (DeregisterInstancesFromLoadBalancerRequest request : requests) {
         try {
           if (configuration.get().isRemoveLastHealthyEnabled() || !isLastHealthyInstance(request)) {
-            elbClient.deregisterInstancesFromLoadBalancer(request);
+            elbCache.removeFromElb(request);
           } else {
             LOG.info(String.format("Will not deregister %s because it is the last healthy instance!", request.getInstances()));
           }
@@ -370,11 +332,9 @@ public class ElbManager {
   }
 
   private boolean isLastHealthyInstance(DeregisterInstancesFromLoadBalancerRequest request) throws AmazonClientException {
-    DescribeInstanceHealthRequest describeRequest = new DescribeInstanceHealthRequest(request.getLoadBalancerName());
-    DescribeInstanceHealthResult result = elbClient.describeInstanceHealth(describeRequest);
     boolean instanceIsHealthy = false;
     int healthyCount = 0;
-    for (InstanceState instanceState : result.getInstanceStates()) {
+    for (InstanceState instanceState : elbCache.getInstanceStates(request.getLoadBalancerName())) {
       if (instanceState.getState().equals("InService")) {
         healthyCount++;
         if (instanceState.getInstanceId().equals(request.getInstances().get(0).getInstanceId())) { //Will only ever be one instance per request
@@ -386,10 +346,8 @@ public class ElbManager {
   }
 
   private boolean isHealthyInstance(String instanceId, String loadBalancerName) throws AmazonClientException {
-    DescribeInstanceHealthRequest describeRequest = new DescribeInstanceHealthRequest(loadBalancerName);
-    DescribeInstanceHealthResult result = elbClient.describeInstanceHealth(describeRequest);
     boolean instanceIsHealthy = false;
-    for (InstanceState instanceState : result.getInstanceStates()) {
+    for (InstanceState instanceState : elbCache.getInstanceStates(loadBalancerName)) {
       if (instanceState.getState().equals("InService")) {
         if (instanceState.getInstanceId().equals(instanceId)) {
           instanceIsHealthy = true;
