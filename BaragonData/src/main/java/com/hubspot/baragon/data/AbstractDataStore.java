@@ -234,7 +234,11 @@ public abstract class AbstractDataStore {
     try {
       Stat stat = curatorFramework.checkExists().forPath(path);
       log(OperationType.READ, Optional.<Integer>absent(), Optional.<Integer>absent(), start, path);
-      return Optional.of(stat.getMtime());
+      if (stat != null) {
+        return Optional.of(stat.getMtime());
+      } else {
+        return Optional.absent();
+      }
     } catch (KeeperException.NoNodeException e) {
       return Optional.absent();
     } catch (Exception e) {
