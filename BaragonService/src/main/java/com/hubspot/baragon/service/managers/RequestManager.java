@@ -313,8 +313,10 @@ public class RequestManager {
   private void clearBasePathsWithNoUpstreams(BaragonRequest request) {
     try {
       if (stateDatastore.getUpstreams(request.getLoadBalancerService().getServiceId()).isEmpty()) {
-        for (String loadbalancerGroup : request.getLoadBalancerService().getLoadBalancerGroups()) {
-          loadBalancerDatastore.clearBasePath(loadbalancerGroup, request.getLoadBalancerService().getServiceBasePath());
+        for (String loadBalancerGroup : request.getLoadBalancerService().getLoadBalancerGroups()) {
+          if (loadBalancerDatastore.getBasePathServiceId(loadBalancerGroup, request.getLoadBalancerService().getServiceBasePath()).or("").equals(request.getLoadBalancerService().getServiceId())) {
+            loadBalancerDatastore.clearBasePath(loadBalancerGroup, request.getLoadBalancerService().getServiceBasePath());
+          }
         }
       }
     } catch (Exception e) {
@@ -325,7 +327,9 @@ public class RequestManager {
   private void clearChangedBasePaths(BaragonRequest request, Optional<BaragonService> maybeOriginalService) {
     if (maybeOriginalService.isPresent() && !maybeOriginalService.get().getServiceBasePath().equals(request.getLoadBalancerService().getServiceBasePath())) {
       for (String loadBalancerGroup : maybeOriginalService.get().getLoadBalancerGroups()) {
-        loadBalancerDatastore.clearBasePath(loadBalancerGroup, maybeOriginalService.get().getServiceBasePath());
+        if (loadBalancerDatastore.getBasePathServiceId(loadBalancerGroup, maybeOriginalService.get().getServiceBasePath()).or("").equals(maybeOriginalService.get().getServiceId())) {
+          loadBalancerDatastore.clearBasePath(loadBalancerGroup, maybeOriginalService.get().getServiceBasePath());
+        }
       }
     }
   }
@@ -336,8 +340,10 @@ public class RequestManager {
       removedLbGroups.removeAll(request.getLoadBalancerService().getLoadBalancerGroups());
       if (!removedLbGroups.isEmpty()) {
         try {
-          for (String loadbalancerGroup : removedLbGroups) {
-            loadBalancerDatastore.clearBasePath(loadbalancerGroup, maybeOriginalService.get().getServiceBasePath());
+          for (String loadBalancerGroup : removedLbGroups) {
+            if (loadBalancerDatastore.getBasePathServiceId(loadBalancerGroup, maybeOriginalService.get().getServiceBasePath()).or("").equals(maybeOriginalService.get().getServiceId())) {
+              loadBalancerDatastore.clearBasePath(loadBalancerGroup, maybeOriginalService.get().getServiceBasePath());
+            }
           }
         } catch (Exception e) {
           LOG.info(String.format("Error clearing base path %s", e));

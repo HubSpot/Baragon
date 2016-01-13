@@ -83,7 +83,7 @@ public class BaragonRequestWorker implements Runnable {
       case PENDING:
         final Map<String, String> conflicts = requestManager.getBasePathConflicts(request);
 
-        if (!conflicts.isEmpty()) {
+        if (!conflicts.isEmpty() && !(request.getAction().or(RequestAction.UPDATE) == RequestAction.DELETE)) {
           requestManager.setRequestMessage(request.getLoadBalancerRequestId(), String.format("Invalid request due to base path conflicts: %s", conflicts));
           return InternalRequestStates.INVALID_REQUEST_NOOP;
         }
@@ -102,7 +102,9 @@ public class BaragonRequestWorker implements Runnable {
           }
         }
 
-        requestManager.lockBasePaths(request);
+        if (!(request.getAction().or(RequestAction.UPDATE) == RequestAction.DELETE)) {
+          requestManager.lockBasePaths(request);
+        }
 
         return InternalRequestStates.SEND_APPLY_REQUESTS;
 
