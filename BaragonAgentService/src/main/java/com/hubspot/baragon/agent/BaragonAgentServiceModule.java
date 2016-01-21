@@ -11,6 +11,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.jknack.handlebars.Handlebars;
 import com.google.common.base.Optional;
+import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
@@ -79,17 +80,21 @@ public class BaragonAgentServiceModule extends AbstractModule {
     Map<String, List<LbConfigTemplate>> templates = new HashMap<>();
 
     for (TemplateConfiguration templateConfiguration : configuration.getTemplates()) {
-      if (templates.containsKey(DEFAULT_TEMPLATE_NAME)) {
-        templates.get(DEFAULT_TEMPLATE_NAME).add(new LbConfigTemplate(templateConfiguration.getFilename(), handlebars.compileInline(templateConfiguration.getDefaultTemplate())));
-      } else {
-        templates.put(DEFAULT_TEMPLATE_NAME, Lists.newArrayList(new LbConfigTemplate(templateConfiguration.getFilename(), handlebars.compileInline(templateConfiguration.getDefaultTemplate()))));
+      if (!Strings.isNullOrEmpty(templateConfiguration.getDefaultTemplate())) {
+        if (templates.containsKey(DEFAULT_TEMPLATE_NAME)) {
+          templates.get(DEFAULT_TEMPLATE_NAME).add(new LbConfigTemplate(templateConfiguration.getFilename(), handlebars.compileInline(templateConfiguration.getDefaultTemplate())));
+        } else {
+          templates.put(DEFAULT_TEMPLATE_NAME, Lists.newArrayList(new LbConfigTemplate(templateConfiguration.getFilename(), handlebars.compileInline(templateConfiguration.getDefaultTemplate()))));
+        }
       }
       if (templateConfiguration.getNamedTemplates() != null) {
         for (Map.Entry<String, String> entry : templateConfiguration.getNamedTemplates().entrySet()) {
-          if (templates.containsKey(entry.getKey())) {
-            templates.get(entry.getKey()).add(new LbConfigTemplate(templateConfiguration.getFilename(), handlebars.compileInline(entry.getValue())));
-          } else {
-            templates.put(entry.getKey(), Lists.newArrayList(new LbConfigTemplate(templateConfiguration.getFilename(), handlebars.compileInline(entry.getValue()))));
+          if (!Strings.isNullOrEmpty(entry.getValue())) {
+            if (templates.containsKey(entry.getKey())) {
+              templates.get(entry.getKey()).add(new LbConfigTemplate(templateConfiguration.getFilename(), handlebars.compileInline(entry.getValue())));
+            } else {
+              templates.put(entry.getKey(), Lists.newArrayList(new LbConfigTemplate(templateConfiguration.getFilename(), handlebars.compileInline(entry.getValue()))));
+            }
           }
         }
       }
