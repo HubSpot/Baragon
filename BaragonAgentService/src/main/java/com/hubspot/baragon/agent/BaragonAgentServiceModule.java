@@ -22,6 +22,7 @@ import com.hubspot.baragon.agent.config.BaragonAgentConfiguration;
 import com.hubspot.baragon.agent.config.LoadBalancerConfiguration;
 import com.hubspot.baragon.agent.config.TemplateConfiguration;
 import com.hubspot.baragon.agent.config.TestingConfiguration;
+import com.hubspot.baragon.agent.handlebars.CurrentRackIsPresentHelper;
 import com.hubspot.baragon.agent.handlebars.FirstOfHelper;
 import com.hubspot.baragon.agent.handlebars.FormatTimestampHelper;
 import com.hubspot.baragon.agent.listeners.ResyncListener;
@@ -64,11 +65,12 @@ public class BaragonAgentServiceModule extends AbstractModule {
 
   @Provides
   @Singleton
-  public Handlebars providesHandlebars(BaragonAgentConfiguration config) {
+  public Handlebars providesHandlebars(BaragonAgentConfiguration config, BaragonAgentMetadata agentMetadata) {
     final Handlebars handlebars = new Handlebars();
 
     handlebars.registerHelper("formatTimestamp", new FormatTimestampHelper(config.getDefaultDateFormat()));
     handlebars.registerHelper("firstOf", new FirstOfHelper(""));
+    handlebars.registerHelper("currentRackIsPresent", new CurrentRackIsPresentHelper(agentMetadata.getEc2().getAvailabilityZone()));
 
     return handlebars;
   }
