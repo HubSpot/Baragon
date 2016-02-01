@@ -21,6 +21,10 @@ public class CurrentRackIsPresentHelper implements Helper<Collection<UpstreamInf
       return options.fn();
     }
 
+    if (upstreams == null) {
+      return options.inverse();
+    }
+
     for (UpstreamInfo upstreamInfo : upstreams) {
       if (upstreamInfo.getRackId().isPresent() && upstreamInfo.getRackId().get().toLowerCase().equals(currentRackId.get().toLowerCase())) {
         return options.fn();
