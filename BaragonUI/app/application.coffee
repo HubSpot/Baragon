@@ -5,9 +5,6 @@ class Application
 
     views: {}
 
-    globalRefreshInterval: undefined
-    globalRefreshTime:     60000 # one minute
-
     blurred: false
 
     initialize: ->
@@ -32,28 +29,12 @@ class Application
             pushState: true
             root: el.pathname
 
-        @setRefreshInterval()
-
-        # We don't want the refresh to trigger if the tab isn't active
         $(window).on 'blur',  =>
             @blurred = true
-            clearInterval @globalRefreshInterval
 
         $(window).on 'focus', =>
             @blurred = false
-            @globalRefresh()
-            @setRefreshInterval()
-
-    setRefreshInterval: ->
-        clearInterval @globalRefreshInterval
-        setInterval @globalRefresh, @globalRefreshTime
-
-    globalRefresh: =>
-        return if localStorage.getItem 'suppressRefresh'
-        if @blurred
-            clearInterval @globalRefreshInterval
-            return
-        @currentController.refresh()
+            @currentController.refresh()
 
     caughtError: ->
         @caughtThisError = true
