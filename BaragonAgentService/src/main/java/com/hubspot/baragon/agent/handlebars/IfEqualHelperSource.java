@@ -14,7 +14,7 @@ public class IfEqualHelperSource {
     }
   }
 
-  public static CharSequence ifEqual(Optional<String> v1, Optional<String> v2, Options options) throws IOException {
+  public static CharSequence ifOptionalEqual(Optional<String> v1, Optional<String> v2, Options options) throws IOException {
     if (v1.equals(v2)) {
       return options.fn();
     } else {
