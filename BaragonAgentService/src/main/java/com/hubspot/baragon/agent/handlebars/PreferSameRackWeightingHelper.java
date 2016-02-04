@@ -2,6 +2,7 @@ package com.hubspot.baragon.agent.handlebars;
 
 import java.util.Collection;
 
+import com.github.jknack.handlebars.Options;
 import com.google.common.collect.HashMultiset;
 import com.google.common.collect.Multiset;
 import com.hubspot.baragon.agent.config.BaragonAgentConfiguration;
@@ -17,7 +18,7 @@ public class PreferSameRackWeightingHelper {
     this.agentMetadata = agentMetadata;
   }
 
-  public CharSequence preferSameRackWeighting(Collection<UpstreamInfo> upstreams, UpstreamInfo currentUpstream) {
+  public CharSequence preferSameRackWeighting(Collection<UpstreamInfo> upstreams, UpstreamInfo currentUpstream, Options options) {
     if (agentMetadata.getEc2().getAvailabilityZone().isPresent() && currentUpstream.getRackId().isPresent()) {
       String currentRack = agentMetadata.getEc2().getAvailabilityZone().get();
       int maxCount = 0;
