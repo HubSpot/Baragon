@@ -103,6 +103,15 @@ public class BaragonAgentConfiguration extends Configuration {
   @JsonProperty("maxGetGloablStateAttempts")
   private int maxGetGloablStateAttempts = 3;
 
+  @JsonProperty("zeroWeightString")
+  private String zeroWeightString = "backup";
+
+  @JsonProperty("sameRackMultiplier")
+  private int sameRackMultiplier = 2;
+
+  @JsonProperty("weightingFormat")
+  private String weightingFormat = "weight=%s";
+
   public HttpClientConfiguration getHttpClientConfiguration() {
     return httpClientConfiguration;
   }
@@ -281,5 +290,29 @@ public class BaragonAgentConfiguration extends Configuration {
 
   public void setMaxGetGloablStateAttempts(int maxGetGloablStateAttempts) {
     this.maxGetGloablStateAttempts = maxGetGloablStateAttempts;
+  }
+
+  public String getZeroWeightString() {
+    return zeroWeightString;
+  }
+
+  public void setZeroWeightString(String zeroWeightString) {
+    this.zeroWeightString = zeroWeightString;
+  }
+
+  public int getSameRackMultiplier() {
+    return sameRackMultiplier;
+  }
+
+  public void setSameRackMultiplier(int sameRackMultiplier) {
+    this.sameRackMultiplier = sameRackMultiplier;
+  }
+
+  public String getWeightingFormat() {
+    return weightingFormat;
+  }
+
+  public void setWeightingFormat(String weightingFormat) {
+    this.weightingFormat = weightingFormat;
   }
 }
