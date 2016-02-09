@@ -149,7 +149,8 @@ public class BaragonAgentServiceModule extends AbstractModule {
     final String baseAgentUri = String.format(config.getBaseUrlTemplate(), hostname, httpPort, appRoot);
     final String agentId = String.format("%s:%s", hostname, httpPort);
 
-    return new BaragonAgentMetadata(baseAgentUri, agentId, domain, BaragonAgentEc2Metadata.fromEnvironment(), config.getExtraAgentData());
+    final Optional<Integer> nginxPort = config.getNginxPort().or(Optional.<Integer>absent());
+    return new BaragonAgentMetadata(baseAgentUri, agentId, domain, BaragonAgentEc2Metadata.fromEnvironment(), nginxPort, config.getExtraAgentData());
   }
 
 

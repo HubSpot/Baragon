@@ -20,6 +20,7 @@ public class BaragonAgentMetadata {
   private final Optional<String> domain;
   private final String agentId;
   private final BaragonAgentEc2Metadata ec2;
+  private final Optional<Integer> nginxPort;
   private final Map<String, String> extraAgentData;
 
   @JsonCreator
@@ -30,7 +31,7 @@ public class BaragonAgentMetadata {
       throw new InvalidAgentMetadataStringException(value);
     }
 
-    return new BaragonAgentMetadata(value, matcher.group(1), Optional.<String>absent(), new BaragonAgentEc2Metadata(Optional.<String>absent(), Optional.<String>absent(), Optional.<String>absent(), Optional.<String>absent()), Collections.<String, String>emptyMap());
+    return new BaragonAgentMetadata(value, matcher.group(1), Optional.<String>absent(), new BaragonAgentEc2Metadata(Optional.<String>absent(), Optional.<String>absent(), Optional.<String>absent(), Optional.<String>absent()), Optional.<Integer>absent(), Collections.<String, String>emptyMap());
   }
 
   @JsonCreator
@@ -38,11 +39,13 @@ public class BaragonAgentMetadata {
                               @JsonProperty("agentId") String agentId,
                               @JsonProperty("domain") Optional<String> domain,
                               @JsonProperty("ec2") BaragonAgentEc2Metadata ec2,
+                              @JsonProperty("nginxPort") Optional<Integer> nginxPort,
                               @JsonProperty("extraAgentData") Map<String, String> extraAgentData) {
     this.baseAgentUri = baseAgentUri;
     this.domain = domain;
     this.agentId = agentId;
     this.ec2 = ec2;
+    this.nginxPort = nginxPort;
     this.extraAgentData = Objects.firstNonNull(extraAgentData, Collections.<String, String>emptyMap());
   }
 
@@ -61,6 +64,8 @@ public class BaragonAgentMetadata {
   public BaragonAgentEc2Metadata getEc2() {
     return ec2;
   }
+
+  public Optional<Integer> getNginxPort() { return nginxPort; }
 
   public Map<String, String> getExtraAgentData() {
     return extraAgentData;
