@@ -13,7 +13,7 @@ public class BaragonKnownAgentMetadata extends BaragonAgentMetadata {
   private long lastSeenAt;
 
   public static BaragonKnownAgentMetadata fromAgentMetadata(BaragonAgentMetadata agentMetadata, long lastSeenAt) {
-    return new BaragonKnownAgentMetadata(agentMetadata.getBaseAgentUri(), agentMetadata.getAgentId(), agentMetadata.getDomain(), agentMetadata.getEc2(), agentMetadata.getExtraAgentData(), lastSeenAt);
+    return new BaragonKnownAgentMetadata(agentMetadata.getBaseAgentUri(), agentMetadata.getAgentId(), agentMetadata.getDomain(), agentMetadata.getEc2(), agentMetadata.getNginxPort(), agentMetadata.getExtraAgentData(), lastSeenAt);
   }
 
   @JsonCreator
@@ -21,9 +21,10 @@ public class BaragonKnownAgentMetadata extends BaragonAgentMetadata {
                                    @JsonProperty("agentId") String agentId,
                                    @JsonProperty("domain") Optional<String> domain,
                                    @JsonProperty("ec2") BaragonAgentEc2Metadata ec2,
+                                   @JsonProperty("nginxPort") Optional<Integer> nginxPort,
                                    @JsonProperty("extraAgentData")Map<String, String> extraAgentData,
                                    @JsonProperty("lastSeenAt") long lastSeenAt) {
-    super(baseAgentUri, agentId, domain, ec2, extraAgentData);
+    super(baseAgentUri, agentId, domain, ec2, nginxPort, extraAgentData);
     this.lastSeenAt = lastSeenAt;
   }
 
