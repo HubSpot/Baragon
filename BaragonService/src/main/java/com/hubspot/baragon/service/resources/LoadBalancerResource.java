@@ -23,6 +23,7 @@ import com.hubspot.baragon.models.BaragonAgentMetadata;
 import com.hubspot.baragon.models.BaragonGroup;
 import com.hubspot.baragon.models.BaragonKnownAgentMetadata;
 import com.hubspot.baragon.models.BaragonService;
+import com.hubspot.baragon.models.BaragonSource;
 import com.hubspot.baragon.service.config.BaragonConfiguration;
 
 @Path("/load-balancer")
@@ -60,7 +61,7 @@ public class LoadBalancerResource {
 
   @POST
   @Path("/{clusterName}/sources")
-  public BaragonGroup addSource(@PathParam("clusterName") String clusterName, @QueryParam("source") String source) {
+  public BaragonGroup addSource(@PathParam("clusterName") String clusterName, BaragonSource source) {
     return loadBalancerDatastore.addSourceToGroup(clusterName, source);
   }
 
