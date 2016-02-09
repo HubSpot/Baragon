@@ -25,12 +25,10 @@
                                 <li class="list-group-item">
                                     {{#if ../../config.allowEdit}}
                                         <a data-action="removeSource" title="Remove Traffic Source">
-                                            <span class="glyphicon glyphicon-remove" data-source="{{this}}"></span>
+                                            <span class="glyphicon glyphicon-remove" data-source="{{this.name}}"></span>
                                         </a>
-                                        {{this}}
-                                    {{else}}
-                                        {{this}}
                                     {{/if}}
+                                    {{this.name}} {{#if this.port}}(listener: <i>{{this.port}}</i>){{/if}}
                                 </li>
                             {{/each}}
                         </ul>

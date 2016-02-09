@@ -22,8 +22,11 @@ class Group extends Model
 
     addSource: (source) =>
         $.ajax
-            url: "#{ @url() }/sources?authkey=#{ localStorage.getItem 'baragonAuthKey' }&source=#{source}"
+            url: "#{ @url() }/sources?authkey=#{ localStorage.getItem 'baragonAuthKey' }"
             type: "POST"
+            data: JSON.stringify(source)
+            dataType: "json"
+            contentType: "application/json"
 
     promptRemoveSource: (source, callback) =>
         vex.dialog.confirm
@@ -40,8 +43,10 @@ class Group extends Model
 
     promptAddSource: (callback) =>
         input = """
-                <input name="source" type="text" placeholder="Traffic Source Name" required />
+                <input name="name" type="text" placeholder="Traffic Source Name" required />
+                <input name="port" type="number" placeholder="Optional ELB listener port" />
             """
+        message = null
         vex.dialog.confirm
             message: @sourceAddTemplate
             input: input
@@ -51,8 +56,27 @@ class Group extends Model
                     className: 'vex-dialog-button-primary vex-dialog-button-primary-remove'
                 vex.dialog.buttons.NO
             ]
-            callback: (data) =>
-                return if data is false
-                @addSource(data.source).done callback
+            onSubmit: (event) =>
+                event.preventDefault()
+                event.stopPropagation()
+
+                message.hide() if message
+
+                form = event.target
+                data =
+                    name: form.name.value
+
+                if form.port.value
+                    data.port = form.port.value
+
+                if data.port
+                    if data.port <= 0 || data.port > 65535
+                        message = Messenger().error
+                            message: "<p>Port is optional and must be between 0 and 65535</p>"
+                            timeout: 0
+                        return
+
+                @addSource(data).done callback
+                vex.close $(form).parent().data().vex.id
 
 module.exports = Group
