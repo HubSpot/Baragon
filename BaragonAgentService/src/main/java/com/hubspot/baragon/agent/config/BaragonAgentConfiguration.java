@@ -40,8 +40,8 @@ public class BaragonAgentConfiguration extends Configuration {
   @JsonProperty("hostname")
   private String hostname;
 
-  @JsonProperty("nginxPort")
-  private Optional<Integer> nginxPort = Optional.absent();
+  @JsonProperty("loadBalancerPort")
+  private Optional<Integer> loadBalancerPort = Optional.absent();
 
   @JsonProperty("agentLockTimeoutMs")
   @Min(0)
@@ -167,12 +167,12 @@ public class BaragonAgentConfiguration extends Configuration {
     this.hostname = hostname;
   }
 
-  public Optional<Integer> getNginxPort() {
-    return nginxPort;
+  public Optional<Integer> getLoadBalancerPort() {
+    return loadBalancerPort;
   }
 
-  public void setNginxPort(Optional<Integer> nginxPort) {
-    this.nginxPort = nginxPort;
+  public void setLoadBalancerPort(Optional<Integer> loadBalancerPort) {
+    this.loadBalancerPort = loadBalancerPort;
   }
 
   public long getAgentLockTimeoutMs() {

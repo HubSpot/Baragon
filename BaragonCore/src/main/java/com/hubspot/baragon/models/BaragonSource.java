@@ -17,6 +17,11 @@ public class BaragonSource {
     this.port = port;
   }
 
+  @JsonCreator
+  public static BaragonSource fromString(String value) {
+    return new BaragonSource(value, Optional.<Integer>absent());
+  }
+
   public String getName() {
     return name;
   }
@@ -47,5 +52,13 @@ public class BaragonSource {
     int result = name != null ? name.hashCode() : 0;
     result = 31 * result + (port != null ? port.hashCode() : 0);
     return result;
+  }
+
+  @Override
+  public String toString() {
+    return "BaragonSource [" +
+        "name='" + name + '\'' +
+        ", port=" + port +
+        ']';
   }
 }

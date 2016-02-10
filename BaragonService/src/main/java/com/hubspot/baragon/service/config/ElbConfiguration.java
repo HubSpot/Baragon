@@ -44,7 +44,7 @@ public class ElbConfiguration {
   private boolean checkForCorrectVpc = false;
 
   @JsonProperty("syncListeners")
-  private boolean syncListeners = true;
+  private boolean syncListeners = false;
 
   public boolean isSyncListenersEnabled() {
     return syncListeners;

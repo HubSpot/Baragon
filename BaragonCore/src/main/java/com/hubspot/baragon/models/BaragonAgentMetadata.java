@@ -20,7 +20,7 @@ public class BaragonAgentMetadata {
   private final Optional<String> domain;
   private final String agentId;
   private final BaragonAgentEc2Metadata ec2;
-  private final Optional<Integer> nginxPort;
+  private final Optional<Integer> loadBalancerPort;
   private final Map<String, String> extraAgentData;
 
   @JsonCreator
@@ -39,13 +39,13 @@ public class BaragonAgentMetadata {
                               @JsonProperty("agentId") String agentId,
                               @JsonProperty("domain") Optional<String> domain,
                               @JsonProperty("ec2") BaragonAgentEc2Metadata ec2,
-                              @JsonProperty("nginxPort") Optional<Integer> nginxPort,
+                              @JsonProperty("loadBalancerPort") Optional<Integer> loadBalancerPort,
                               @JsonProperty("extraAgentData") Map<String, String> extraAgentData) {
     this.baseAgentUri = baseAgentUri;
     this.domain = domain;
     this.agentId = agentId;
     this.ec2 = ec2;
-    this.nginxPort = nginxPort;
+    this.loadBalancerPort = loadBalancerPort;
     this.extraAgentData = Objects.firstNonNull(extraAgentData, Collections.<String, String>emptyMap());
   }
 
@@ -65,7 +65,7 @@ public class BaragonAgentMetadata {
     return ec2;
   }
 
-  public Optional<Integer> getNginxPort() { return nginxPort; }
+  public Optional<Integer> getLoadBalancerPort() { return loadBalancerPort; }
 
   public Map<String, String> getExtraAgentData() {
     return extraAgentData;
@@ -94,6 +94,9 @@ public class BaragonAgentMetadata {
     if (!ec2.equals(metadata.ec2)) {
       return false;
     }
+    if (!loadBalancerPort.equals(metadata.getLoadBalancerPort())) {
+      return false;
+    }
     if (!extraAgentData.equals(metadata.extraAgentData)) {
       return false;
     }
@@ -107,6 +110,7 @@ public class BaragonAgentMetadata {
     result = 31 * result + domain.hashCode();
     result = 31 * result + (agentId != null ? agentId.hashCode() : 0);
     result = 31 * result + (ec2 != null ? ec2.hashCode() : 0);
+    result = 31 * result + loadBalancerPort.hashCode();
     result = 31 * result + extraAgentData.hashCode();
     return result;
   }
@@ -118,6 +122,7 @@ public class BaragonAgentMetadata {
             .add("domain", domain)
             .add("agentId", agentId)
             .add("ec2", ec2)
+            .add("loadBalancerPort", loadBalancerPort)
             .add("extraAgentData", extraAgentData)
             .toString();
   }

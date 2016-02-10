@@ -199,66 +199,62 @@ public class ElbManager {
     Collection<BaragonAgentMetadata> groupAgents = loadBalancerDatastore.getAgentMetadata(group.getName());
     Map<String, Pair<Integer, Integer>> listenersToKeep = new HashMap<String, Pair<Integer, Integer>>();
 
+    Optional<Integer> agentsPort = Optional.absent();
+    try {
+      agentsPort = getCommonLoadBalancerPortFromAgents(groupAgents);
+    } catch (Exception e) {
+      LOG.error(String.format("Agents in group [%s] aren't listening on same port. Skipping...", group.getName()));
+      return;
+    }
+
+    if (!agentsPort.isPresent()) {
+      LOG.warn(String.format("Agents in group [%s] aren't reporting any port where load balancer is listening. Skipping...", group.getName()));
+      return;
+    }
+
     // Handle create requests
     List<CreateLoadBalancerListenersRequest> loadBalancerListenersCreateRequests = new ArrayList<>();
-    for (BaragonAgentMetadata agent : groupAgents) {
-      for (BaragonSource source : group.getSources()) {
+    for (BaragonSource source : group.getSources()) {
+      if (!source.getPort().isPresent()) {
+        continue;
+      }
 
-        List<Listener> listenersToAdd = new ArrayList<>();
+      List<Listener> listenersToAdd = new ArrayList<>();
+      Integer elbPort = source.getPort().get();
+      Integer instancePort = agentsPort.get();
 
-        if (source.getPort().isPresent() && agent.getEc2().getInstanceId().isPresent()) {
-          if (!agent.getNginxPort().isPresent()) {
-            LOG.warn(String.format("Failed to find agent listener port to set for %s", source.getName()));
-            continue;
-          }
+      LOG.info(String.format("Will attempt to set listener for %s with instance port %s, and elb port %d", source.getName(), instancePort, elbPort));
 
-          Integer elbPort = source.getPort().get();
-          Integer instancePort = agent.getNginxPort().get();
+      Listener listener = new Listener("TCP", elbPort, instancePort);
+      listener.setInstanceProtocol("TCP");
+      ListenerDescription listenerDescription = new ListenerDescription();
+      listenerDescription.setListener(listener);
 
-          LOG.info(String.format("Will attempt to set listener for %s with instance port %s, and elb port %d", source.getName(), instancePort, elbPort));
-
-          Listener listener = new Listener("TCP", elbPort, instancePort);
-          listener.setInstanceProtocol("TCP");
-
-          ListenerDescription listenerDescription = new ListenerDescription();
-          listenerDescription.setListener(listener);
-
-          // Search for ELB in current elbs scope
-          LoadBalancerDescription elb = null;
-          for (LoadBalancerDescription sourceElb : elbsForGroup) {
-            if (sourceElb.getLoadBalancerName().equals(source.getName())) {
-              elb = sourceElb;
-              break;
-            }
-          }
-
-          // Make sure ELB exists for group
-          if (elb == null) {
-            LOG.warn(String.format("Failed to find ELB %s for agent %s in group %s", source.getName(), agent.getAgentId(), group.getName()));
-            continue;
-          }
-
-          // Check if ELB has already listener enabled
-          if (elb.getListenerDescriptions().contains(listenerDescription)) {
-            Pair<Integer, Integer> portMapping = new ImmutablePair<Integer, Integer>(elbPort, instancePort);
-            listenersToKeep.put(source.getName(), portMapping);
-            continue;
-          }
-
-          // Currently we support only one listener per group
-          if (!listenersToAdd.isEmpty()) {
-            if (!listenersToAdd.contains(listener)) {
-              LOG.warn(String.format("More than one agent group port per ELB. New port %s, existing: %s", listener.toString(), listenersToAdd.toString()));
-            }
-            continue;
-          }
-
-          listenersToAdd.add(listener);
+      // Search for ELB in current elbs scope
+      LoadBalancerDescription elb = null;
+      for (LoadBalancerDescription sourceElb : elbsForGroup) {
+        if (sourceElb.getLoadBalancerName().equals(source.getName())) {
+          elb = sourceElb;
+          break;
         }
+      }
 
-        if (!listenersToAdd.isEmpty()) {
-          loadBalancerListenersCreateRequests.add(new CreateLoadBalancerListenersRequest(source.getName(), listenersToAdd));
-        }
+      // Make sure ELB exists for group
+      if (elb == null) {
+        LOG.warn(String.format("Failed to find ELB %s in group %s", source.getName(), group.getName()));
+        continue;
+      }
+
+      // Check if ELB has already listener enabled
+      if (elb.getListenerDescriptions().contains(listenerDescription)) {
+        Pair<Integer, Integer> portMapping = new ImmutablePair<Integer, Integer>(elbPort, instancePort);
+        listenersToKeep.put(source.getName(), portMapping);
+        continue;
+      }
+
+      listenersToAdd.add(listener);
+      if (!listenersToAdd.isEmpty()) {
+        loadBalancerListenersCreateRequests.add(new CreateLoadBalancerListenersRequest(source.getName(), listenersToAdd));
       }
     }
 
@@ -313,6 +309,20 @@ public class ElbManager {
     } else {
       LOG.debug("No new listeners to add for ELB");
     }
+  }
+
+  private Optional<Integer> getCommonLoadBalancerPortFromAgents(Collection<BaragonAgentMetadata> groupAgents) throws Exception {
+    Optional<Integer> result = Optional.absent();
+    for (BaragonAgentMetadata agent : groupAgents) {
+      if (agent.getLoadBalancerPort().isPresent()) {
+        if (!result.isPresent()) {
+          result = agent.getLoadBalancerPort();
+        } else if (!result.get().equals(agent.getLoadBalancerPort().get())) {
+          throw new Exception("Agents in group have different load balancer ports");
+        }
+      }
+    }
+    return result;
   }
 
   private List<LoadBalancerDescription> getElbsForGroup(List<LoadBalancerDescription> elbs, BaragonGroup group) {
