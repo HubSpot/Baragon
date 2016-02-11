@@ -13,7 +13,6 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
 import com.google.common.base.Optional;
-import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import com.hubspot.baragon.auth.NoAuth;
@@ -26,7 +25,6 @@ import com.hubspot.baragon.models.BaragonKnownAgentMetadata;
 import com.hubspot.baragon.models.BaragonService;
 import com.hubspot.baragon.models.BaragonSource;
 import com.hubspot.baragon.service.config.BaragonConfiguration;
-import org.hibernate.validator.valuehandling.UnwrapValidatedValue;
 
 @Path("/load-balancer")
 @Produces(MediaType.APPLICATION_JSON)
@@ -63,20 +61,8 @@ public class LoadBalancerResource {
 
   @POST
   @Path("/{clusterName}/sources")
-  public BaragonGroup addSource(@PathParam("clusterName") String clusterName, @QueryParam("source") Optional<String> sourceFromQuery, @UnwrapValidatedValue Optional<BaragonSource> sourceFromBody) {
-    // TODO This dual "source" argument behavior should be removed, its intended only for fluent migration.
-    Optional<BaragonSource> source = resolveSource(sourceFromQuery, sourceFromBody);
-    if (!source.isPresent()) {
-      throw new IllegalArgumentException("Must provide source as query param or in body");
-    }
+  public BaragonGroup addSource(@PathParam("clusterName") String clusterName, Optional<BaragonSource> source) {
     return loadBalancerDatastore.addSourceToGroup(clusterName, source.get());
-  }
-
-  private Optional<BaragonSource> resolveSource(Optional<String> sourceName, Optional<BaragonSource> source) {
-    if (sourceName.isPresent() && !Strings.isNullOrEmpty(sourceName.get())) {
-      return Optional.of(BaragonSource.fromString(sourceName.get()));
-    }
-    return source;
   }
 
   @DELETE
