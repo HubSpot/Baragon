@@ -1,6 +1,8 @@
 package com.hubspot.baragon.models;
 
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -10,6 +12,7 @@ import javax.validation.constraints.Size;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.base.Objects;
 import com.google.common.base.Optional;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -25,6 +28,8 @@ public class BaragonService {
   @Pattern(regexp = "/(?:[A-Za-z0-9\\-._~!$&'()*+,;=:@/?]|%[0-9A-Fa-f]{2})*", message = "must be an absolute URL path")
   private final String serviceBasePath;
 
+  private final List<String> additionalPaths;
+
   @NotNull
   @Size(min=1)
   private final Set<String> loadBalancerGroups;
@@ -36,19 +41,21 @@ public class BaragonService {
   public BaragonService(@JsonProperty("serviceId") String serviceId,
                         @JsonProperty("owners") Collection<String> owners,
                         @JsonProperty("serviceBasePath") String serviceBasePath,
+                        @JsonProperty("additionalPaths") List<String> additionalPaths,
                         @JsonProperty("loadBalancerGroups") Set<String> loadBalancerGroups,
                         @JsonProperty("options") Map<String, Object> options,
                         @JsonProperty("templateName") Optional<String> templateName) {
     this.serviceId = serviceId;
     this.owners = owners;
     this.serviceBasePath = serviceBasePath;
+    this.additionalPaths = Objects.firstNonNull(additionalPaths, Collections.<String> emptyList());
     this.loadBalancerGroups = loadBalancerGroups;
     this.options = options;
     this.templateName = templateName;
   }
 
   public BaragonService(String serviceId, Collection<String> owners, String serviceBasePath, Set<String> loadBalancerGroups, Map<String, Object> options) {
-    this(serviceId, owners, serviceBasePath, loadBalancerGroups, options, Optional.<String>absent());
+    this(serviceId, owners, serviceBasePath, Collections.<String>emptyList(), loadBalancerGroups, options, Optional.<String>absent());
   }
 
   public String getServiceId() {
@@ -61,6 +68,10 @@ public class BaragonService {
 
   public String getServiceBasePath() {
     return serviceBasePath;
+  }
+
+  public List<String> getAdditionalPaths() {
+    return additionalPaths;
   }
 
   public Set<String> getLoadBalancerGroups() {
@@ -110,6 +121,9 @@ public class BaragonService {
     if (serviceBasePath != null ? !serviceBasePath.equals(service.serviceBasePath) : service.serviceBasePath != null) {
       return false;
     }
+    if (additionalPaths != null ? !additionalPaths.equals(service.additionalPaths) : service.additionalPaths != null) {
+      return false;
+    }
     if (serviceId != null ? !serviceId.equals(service.serviceId) : service.serviceId != null) {
       return false;
     }
@@ -125,6 +139,7 @@ public class BaragonService {
     int result = serviceId != null ? serviceId.hashCode() : 0;
     result = 31 * result + (owners != null ? owners.hashCode() : 0);
     result = 31 * result + (serviceBasePath != null ? serviceBasePath.hashCode() : 0);
+    result = 31 * result + (additionalPaths != null ? additionalPaths.hashCode() : 0);
     result = 31 * result + (loadBalancerGroups != null ? loadBalancerGroups.hashCode() : 0);
     result = 31 * result + (options != null ? options.hashCode() : 0);
     result = 31 * result + (templateName != null ? templateName.hashCode() : 0);

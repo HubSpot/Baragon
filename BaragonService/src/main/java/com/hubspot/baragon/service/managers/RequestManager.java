@@ -148,6 +148,14 @@ public class RequestManager {
           loadBalancerServiceIds.put(loadBalancerGroup, maybeServiceId.get());
         }
       }
+      for (String path : service.getAdditionalPaths()) {
+        final Optional<String> maybeServiceIdForPath = loadBalancerDatastore.getBasePathServiceId(loadBalancerGroup, path);
+        if (maybeServiceIdForPath.isPresent() && !maybeServiceIdForPath.get().equals(service.getServiceId())) {
+          if (!request.getReplaceServiceId().isPresent() || (request.getReplaceServiceId().isPresent() && !request.getReplaceServiceId().get().equals(maybeServiceIdForPath.get()))) {
+            loadBalancerServiceIds.put(loadBalancerGroup, maybeServiceIdForPath.get());
+          }
+        }
+      }
     }
 
     return loadBalancerServiceIds;
@@ -165,12 +173,15 @@ public class RequestManager {
     if (!maybeOriginalService.isPresent()) {
       for (String loadBalancerGroup : request.getLoadBalancerService().getLoadBalancerGroups()) {
         loadBalancerDatastore.clearBasePath(loadBalancerGroup,  request.getLoadBalancerService().getServiceBasePath());
+        for (String path : request.getLoadBalancerService().getAdditionalPaths()) {
+          loadBalancerDatastore.clearBasePath(loadBalancerGroup, path);
+        }
       }
     }
 
     // if we changed the base path, revert it to the old one
     if (maybeOriginalService.isPresent() && request.getReplaceServiceId().isPresent() && maybeOriginalService.get().getServiceId().equals(request.getReplaceServiceId().get())) {
-      lockBasePaths(request.getLoadBalancerService().getLoadBalancerGroups(), request.getLoadBalancerService().getServiceBasePath(), maybeOriginalService.get().getServiceId());
+      lockBasePaths(request.getLoadBalancerService().getLoadBalancerGroups(), request.getLoadBalancerService().getServiceBasePath(), request.getLoadBalancerService().getAdditionalPaths(), maybeOriginalService.get().getServiceId());
     }
   }
 
@@ -183,12 +194,18 @@ public class RequestManager {
   public void lockBasePaths(BaragonRequest request) {
     for (String loadBalancerGroup : request.getLoadBalancerService().getLoadBalancerGroups()) {
       loadBalancerDatastore.setBasePathServiceId(loadBalancerGroup, request.getLoadBalancerService().getServiceBasePath(), request.getLoadBalancerService().getServiceId());
+      for (String path : request.getLoadBalancerService().getAdditionalPaths()) {
+        loadBalancerDatastore.setBasePathServiceId(loadBalancerGroup, path, request.getLoadBalancerService().getServiceId());
+      }
     }
   }
 
-  public void lockBasePaths(Set<String> loadBalancerGroups, String serviceBasePath, String serviceId) {
+  public void lockBasePaths(Set<String> loadBalancerGroups, String serviceBasePath, List<String> additionalPaths, String serviceId) {
     for (String loadBalancerGroup : loadBalancerGroups) {
       loadBalancerDatastore.setBasePathServiceId(loadBalancerGroup, serviceBasePath, serviceId);
+      for (String path : additionalPaths) {
+        loadBalancerDatastore.setBasePathServiceId(loadBalancerGroup, path, serviceId);
+      }
     }
   }
 
@@ -316,6 +333,9 @@ public class RequestManager {
         for (String loadBalancerGroup : request.getLoadBalancerService().getLoadBalancerGroups()) {
           if (loadBalancerDatastore.getBasePathServiceId(loadBalancerGroup, request.getLoadBalancerService().getServiceBasePath()).or("").equals(request.getLoadBalancerService().getServiceId())) {
             loadBalancerDatastore.clearBasePath(loadBalancerGroup, request.getLoadBalancerService().getServiceBasePath());
+            for (String path : request.getLoadBalancerService().getAdditionalPaths()) {
+              loadBalancerDatastore.clearBasePath(loadBalancerGroup, path);
+            }
           }
         }
       }
@@ -329,6 +349,9 @@ public class RequestManager {
       for (String loadBalancerGroup : maybeOriginalService.get().getLoadBalancerGroups()) {
         if (loadBalancerDatastore.getBasePathServiceId(loadBalancerGroup, maybeOriginalService.get().getServiceBasePath()).or("").equals(maybeOriginalService.get().getServiceId())) {
           loadBalancerDatastore.clearBasePath(loadBalancerGroup, maybeOriginalService.get().getServiceBasePath());
+          for (String path : maybeOriginalService.get().getAdditionalPaths()) {
+            loadBalancerDatastore.clearBasePath(loadBalancerGroup, path);
+          }
         }
       }
     }
@@ -343,6 +366,9 @@ public class RequestManager {
           for (String loadBalancerGroup : removedLbGroups) {
             if (loadBalancerDatastore.getBasePathServiceId(loadBalancerGroup, maybeOriginalService.get().getServiceBasePath()).or("").equals(maybeOriginalService.get().getServiceId())) {
               loadBalancerDatastore.clearBasePath(loadBalancerGroup, maybeOriginalService.get().getServiceBasePath());
+              for (String path : maybeOriginalService.get().getAdditionalPaths()) {
+                loadBalancerDatastore.clearBasePath(loadBalancerGroup, path);
+              }
             }
           }
         } catch (Exception e) {
