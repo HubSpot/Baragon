@@ -168,7 +168,7 @@ public class RequestTests {
 
       requestWorker.run();
 
-      assertResponseStateExists(requestManager, requestId, BaragonRequestState.FAILED);
+      assertResponseStateExists(requestManager, requestId, BaragonRequestState.INVALID_REQUEST_NOOP);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -212,7 +212,36 @@ public class RequestTests {
 
       requestWorker.run();
 
-      assertResponseStateExists(requestManager, requestId, BaragonRequestState.FAILED);
+      assertResponseStateExists(requestManager, requestId, BaragonRequestState.INVALID_REQUEST_NOOP);
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  @Test
+  public void testAdditionalPathConflicts(RequestManager requestManager, BaragonRequestWorker requestWorker, BaragonLoadBalancerDatastore loadBalancerDatastore) {
+    loadBalancerDatastore.setBasePathServiceId(REAL_LB_GROUP, "/some-other-path", "foo-service");
+    final String requestId = "test-129";
+    Set<String> lbGroup = new HashSet<>();
+    lbGroup.add(REAL_LB_GROUP);
+
+    final BaragonService service = new BaragonService("testservice", Collections.<String>emptyList(), "/foo", Collections.singletonList("/some-other-path"), lbGroup, Collections.<String, Object>emptyMap(), Optional.<String>absent());
+
+    final UpstreamInfo upstream = new UpstreamInfo("testhost:8080", Optional.of(requestId), Optional.<String>absent());
+
+    final BaragonRequest request = new BaragonRequest(requestId, service, ImmutableList.of(upstream), ImmutableList.<UpstreamInfo>of(), Optional.<String>absent());
+
+    try {
+      assertResponseStateAbsent(requestManager, requestId);
+
+      LOG.info("Going to enqueue request: {}", request);
+      requestManager.enqueueRequest(request);
+
+      assertResponseStateExists(requestManager, requestId, BaragonRequestState.WAITING);
+
+      requestWorker.run();
+
+      assertResponseStateExists(requestManager, requestId, BaragonRequestState.INVALID_REQUEST_NOOP);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
