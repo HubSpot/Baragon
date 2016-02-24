@@ -6,7 +6,7 @@
   <parent>
     <groupId>com.hubspot</groupId>
     <artifactId>basepom</artifactId>
-    <version>12.9</version>
+    <version>15.3</version>
   </parent>
 
   <artifactId>Baragon</artifactId>
@@ -32,6 +32,7 @@
     <horizon.version>0.0.22</horizon.version>
     <ringleader.version>0.1.5</ringleader.version>
     <baragon.jar.name.format>${project.artifactId}-${project.version}</baragon.jar.name.format>
+    <basepom.jar.name.format>${baragon.jar.name.format}</basepom.jar.name.format>
     <mesos.docker.tag>0.21.1-1.1.ubuntu1404</mesos.docker.tag>
     <jukito.version>1.4.1</jukito.version>
   </properties>
@@ -194,22 +195,6 @@
           <groupId>com.github.eirslett</groupId>
           <artifactId>frontend-maven-plugin</artifactId>
           <version>0.0.23</version>
-        </plugin>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-shade-plugin</artifactId>
-          <configuration>
-            <createDependencyReducedPom>true</createDependencyReducedPom>
-            <finalName>${baragon.jar.name.format}</finalName>
-          </configuration>
-          <executions>
-            <execution>
-              <phase>package</phase>
-              <goals>
-                <goal>shade</goal>
-              </goals>
-            </execution>
-          </executions>
         </plugin>
       </plugins>
     </pluginManagement>
