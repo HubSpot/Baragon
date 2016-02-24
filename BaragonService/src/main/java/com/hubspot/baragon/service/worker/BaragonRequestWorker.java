@@ -158,7 +158,7 @@ public class BaragonRequestWorker implements Runnable {
     for (Map.Entry<String, String> entry : conflicts.entrySet()) {
       message = String.format("%s %s on group %s,", message, entry.getValue(), entry.getKey());
     }
-    return message.substring(0, message.length() -1) + "]";
+    return message.substring(0, message.length() -1) + " ]";
   }
 
   public void handleQueuedRequest(QueuedRequestId queuedRequestId) {
