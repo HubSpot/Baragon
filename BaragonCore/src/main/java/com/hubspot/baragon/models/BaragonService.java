@@ -1,5 +1,6 @@
 package com.hubspot.baragon.models;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -10,6 +11,7 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Objects;
@@ -84,6 +86,14 @@ public class BaragonService {
 
   public Optional<String> getTemplateName() {
     return templateName;
+  }
+
+  @JsonIgnore
+  public List<String> getAllPaths() {
+    List<String> allPaths = new ArrayList<>();
+    allPaths.addAll(additionalPaths);
+    allPaths.add(serviceBasePath);
+    return allPaths;
   }
 
   @Override
