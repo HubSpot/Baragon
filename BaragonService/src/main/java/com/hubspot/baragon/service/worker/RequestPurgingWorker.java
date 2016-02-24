@@ -83,7 +83,7 @@ public class RequestPurgingWorker implements Runnable {
               responseHistoryDatastore.addResponse(maybeRequest.get().getLoadBalancerService().getServiceId(), maybeRequest.get().getLoadBalancerRequestId(), response);
               requestDatastore.deleteRequest(requestId);
             } else {
-              LOG.warn(String.format("Could not get request data to save history for request %s", requestId));
+              LOG.warn("Could not get request data to save history for request {}", requestId);
             }
             break;
           case NONE:
@@ -91,7 +91,7 @@ public class RequestPurgingWorker implements Runnable {
             break;
         }
       } catch (Exception e) {
-        LOG.error(String.format("Caught exception trying to clean up request %s", requestId));
+        LOG.error("Caught exception trying to clean up request {}", requestId, e);
         exceptionNotifier.notify(e, ImmutableMap.of("requestId", requestId));
       }
       if (Thread.interrupted()) {
@@ -106,7 +106,7 @@ public class RequestPurgingWorker implements Runnable {
     if (!maybeState.isPresent() || InternalStatesMap.isRemovable(maybeState.get())) {
       if (configuration.getHistoryConfiguration().isPurgeOldRequests()) {
         if (shouldPurge(maybeUpdatedAt, referenceTime)) {
-          LOG.trace(String.format("Updated at time: %s is earlier than reference time: %s, purging request %s", maybeUpdatedAt.get(), referenceTime, requestId));
+          LOG.trace("Updated at time: {} is earlier than reference time: {}, purging request {}", maybeUpdatedAt.get(), referenceTime, requestId);
           return PurgeAction.PURGE;
         } else {
           return PurgeAction.SAVE;
@@ -128,7 +128,7 @@ public class RequestPurgingWorker implements Runnable {
             for (String requestId : requestIds) {
               Optional<Long> maybeUpdatedAt = responseHistoryDatastore.getRequestUpdatedAt(serviceId, requestId);
               if (shouldPurge(maybeUpdatedAt, referenceTime)) {
-                LOG.trace(String.format("Updated at time: %s is earlier than reference time: %s, purging request %s", maybeUpdatedAt.get(), referenceTime, requestId));
+                LOG.trace("Updated at time: {} is earlier than reference time: {}, purging request {}", maybeUpdatedAt.get(), referenceTime, requestId);
                 responseHistoryDatastore.deleteResponse(serviceId, requestId);
               }
               if (Thread.interrupted()) {
@@ -153,7 +153,7 @@ public class RequestPurgingWorker implements Runnable {
   }
 
   private void trimNumRequestsPerService() {
-    LOG.debug("Checking for services with too many requests");
+    LOG.trace("Checking for services with too many requests");
     for (String serviceId : responseHistoryDatastore.getServiceIds()) {
       if (!serviceId.equals("requestIdMapping")) {
         try {
@@ -162,7 +162,7 @@ public class RequestPurgingWorker implements Runnable {
             removeOldestRequestIds(serviceId, requestIds);
           }
         } catch (Exception e) {
-          LOG.error(String.format("Caught exception purging old requests for service %s", serviceId), e);
+          LOG.error("Caught exception purging old requests for service {}", serviceId, e);
           exceptionNotifier.notify(e, ImmutableMap.of("serviceId", serviceId));
         }
       }
@@ -170,7 +170,7 @@ public class RequestPurgingWorker implements Runnable {
   }
 
   private void removeOldestRequestIds(String serviceId, List<String> requestIds) {
-    LOG.debug(String.format("Service %s has %s requests, over limit of %s, will remove oldest requests", serviceId, requestIds.size(), configuration.getHistoryConfiguration().getMaxRequestsPerService()));
+    LOG.debug("Service {} has {} requests, over limit of {}, will remove oldest requests", serviceId, requestIds.size(), configuration.getHistoryConfiguration().getMaxRequestsPerService());
     List<BaragonRequestKey> requestKeyList = new ArrayList<>();
     for (String requestId : requestIds) {
       Optional<Long> maybeUpdatedAt = responseHistoryDatastore.getRequestUpdatedAt(serviceId, requestId);
