@@ -84,7 +84,7 @@ public class BaragonRequestWorker implements Runnable {
         final Map<String, String> conflicts = requestManager.getBasePathConflicts(request);
 
         if (!conflicts.isEmpty() && !(request.getAction().or(RequestAction.UPDATE) == RequestAction.DELETE)) {
-          requestManager.setRequestMessage(request.getLoadBalancerRequestId(), String.format("Invalid request due to base path conflicts: %s", conflicts));
+          requestManager.setRequestMessage(request.getLoadBalancerRequestId(), getBasePathConflictMessage(conflicts));
           return InternalRequestStates.INVALID_REQUEST_NOOP;
         }
 
@@ -120,9 +120,9 @@ public class BaragonRequestWorker implements Runnable {
               requestManager.commitRequest(request);
               return InternalRequestStates.COMPLETED;
             } catch (KeeperException ke) {
-              String message = String.format("Caught zookeeper error for path %s: %s", ke.getPath(), ke);
-              LOG.error(message);
-              requestManager.setRequestMessage(request.getLoadBalancerRequestId(), message);
+              String message = String.format("Caught zookeeper error for path %s.", ke.getPath());
+              LOG.error(message, ke);
+              requestManager.setRequestMessage(request.getLoadBalancerRequestId(), message + ke.getMessage());
               return InternalRequestStates.FAILED_SEND_REVERT_REQUESTS;
             } catch (Exception e) {
               LOG.warn(String.format("Request %s was successful, but failed to commit!", request.getLoadBalancerRequestId()), e);
@@ -151,6 +151,14 @@ public class BaragonRequestWorker implements Runnable {
       default:
         return currentState;
     }
+  }
+
+  private String getBasePathConflictMessage(Map<String, String> conflicts) {
+    String message = "Invalid request due to base path conflicts: [";
+    for (Map.Entry<String, String> entry : conflicts.entrySet()) {
+      message = String.format("%s %s on group %s,", message, entry.getValue(), entry.getKey());
+    }
+    return message.substring(0, message.length() -1) + " ]";
   }
 
   public void handleQueuedRequest(QueuedRequestId queuedRequestId) {
