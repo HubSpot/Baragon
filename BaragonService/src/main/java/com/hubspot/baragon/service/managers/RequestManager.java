@@ -142,10 +142,12 @@ public class RequestManager {
     final Map<String, String> loadBalancerServiceIds = Maps.newHashMap();
 
     for (String loadBalancerGroup : service.getLoadBalancerGroups()) {
-      final Optional<String> maybeServiceId = loadBalancerDatastore.getBasePathServiceId(loadBalancerGroup, service.getServiceBasePath());
-      if (maybeServiceId.isPresent() && !maybeServiceId.get().equals(service.getServiceId())) {
-        if (!request.getReplaceServiceId().isPresent() || (request.getReplaceServiceId().isPresent() && !request.getReplaceServiceId().get().equals(maybeServiceId.get()))) {
-          loadBalancerServiceIds.put(loadBalancerGroup, maybeServiceId.get());
+      for (String path : service.getAllPaths()) {
+        final Optional<String> maybeServiceIdForPath = loadBalancerDatastore.getBasePathServiceId(loadBalancerGroup, path);
+        if (maybeServiceIdForPath.isPresent() && !maybeServiceIdForPath.get().equals(service.getServiceId())) {
+          if (!request.getReplaceServiceId().isPresent() || (request.getReplaceServiceId().isPresent() && !request.getReplaceServiceId().get().equals(maybeServiceIdForPath.get()))) {
+            loadBalancerServiceIds.put(loadBalancerGroup, maybeServiceIdForPath.get());
+          }
         }
       }
     }
@@ -164,13 +166,15 @@ public class RequestManager {
     // if the request is not in the state datastore (ie. no previous request) clear the base path lock
     if (!maybeOriginalService.isPresent()) {
       for (String loadBalancerGroup : request.getLoadBalancerService().getLoadBalancerGroups()) {
-        loadBalancerDatastore.clearBasePath(loadBalancerGroup,  request.getLoadBalancerService().getServiceBasePath());
+        for (String path : request.getLoadBalancerService().getAllPaths()) {
+          loadBalancerDatastore.clearBasePath(loadBalancerGroup, path);
+        }
       }
     }
 
     // if we changed the base path, revert it to the old one
     if (maybeOriginalService.isPresent() && request.getReplaceServiceId().isPresent() && maybeOriginalService.get().getServiceId().equals(request.getReplaceServiceId().get())) {
-      lockBasePaths(request.getLoadBalancerService().getLoadBalancerGroups(), request.getLoadBalancerService().getServiceBasePath(), maybeOriginalService.get().getServiceId());
+      lockBasePaths(request.getLoadBalancerService().getLoadBalancerGroups(), request.getLoadBalancerService().getAllPaths(), maybeOriginalService.get().getServiceId());
     }
   }
 
@@ -182,13 +186,17 @@ public class RequestManager {
 
   public void lockBasePaths(BaragonRequest request) {
     for (String loadBalancerGroup : request.getLoadBalancerService().getLoadBalancerGroups()) {
-      loadBalancerDatastore.setBasePathServiceId(loadBalancerGroup, request.getLoadBalancerService().getServiceBasePath(), request.getLoadBalancerService().getServiceId());
+      for (String path : request.getLoadBalancerService().getAllPaths()) {
+        loadBalancerDatastore.setBasePathServiceId(loadBalancerGroup, path, request.getLoadBalancerService().getServiceId());
+      }
     }
   }
 
-  public void lockBasePaths(Set<String> loadBalancerGroups, String serviceBasePath, String serviceId) {
+  public void lockBasePaths(Set<String> loadBalancerGroups, List<String> paths, String serviceId) {
     for (String loadBalancerGroup : loadBalancerGroups) {
-      loadBalancerDatastore.setBasePathServiceId(loadBalancerGroup, serviceBasePath, serviceId);
+      for (String path : paths) {
+        loadBalancerDatastore.setBasePathServiceId(loadBalancerGroup, path, serviceId);
+      }
     }
   }
 
@@ -300,7 +308,7 @@ public class RequestManager {
     try {
       stateDatastore.incrementStateVersion();
     } catch (Exception e) {
-      LOG.error(String.format("Error updating state datastore %s", e));
+      LOG.error("Error updating state datastore", e);
     }
   }
 
@@ -314,22 +322,33 @@ public class RequestManager {
     try {
       if (stateDatastore.getUpstreams(request.getLoadBalancerService().getServiceId()).isEmpty()) {
         for (String loadBalancerGroup : request.getLoadBalancerService().getLoadBalancerGroups()) {
-          if (loadBalancerDatastore.getBasePathServiceId(loadBalancerGroup, request.getLoadBalancerService().getServiceBasePath()).or("").equals(request.getLoadBalancerService().getServiceId())) {
-            loadBalancerDatastore.clearBasePath(loadBalancerGroup, request.getLoadBalancerService().getServiceBasePath());
+          for (String path : request.getLoadBalancerService().getAllPaths()) {
+            if (loadBalancerDatastore.getBasePathServiceId(loadBalancerGroup, path).or("").equals(request.getLoadBalancerService().getServiceId())) {
+              loadBalancerDatastore.clearBasePath(loadBalancerGroup, path);
+            }
           }
         }
       }
     } catch (Exception e) {
-      LOG.info(String.format("Error clearing base path %s", e));
+      LOG.error("Error clearing base path", e);
     }
   }
 
   private void clearChangedBasePaths(BaragonRequest request, Optional<BaragonService> maybeOriginalService) {
-    if (maybeOriginalService.isPresent() && !maybeOriginalService.get().getServiceBasePath().equals(request.getLoadBalancerService().getServiceBasePath())) {
-      for (String loadBalancerGroup : maybeOriginalService.get().getLoadBalancerGroups()) {
-        if (loadBalancerDatastore.getBasePathServiceId(loadBalancerGroup, maybeOriginalService.get().getServiceBasePath()).or("").equals(maybeOriginalService.get().getServiceId())) {
-          loadBalancerDatastore.clearBasePath(loadBalancerGroup, maybeOriginalService.get().getServiceBasePath());
+    if (maybeOriginalService.isPresent()) {
+      try {
+        List<String> newPaths = request.getLoadBalancerService().getAllPaths();
+        for (String oldPath : maybeOriginalService.get().getAllPaths()) {
+          if (!newPaths.contains(oldPath)) {
+            for (String loadBalancerGroup : maybeOriginalService.get().getLoadBalancerGroups()) {
+              if (loadBalancerDatastore.getBasePathServiceId(loadBalancerGroup, oldPath).or("").equals(maybeOriginalService.get().getServiceId())) {
+                loadBalancerDatastore.clearBasePath(loadBalancerGroup, oldPath);
+              }
+            }
+          }
         }
+      } catch (Exception e) {
+        LOG.error("Error clearing base path", e);
       }
     }
   }
@@ -341,12 +360,14 @@ public class RequestManager {
       if (!removedLbGroups.isEmpty()) {
         try {
           for (String loadBalancerGroup : removedLbGroups) {
-            if (loadBalancerDatastore.getBasePathServiceId(loadBalancerGroup, maybeOriginalService.get().getServiceBasePath()).or("").equals(maybeOriginalService.get().getServiceId())) {
-              loadBalancerDatastore.clearBasePath(loadBalancerGroup, maybeOriginalService.get().getServiceBasePath());
+            for (String path : maybeOriginalService.get().getAllPaths()) {
+              if (loadBalancerDatastore.getBasePathServiceId(loadBalancerGroup, path).or("").equals(maybeOriginalService.get().getServiceId())) {
+                loadBalancerDatastore.clearBasePath(loadBalancerGroup, path);
+              }
             }
           }
         } catch (Exception e) {
-          LOG.info(String.format("Error clearing base path %s", e));
+          LOG.error("Error clearing base path", e);
         }
       }
     }
