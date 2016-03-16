@@ -33,7 +33,7 @@ public class KnownAgentTests {
 
   @Test
   public void testKnownAgentBaragonMetadata(BaragonKnownAgentsDatastore datastore) {
-    final BaragonKnownAgentMetadata metadata = new BaragonKnownAgentMetadata(BASE_URI, AGENT_ID, Optional.of(DOMAIN), new BaragonAgentEc2Metadata(Optional.<String>absent(), Optional.<String>absent(), Optional.<String>absent(), Optional.<String>absent()), Collections.<String, String>emptyMap(), System.currentTimeMillis());
+    final BaragonKnownAgentMetadata metadata = new BaragonKnownAgentMetadata(BASE_URI, AGENT_ID, Optional.of(DOMAIN), new BaragonAgentEc2Metadata(Optional.<String>absent(), Optional.<String>absent(), Optional.<String>absent(), Optional.<String>absent()), Optional.<Integer>absent(), Collections.<String, String>emptyMap(), System.currentTimeMillis());
     datastore.addKnownAgent(CLUSTER_NAME, metadata);
 
     assertEquals(Collections.singletonList(metadata), datastore.getKnownAgentsMetadata(CLUSTER_NAME));
@@ -41,7 +41,7 @@ public class KnownAgentTests {
 
   @Test
   public void testKnownAgentString() {
-    assertEquals(new BaragonAgentMetadata(BASE_URI, AGENT_ID, Optional.<String>absent(), new BaragonAgentEc2Metadata(Optional.<String>absent(), Optional.<String>absent(), Optional.<String>absent(), Optional.<String>absent()), Collections.<String, String>emptyMap()), BaragonAgentMetadata.fromString(BASE_URI));
+    assertEquals(new BaragonAgentMetadata(BASE_URI, AGENT_ID, Optional.<String>absent(), new BaragonAgentEc2Metadata(Optional.<String>absent(), Optional.<String>absent(), Optional.<String>absent(), Optional.<String>absent()), Optional.<Integer>absent(), Collections.<String, String>emptyMap()), BaragonAgentMetadata.fromString(BASE_URI));
   }
 
   @Test( expected = InvalidAgentMetadataStringException.class )

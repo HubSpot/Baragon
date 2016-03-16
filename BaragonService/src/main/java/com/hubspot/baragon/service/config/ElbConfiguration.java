@@ -43,6 +43,17 @@ public class ElbConfiguration {
   @JsonProperty("checkForCorrectVpc")
   private boolean checkForCorrectVpc = false;
 
+  @JsonProperty("syncListeners")
+  private boolean syncListeners = false;
+
+  public boolean isSyncListenersEnabled() {
+    return syncListeners;
+  }
+
+  public void setSyncListeners(boolean syncListeners) {
+    this.syncListeners = syncListeners;
+  }
+
   public boolean isEnabled() {
     return enabled;
   }

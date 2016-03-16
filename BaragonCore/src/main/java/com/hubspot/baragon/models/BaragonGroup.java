@@ -11,12 +11,12 @@ import com.google.common.base.Optional;
 public class BaragonGroup {
   private final String name;
   private Optional<String> domain;
-  private Set<String> sources;
+  private Set<BaragonSource> sources;
 
   @JsonCreator
   public BaragonGroup(@JsonProperty("name") String name,
                       @JsonProperty("domain") Optional<String> domain,
-                      @JsonProperty("sources") Set<String> sources) {
+                      @JsonProperty("sources") Set<BaragonSource> sources) {
     this.name = name;
     this.domain = domain;
     this.sources = sources;
@@ -30,15 +30,23 @@ public class BaragonGroup {
     return domain;
   }
 
-  public Set<String> getSources() {
+  public Set<BaragonSource> getSources() {
     return sources;
   }
 
-  public void addSource(String source) {
+  public void addSource(BaragonSource source) {
     this.sources.add(source);
   }
 
-  public void removeSource(String source) {
+  public void removeSource(String sourceName) {
+    for (BaragonSource source : sources) {
+      if (source.getName().equals(sourceName)) {
+        removeSource(source);
+      }
+    }
+  }
+
+  public void removeSource(BaragonSource source) {
     this.sources.remove(source);
   }
 

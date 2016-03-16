@@ -4,6 +4,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicReference;
 
+import com.hubspot.baragon.migrations.SourceMigration;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 
@@ -49,6 +50,7 @@ public class BaragonDataModule extends AbstractModule {
   protected void configure() {
     Multibinder<ZkDataMigration> zkMigrationBinder = Multibinder.newSetBinder(binder(), ZkDataMigration.class);
     zkMigrationBinder.addBinding().to(UpstreamsMigration.class);
+    zkMigrationBinder.addBinding().to(SourceMigration.class);
   }
 
   @Singleton
