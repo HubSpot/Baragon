@@ -240,6 +240,10 @@ public class FilesystemConfigHelper {
   private void writeConfigs(Collection<BaragonConfigFile> files) {
     for (BaragonConfigFile file : files) {
       try {
+        File  configFile = new File(file.getFullPath());
+        if (configFile.getParentFile() != null) {
+          configFile.getParentFile().mkdirs();
+        }
         Files.write(file.getContent().getBytes(Charsets.UTF_8), new File(file.getFullPath()));
       } catch (IOException e) {
         LOG.error(String.format("Failed writing %s", file.getFullPath()), e);
@@ -275,7 +279,7 @@ public class FilesystemConfigHelper {
           continue;
         }
         File dest = new File(filename + BACKUP_FILENAME_SUFFIX);
-        Files.copy(src, dest);
+        Files.move(src, dest);
       } catch (IOException e) {
         LOG.error(String.format("Failed to backup %s", filename), e);
         throw new RuntimeException(String.format("Failed to backup %s", filename));

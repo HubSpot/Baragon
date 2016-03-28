@@ -73,7 +73,7 @@ public class LbConfigGenerator {
     final Set<String> paths = new HashSet<>();
     for (Map.Entry<String,List<LbConfigTemplate>> entry : templates.entrySet()) {
       for (LbConfigTemplate template : entry.getValue()) {
-        final String filename = String.format(template.getFilename(), service.getServiceId());
+        final String filename = getFilename(template.getFilename(), service);
         if (!paths.contains(filename)) {
           paths.add(String.format("%s/%s", loadBalancerConfiguration.getRootPath(), filename));
         }
