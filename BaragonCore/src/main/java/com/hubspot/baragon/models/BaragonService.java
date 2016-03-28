@@ -98,8 +98,10 @@ public class BaragonService {
   @JsonIgnore
   public List<String> getAllPaths() {
     List<String> allPaths = new ArrayList<>();
-    allPaths.addAll(additionalPaths);
-    allPaths.add(serviceBasePath);
+    for (String path : additionalPaths) {
+      allPaths.add(String.format("%s%s", domain.or(""), path));
+    }
+    allPaths.add(String.format("%s%s", domain.or(""), serviceBasePath));
     return allPaths;
   }
 
