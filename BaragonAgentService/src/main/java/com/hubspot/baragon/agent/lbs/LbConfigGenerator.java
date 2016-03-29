@@ -17,6 +17,7 @@ import com.google.inject.name.Named;
 import com.hubspot.baragon.agent.BaragonAgentServiceModule;
 import com.hubspot.baragon.agent.config.BaragonAgentConfiguration;
 import com.hubspot.baragon.agent.config.LoadBalancerConfiguration;
+import com.hubspot.baragon.agent.models.FilePathFormatType;
 import com.hubspot.baragon.agent.models.LbConfigTemplate;
 import com.hubspot.baragon.exceptions.MissingTemplateException;
 import com.hubspot.baragon.models.BaragonAgentMetadata;
@@ -50,7 +51,7 @@ public class LbConfigGenerator {
 
     if (templates.get(templateName) != null) {
       for (LbConfigTemplate template : matchingTemplates) {
-        final String filename = getFilename(template.getFilename(), snapshot.getService());
+        final String filename = getFilename(template, snapshot.getService());
 
         final StringWriter sw = new StringWriter();
         final Context context = Context.newBuilder(snapshot).combine("agentProperties", agentMetadata).build();
@@ -73,7 +74,7 @@ public class LbConfigGenerator {
     final Set<String> paths = new HashSet<>();
     for (Map.Entry<String,List<LbConfigTemplate>> entry : templates.entrySet()) {
       for (LbConfigTemplate template : entry.getValue()) {
-        final String filename = getFilename(template.getFilename(), service);
+        final String filename = getFilename(template, service);
         if (!paths.contains(filename)) {
           paths.add(String.format("%s/%s", loadBalancerConfiguration.getRootPath(), filename));
         }
@@ -82,17 +83,15 @@ public class LbConfigGenerator {
     return paths;
   }
 
-  private String getFilename(String filenameFormat, BaragonService service) {
-    Matcher m = FORMAT_PATTERN.matcher(filenameFormat);
-    int count = 0;
-    while(m.find()) {
-      count ++;
-    }
-
-    if (count > 1) {
-      return String.format(filenameFormat, service.getDomain().or(agentMetadata.getDomain()).or(""), service.getServiceId());
-    } else {
-      return String.format(filenameFormat, service.getServiceId());
+  private String getFilename(LbConfigTemplate template, BaragonService service) {
+    switch (template.getFormatType()) {
+      case NONE:
+        return template.getFilename();
+      case SERVICE:
+        return String.format(template.getFilename(), service.getServiceId());
+      case DOMAIN_SERVICE:
+      default:
+        return String.format(template.getFilename(), service.getDomain().or(agentMetadata.getDomain()).or(""), service.getServiceId());
     }
   }
 
