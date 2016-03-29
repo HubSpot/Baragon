@@ -242,7 +242,9 @@ public class FilesystemConfigHelper {
       try {
         File  configFile = new File(file.getFullPath());
         if (configFile.getParentFile() != null) {
-          configFile.getParentFile().mkdirs();
+          if (!configFile.getParentFile().exists() && !configFile.getParentFile().mkdirs()) {
+            throw new IOException(String.format("Could not create parent directories for file path %s", file.getFullPath()));
+          }
         }
         Files.write(file.getContent().getBytes(Charsets.UTF_8), new File(file.getFullPath()));
       } catch (IOException e) {
