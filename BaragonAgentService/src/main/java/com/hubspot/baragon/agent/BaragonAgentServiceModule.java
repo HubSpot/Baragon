@@ -7,6 +7,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.jknack.handlebars.Handlebars;
@@ -28,6 +30,7 @@ import com.hubspot.baragon.agent.handlebars.FormatTimestampHelper;
 import com.hubspot.baragon.agent.handlebars.IfEqualHelperSource;
 import com.hubspot.baragon.agent.handlebars.PreferSameRackWeightingHelper;
 import com.hubspot.baragon.agent.listeners.ResyncListener;
+import com.hubspot.baragon.agent.models.FilePathFormatType;
 import com.hubspot.baragon.agent.models.LbConfigTemplate;
 import com.hubspot.baragon.config.AuthConfiguration;
 import com.hubspot.baragon.config.HttpClientConfiguration;
@@ -60,6 +63,8 @@ public class BaragonAgentServiceModule extends AbstractModule {
   public static final String BARAGON_AGENT_HTTP_CLIENT = "baragon.agent.http.client";
   public static final String CONFIG_ERROR_MESSAGE = "baragon.agent.config.error.message";
 
+  private static final Pattern FORMAT_PATTERN = Pattern.compile("[^%]%([+-]?\\d*.?\\d*)?[sdf]");
+
   @Override
   protected void configure() {
     install(new BaragonDataModule());
@@ -88,18 +93,18 @@ public class BaragonAgentServiceModule extends AbstractModule {
     for (TemplateConfiguration templateConfiguration : configuration.getTemplates()) {
       if (!Strings.isNullOrEmpty(templateConfiguration.getDefaultTemplate())) {
         if (templates.containsKey(DEFAULT_TEMPLATE_NAME)) {
-          templates.get(DEFAULT_TEMPLATE_NAME).add(new LbConfigTemplate(templateConfiguration.getFilename(), handlebars.compileInline(templateConfiguration.getDefaultTemplate())));
+          templates.get(DEFAULT_TEMPLATE_NAME).add(new LbConfigTemplate(templateConfiguration.getFilename(), handlebars.compileInline(templateConfiguration.getDefaultTemplate()), getFilePathFormatType(templateConfiguration.getFilename())));
         } else {
-          templates.put(DEFAULT_TEMPLATE_NAME, Lists.newArrayList(new LbConfigTemplate(templateConfiguration.getFilename(), handlebars.compileInline(templateConfiguration.getDefaultTemplate()))));
+          templates.put(DEFAULT_TEMPLATE_NAME, Lists.newArrayList(new LbConfigTemplate(templateConfiguration.getFilename(), handlebars.compileInline(templateConfiguration.getDefaultTemplate()), getFilePathFormatType(templateConfiguration.getFilename()))));
         }
       }
       if (templateConfiguration.getNamedTemplates() != null) {
         for (Map.Entry<String, String> entry : templateConfiguration.getNamedTemplates().entrySet()) {
           if (!Strings.isNullOrEmpty(entry.getValue())) {
             if (templates.containsKey(entry.getKey())) {
-              templates.get(entry.getKey()).add(new LbConfigTemplate(templateConfiguration.getFilename(), handlebars.compileInline(entry.getValue())));
+              templates.get(entry.getKey()).add(new LbConfigTemplate(templateConfiguration.getFilename(), handlebars.compileInline(entry.getValue()), getFilePathFormatType(templateConfiguration.getFilename())));
             } else {
-              templates.put(entry.getKey(), Lists.newArrayList(new LbConfigTemplate(templateConfiguration.getFilename(), handlebars.compileInline(entry.getValue()))));
+              templates.put(entry.getKey(), Lists.newArrayList(new LbConfigTemplate(templateConfiguration.getFilename(), handlebars.compileInline(entry.getValue()), getFilePathFormatType(templateConfiguration.getFilename()))));
             }
           }
         }
@@ -107,6 +112,21 @@ public class BaragonAgentServiceModule extends AbstractModule {
     }
 
     return templates;
+  }
+
+  private FilePathFormatType getFilePathFormatType(String filenameFormat) {
+    Matcher m = FORMAT_PATTERN.matcher(filenameFormat);
+    int count = 0;
+    while(m.find()) {
+      count ++;
+    }
+    if (count == 0) {
+      return FilePathFormatType.NONE;
+    } else if (count == 1) {
+      return FilePathFormatType.SERVICE;
+    } else {
+      return FilePathFormatType.DOMAIN_SERVICE;
+    }
   }
 
   @Provides

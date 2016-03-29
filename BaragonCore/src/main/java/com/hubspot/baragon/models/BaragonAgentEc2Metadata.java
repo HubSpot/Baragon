@@ -91,4 +91,47 @@ public class BaragonAgentEc2Metadata {
   public Optional<String> getVpcId() {
     return vpcId;
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    BaragonAgentEc2Metadata that = (BaragonAgentEc2Metadata) o;
+
+    if (instanceId != null ? !instanceId.equals(that.instanceId) : that.instanceId != null) {
+      return false;
+    }
+    if (availabilityZone != null ? !availabilityZone.equals(that.availabilityZone) : that.availabilityZone != null) {
+      return false;
+    }
+    if (subnetId != null ? !subnetId.equals(that.subnetId) : that.subnetId != null) {
+      return false;
+    }
+    return vpcId != null ? vpcId.equals(that.vpcId) : that.vpcId == null;
+
+  }
+
+  @Override
+  public int hashCode() {
+    int result = instanceId != null ? instanceId.hashCode() : 0;
+    result = 31 * result + (availabilityZone != null ? availabilityZone.hashCode() : 0);
+    result = 31 * result + (subnetId != null ? subnetId.hashCode() : 0);
+    result = 31 * result + (vpcId != null ? vpcId.hashCode() : 0);
+    return result;
+  }
+
+  @Override
+  public String toString() {
+    return "BaragonAgentEc2Metadata{" +
+      "instanceId=" + instanceId +
+      ", availabilityZone=" + availabilityZone +
+      ", subnetId=" + subnetId +
+      ", vpcId=" + vpcId +
+      '}';
+  }
 }

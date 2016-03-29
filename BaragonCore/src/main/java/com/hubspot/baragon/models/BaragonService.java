@@ -39,13 +39,16 @@ public class BaragonService {
 
   private final Optional<String> templateName;
 
+  private final Optional<String> domain;
+
   public BaragonService(@JsonProperty("serviceId") String serviceId,
                         @JsonProperty("owners") Collection<String> owners,
                         @JsonProperty("serviceBasePath") String serviceBasePath,
                         @JsonProperty("additionalPaths") List<String> additionalPaths,
                         @JsonProperty("loadBalancerGroups") Set<String> loadBalancerGroups,
                         @JsonProperty("options") Map<String, Object> options,
-                        @JsonProperty("templateName") Optional<String> templateName) {
+                        @JsonProperty("templateName") Optional<String> templateName,
+                        @JsonProperty("domain") Optional<String> domain) {
     this.serviceId = serviceId;
     this.owners = owners;
     this.serviceBasePath = serviceBasePath;
@@ -53,10 +56,11 @@ public class BaragonService {
     this.loadBalancerGroups = loadBalancerGroups;
     this.options = options;
     this.templateName = templateName;
+    this.domain = domain;
   }
 
   public BaragonService(String serviceId, Collection<String> owners, String serviceBasePath, Set<String> loadBalancerGroups, Map<String, Object> options) {
-    this(serviceId, owners, serviceBasePath, Collections.<String>emptyList(), loadBalancerGroups, options, Optional.<String>absent());
+    this(serviceId, owners, serviceBasePath, Collections.<String>emptyList(), loadBalancerGroups, options, Optional.<String>absent(), Optional.<String>absent());
   }
 
   public String getServiceId() {
@@ -87,11 +91,17 @@ public class BaragonService {
     return templateName;
   }
 
+  public Optional<String> getDomain() {
+    return domain;
+  }
+
   @JsonIgnore
   public List<String> getAllPaths() {
     List<String> allPaths = new ArrayList<>();
-    allPaths.addAll(additionalPaths);
-    allPaths.add(serviceBasePath);
+    for (String path : additionalPaths) {
+      allPaths.add(String.format("%s%s", domain.or(""), path));
+    }
+    allPaths.add(String.format("%s%s", domain.or(""), serviceBasePath));
     return allPaths;
   }
 
@@ -104,6 +114,7 @@ public class BaragonService {
         ", loadBalancerGroups=" + loadBalancerGroups +
         ", options=" + options +
         ", templateName=" + templateName +
+        ", domain=" + domain +
         ']';
   }
 
@@ -139,6 +150,9 @@ public class BaragonService {
     if (templateName != null ? !templateName.equals(service.templateName) : service.templateName != null) {
       return false;
     }
+    if (domain != null ? !domain.equals(service.domain) : service.domain != null) {
+      return false;
+    }
 
     return true;
   }
@@ -152,6 +166,7 @@ public class BaragonService {
     result = 31 * result + (loadBalancerGroups != null ? loadBalancerGroups.hashCode() : 0);
     result = 31 * result + (options != null ? options.hashCode() : 0);
     result = 31 * result + (templateName != null ? templateName.hashCode() : 0);
+    result = 31 * result + (domain != null ? domain.hashCode() : 0);
     return result;
   }
 }
