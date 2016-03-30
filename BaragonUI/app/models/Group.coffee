@@ -13,6 +13,7 @@ class Group extends Model
 
     parse: (data) =>
         data.splitSources = utils.splitArray(data.sources.sort(), Math.ceil(data.sources.length/4))
+        data.splitDomains = utils.splitArray(data.domainsServed.sort(), Math.ceil(data.domainsServed.length/4))
         data
 
     deleteSource: (source) =>

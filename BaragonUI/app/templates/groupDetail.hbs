@@ -5,13 +5,29 @@
                 <h3>Group: {{ group.name }}</h3>
             </div>
             <div class="col-md-5">
-                <h3>Domain: <a href="http://{{ group.domain }}">{{ group.domain }}<a/></h3>
+                <h3>Default Domain: <a href="http://{{ group.defaultDomain }}">{{ group.defaultDomain }}<a/></h3>
             </div>
             {{#if targetCount.count}}
                 <div class="col-md-3">
                     <h3>Target Count: {{ targetCount.count }} {{#if config.allowEdit }} <a data-action="updateTargetCount"><span class="glyphicon glyphicon-edit"></span></a>{{/if}}</h3>
                 </div>
             {{/if}}
+        </div>
+    {{/if}}
+    {{#if group.splitDomains}}
+        <div class="row">
+            <div class="col-md-12">
+                <h4>Domains Served</h4>
+                {{#each group.splitDomains}}
+                    <div class="col-md-3">
+                        <ul class="list-group">
+                            {{#each this}}
+                                <li class="list-group-item">{{this}}</li>
+                            {{/each}}
+                        </ul>
+                    </div>
+                {{/each}}
+            </div>
         </div>
     {{/if}}
     {{#if group.sources}}
@@ -114,8 +130,8 @@
                                         <span class="glyphicon glyphicon-remove" data-base-path="{{this}}"></span>
                                     </a>
                                 {{/if}}
-                                {{#if ../../group.domain }}
-                                    <a target="_blank" href="http://{{ ../../../group.domain }}{{ this }}">{{ this }}</a>
+                                {{#if ../../group.defaultDomain }}
+                                    <a target="_blank" href="http://{{ ../../../group.defaultDomain }}{{ this }}">{{ this }}</a>
                                 {{else}}
                                     {{ this }}
                                 {{/if}}
