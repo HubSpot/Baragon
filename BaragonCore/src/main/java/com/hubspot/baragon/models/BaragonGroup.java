@@ -13,17 +13,17 @@ import com.google.common.base.Optional;
 @JsonIgnoreProperties( ignoreUnknown = true )
 public class BaragonGroup {
   private final String name;
-  private Optional<String> defaultDomain;
+  private Optional<String> domain;
   private Set<String> sources;
   private List<String> domainsServed;
 
   @JsonCreator
   public BaragonGroup(@JsonProperty("name") String name,
-                      @JsonProperty("defaultDomain") Optional<String> defaultDomain,
+                      @JsonProperty("domain") Optional<String> domain,
                       @JsonProperty("sources") Set<String> sources,
                       @JsonProperty("domainsServed") List<String> domainsServed) {
     this.name = name;
-    this.defaultDomain = defaultDomain;
+    this.domain = domain;
     this.sources = sources;
     this.domainsServed = domainsServed;
   }
@@ -32,26 +32,12 @@ public class BaragonGroup {
     return name;
   }
 
-  public Optional<String> getDefaultDomain() {
-    return defaultDomain;
-  }
-
-  public void setDefaultDomain(Optional<String> defaultDomain) {
-    this.defaultDomain = defaultDomain;
-  }
-
-  @Deprecated
-  @JsonIgnore
   public Optional<String> getDomain() {
-    return defaultDomain;
+    return domain;
   }
 
-  @Deprecated
-  @JsonSetter("domain")
   public void setDomain(Optional<String> domain) {
-    if (!this.defaultDomain.isPresent()) {
-      this.defaultDomain = domain;
-    }
+    this.domain = domain;
   }
 
   public Set<String> getSources() {
@@ -88,7 +74,7 @@ public class BaragonGroup {
     if (!name.equals(that.name)) {
       return false;
     }
-    if (!defaultDomain.equals(that.defaultDomain)) {
+    if (!domain.equals(that.domain)) {
       return false;
     }
     if (!sources.equals(that.sources)) {
@@ -103,7 +89,7 @@ public class BaragonGroup {
   @Override
   public int hashCode() {
     int result = name.hashCode();
-    result = 31 * result + defaultDomain.hashCode();
+    result = 31 * result + domain.hashCode();
     result = 31 * result + sources.hashCode();
     result = 31 * result + domainsServed.hashCode();
     return result;
@@ -113,7 +99,7 @@ public class BaragonGroup {
   public String toString() {
     return "BaragonGroup [" +
       "name=" + name +
-      ", defaultDomain=" + defaultDomain +
+      ", domain=" + domain +
       ", sources=" + sources +
       ", domainsServed=" + domainsServed +
       ']';

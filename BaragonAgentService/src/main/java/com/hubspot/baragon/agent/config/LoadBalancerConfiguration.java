@@ -15,10 +15,7 @@ public class LoadBalancerConfiguration {
   @NotNull
   private String name;
 
-  @Deprecated
   private String domain;
-
-  private String defaultDomain;
 
   @NotNull
   private String rootPath;
@@ -75,21 +72,12 @@ public class LoadBalancerConfiguration {
     this.commandTimeoutMs = commandTimeoutMs;
   }
 
-  @Deprecated
   public Optional<String> getDomain() {
-    return getDefaultDomain();
+    return Optional.fromNullable(Strings.emptyToNull(domain));
   }
 
   public void setDomain(String domain) {
     this.domain = domain;
-  }
-
-  public Optional<String> getDefaultDomain() {
-    return Optional.fromNullable(Strings.emptyToNull(defaultDomain)).or(Optional.fromNullable(Strings.emptyToNull(domain)));
-  }
-
-  public void setDefaultDomain(String defaultDomain) {
-    this.defaultDomain = defaultDomain;
   }
 
   public List<String> getDomainsServed() {
