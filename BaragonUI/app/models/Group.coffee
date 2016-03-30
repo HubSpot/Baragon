@@ -12,8 +12,14 @@ class Group extends Model
     initialize: ({ @groupId }) ->
 
     parse: (data) =>
-        data.splitSources = utils.splitArray(data.sources.sort(), Math.ceil(data.sources.length/4))
-        data.splitDomains = utils.splitArray(data.domainsServed.sort(), Math.ceil(data.domainsServed.length/4))
+        if data.sources
+            data.splitSources = utils.splitArray(data.sources.sort(), Math.ceil(data.sources.length/4))
+        else
+            data.splitSources = []
+        if data.domainsServed
+            data.splitDomains = utils.splitArray(data.domainsServed.sort(), Math.ceil(data.domainsServed.length/4))
+        else
+            data.splitDomains = []
         data
 
     deleteSource: (source) =>
