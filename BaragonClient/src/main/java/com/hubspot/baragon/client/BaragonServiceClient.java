@@ -41,6 +41,7 @@ public class BaragonServiceClient {
   private static final String LOAD_BALANCER_KNOWN_AGENTS_FORMAT = LOAD_BALANCER_FORMAT + "/%s/known-agents";
   private static final String LOAD_BALANCER_DELETE_KNOWN_AGENT_FORMAT = LOAD_BALANCER_KNOWN_AGENTS_FORMAT + "/%s";
   private static final String LOAD_BALANCER_GROUP_FORMAT = LOAD_BALANCER_FORMAT + "/%s";
+  private static final String ALL_LOAD_BALANCER_GROUPS_FORMAT = LOAD_BALANCER_FORMAT + "/all";
   private static final String LOAD_BALANCER_TRAFFIC_SOURCE_FORMAT = LOAD_BALANCER_GROUP_FORMAT + "/sources";
 
   private static final String REQUEST_FORMAT = "http://%s/%s/request";
@@ -53,6 +54,7 @@ public class BaragonServiceClient {
   private static final String STATUS_FORMAT = "http://%s/%s/status";
 
   private static final TypeReference<Collection<String>> STRING_COLLECTION = new TypeReference<Collection<String>>() {};
+  private static final TypeReference<Collection<BaragonGroup>> BARAGON_GROUP_COLLECTION = new TypeReference<Collection<BaragonGroup>>() {};
   private static final TypeReference<Collection<BaragonAgentMetadata>> BARAGON_AGENTS_COLLECTION = new TypeReference<Collection<BaragonAgentMetadata>>() {};
   private static final TypeReference<Collection<QueuedRequestId>> QUEUED_REQUEST_COLLECTION = new TypeReference<Collection<QueuedRequestId>>() {};
   private static final TypeReference<Collection<BaragonServiceState>> BARAGON_SERVICE_STATE_COLLECTION = new TypeReference<Collection<BaragonServiceState>>() {};
@@ -268,6 +270,11 @@ public class BaragonServiceClient {
   public Collection<String> getLoadBalancerGroups() {
     final String requestUri = String.format(LOAD_BALANCER_FORMAT, getHost(), contextPath);
     return getCollection(requestUri, "load balancer groups", STRING_COLLECTION);
+  }
+
+  public Collection<BaragonGroup> getAllLoadBalancerGroups() {
+    final String requestUri = String.format(ALL_LOAD_BALANCER_GROUPS_FORMAT, getHost(), contextPath);
+    return getCollection(requestUri, "load balancer groups", BARAGON_GROUP_COLLECTION);
   }
 
   public Collection<BaragonAgentMetadata> getLoadBalancerGroupAgentMetadata(String loadBalancerGroupName) {
