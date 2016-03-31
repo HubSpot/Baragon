@@ -22,7 +22,7 @@
                     <div class="col-md-3">
                         <ul class="list-group">
                             {{#each this}}
-                                <li class="list-group-item">{{this}}</li>
+                                <li class="list-group-item">{{this}}{{#ifEqual this ../../group.defaultDomain}}<span class="label label-info pull-right">Default</span>{{/ifEqual}}</li>
                             {{/each}}
                         </ul>
                     </div>
