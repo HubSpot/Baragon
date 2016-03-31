@@ -90,7 +90,7 @@ public class LbConfigGenerator {
       case DOMAIN_SERVICE:
       default:
         List<String> filenames = new ArrayList<>();
-        if (!service.getDomains().isEmpty() && !loadBalancerConfiguration.getDomains().isEmpty()) {
+        if (!service.getDomains().isEmpty() && (!loadBalancerConfiguration.getDomains().isEmpty() || loadBalancerConfiguration.getDefaultDomain().isPresent())) {
           for (String domain : service.getDomains()) {
             if (isDomainServed(domain)) {
               filenames.add(String.format(template.getFilename(), domain, service.getServiceId()));
