@@ -70,7 +70,7 @@ class Application
                     hideAFter: 20
             else if jqxhr.status is 0
                 Messenger().error
-                    message:   "<p>Could not reach the Baragon API. Please make sure BaragonUI is properly set up.</p><p>If running through Brunch, this might be your browser blocking cross-domains requests.</p>"
+                    message:   "<p>Could not reach the Baragon API. Please make sure BaragonUI is properly set up.</p><p>If running through Brunch, this might be your browser blocking cross-domain requests.</p>"
                     hideAfter: 20
             else
                 console.log jqxhr.responseText
