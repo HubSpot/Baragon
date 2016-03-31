@@ -1,7 +1,6 @@
 package com.hubspot.baragon.agent.config;
 
 import java.util.Collections;
-import java.util.List;
 import java.util.Set;
 
 import javax.validation.constraints.Min;
