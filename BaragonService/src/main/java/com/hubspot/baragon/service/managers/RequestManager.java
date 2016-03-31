@@ -22,6 +22,7 @@ import com.hubspot.baragon.data.BaragonStateDatastore;
 import com.hubspot.baragon.exceptions.InvalidRequestActionException;
 import com.hubspot.baragon.exceptions.InvalidUpstreamsException;
 import com.hubspot.baragon.exceptions.RequestAlreadyEnqueuedException;
+import com.hubspot.baragon.models.BaragonGroup;
 import com.hubspot.baragon.models.BaragonRequest;
 import com.hubspot.baragon.models.BaragonResponse;
 import com.hubspot.baragon.models.BaragonService;
@@ -142,11 +143,23 @@ public class RequestManager {
     final Map<String, String> loadBalancerServiceIds = Maps.newHashMap();
 
     for (String loadBalancerGroup : service.getLoadBalancerGroups()) {
+      Optional<BaragonGroup> maybeGroup = loadBalancerDatastore.getLoadBalancerGroup(loadBalancerGroup);
       for (String path : service.getAllPaths()) {
         final Optional<String> maybeServiceIdForPath = loadBalancerDatastore.getBasePathServiceId(loadBalancerGroup, path);
         if (maybeServiceIdForPath.isPresent() && !maybeServiceIdForPath.get().equals(service.getServiceId())) {
           if (!request.getReplaceServiceId().isPresent() || (request.getReplaceServiceId().isPresent() && !request.getReplaceServiceId().get().equals(maybeServiceIdForPath.get()))) {
             loadBalancerServiceIds.put(loadBalancerGroup, maybeServiceIdForPath.get());
+            continue;
+          }
+        }
+        if (!path.startsWith("/")) {
+          if (maybeGroup.isPresent() && maybeGroup.get().getDefaultDomain().isPresent() && path.startsWith(maybeGroup.get().getDefaultDomain().get())) {
+            Optional<String> maybeServiceForDefaultDomainPath = loadBalancerDatastore.getBasePathServiceId(loadBalancerGroup, path.replace(maybeGroup.get().getDefaultDomain().get(), ""));
+            if (maybeServiceForDefaultDomainPath.isPresent() && !maybeServiceForDefaultDomainPath.get().equals(service.getServiceId())) {
+              if (!request.getReplaceServiceId().isPresent() || (request.getReplaceServiceId().isPresent() && !request.getReplaceServiceId().get().equals(maybeServiceForDefaultDomainPath.get()))) {
+                loadBalancerServiceIds.put(loadBalancerGroup, maybeServiceForDefaultDomainPath.get());
+              }
+            }
           }
         }
       }
