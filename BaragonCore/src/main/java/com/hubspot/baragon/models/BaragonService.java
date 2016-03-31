@@ -39,7 +39,7 @@ public class BaragonService {
 
   private final Optional<String> templateName;
 
-  private final Optional<String> domain;
+  private final Set<String> domains;
 
   public BaragonService(@JsonProperty("serviceId") String serviceId,
                         @JsonProperty("owners") Collection<String> owners,
@@ -48,7 +48,7 @@ public class BaragonService {
                         @JsonProperty("loadBalancerGroups") Set<String> loadBalancerGroups,
                         @JsonProperty("options") Map<String, Object> options,
                         @JsonProperty("templateName") Optional<String> templateName,
-                        @JsonProperty("domain") Optional<String> domain) {
+                        @JsonProperty("domains") Set<String> domains) {
     this.serviceId = serviceId;
     this.owners = owners;
     this.serviceBasePath = serviceBasePath;
@@ -56,11 +56,15 @@ public class BaragonService {
     this.loadBalancerGroups = loadBalancerGroups;
     this.options = options;
     this.templateName = templateName;
-    this.domain = domain;
+    this.domains = Objects.firstNonNull(domains, Collections.<String>emptySet());
+  }
+
+  public BaragonService(String serviceId, Collection<String> owners, String serviceBasePath, List<String> additionalPaths, Set<String> loadBalancerGroups, Map<String, Object> options, Optional<String> templateName) {
+    this(serviceId, owners, serviceBasePath, additionalPaths, loadBalancerGroups, options, templateName, Collections.<String>emptySet());
   }
 
   public BaragonService(String serviceId, Collection<String> owners, String serviceBasePath, Set<String> loadBalancerGroups, Map<String, Object> options) {
-    this(serviceId, owners, serviceBasePath, Collections.<String>emptyList(), loadBalancerGroups, options, Optional.<String>absent(), Optional.<String>absent());
+    this(serviceId, owners, serviceBasePath, Collections.<String>emptyList(), loadBalancerGroups, options, Optional.<String>absent(), Collections.<String>emptySet());
   }
 
   public String getServiceId() {
@@ -91,17 +95,29 @@ public class BaragonService {
     return templateName;
   }
 
-  public Optional<String> getDomain() {
-    return domain;
+  public Set<String> getDomains() {
+    return domains;
   }
 
   @JsonIgnore
   public List<String> getAllPaths() {
     List<String> allPaths = new ArrayList<>();
     for (String path : additionalPaths) {
-      allPaths.add(String.format("%s%s", domain.or(""), path));
+      if (!domains.isEmpty()) {
+        for (String domain : domains) {
+          allPaths.add(String.format("%s%s", domain, path));
+        }
+      } else {
+        allPaths.add(path);
+      }
     }
-    allPaths.add(String.format("%s%s", domain.or(""), serviceBasePath));
+    if (!domains.isEmpty()) {
+      for (String domain : domains) {
+        allPaths.add(String.format("%s%s", domain, serviceBasePath));
+      }
+    } else {
+      allPaths.add(serviceBasePath);
+    }
     return allPaths;
   }
 
@@ -114,7 +130,7 @@ public class BaragonService {
         ", loadBalancerGroups=" + loadBalancerGroups +
         ", options=" + options +
         ", templateName=" + templateName +
-        ", domain=" + domain +
+        ", domains=" + domains +
         ']';
   }
 
@@ -150,7 +166,7 @@ public class BaragonService {
     if (templateName != null ? !templateName.equals(service.templateName) : service.templateName != null) {
       return false;
     }
-    if (domain != null ? !domain.equals(service.domain) : service.domain != null) {
+    if (domains != null ? !domains.equals(service.domains) : service.domains != null) {
       return false;
     }
 
@@ -166,7 +182,7 @@ public class BaragonService {
     result = 31 * result + (loadBalancerGroups != null ? loadBalancerGroups.hashCode() : 0);
     result = 31 * result + (options != null ? options.hashCode() : 0);
     result = 31 * result + (templateName != null ? templateName.hashCode() : 0);
-    result = 31 * result + (domain != null ? domain.hashCode() : 0);
+    result = 31 * result + (domains != null ? domains.hashCode() : 0);
     return result;
   }
 }

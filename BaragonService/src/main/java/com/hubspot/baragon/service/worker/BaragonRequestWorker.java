@@ -1,5 +1,6 @@
 package com.hubspot.baragon.service.worker;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -17,6 +18,7 @@ import com.hubspot.baragon.BaragonDataModule;
 import com.hubspot.baragon.models.AgentRequestType;
 import com.hubspot.baragon.models.AgentResponse;
 import com.hubspot.baragon.models.BaragonRequest;
+import com.hubspot.baragon.models.BaragonService;
 import com.hubspot.baragon.models.InternalRequestStates;
 import com.hubspot.baragon.models.InternalStatesMap;
 import com.hubspot.baragon.models.QueuedRequestId;
@@ -102,6 +104,14 @@ public class BaragonRequestWorker implements Runnable {
           }
         }
 
+        if (!request.getLoadBalancerService().getDomains().isEmpty()) {
+          List<String> domainsNotServed = getDomainsNotServed(request.getLoadBalancerService());
+          if (!domainsNotServed.isEmpty()) {
+            requestManager.setRequestMessage(request.getLoadBalancerRequestId(), String.format("No groups present that serve domains: %s", domainsNotServed));
+            return  InternalRequestStates.INVALID_REQUEST_NOOP;
+          }
+        }
+
         if (!(request.getAction().or(RequestAction.UPDATE) == RequestAction.DELETE)) {
           requestManager.lockBasePaths(request);
         }
@@ -151,6 +161,17 @@ public class BaragonRequestWorker implements Runnable {
       default:
         return currentState;
     }
+  }
+
+  private List<String> getDomainsNotServed(BaragonService service) {
+    List<String> notServed = new ArrayList<>(service.getDomains());
+    for (String group : service.getLoadBalancerGroups()) {
+      Set<String> domains = agentManager.getAllDomainsForGroup(group);
+      for (String domain : domains) {
+        notServed.remove(domain);
+      }
+    }
+    return notServed;
   }
 
   private String getBasePathConflictMessage(Map<String, String> conflicts) {

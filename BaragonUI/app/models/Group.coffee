@@ -16,8 +16,8 @@ class Group extends Model
             data.splitSources = utils.splitArray(data.sources.sort(), Math.ceil(data.sources.length/4))
         else
             data.splitSources = []
-        if data.domainsServed
-            data.splitDomains = utils.splitArray(data.domainsServed.sort(), Math.ceil(data.domainsServed.length/4))
+        if data.domains
+            data.splitDomains = utils.splitArray(data.domains.sort(), Math.ceil(data.domains.length/4))
         else
             data.splitDomains = []
         data
