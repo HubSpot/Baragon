@@ -8,7 +8,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.regex.Pattern;
 
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
@@ -30,8 +29,6 @@ public class LbConfigGenerator {
   private final LoadBalancerConfiguration loadBalancerConfiguration;
   private final Map<String, List<LbConfigTemplate>> templates;
   private final BaragonAgentMetadata agentMetadata;
-
-  private static final Pattern FORMAT_PATTERN = Pattern.compile("[^%]%([+-]?\\d*.?\\d*)?[sdf]");
 
   @Inject
   public LbConfigGenerator(LoadBalancerConfiguration loadBalancerConfiguration,
