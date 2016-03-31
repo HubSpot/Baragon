@@ -4,38 +4,42 @@ import java.util.List;
 import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonSetter;
 import com.google.common.base.Optional;
 
 @JsonIgnoreProperties( ignoreUnknown = true )
 public class BaragonGroup {
   private final String name;
+  @Deprecated
   private Optional<String> domain;
   private Set<String> sources;
-  private List<String> domainsServed;
+  private Optional<String> defaultDomain;
+  private Set<String> domains;
 
   @JsonCreator
   public BaragonGroup(@JsonProperty("name") String name,
                       @JsonProperty("domain") Optional<String> domain,
                       @JsonProperty("sources") Set<String> sources,
-                      @JsonProperty("domainsServed") List<String> domainsServed) {
+                      @JsonProperty("defaultDomain") Optional<String> defaultDomain,
+                      @JsonProperty("domains") Set<String> domains) {
     this.name = name;
     this.domain = domain;
     this.sources = sources;
-    this.domainsServed = domainsServed;
+    this.defaultDomain = defaultDomain;
+    this.domains = domains;
   }
 
   public String getName() {
     return name;
   }
 
+  @Deprecated
   public Optional<String> getDomain() {
-    return domain;
+    return getDefaultDomain();
   }
 
+  @Deprecated
   public void setDomain(Optional<String> domain) {
     this.domain = domain;
   }
@@ -44,20 +48,24 @@ public class BaragonGroup {
     return sources;
   }
 
-  public void addSource(String source) {
-    this.sources.add(source);
+  public void setSources(Set<String> sources) {
+    this.sources = sources;
   }
 
-  public void removeSource(String source) {
-    this.sources.remove(source);
+  public Optional<String> getDefaultDomain() {
+    return defaultDomain.or(domain);
   }
 
-  public List<String> getDomainsServed() {
-    return domainsServed;
+  public void setDefaultDomain(Optional<String> defaultDomain) {
+    this.defaultDomain = defaultDomain;
   }
 
-  public void setDomainsServed(List<String> domainsServed) {
-    this.domainsServed = domainsServed;
+  public Set<String> getDomains() {
+    return domains;
+  }
+
+  public void setDomains(Set<String> domains) {
+    this.domains = domains;
   }
 
   @Override
@@ -80,7 +88,10 @@ public class BaragonGroup {
     if (!sources.equals(that.sources)) {
       return false;
     }
-    if (!domainsServed.equals(that.domainsServed)) {
+    if (!defaultDomain.equals(that.defaultDomain)) {
+      return false;
+    }
+    if (!domains.equals(that.domains)) {
       return false;
     }
     return true;
@@ -91,7 +102,8 @@ public class BaragonGroup {
     int result = name.hashCode();
     result = 31 * result + domain.hashCode();
     result = 31 * result + sources.hashCode();
-    result = 31 * result + domainsServed.hashCode();
+    result = 31 * result + defaultDomain.hashCode();
+    result = 31 * result + domains.hashCode();
     return result;
   }
 
@@ -101,7 +113,8 @@ public class BaragonGroup {
       "name=" + name +
       ", domain=" + domain +
       ", sources=" + sources +
-      ", domainsServed=" + domainsServed +
+      ", defaultDomain=" + defaultDomain +
+      ", domains=" + domains +
       ']';
   }
 }

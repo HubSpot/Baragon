@@ -16,7 +16,7 @@ zookeeper:
 loadBalancerConfig:
   name: docker-baragon
   defaultDomain: docker-baragon
-  domainsServed:
+  domains:
     - docker-baragon
   rootPath: /etc/nginx/conf.d
   checkConfigCommand: /usr/sbin/nginx -t

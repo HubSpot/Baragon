@@ -225,7 +225,7 @@ public class RequestTests {
     Set<String> lbGroup = new HashSet<>();
     lbGroup.add(REAL_LB_GROUP);
 
-    final BaragonService service = new BaragonService("testservice", Collections.<String>emptyList(), "/foo", Collections.singletonList("/some-other-path"), lbGroup, Collections.<String, Object>emptyMap(), Optional.<String>absent(), Optional.<String>absent());
+    final BaragonService service = new BaragonService("testservice", Collections.<String>emptyList(), "/foo", Collections.singletonList("/some-other-path"), lbGroup, Collections.<String, Object>emptyMap(), Optional.<String>absent(), Collections.<String>emptySet());
 
     final UpstreamInfo upstream = new UpstreamInfo("testhost:8080", Optional.of(requestId), Optional.<String>absent());
 

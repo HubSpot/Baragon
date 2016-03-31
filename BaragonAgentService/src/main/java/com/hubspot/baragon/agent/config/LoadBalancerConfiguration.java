@@ -2,6 +2,7 @@ package com.hubspot.baragon.agent.config;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
@@ -15,6 +16,9 @@ public class LoadBalancerConfiguration {
   @NotNull
   private String name;
 
+  private String defaultDomain;
+
+  @Deprecated
   private String domain;
 
   @NotNull
@@ -30,7 +34,7 @@ public class LoadBalancerConfiguration {
   private int commandTimeoutMs = DEFAULT_COMMAND_TIMEOUT_MS;
 
   @NotNull
-  private List<String> domainsServed = Collections.emptyList();
+  private Set<String> domains = Collections.emptySet();
 
   public String getName() {
     return name;
@@ -72,19 +76,28 @@ public class LoadBalancerConfiguration {
     this.commandTimeoutMs = commandTimeoutMs;
   }
 
+  public Optional<String> getDefaultDomain() {
+    return Optional.fromNullable(Strings.emptyToNull(defaultDomain)).or(Optional.fromNullable(Strings.emptyToNull(domain)));
+  }
+
+  public void setDefaultDomain(String defaultDomain) {
+    this.defaultDomain = defaultDomain;
+  }
+
+  @Deprecated
   public Optional<String> getDomain() {
-    return Optional.fromNullable(Strings.emptyToNull(domain));
+    return getDefaultDomain();
   }
 
   public void setDomain(String domain) {
     this.domain = domain;
   }
 
-  public List<String> getDomainsServed() {
-    return domainsServed;
+  public Set<String> getDomains() {
+    return domains;
   }
 
-  public void setDomainsServed(List<String> domainsServed) {
-    this.domainsServed = domainsServed;
+  public void setDomains(Set<String> domains) {
+    this.domains = domains;
   }
 }

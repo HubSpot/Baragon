@@ -17,6 +17,7 @@ public class BaragonAgentMetadata {
   public static final Pattern AGENT_METADATA_STRING_REGEX = Pattern.compile("^http[s]?:\\/\\/([^:\\/]+:\\d{1,5})\\/.*$");
 
   private final String baseAgentUri;
+  @Deprecated
   private final Optional<String> domain;
   private final String agentId;
   private final BaragonAgentEc2Metadata ec2;
@@ -50,6 +51,7 @@ public class BaragonAgentMetadata {
     return baseAgentUri;
   }
 
+  @Deprecated
   public Optional<String> getDomain() {
     return domain;
   }
