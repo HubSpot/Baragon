@@ -16,10 +16,16 @@ class Group extends Model
             data.splitSources = utils.splitArray(data.sources.sort(), Math.ceil(data.sources.length/4))
         else
             data.splitSources = []
+
         if data.domains
-            data.splitDomains = utils.splitArray(data.domains.sort(), Math.ceil(data.domains.length/4))
+            if data.defaultDomain and data.defaultDomain not in data.domains
+                data.domains.push data.defaultDomain
+        else if data.defaultDomain
+            data.domains = [data.defaultDomain]
         else
-            data.splitDomains = []
+            data.domains = []
+
+        data.splitDomains = utils.splitArray(data.domains.sort(), Math.ceil(data.domains.length/4))
         data
 
     deleteSource: (source) =>
