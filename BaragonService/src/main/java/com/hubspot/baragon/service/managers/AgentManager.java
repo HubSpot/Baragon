@@ -2,6 +2,7 @@ package com.hubspot.baragon.service.managers;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -21,6 +22,7 @@ import com.hubspot.baragon.models.AgentRequestsStatus;
 import com.hubspot.baragon.models.AgentResponse;
 import com.hubspot.baragon.models.AgentResponseId;
 import com.hubspot.baragon.models.BaragonAgentMetadata;
+import com.hubspot.baragon.models.BaragonGroup;
 import com.hubspot.baragon.models.BaragonRequest;
 import com.hubspot.baragon.models.BaragonService;
 import com.hubspot.baragon.models.RequestAction;
@@ -221,5 +223,17 @@ public class AgentManager {
       }
     }
     return true;
+  }
+
+  public Set<String> getAllDomainsForGroup(String group) {
+    Optional<BaragonGroup> maybeGroup = loadBalancerDatastore.getLoadBalancerGroup(group);
+    Set<String> domains = new HashSet<>();
+    if (maybeGroup.isPresent()) {
+      domains.addAll(maybeGroup.get().getDomains());
+      if (maybeGroup.get().getDefaultDomain().isPresent()) {
+        domains.add(maybeGroup.get().getDefaultDomain().get());
+      }
+    }
+    return domains;
   }
 }

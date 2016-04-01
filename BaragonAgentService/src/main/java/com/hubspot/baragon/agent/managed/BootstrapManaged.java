@@ -1,58 +1,24 @@
 package com.hubspot.baragon.agent.managed;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-import com.github.rholder.retry.Retryer;
-import com.github.rholder.retry.RetryerBuilder;
-import com.github.rholder.retry.StopStrategies;
-import com.github.rholder.retry.WaitStrategies;
-import com.google.common.base.Optional;
-import com.google.common.base.Stopwatch;
-import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import com.hubspot.baragon.agent.BaragonAgentServiceModule;
 import com.hubspot.baragon.agent.config.BaragonAgentConfiguration;
 import com.hubspot.baragon.agent.healthcheck.ConfigChecker;
-import com.hubspot.baragon.agent.lbs.BootstrapFileChecker;
-import com.hubspot.baragon.agent.lbs.FilesystemConfigHelper;
-import com.hubspot.baragon.agent.listeners.ResyncListener;
 import com.hubspot.baragon.agent.workers.AgentHeartbeatWorker;
-import com.hubspot.baragon.data.BaragonAuthDatastore;
 import com.hubspot.baragon.data.BaragonKnownAgentsDatastore;
 import com.hubspot.baragon.data.BaragonLoadBalancerDatastore;
-import com.hubspot.baragon.data.BaragonStateDatastore;
-import com.hubspot.baragon.data.BaragonWorkerDatastore;
-import com.hubspot.baragon.exceptions.AgentStartupException;
 import com.hubspot.baragon.models.BaragonAgentMetadata;
 import com.hubspot.baragon.models.BaragonAgentState;
-import com.hubspot.baragon.models.BaragonAuthKey;
-import com.hubspot.baragon.models.BaragonConfigFile;
 import com.hubspot.baragon.models.BaragonKnownAgentMetadata;
-import com.hubspot.baragon.models.BaragonServiceState;
-import com.hubspot.baragon.models.ServiceContext;
-import com.hubspot.horizon.HttpClient;
-import com.hubspot.horizon.HttpRequest;
-import com.hubspot.horizon.HttpResponse;
+
 import io.dropwizard.lifecycle.Managed;
-import org.apache.commons.lang3.tuple.Pair;
+
 import org.apache.curator.framework.recipes.leader.LeaderLatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -113,7 +79,7 @@ public class BootstrapManaged implements Managed {
     }
 
     LOG.info("Updating BaragonGroup information...");
-    loadBalancerDatastore.updateGroupInfo(configuration.getLoadBalancerConfiguration().getName(), configuration.getLoadBalancerConfiguration().getDomain());
+    loadBalancerDatastore.updateGroupInfo(configuration.getLoadBalancerConfiguration().getName(), configuration.getLoadBalancerConfiguration().getDefaultDomain(), configuration.getLoadBalancerConfiguration().getDomains());
 
     LOG.info("Adding to known-agents...");
     knownAgentsDatastore.addKnownAgent(configuration.getLoadBalancerConfiguration().getName(), BaragonKnownAgentMetadata.fromAgentMetadata(baragonAgentMetadata, System.currentTimeMillis()));

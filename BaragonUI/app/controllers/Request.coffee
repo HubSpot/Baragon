@@ -21,7 +21,7 @@ class RequestController extends Controller
     refresh: ->
         @models.request.fetch().error((response) ->
             if response.status is 404
-            	app.caughError()
+            	app.caughtError()
             	Backbone.history.navigate('/404', { trigger: true })
         )
 

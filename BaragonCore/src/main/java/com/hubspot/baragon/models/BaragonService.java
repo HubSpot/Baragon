@@ -39,13 +39,16 @@ public class BaragonService {
 
   private final Optional<String> templateName;
 
+  private final Set<String> domains;
+
   public BaragonService(@JsonProperty("serviceId") String serviceId,
                         @JsonProperty("owners") Collection<String> owners,
                         @JsonProperty("serviceBasePath") String serviceBasePath,
                         @JsonProperty("additionalPaths") List<String> additionalPaths,
                         @JsonProperty("loadBalancerGroups") Set<String> loadBalancerGroups,
                         @JsonProperty("options") Map<String, Object> options,
-                        @JsonProperty("templateName") Optional<String> templateName) {
+                        @JsonProperty("templateName") Optional<String> templateName,
+                        @JsonProperty("domains") Set<String> domains) {
     this.serviceId = serviceId;
     this.owners = owners;
     this.serviceBasePath = serviceBasePath;
@@ -53,10 +56,15 @@ public class BaragonService {
     this.loadBalancerGroups = loadBalancerGroups;
     this.options = options;
     this.templateName = templateName;
+    this.domains = Objects.firstNonNull(domains, Collections.<String>emptySet());
+  }
+
+  public BaragonService(String serviceId, Collection<String> owners, String serviceBasePath, List<String> additionalPaths, Set<String> loadBalancerGroups, Map<String, Object> options, Optional<String> templateName) {
+    this(serviceId, owners, serviceBasePath, additionalPaths, loadBalancerGroups, options, templateName, Collections.<String>emptySet());
   }
 
   public BaragonService(String serviceId, Collection<String> owners, String serviceBasePath, Set<String> loadBalancerGroups, Map<String, Object> options) {
-    this(serviceId, owners, serviceBasePath, Collections.<String>emptyList(), loadBalancerGroups, options, Optional.<String>absent());
+    this(serviceId, owners, serviceBasePath, Collections.<String>emptyList(), loadBalancerGroups, options, Optional.<String>absent(), Collections.<String>emptySet());
   }
 
   public String getServiceId() {
@@ -87,11 +95,29 @@ public class BaragonService {
     return templateName;
   }
 
+  public Set<String> getDomains() {
+    return domains;
+  }
+
   @JsonIgnore
   public List<String> getAllPaths() {
     List<String> allPaths = new ArrayList<>();
-    allPaths.addAll(additionalPaths);
-    allPaths.add(serviceBasePath);
+    for (String path : additionalPaths) {
+      if (!domains.isEmpty()) {
+        for (String domain : domains) {
+          allPaths.add(String.format("%s%s", domain, path));
+        }
+      } else {
+        allPaths.add(path);
+      }
+    }
+    if (!domains.isEmpty()) {
+      for (String domain : domains) {
+        allPaths.add(String.format("%s%s", domain, serviceBasePath));
+      }
+    } else {
+      allPaths.add(serviceBasePath);
+    }
     return allPaths;
   }
 
@@ -104,6 +130,7 @@ public class BaragonService {
         ", loadBalancerGroups=" + loadBalancerGroups +
         ", options=" + options +
         ", templateName=" + templateName +
+        ", domains=" + domains +
         ']';
   }
 
@@ -139,6 +166,9 @@ public class BaragonService {
     if (templateName != null ? !templateName.equals(service.templateName) : service.templateName != null) {
       return false;
     }
+    if (domains != null ? !domains.equals(service.domains) : service.domains != null) {
+      return false;
+    }
 
     return true;
   }
@@ -152,6 +182,7 @@ public class BaragonService {
     result = 31 * result + (loadBalancerGroups != null ? loadBalancerGroups.hashCode() : 0);
     result = 31 * result + (options != null ? options.hashCode() : 0);
     result = 31 * result + (templateName != null ? templateName.hashCode() : 0);
+    result = 31 * result + (domains != null ? domains.hashCode() : 0);
     return result;
   }
 }

@@ -53,6 +53,13 @@ public class LoadBalancerResource {
 
   @GET
   @NoAuth
+  @Path("/all")
+  public Collection<BaragonGroup> getAllClusterDetails() {
+    return loadBalancerDatastore.getLoadBalancerGroups();
+  }
+
+  @GET
+  @NoAuth
   @Path("/{clusterName}")
   public Optional<BaragonGroup> getGroupDetail(@PathParam("clusterName") String clusterName) {
     return loadBalancerDatastore.getLoadBalancerGroup(clusterName);

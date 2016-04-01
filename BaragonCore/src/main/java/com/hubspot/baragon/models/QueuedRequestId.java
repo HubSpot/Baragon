@@ -45,6 +45,35 @@ public class QueuedRequestId {
   }
 
   @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    QueuedRequestId that = (QueuedRequestId) o;
+
+    if (index != that.index) {
+      return false;
+    }
+    if (serviceId != null ? !serviceId.equals(that.serviceId) : that.serviceId != null) {
+      return false;
+    }
+    return requestId != null ? requestId.equals(that.requestId) : that.requestId == null;
+
+  }
+
+  @Override
+  public int hashCode() {
+    int result = serviceId != null ? serviceId.hashCode() : 0;
+    result = 31 * result + (requestId != null ? requestId.hashCode() : 0);
+    result = 31 * result + index;
+    return result;
+  }
+
+  @Override
   public String toString() {
     return Objects.toStringHelper(this)
         .add("serviceId", serviceId)
