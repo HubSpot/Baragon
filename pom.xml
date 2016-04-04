@@ -10,14 +10,14 @@
   </parent>
 
   <artifactId>Baragon</artifactId>
-  <version>0.1.13-SNAPSHOT</version>
+  <version>0.2.0</version>
   <packaging>pom</packaging>
 
   <scm>
     <connection>scm:git:git@github.com:HubSpot/Baragon.git</connection>
     <developerConnection>scm:git:ssh://git@github.com/HubSpot/Baragon.git</developerConnection>
     <url>git@github.com:HubSpot/Baragon.git</url>
-    <tag>HEAD</tag>
+    <tag>Baragon-0.2.0</tag>
   </scm>
 
   <developers>
