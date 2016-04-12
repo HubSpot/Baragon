@@ -1,6 +1,7 @@
 package com.hubspot.baragon.data;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -157,7 +158,7 @@ public abstract class AbstractDataStore {
       return objectMapper.readValue(data, klass);
     } catch (JsonParseException jpe) {
       try {
-        LOG.error("Invalid Json at path {}: {}", path, new String(data), jpe);
+        LOG.error("Invalid Json at path {}: {}", path, new String(data, StandardCharsets.UTF_8), jpe);
       } catch (Exception e) {
         LOG.error("Could not parse valid json at path {}", path, e);
       }
