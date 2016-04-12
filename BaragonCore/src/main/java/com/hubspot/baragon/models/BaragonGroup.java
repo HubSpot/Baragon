@@ -1,10 +1,12 @@
 package com.hubspot.baragon.models;
 
+import java.util.Collections;
 import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.base.Objects;
 import com.google.common.base.Optional;
 
 @JsonIgnoreProperties( ignoreUnknown = true )
@@ -24,9 +26,9 @@ public class BaragonGroup {
                       @JsonProperty("domains") Set<String> domains) {
     this.name = name;
     this.domain = domain;
-    this.sources = sources;
+    this.sources = Objects.firstNonNull(sources, Collections.<String>emptySet());
     this.defaultDomain = defaultDomain;
-    this.domains = domains;
+    this.domains = Objects.firstNonNull(domains, Collections.<String>emptySet());
   }
 
   public String getName() {
