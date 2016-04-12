@@ -132,7 +132,7 @@ public abstract class AbstractDataStore {
       @Override
       public T apply(byte[] data) {
         log(OperationType.READ, Optional.<Integer>absent(), Optional.of(data.length), start, path);
-        return deserialize(data, klass);
+        return deserialize(data, klass, path);
       }
     });
   }
@@ -152,14 +152,14 @@ public abstract class AbstractDataStore {
     }
   }
 
-  protected <T> T deserialize(byte[] data, Class<T> klass) {
+  protected <T> T deserialize(byte[] data, Class<T> klass, String path) {
     try {
       return objectMapper.readValue(data, klass);
     } catch (JsonParseException jpe) {
       try {
-        LOG.error(String.format("Invalid Json: %s", objectMapper.readValue(data, String.class)));
+        LOG.error("Invalid Json at path {}: {}", path, new String(data), jpe);
       } catch (Exception e) {
-        LOG.error("Could not get raw json string", e);
+        LOG.error("Could not parse valid json at path {}", path, e);
       }
       throw Throwables.propagate(jpe);
     } catch (IOException e) {
