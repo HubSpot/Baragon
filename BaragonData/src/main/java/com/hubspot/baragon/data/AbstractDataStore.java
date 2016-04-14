@@ -160,7 +160,7 @@ public abstract class AbstractDataStore {
       try {
         LOG.error("Invalid Json at path {}: {}", path, new String(data, StandardCharsets.UTF_8), jpe);
       } catch (Exception e) {
-        LOG.error("Could not parse valid json at path {}", path, e);
+        LOG.error("Could not get raw json string at path {}", path, e);
       }
       throw Throwables.propagate(jpe);
     } catch (IOException e) {
