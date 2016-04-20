@@ -96,10 +96,12 @@ public class LbConfigGenerator {
               filenames.add(String.format(template.getFilename(), domain, service.getServiceId()));
             }
           }
-          if (filenames.isEmpty() && loadBalancerConfiguration.getDefaultDomain().isPresent()) {
-            filenames.add(String.format(template.getFilename(), loadBalancerConfiguration.getDefaultDomain().get(), service.getServiceId()));
-          } else {
-            throw new IllegalStateException("No domain served for template file that requires domain");
+          if (filenames.isEmpty()) {
+            if (loadBalancerConfiguration.getDefaultDomain().isPresent()) {
+              filenames.add(String.format(template.getFilename(), loadBalancerConfiguration.getDefaultDomain().get(), service.getServiceId()));
+            } else {
+              throw new IllegalStateException("No domain served for template file that requires domain");
+            }
           }
         } else if (loadBalancerConfiguration.getDefaultDomain().isPresent()){
           filenames.add(String.format(template.getFilename(), loadBalancerConfiguration.getDefaultDomain().get(), service.getServiceId()));
