@@ -55,16 +55,21 @@ public class LocalLbAdapter {
     try {
       ProcessBuilder processBuilder = new ProcessBuilder(command);
       Process process = processBuilder.start();
-      List<String> output = new ArrayList<>();
-      BufferedReader br = new BufferedReader(new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8));
-      String line = br.readLine();
-      while (line != null) {
-        output.add(line);
-        line = br.readLine();
+
+      try (BufferedReader br = new BufferedReader(new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8));) {
+        List<String> output = new ArrayList<>();
+        String line = br.readLine();
+        while (line != null) {
+          output.add(line);
+          line = br.readLine();
+        }
+        return Optional.of(Integer.parseInt(output.get(0).trim()));
+      } catch (Exception e) {
+        LOG.error("Could not get worker count from command {}", command, e);
+        return Optional.absent();
       }
-      return Optional.of(Integer.parseInt(output.get(0).trim()));
-    } catch (Exception e) {
-      LOG.error("Could not get worker count from command {}", command, e);
+    } catch (IOException ioe) {
+      LOG.error("Could not get worker count from command {}", command, ioe);
       return Optional.absent();
     }
   }
