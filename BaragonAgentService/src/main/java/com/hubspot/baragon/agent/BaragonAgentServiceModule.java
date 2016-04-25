@@ -261,7 +261,7 @@ public class BaragonAgentServiceModule extends AbstractModule {
   @Provides
   public Optional<RateLimiter> providesReloadRateLimiter(LoadBalancerConfiguration configuration) {
     if (configuration.getMaxReloadsPerMinute().isPresent()) {
-      double ratePerSecond = configuration.getMaxReloadsPerMinute().get() / TimeUnit.MINUTES.toSeconds(1);
+      double ratePerSecond = configuration.getMaxReloadsPerMinute().get() / (double) TimeUnit.MINUTES.toSeconds(1);
       return Optional.of(RateLimiter.create(ratePerSecond));
     } else {
       return Optional.absent();
