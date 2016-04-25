@@ -256,15 +256,4 @@ public class BaragonAgentServiceModule extends AbstractModule {
   public AtomicReference<BaragonAgentState> providesAgentState() {
     return new AtomicReference<>(BaragonAgentState.BOOTSTRAPING);
   }
-
-  @Singleton
-  @Provides
-  public Optional<RateLimiter> providesReloadRateLimiter(LoadBalancerConfiguration configuration) {
-    if (configuration.getMaxReloadsPerMinute().isPresent()) {
-      double ratePerSecond = configuration.getMaxReloadsPerMinute().get() / (double) TimeUnit.MINUTES.toSeconds(1);
-      return Optional.of(RateLimiter.create(ratePerSecond));
-    } else {
-      return Optional.absent();
-    }
-  }
 }

@@ -37,9 +37,10 @@ public class LoadBalancerConfiguration {
 
   @NotNull
   @Min(1)
-  private Optional<Integer> maxReloadsPerMinute = Optional.absent();
+  private int maxLbWorkerCount = 1;
 
-  private int maxReloadWaitTimeMs = 1000;
+  @NotNull
+  private Optional<String> workerCountCommand = Optional.absent();
 
   public String getName() {
     return name;
@@ -106,19 +107,19 @@ public class LoadBalancerConfiguration {
     this.domains = domains;
   }
 
-  public Optional<Integer> getMaxReloadsPerMinute() {
-    return maxReloadsPerMinute;
+  public int getMaxLbWorkerCount() {
+    return maxLbWorkerCount;
   }
 
-  public void setMaxReloadsPerMinute(Optional<Integer> maxReloadsPerMinute) {
-    this.maxReloadsPerMinute = maxReloadsPerMinute;
+  public void setMaxLbWorkerCount(int maxLbWorkerCount) {
+    this.maxLbWorkerCount = maxLbWorkerCount;
   }
 
-  public int getMaxReloadWaitTimeMs() {
-    return maxReloadWaitTimeMs;
+  public Optional<String> getWorkerCountCommand() {
+    return workerCountCommand;
   }
 
-  public void setMaxReloadWaitTimeMs(int maxReloadWaitTimeMs) {
-    this.maxReloadWaitTimeMs = maxReloadWaitTimeMs;
+  public void setWorkerCountCommand(Optional<String> workerCountCommand) {
+    this.workerCountCommand = workerCountCommand;
   }
 }

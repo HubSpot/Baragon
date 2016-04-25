@@ -73,7 +73,7 @@ public class FilesystemConfigHelper {
 
     try {
       adapter.checkConfigs();
-      adapter.reloadConfigsRateLimited();
+      adapter.reloadConfigs();
     } catch (Exception e) {
       LOG.error("Caught exception while trying to reload configs", e);
       throw Throwables.propagate(e);
@@ -164,7 +164,7 @@ public class FilesystemConfigHelper {
         LOG.debug("Not validating configs due to 'noValidate' specified in request");
       }
       if (!noReload) {
-        adapter.reloadConfigsRateLimited();
+        adapter.reloadConfigs();
       } else {
         LOG.debug("Not reloading configs due to 'noReload' specified in request");
       }
@@ -214,7 +214,7 @@ public class FilesystemConfigHelper {
         LOG.debug("Not validating configs due to 'noValidate' specified in request");
       }
       if (!noReload) {
-        adapter.reloadConfigsRateLimited();
+        adapter.reloadConfigs();
       } else {
         LOG.debug("Not reloading configs due to 'noReload' specified in request");
       }
