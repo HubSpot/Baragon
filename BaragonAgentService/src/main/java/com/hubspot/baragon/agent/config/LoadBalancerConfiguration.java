@@ -35,6 +35,10 @@ public class LoadBalancerConfiguration {
   @NotNull
   private Set<String> domains = Collections.emptySet();
 
+  private int maxReloadsPerMinute = 0;
+
+  private int maxReloadWaitTimeMs = 1000;
+
   public String getName() {
     return name;
   }
@@ -98,5 +102,21 @@ public class LoadBalancerConfiguration {
 
   public void setDomains(Set<String> domains) {
     this.domains = domains;
+  }
+
+  public int getMaxReloadsPerMinute() {
+    return maxReloadsPerMinute;
+  }
+
+  public void setMaxReloadsPerMinute(int maxReloadsPerMinute) {
+    this.maxReloadsPerMinute = maxReloadsPerMinute;
+  }
+
+  public int getMaxReloadWaitTimeMs() {
+    return maxReloadWaitTimeMs;
+  }
+
+  public void setMaxReloadWaitTimeMs(int maxReloadWaitTimeMs) {
+    this.maxReloadWaitTimeMs = maxReloadWaitTimeMs;
   }
 }

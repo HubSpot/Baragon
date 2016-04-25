@@ -15,6 +15,7 @@ import com.github.jknack.handlebars.Handlebars;
 import com.google.common.base.Optional;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.RateLimiter;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
@@ -253,5 +254,16 @@ public class BaragonAgentServiceModule extends AbstractModule {
   @Provides
   public AtomicReference<BaragonAgentState> providesAgentState() {
     return new AtomicReference<>(BaragonAgentState.BOOTSTRAPING);
+  }
+
+  @Singleton
+  @Provides
+  public Optional<RateLimiter> providesReloadRateLimiter(LoadBalancerConfiguration configuration) {
+    if (configuration.getMaxReloadsPerMinute() > 0) {
+      double ratePerSecond = configuration.getMaxReloadsPerMinute() / 60.0;
+      return Optional.of(RateLimiter.create(ratePerSecond));
+    } else {
+      return Optional.absent();
+    }
   }
 }

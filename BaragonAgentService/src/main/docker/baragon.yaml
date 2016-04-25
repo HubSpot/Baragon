@@ -21,6 +21,7 @@ loadBalancerConfig:
   rootPath: /etc/nginx/conf.d
   checkConfigCommand: /usr/sbin/nginx -t
   reloadConfigCommand: /usr/sbin/nginx -s reload
+  maxReloadsPerMinute: 2
 
 templates:
   - filename: proxy/%s.conf
