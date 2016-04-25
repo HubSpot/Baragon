@@ -21,8 +21,6 @@ loadBalancerConfig:
   rootPath: /etc/nginx/conf.d
   checkConfigCommand: /usr/sbin/nginx -t
   reloadConfigCommand: /usr/sbin/nginx -s reload
-  workerCountCommand: /etc/nginx/conf.d/worker_count.sh
-  maxLbWorkerCount: 4
 
 templates:
   - filename: proxy/%s.conf

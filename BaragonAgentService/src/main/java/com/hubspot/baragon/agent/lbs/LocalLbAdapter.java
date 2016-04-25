@@ -97,8 +97,8 @@ public class LocalLbAdapter {
 
   private void checkWorkerCount() throws WorkerLimitReachedException {
     Optional<Integer> workerCount = getOutputAsInt(loadBalancerConfiguration.getWorkerCountCommand().get());
-    if (workerCount.isPresent() && workerCount.get() > loadBalancerConfiguration.getMaxLbWorkerCount()) {
-      throw new WorkerLimitReachedException(String.format("%s LB workers currently running, wait before trying to reload LB configs again", workerCount.get()));
+    if (!workerCount.isPresent() || workerCount.get() > loadBalancerConfiguration.getMaxLbWorkerCount()) {
+      throw new WorkerLimitReachedException(String.format("%s LB workers currently running, wait for old workers to exit before attempting to reload configs", workerCount.get()));
     }
   }
 }
