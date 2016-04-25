@@ -1,8 +1,12 @@
 package com.hubspot.baragon.agent.lbs;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.concurrent.TimeUnit;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.commons.exec.CommandLine;
 import org.apache.commons.exec.DefaultExecutor;
@@ -15,25 +19,22 @@ import org.slf4j.LoggerFactory;
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.base.Charsets;
 import com.google.common.base.Optional;
-import com.google.common.util.concurrent.RateLimiter;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.hubspot.baragon.agent.config.LoadBalancerConfiguration;
 import com.hubspot.baragon.exceptions.InvalidConfigException;
 import com.hubspot.baragon.exceptions.LbAdapterExecuteException;
-import com.hubspot.baragon.exceptions.LbAdapterRateLimitedException;
+import com.hubspot.baragon.exceptions.WorkerLimitReachedException;
 
 @Singleton
 public class LocalLbAdapter {
   private static final Logger LOG = LoggerFactory.getLogger(LocalLbAdapter.class);
 
   private final LoadBalancerConfiguration loadBalancerConfiguration;
-  private final Optional<RateLimiter> limiter;
 
   @Inject
-  public LocalLbAdapter(LoadBalancerConfiguration loadBalancerConfiguration, Optional<RateLimiter> limiter) {
+  public LocalLbAdapter(LoadBalancerConfiguration loadBalancerConfiguration) {
     this.loadBalancerConfiguration = loadBalancerConfiguration;
-    this.limiter = limiter;
   }
 
   private int executeWithTimeout(CommandLine command, int timeout) throws LbAdapterExecuteException, IOException {
@@ -50,6 +51,24 @@ public class LocalLbAdapter {
     }
   }
 
+  private Optional<Integer> getOutputAsInt(String command) {
+    try {
+      ProcessBuilder processBuilder = new ProcessBuilder(command);
+      Process process = processBuilder.start();
+      List<String> output = new ArrayList<>();
+      BufferedReader br = new BufferedReader(new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8));
+      String line = br.readLine();
+      while (line != null) {
+        output.add(line);
+        line = br.readLine();
+      }
+      return Optional.of(Integer.parseInt(output.get(0).trim()));
+    } catch (Exception e) {
+      LOG.error("Could not get worker count from command {}", command, e);
+      return Optional.absent();
+    }
+  }
+
   @Timed
   public void checkConfigs() throws InvalidConfigException {
     try {
@@ -63,18 +82,20 @@ public class LocalLbAdapter {
     }
   }
 
-  public void reloadConfigsRateLimited() throws LbAdapterExecuteException, IOException, LbAdapterRateLimitedException {
-    if (!limiter.isPresent() || limiter.get().tryAcquire(loadBalancerConfiguration.getMaxReloadWaitTimeMs(), TimeUnit.MILLISECONDS)) {
-      reloadConfigs();
-    } else {
-      throw new LbAdapterRateLimitedException("Config reload rate limit exceeded", loadBalancerConfiguration.getReloadConfigCommand());
-    }
-  }
-
   @Timed
-  private void reloadConfigs() throws LbAdapterExecuteException, IOException {
+  public void reloadConfigs() throws LbAdapterExecuteException, IOException, WorkerLimitReachedException {
+    if (loadBalancerConfiguration.getWorkerCountCommand().isPresent()) {
+      checkWorkerCount();
+    }
     final long start = System.currentTimeMillis();
     final int exitCode = executeWithTimeout(CommandLine.parse(loadBalancerConfiguration.getReloadConfigCommand()), loadBalancerConfiguration.getCommandTimeoutMs());
     LOG.info("Reloaded configs via '{}' in {}ms (exit code = {})", loadBalancerConfiguration.getReloadConfigCommand(), System.currentTimeMillis() - start, exitCode);
+  }
+
+  private void checkWorkerCount() throws WorkerLimitReachedException {
+    Optional<Integer> workerCount = getOutputAsInt(loadBalancerConfiguration.getWorkerCountCommand().get());
+    if (!workerCount.isPresent() || workerCount.get() > loadBalancerConfiguration.getMaxLbWorkerCount()) {
+      throw new WorkerLimitReachedException(String.format("%s LB workers currently running, wait for old workers to exit before attempting to reload configs", workerCount.get()));
+    }
   }
 }

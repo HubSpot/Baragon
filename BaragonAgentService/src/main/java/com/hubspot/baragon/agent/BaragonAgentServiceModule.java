@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Matcher;
@@ -16,7 +15,6 @@ import com.github.jknack.handlebars.Handlebars;
 import com.google.common.base.Optional;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
-import com.google.common.util.concurrent.RateLimiter;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
@@ -255,16 +253,5 @@ public class BaragonAgentServiceModule extends AbstractModule {
   @Provides
   public AtomicReference<BaragonAgentState> providesAgentState() {
     return new AtomicReference<>(BaragonAgentState.BOOTSTRAPING);
-  }
-
-  @Singleton
-  @Provides
-  public Optional<RateLimiter> providesReloadRateLimiter(LoadBalancerConfiguration configuration) {
-    if (configuration.getMaxReloadsPerMinute().isPresent()) {
-      double ratePerSecond = configuration.getMaxReloadsPerMinute().get() / (double) TimeUnit.MINUTES.toSeconds(1);
-      return Optional.of(RateLimiter.create(ratePerSecond));
-    } else {
-      return Optional.absent();
-    }
   }
 }
