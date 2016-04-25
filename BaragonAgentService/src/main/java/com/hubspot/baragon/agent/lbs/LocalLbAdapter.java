@@ -21,6 +21,7 @@ import com.google.inject.Singleton;
 import com.hubspot.baragon.agent.config.LoadBalancerConfiguration;
 import com.hubspot.baragon.exceptions.InvalidConfigException;
 import com.hubspot.baragon.exceptions.LbAdapterExecuteException;
+import com.hubspot.baragon.exceptions.LbAdapterRateLimitedException;
 
 @Singleton
 public class LocalLbAdapter {
@@ -62,12 +63,11 @@ public class LocalLbAdapter {
     }
   }
 
-  public void reloadConfigsRateLimited() throws LbAdapterExecuteException, IOException {
-    LOG.info(String.format("Limiter: %s", limiter));
-    if ((limiter.isPresent() && limiter.get().tryAcquire(loadBalancerConfiguration.getMaxReloadWaitTimeMs(), TimeUnit.MILLISECONDS)) || !limiter.isPresent()) {
+  public void reloadConfigsRateLimited() throws LbAdapterExecuteException, IOException, LbAdapterRateLimitedException {
+    if (!limiter.isPresent() || limiter.get().tryAcquire(loadBalancerConfiguration.getMaxReloadWaitTimeMs(), TimeUnit.MILLISECONDS)) {
       reloadConfigs();
     } else {
-      throw new LbAdapterExecuteException("Config reload rate limit exceeded", loadBalancerConfiguration.getReloadConfigCommand());
+      throw new LbAdapterRateLimitedException("Config reload rate limit exceeded", loadBalancerConfiguration.getReloadConfigCommand());
     }
   }
 

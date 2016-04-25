@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Matcher;
@@ -259,8 +260,8 @@ public class BaragonAgentServiceModule extends AbstractModule {
   @Singleton
   @Provides
   public Optional<RateLimiter> providesReloadRateLimiter(LoadBalancerConfiguration configuration) {
-    if (configuration.getMaxReloadsPerMinute() > 0) {
-      double ratePerSecond = configuration.getMaxReloadsPerMinute() / 60.0;
+    if (configuration.getMaxReloadsPerMinute().isPresent()) {
+      double ratePerSecond = configuration.getMaxReloadsPerMinute().get() / TimeUnit.MINUTES.toSeconds(1);
       return Optional.of(RateLimiter.create(ratePerSecond));
     } else {
       return Optional.absent();
