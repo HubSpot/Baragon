@@ -21,7 +21,6 @@ import com.hubspot.baragon.exceptions.InvalidConfigException;
 import com.hubspot.baragon.exceptions.LbAdapterExecuteException;
 import com.hubspot.baragon.exceptions.LockTimeoutException;
 import com.hubspot.baragon.exceptions.MissingTemplateException;
-import com.hubspot.baragon.models.BaragonAgentMetadata;
 import com.hubspot.baragon.models.BaragonConfigFile;
 import com.hubspot.baragon.models.BaragonService;
 import com.hubspot.baragon.models.ServiceContext;
@@ -74,7 +73,7 @@ public class FilesystemConfigHelper {
 
     try {
       adapter.checkConfigs();
-      adapter.reloadConfigs();
+      adapter.reloadConfigsRateLimited();
     } catch (Exception e) {
       LOG.error("Caught exception while trying to reload configs", e);
       throw Throwables.propagate(e);
@@ -165,7 +164,7 @@ public class FilesystemConfigHelper {
         LOG.debug("Not validating configs due to 'noValidate' specified in request");
       }
       if (!noReload) {
-        adapter.reloadConfigs();
+        adapter.reloadConfigsRateLimited();
       } else {
         LOG.debug("Not reloading configs due to 'noReload' specified in request");
       }
@@ -215,7 +214,7 @@ public class FilesystemConfigHelper {
         LOG.debug("Not validating configs due to 'noValidate' specified in request");
       }
       if (!noReload) {
-        adapter.reloadConfigs();
+        adapter.reloadConfigsRateLimited();
       } else {
         LOG.debug("Not reloading configs due to 'noReload' specified in request");
       }
