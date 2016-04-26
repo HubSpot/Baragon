@@ -35,6 +35,13 @@ public class LoadBalancerConfiguration {
   @NotNull
   private Set<String> domains = Collections.emptySet();
 
+  @NotNull
+  @Min(1)
+  private int maxLbWorkerCount = 1;
+
+  @NotNull
+  private Optional<String> workerCountCommand = Optional.absent();
+
   public String getName() {
     return name;
   }
@@ -98,5 +105,21 @@ public class LoadBalancerConfiguration {
 
   public void setDomains(Set<String> domains) {
     this.domains = domains;
+  }
+
+  public int getMaxLbWorkerCount() {
+    return maxLbWorkerCount;
+  }
+
+  public void setMaxLbWorkerCount(int maxLbWorkerCount) {
+    this.maxLbWorkerCount = maxLbWorkerCount;
+  }
+
+  public Optional<String> getWorkerCountCommand() {
+    return workerCountCommand;
+  }
+
+  public void setWorkerCountCommand(Optional<String> workerCountCommand) {
+    this.workerCountCommand = workerCountCommand;
   }
 }
