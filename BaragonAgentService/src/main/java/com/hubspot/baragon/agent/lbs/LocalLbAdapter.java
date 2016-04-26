@@ -89,8 +89,12 @@ public class LocalLbAdapter {
 
   @Timed
   public void reloadConfigs() throws LbAdapterExecuteException, IOException, WorkerLimitReachedException {
-    if (loadBalancerConfiguration.getWorkerCountCommand().isPresent()) {
-      checkWorkerCount();
+    if (loadBalancerConfiguration.isLimitWorkerCount()) {
+      if (loadBalancerConfiguration.getWorkerCountCommand().isPresent()) {
+        checkWorkerCount();
+      } else {
+        LOG.warn("Asked to limit worker count, but no workerCountCommand was specified");
+      }
     }
     final long start = System.currentTimeMillis();
     final int exitCode = executeWithTimeout(CommandLine.parse(loadBalancerConfiguration.getReloadConfigCommand()), loadBalancerConfiguration.getCommandTimeoutMs());
