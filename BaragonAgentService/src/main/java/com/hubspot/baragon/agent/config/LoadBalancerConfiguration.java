@@ -42,6 +42,8 @@ public class LoadBalancerConfiguration {
   @NotNull
   private Optional<String> workerCountCommand = Optional.absent();
 
+  private boolean limitWorkerCount = false;
+
   public String getName() {
     return name;
   }
@@ -121,5 +123,13 @@ public class LoadBalancerConfiguration {
 
   public void setWorkerCountCommand(Optional<String> workerCountCommand) {
     this.workerCountCommand = workerCountCommand;
+  }
+
+  public boolean isLimitWorkerCount() {
+    return limitWorkerCount;
+  }
+
+  public void setLimitWorkerCount(boolean limitWorkerCount) {
+    this.limitWorkerCount = limitWorkerCount;
   }
 }
