@@ -1,10 +1,13 @@
 package com.hubspot.baragon.watcher;
 
+import java.util.ArrayDeque;
 import java.util.Collection;
-import java.util.Collections;
+import java.util.Deque;
 import java.util.Set;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedTransferQueue;
 import java.util.concurrent.ThreadFactory;
 
 import com.google.common.base.Function;
@@ -22,48 +25,69 @@ import org.slf4j.LoggerFactory;
 public class BaragonStateWatcher {
   private static final Logger LOG = LoggerFactory.getLogger(BaragonStateWatcher.class);
 
+  private final BaragonStateFetcher stateFetcher;
+  private final ListenerContainer<BaragonStateListener> listenerContainer;
+  private final ExecutorService executor;
+  private final BlockingQueue<Integer> versionQueue;
+
   @Inject
   public BaragonStateWatcher(final BaragonStateFetcher stateFetcher,
                              Set<BaragonStateListener> listeners,
                              @Baragon PersistentWatcher watcher) {
-    ExecutorService executor = newExecutor();
-
-    final ListenerContainer<BaragonStateListener> listenerContainer = new ListenerContainer<>();
+    this.stateFetcher = stateFetcher;
+    this.listenerContainer = new ListenerContainer<>();
+    this.executor = newExecutor();
+    this.versionQueue = new LinkedTransferQueue<>();
     for (BaragonStateListener listener : listeners) {
-      listenerContainer.addListener(listener, executor);
+      listenerContainer.addListener(listener);
     }
 
     watcher.getEventListenable().addListener(new EventListener() {
 
       @Override
       public void newEvent(Event event) {
-        final Collection<BaragonServiceState> newState;
-
         switch (event.getType()) {
           case NODE_UPDATED:
             int version = event.getStat().getVersion();
-            newState = stateFetcher.fetchState(version);
+            versionQueue.add(version);
+            executor.submit(new Runnable() {
+
+              @Override
+              public void run() {
+                updateToLatestVersion();
+              }
+            });
             break;
           case NODE_DELETED:
-            newState = Collections.emptyList();
+            LOG.warn("Baragon state node was deleted");
             break;
           default:
             LOG.warn("Unrecognized event type {}", event.getType());
-            return;
+            break;
         }
-
-        listenerContainer.forEach(new Function<BaragonStateListener, Void>() {
-
-          @Override
-          public Void apply(BaragonStateListener listener) {
-            listener.stateChanged(newState);
-            return null;
-          }
-        });
       }
     }, executor);
 
     watcher.start();
+  }
+
+  private void updateToLatestVersion() {
+    Deque<Integer> versions = new ArrayDeque<>();
+    versionQueue.drainTo(versions);
+
+    if (!versions.isEmpty()) {
+      int latestVersion = versions.getLast();
+      final Collection<BaragonServiceState> newState = stateFetcher.fetchState(latestVersion);
+
+      listenerContainer.forEach(new Function<BaragonStateListener, Void>() {
+
+        @Override
+        public Void apply(BaragonStateListener listener) {
+          listener.stateChanged(newState);
+          return null;
+        }
+      });
+    }
   }
 
   private ExecutorService newExecutor() {
