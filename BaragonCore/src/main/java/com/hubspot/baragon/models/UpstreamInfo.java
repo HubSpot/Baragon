@@ -24,9 +24,6 @@ public class UpstreamInfo {
   @Pattern(regexp = "^$|[^\\s|]+", message = "cannot contain whitespace, '/', or '|'")
   private final String rackId;
   private final Optional<String> originalPath;
-
-  @Size(max=100)
-  @Pattern(regexp = "^$|[^\\s|]+", message = "cannot contain whitespace, '/', or '|'")
   private final Optional<String> group;
 
   @JsonCreator
@@ -47,8 +44,12 @@ public class UpstreamInfo {
     return new UpstreamInfo(upstream, Optional.<String>absent(), Optional.<String>absent(), Optional.of(upstream), Optional.<String>absent());
   }
 
-  public UpstreamInfo (String upstream, Optional<String> requestId, Optional<String> rackId) {
+  public UpstreamInfo(String upstream, Optional<String> requestId, Optional<String> rackId) {
     this(upstream, requestId, rackId, Optional.<String>absent(), Optional.<String>absent());
+  }
+
+  public UpstreamInfo(String upstream, Optional<String> requestId, Optional<String> rackId, Optional<String> group) {
+    this(upstream, requestId, rackId, Optional.<String>absent(), group);
   }
 
   @JsonCreator
