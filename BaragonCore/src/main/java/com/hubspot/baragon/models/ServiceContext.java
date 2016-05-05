@@ -13,8 +13,6 @@ import java.util.Map;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ServiceContext {
-  public static final String DEFAULT_UPSTREAM_GROUP = "default";
-
   private final BaragonService service;
   private final Collection<UpstreamInfo> upstreams;
   private final Map<String, Collection<UpstreamInfo>> upstreamGroups;
@@ -36,7 +34,7 @@ public class ServiceContext {
     if (!this.upstreams.isEmpty()) {
       final Multimap<String, UpstreamInfo> upstreamGroupsMultimap = ArrayListMultimap.create();
       for (UpstreamInfo upstream : this.upstreams) {
-        upstreamGroupsMultimap.put(upstream.getGroup().or(DEFAULT_UPSTREAM_GROUP), upstream);
+        upstreamGroupsMultimap.put(upstream.getGroup(), upstream);
       }
       this.upstreamGroups = upstreamGroupsMultimap.asMap();
     } else {
