@@ -159,19 +159,26 @@ public class AgentRequestManager {
       return new ServiceContext(request.getLoadBalancerService(), request.getReplaceUpstreams(), System.currentTimeMillis(), true);
     } else {
       List<UpstreamInfo> upstreams = new ArrayList<>();
-      upstreams.addAll(stateDatastore.getUpstreams(request.getLoadBalancerService().getServiceId()));
-
-      List<UpstreamInfo> toRemove = new ArrayList<>();
-      for (UpstreamInfo removeUpstreamInfo : request.getRemoveUpstreams()) {
-        for (UpstreamInfo upstreamInfo : upstreams) {
-          if (upstreamInfo.getUpstream().equals(removeUpstreamInfo.getUpstream())) {
-            toRemove.add(upstreamInfo);
+      upstreams.addAll(request.getAddUpstreams());
+      for (UpstreamInfo existingUpstream : stateDatastore.getUpstreams(request.getLoadBalancerService().getServiceId())) {
+        boolean present = false;
+        boolean toRemove = false;
+        for (UpstreamInfo currentUpstream : upstreams) {
+          if (currentUpstream.sameAs(existingUpstream)) {
+            present = true;
+            break;
           }
         }
+        for (UpstreamInfo upstreamToRemove : request.getRemoveUpstreams()) {
+          if (upstreamToRemove.sameAs(existingUpstream)) {
+            toRemove = true;
+            break;
+          }
+        }
+        if (!present && !toRemove) {
+          upstreams.add(existingUpstream);
+        }
       }
-
-      upstreams.removeAll(toRemove);
-      upstreams.addAll(request.getAddUpstreams());
 
       return new ServiceContext(request.getLoadBalancerService(), upstreams, System.currentTimeMillis(), true);
     }

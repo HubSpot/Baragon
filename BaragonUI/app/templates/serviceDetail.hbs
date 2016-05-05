@@ -124,7 +124,7 @@
                     {{#each service.splitUpstreams}}
                         <div class="col-md-6">
                             {{#each this}}
-                                <h4>{{upstream}} {{#if rackId}}({{ rackId }}){{/if}}{{#if ../../config.allowEdit}}<a class="pull-left" data-action="removeUpstream"><span class="glyphicon glyphicon-remove inactive" data-upstream="{{ upstream }}"></span></a>{{/if}}</h4>
+                                <h4>{{upstream}} {{#if rackId}}({{ rackId }}){{/if}}{{#if group}}({{{ group }}}){{/if}}{{#if ../../config.allowEdit}}<a class="pull-left" data-action="removeUpstream"><span class="glyphicon glyphicon-remove inactive" data-upstream="{{ upstream }}"></span></a>{{/if}}</h4>
                             {{/each}}
                         </div>
                     {{/each}}
