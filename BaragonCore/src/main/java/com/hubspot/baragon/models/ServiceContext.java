@@ -1,17 +1,21 @@
 package com.hubspot.baragon.models;
 
-import java.util.Collection;
-import java.util.Collections;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Objects;
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
+
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Map;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ServiceContext {
   private final BaragonService service;
   private final Collection<UpstreamInfo> upstreams;
+  private final Map<String, Collection<UpstreamInfo>> upstreamGroups;
   private final Long timestamp;
   private final boolean present;
   private final boolean rootPath;
@@ -26,6 +30,16 @@ public class ServiceContext {
     this.upstreams = Objects.firstNonNull(upstreams, Collections.<UpstreamInfo>emptyList());
     this.present = present;
     this.rootPath = service.getServiceBasePath().equals("/");
+
+    if (!this.upstreams.isEmpty()) {
+      final Multimap<String, UpstreamInfo> upstreamGroupsMultimap = ArrayListMultimap.create();
+      for (UpstreamInfo upstream : this.upstreams) {
+        upstreamGroupsMultimap.put(upstream.getGroup(), upstream);
+      }
+      this.upstreamGroups = upstreamGroupsMultimap.asMap();
+    } else {
+      this.upstreamGroups = Collections.emptyMap();
+    }
   }
 
   public BaragonService getService() {
@@ -34,6 +48,10 @@ public class ServiceContext {
 
   public Collection<UpstreamInfo> getUpstreams() {
     return upstreams;
+  }
+
+  public Map<String, Collection<UpstreamInfo>> getUpstreamGroups() {
+    return upstreamGroups;
   }
 
   public Long getTimestamp() {
