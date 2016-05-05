@@ -138,7 +138,7 @@ public class BaragonStateDatastore extends AbstractDataStore {
           if (nodeExists(fullPath) && !pathsToDelete.contains(fullPath) && !fullPath.equals(addPath)) {
             LOG.info(String.format("Deleting %s", fullPath));
             pathsToDelete.add(fullPath);
-            transaction.delete().forPath(fullPath);
+            transaction.delete().forPath(fullPath).and();
           }
         }
         if (!nodeExists(addPath) || pathsToDelete.contains(addPath)) {
