@@ -122,7 +122,7 @@ public class BaragonRequest {
 
   private UpstreamInfo addRequestId(UpstreamInfo upstream, String requestId) {
     if (!upstream.getRequestId().isPresent()) {
-      return new UpstreamInfo(upstream.getUpstream(), Optional.of(requestId), upstream.getRackId());
+      return new UpstreamInfo(upstream.getUpstream(), Optional.of(requestId), upstream.getRackId(), Optional.of(upstream.getGroup()));
     } else {
       return upstream;
     }

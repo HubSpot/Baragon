@@ -134,6 +134,10 @@ public class UpstreamInfo {
     return true;
   }
 
+  public boolean sameAs(UpstreamInfo that) {
+    return upstream.equals(that.upstream) && group.equals(that.group);
+  }
+
   @Override
   public int hashCode() {
     int result = upstream.hashCode();
