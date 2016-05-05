@@ -14,6 +14,8 @@ import javax.validation.constraints.Size;
 
 @JsonIgnoreProperties( ignoreUnknown = true )
 public class UpstreamInfo {
+  public static final String DEFAULT_GROUP = "default";
+
   private final String upstream;
 
   @Size(max=250)
@@ -24,7 +26,10 @@ public class UpstreamInfo {
   @Pattern(regexp = "^$|[^\\s|]+", message = "cannot contain whitespace, '/', or '|'")
   private final String rackId;
   private final Optional<String> originalPath;
-  private final Optional<String> group;
+
+  @Size(max=100)
+  @Pattern(regexp = "^$|[^\\s|]+", message = "cannot contain whitespace, '/', or '|'")
+  private final String group;
 
   @JsonCreator
   public static UpstreamInfo fromString(String value) {
@@ -62,7 +67,7 @@ public class UpstreamInfo {
     this.requestId = requestId.or("");
     this.rackId = rackId.or("");
     this.originalPath = originalPath;
-    this.group = group;
+    this.group = group.or(DEFAULT_GROUP);
   }
 
   public String getUpstream() {
@@ -82,7 +87,7 @@ public class UpstreamInfo {
     return originalPath;
   }
 
-  public Optional<String> getGroup() {
+  public String getGroup() {
     return group;
   }
 
