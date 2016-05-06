@@ -1,14 +1,5 @@
 package com.hubspot.baragon.agent.managers;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Random;
-import java.util.concurrent.atomic.AtomicReference;
-
-import javax.ws.rs.core.Response;
-
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -29,6 +20,13 @@ import com.hubspot.baragon.models.ServiceContext;
 import com.hubspot.baragon.models.UpstreamInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Random;
+import java.util.concurrent.atomic.AtomicReference;
+import javax.ws.rs.core.Response;
 
 @Singleton
 public class AgentRequestManager {
@@ -159,19 +157,26 @@ public class AgentRequestManager {
       return new ServiceContext(request.getLoadBalancerService(), request.getReplaceUpstreams(), System.currentTimeMillis(), true);
     } else {
       List<UpstreamInfo> upstreams = new ArrayList<>();
-      upstreams.addAll(stateDatastore.getUpstreams(request.getLoadBalancerService().getServiceId()));
-
-      List<UpstreamInfo> toRemove = new ArrayList<>();
-      for (UpstreamInfo removeUpstreamInfo : request.getRemoveUpstreams()) {
-        for (UpstreamInfo upstreamInfo : upstreams) {
-          if (upstreamInfo.getUpstream().equals(removeUpstreamInfo.getUpstream())) {
-            toRemove.add(upstreamInfo);
+      upstreams.addAll(request.getAddUpstreams());
+      for (UpstreamInfo existingUpstream : stateDatastore.getUpstreams(request.getLoadBalancerService().getServiceId())) {
+        boolean present = false;
+        boolean toRemove = false;
+        for (UpstreamInfo currentUpstream : upstreams) {
+          if (UpstreamInfo.upstreamAndGroupMatches(currentUpstream, existingUpstream)) {
+            present = true;
+            break;
           }
         }
+        for (UpstreamInfo upstreamToRemove : request.getRemoveUpstreams()) {
+          if (UpstreamInfo.upstreamAndGroupMatches(upstreamToRemove, existingUpstream)) {
+            toRemove = true;
+            break;
+          }
+        }
+        if (!present && !toRemove) {
+          upstreams.add(existingUpstream);
+        }
       }
-
-      upstreams.removeAll(toRemove);
-      upstreams.addAll(request.getAddUpstreams());
 
       return new ServiceContext(request.getLoadBalancerService(), upstreams, System.currentTimeMillis(), true);
     }
