@@ -1,21 +1,5 @@
 package com.hubspot.baragon.data;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-
-import org.apache.curator.framework.CuratorFramework;
-import org.apache.curator.framework.api.transaction.CuratorTransactionFinal;
-import org.apache.curator.utils.ZKPaths;
-import org.apache.zookeeper.data.Stat;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.codahale.metrics.annotation.Timed;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Function;
@@ -31,6 +15,21 @@ import com.hubspot.baragon.models.BaragonService;
 import com.hubspot.baragon.models.BaragonServiceState;
 import com.hubspot.baragon.models.UpstreamInfo;
 import com.hubspot.baragon.utils.ZkParallelFetcher;
+import org.apache.curator.framework.CuratorFramework;
+import org.apache.curator.framework.api.transaction.CuratorTransactionFinal;
+import org.apache.curator.utils.ZKPaths;
+import org.apache.zookeeper.data.Stat;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 @Singleton
 public class BaragonStateDatastore extends AbstractDataStore {
@@ -152,7 +151,7 @@ public class BaragonStateDatastore extends AbstractDataStore {
   private List<String> matchingUpstreamPaths(Collection<UpstreamInfo> currentUpstreams, UpstreamInfo toAdd) {
     List<String> matchingPaths = new ArrayList<>();
     for (UpstreamInfo upstreamInfo : currentUpstreams) {
-      if (upstreamInfo.sameAs(toAdd)) {
+      if (UpstreamInfo.upstreamAndGroupMatches(upstreamInfo, toAdd)) {
         matchingPaths.add(upstreamInfo.getOriginalPath().or(upstreamInfo.getUpstream()));
       }
     }
@@ -161,7 +160,7 @@ public class BaragonStateDatastore extends AbstractDataStore {
 
   private String getRemovePath(Collection<UpstreamInfo> currentUpstreams, UpstreamInfo toRemove) {
     for (UpstreamInfo upstreamInfo : currentUpstreams) {
-      if (upstreamInfo.sameAs(toRemove)) {
+      if (UpstreamInfo.upstreamAndGroupMatches(upstreamInfo, toRemove)) {
         return upstreamInfo.getOriginalPath().or(upstreamInfo.toPath());
       }
     }

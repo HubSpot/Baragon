@@ -16,6 +16,10 @@ import javax.validation.constraints.Size;
 public class UpstreamInfo {
   public static final String DEFAULT_GROUP = "default";
 
+  public static boolean upstreamAndGroupMatches(UpstreamInfo a, UpstreamInfo b) {
+    return a.getUpstream().equals(b.getUpstream()) && a.getGroup().equals(b.getGroup());
+  }
+
   private final String upstream;
 
   @Size(max=250)
@@ -132,10 +136,6 @@ public class UpstreamInfo {
     }
 
     return true;
-  }
-
-  public boolean sameAs(UpstreamInfo that) {
-    return upstream.equals(that.upstream) && group.equals(that.group);
   }
 
   @Override
