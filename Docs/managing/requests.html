@@ -1,0 +1,480 @@
+<!DOCTYPE HTML>
+<html lang="en" >
+    <!-- Start book Baragon -->
+    <head>
+        <!-- head:start -->
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <title>Making Requests to Baragon Service | Baragon</title>
+        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+        <meta name="description" content="">
+        <meta name="generator" content="GitBook 2.6.7">
+        
+        
+        <meta name="HandheldFriendly" content="true"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-status-bar-style" content="black">
+        <link rel="apple-touch-icon-precomposed" sizes="152x152" href="../../gitbook/images/apple-touch-icon-precomposed-152.png">
+        <link rel="shortcut icon" href="../../gitbook/images/favicon.ico" type="image/x-icon">
+        
+    <link rel="stylesheet" href="../../gitbook/style.css">
+    
+        
+        <link rel="stylesheet" href="../../gitbook/plugins/gitbook-plugin-search/search.css">
+        
+    
+        
+        <link rel="stylesheet" href="../../gitbook/plugins/gitbook-plugin-fontsettings/website.css">
+        
+    
+    
+
+        
+    
+    
+    <link rel="next" href="../../Docs/managing/basepaths.html" />
+    
+    
+    <link rel="prev" href="../../Docs/managing/launch.html" />
+    
+
+        <!-- head:end -->
+    </head>
+    <body>
+        <!-- body:start -->
+        
+    <div class="book"
+        data-level="3.3"
+        data-chapter-title="Making Requests to Baragon Service"
+        data-filepath="Docs/managing/requests.md"
+        data-basepath="../.."
+        data-revision="Fri May 20 2016 16:53:16 GMT-0400 (EDT)"
+        data-innerlanguage="">
+    
+
+<div class="book-summary">
+    <nav role="navigation">
+        <ul class="summary">
+            
+            
+            
+            
+
+            
+
+            
+    
+        <li class="chapter " data-level="0" data-path="index.html">
+            
+                
+                    <a href="../../index.html">
+                
+                        <i class="fa fa-check"></i>
+                        
+                        Introduction
+                    </a>
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="1" >
+            
+            <span><b>1.</b> About Baragon</span>
+            
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="1.1" data-path="Docs/about/basics.html">
+            
+                
+                    <a href="../../Docs/about/basics.html">
+                
+                        <i class="fa fa-check"></i>
+                        
+                            <b>1.1.</b>
+                        
+                        Basics
+                    </a>
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2" data-path="Docs/about/getting_started.html">
+            
+                
+                    <a href="../../Docs/about/getting_started.html">
+                
+                        <i class="fa fa-check"></i>
+                        
+                            <b>1.2.</b>
+                        
+                        Getting Started
+                    </a>
+            
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+        <li class="chapter " data-level="2" data-path="Docs/api.html">
+            
+                
+                    <a href="../../Docs/api.html">
+                
+                        <i class="fa fa-check"></i>
+                        
+                            <b>2.</b>
+                        
+                        Baragon API Docs
+                    </a>
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3" data-path="Docs/managing_baragon.html">
+            
+                
+                    <a href="../../Docs/managing_baragon.html">
+                
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.</b>
+                        
+                        Managing Baragon
+                    </a>
+            
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="3.1" data-path="Docs/managing/terminology.html">
+            
+                
+                    <a href="../../Docs/managing/terminology.html">
+                
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.1.</b>
+                        
+                        Terminology
+                    </a>
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3.2" data-path="Docs/managing/launch.html">
+            
+                
+                    <a href="../../Docs/managing/launch.html">
+                
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.2.</b>
+                        
+                        Launching a Cluster
+                    </a>
+            
+            
+        </li>
+    
+        <li class="chapter active" data-level="3.3" data-path="Docs/managing/requests.html">
+            
+                
+                    <a href="../../Docs/managing/requests.html">
+                
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.3.</b>
+                        
+                        Making Requests to Baragon Service
+                    </a>
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3.4" data-path="Docs/managing/basepaths.html">
+            
+                
+                    <a href="../../Docs/managing/basepaths.html">
+                
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.4.</b>
+                        
+                        BasePath Locking and Updating
+                    </a>
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3.5" data-path="Docs/managing/elb_sync.html">
+            
+                
+                    <a href="../../Docs/managing/elb_sync.html">
+                
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.5.</b>
+                        
+                        ELB Sync
+                    </a>
+            
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+        <li class="chapter " data-level="4" data-path="Docs/development.html">
+            
+                
+                    <a href="../../Docs/development.html">
+                
+                        <i class="fa fa-check"></i>
+                        
+                            <b>4.</b>
+                        
+                        Developing
+                    </a>
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="5" data-path="Docs/config/config.html">
+            
+                
+                    <a href="../../Docs/config/config.html">
+                
+                        <i class="fa fa-check"></i>
+                        
+                            <b>5.</b>
+                        
+                        Example Configuration
+                    </a>
+            
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="5.1" data-path="Docs/config/baragon_agent_config.html">
+            
+                
+                    <a href="../../Docs/config/baragon_agent_config.html">
+                
+                        <i class="fa fa-check"></i>
+                        
+                            <b>5.1.</b>
+                        
+                        Example Agent Config
+                    </a>
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="5.2" data-path="Docs/config/baragon_service_config.html">
+            
+                
+                    <a href="../../Docs/config/baragon_service_config.html">
+                
+                        <i class="fa fa-check"></i>
+                        
+                            <b>5.2.</b>
+                        
+                        Example Service Config
+                    </a>
+            
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+
+
+            
+            <li class="divider"></li>
+            <li>
+                <a href="https://www.gitbook.com" target="blank" class="gitbook-link">
+                    Published with GitBook
+                </a>
+            </li>
+            
+        </ul>
+    </nav>
+</div>
+
+    <div class="book-body">
+        <div class="body-inner">
+            <div class="book-header" role="navigation">
+    <!-- Actions Left -->
+    
+
+    <!-- Title -->
+    <h1>
+        <i class="fa fa-circle-o-notch fa-spin"></i>
+        <a href="../../" >Baragon</a>
+    </h1>
+</div>
+
+            <div class="page-wrapper" tabindex="-1" role="main">
+                <div class="page-inner">
+                
+                
+                    <section class="normal" id="section-">
+                    
+                        <h2 id="making-requests-to-baragonservice">Making Requests to BaragonService</h2>
+<p>A request can be made to Baragon by posting a <code>BaragonRequest</code> object to <code>BaragonService</code>&apos;s <code>/request</code> endpoint. The Baragon request can have the following structure (specified in json below)</p>
+<pre><code class="lang-json">{
+  &quot;loadBalancerRequestId&quot;:&quot;123456&quot;, 
+  &quot;loadBalancerService&quot;:{
+    &quot;serviceId&quot;:&quot;testService&quot;,
+    &quot;owners&quot;:[&quot;owner@example.com&quot;],
+    &quot;serviceBasePath&quot;:&quot;/basepath&quot;,
+    &quot;loadBalancerGroups&quot;:[&quot;test&quot;],
+    &quot;options&quot;:{
+      &quot;nginxExtraConfigs&quot;: [
+        &quot;rewrite ^/test(.*) /test/v1/$1 last;&quot;
+      ],
+    },
+    &quot;templateName&quot;:&quot;name&quot;
+  },
+  &quot;addUpstreams&quot;:[
+    {&quot;upstream&quot;:&quot;example.com:80&quot;,&quot;requestId&quot;:&quot;requestId&quot;,&quot;rack&quot;:&quot;us_east_1a&quot;}
+  ],
+  &quot;removeUpstreams&quot;:[],
+  &quot;replaceServiceId&quot;:&quot;otherServiceId&quot;,
+  &quot;action&quot;:&quot;UPDATE&quot;
+}
+</code></pre>
+<ul>
+<li><code>loadBalancerRequestId</code>: Alphanumeric, must be unique for each request, posting to an existing requestId will get you the response for that previous request</li>
+<li><code>laodBalancerService</code>: Container for information about specific configuration for the service<ul>
+<li><code>serviceId</code>: Must be unique within the Baragon cluster</li>
+<li><code>serviceBasePath</code>: Must be unique within the <code>loadBalancerGroup</code> (ie. cannot host two services at the same location), must be specified with a leading <code>/</code></li>
+<li><code>loadBalancerGroups</code>: The request will be applied on agents in these groups. If a group is removed from the list (compared to a previously applied request), configuration files for the service will be removed via agents in that group and the <code>basePath</code> will become available again within that group</li>
+<li><code>options</code>: Any valid json object is permittable here. These values will be available under <code>service.options</code> in the handlebars templates. These fields can be used for custom configuration specific to an individual service (ie. not appropriate to include in the template for all services)</li>
+<li><code>templateName</code>: an optional field used to specify a custom template to render for this service. Specifying a <code>templateName</code> that does not exist in the <code>namedTemplates</code> on the agent will result in an error</li>
+</ul>
+</li>
+<li><code>addUpstreams</code>/<code>removeUpstreams</code>: A list of <code>UpstreamInfo</code> objects. Data from these objects will be available under <code>upstreams</code> in teh handlebars templates. Generally used to specify valid application hosts connected to the load balancer (ie. post a request to connect a healthy application host)</li>
+<li><code>replaceServiceId</code>: An optional field used to rename a service or transfer a <code>basePath</code> to a different service. If specified, the configuration for the service in <code>replaceServiceId</code> will be swapped out for configuration belonging to the new serviceId and the basePath registered as belonging to the new serviceId(if the <code>replaceServiceId</code> exists). If it does not previously exist, the request will be applied as normal.</li>
+<li><code>action</code>: An optional field. You can specify <code>UPDATE</code>, <code>DELETE</code>, or <code>RELOAD</code>. <code>UPDATE</code> is the default action if left blank and will update configs if they exist or create new ones if they don&apos;t (ie. a normal request). The <code>DELETE</code> action will remove the service from the state datastore as well as removing any associated config files form all associated load balancers. <code>RELOAD</code> will trigger the agents to check configs for validity and reload/restart </li>
+</ul>
+<p><a id="requestflow"></a></p>
+<h3 id="request-flow-and-statuses">Request Flow and Statuses</h3>
+<p>Baragon keeps track of an internal state and produces an externally visible status. Mentions of state below reference the internal state, while status references the status visible in the <code>BaragonResponse</code></p>
+<h4 id="posting-the-request">Posting the request</h4>
+<p>When a request is first posted to Baragon&apos;s <code>/request</code> endpoint, BaragonService will attempt to enqueue the request. This can have three outcomes:</p>
+<ul>
+<li>If the request is new (unique requestId), it is added to the pending request queue</li>
+<li>If the request is already present (requestId already used), but the request content matches the original request, the response to the original request will be returned (ie. the same request won&apos;t be enqueued again)</li>
+<li>If the request is already present, but the request content does not match, an error will be thrown</li>
+</ul>
+<h4 id="initial-processing-of-the-request-pending-internal-state--waiting-status">Initial processing of the request (<code>PENDING</code> internal state / <code>WAITING</code> status)</h4>
+<p>Once the request is in the pending request queue, it will be picked up by the request worker. The request will initially be in the <code>PENDING</code> state and the request worker will do the following:</p>
+<ul>
+<li>Check that there are no base path conflicts, moving the request to <code>INVALID_REQUEST_NOOP</code> if any are found</li>
+<li>Check that no non-existent load balancer groups have been requested, moving the request to <code>INVALID_REQUEST_NOOP</code> if any are found</li>
+<li>set the lock for the base paths in the request if it has not already been set to prevent other operations on the base path while the request is being processed</li>
+<li>If all checks have passed, move the request to the internal <code>SEND_APPLY_REQUESTS</code> status</li>
+</ul>
+<h4 id="sending-apply-requests-to-agents-sendapplyrequests-internal-status--waiting-status">Sending apply requests to agents (<code>SEND_APPLY_REQUESTS</code> internal status / <code>WAITING</code> status)</h4>
+<p>The request worker will send async requests to each agent in any load balancer groups that need to be updated during this step, then internally move the state to <code>CHECK_APPLY_RESPONSES</code> while waiting for requests to complete. The responses code of the agent post requests sent will be used to determine the status</p>
+<h4 id="check-agent-responses-checkapplyresponses-internal-state-waiting-status">Check agent responses (<code>CHECK_APPLY_RESPONSES</code> internal state, <code>WAITING</code> status)</h4>
+<p>The request worker will gather the responses from all agents it sent requests to and translate those to one of the following statuses:</p>
+<ul>
+<li><code>WAITING</code>: Some requests are still being processed, none have failed yet, stay in the <code>CHECK_APPLY_RESPONSES</code> state</li>
+<li><code>RETRY</code>: Some requests have failed, but the limit for number of retries was not yet reached. Send the requests again (<code>SEND_APPLY_REQUESTS</code>) and move back to <code>CHECK_APPLY_RESPONSES</code></li>
+<li><code>CANCELLED_SEND_REVERT_REQUESTS</code>: If the request was cancelled but some changes have been made, send new requests agents to revert the changes (status of <code>CANCELLING</code>)<ul>
+<li><code>CANCELLED_CHECK_REVERT_RESPONSES</code>: similar to <code>CHECK_APPLY_RESPONSES</code>, a success produces the <code>CANCELLED</code> state/status and a failure will produce the <code>FAILED_CANCEL_FAILED</code> state(<code>FAILED</code> status)</li>
+</ul>
+</li>
+<li><code>FAILURE</code>: One or more of the requests has failed and the retry limit has been reached, move to <code>FAILED_SEND_REVERT_REQUESTS</code> state, this will cause new requests to be sent (similar to step 3), but the applied data will be from the most recent successful request (data stored in Baragon state node)<ul>
+<li><code>FAILED_SEND_REVERT_REQUESTS</code>: Send requests to apply previous data and revert the load balancer changes</li>
+<li><code>FAILED_CHECK_REVERT_RESPONSES</code>: Similar to <code>CHECK_APPLY_RESPONSES</code>, but a failure will cause <code>FAILED_REVERT_FAILED</code> state and an overall status of <code>FAILED</code>, while a success will cause the <code>FAILED_REVERTED</code> state (still overall status of <code>FAILED</code> for the request)</li>
+</ul>
+</li>
+<li><code>INVALID_REQUEST_NOOP</code>: A failure has occurred but no action was taken on any load balancer. A revert is not needed, so undo any base path lock changes and return the <code>INVALID_REQUEST_NOOP</code> status</li>
+</ul>
+<h4 id="commit-the-request-if-successful-success-statestatus">Commit the request if successful (<code>SUCCESS</code> state/status)</h4>
+<p>Once the request has been determined to be successful, the worker will commit the applied changes. This includes:</p>
+<ul>
+<li>Clearing invalid base path locks if:<ul>
+<li>base path has changed</li>
+<li>service has moved off of that load balancer group</li>
+<li>there are no remaining upstreams for the service</li>
+</ul>
+</li>
+<li>If the serviceId has changed, remove the old service from the state node</li>
+<li>Add/update the new information about this service in the state node</li>
+<li>update the global state node to include this new data</li>
+</ul>
+<p><a id="exceptions"></a></p>
+<h3 id="common-exceptions">Common Exceptions</h3>
+<ul>
+<li><code>InvalidConfigException</code>: <code>BaragonAgent</code> will throw this when it has encountered an error during the configuration check (config is checked for validity before reloading). If a message was produced by the config check command, it will be included in the exception message</li>
+<li><code>LbAdapterExecuteException</code>: This is a more general exception that can occur on the agent when an error occurs while executing one of the check or reload config commands. If a message was produced by the command, it will be included in the exception message.</li>
+<li><code>MissingTemplateException</code>: This exception will occur on the <code>BaragonAgent</code> when a <code>templateName</code> is requested that does not match any <code>namedTemplates</code> known to that agent instance. No action will be taken on the load balancer for that request and the name of the unknown template will be included in the request message.</li>
+<li><code>RequestAlreadyEnqueuedException</code>: This exception can occur on <code>BaragonService</code> when a request with an already existing <code>loadBalancerRequestId</code> but different data (service, options, etc) is posted to the <code>/request</code> endpoint.</li>
+</ul>
+
+                    
+                    </section>
+                
+                
+                </div>
+            </div>
+        </div>
+
+        
+        <a href="../../Docs/managing/launch.html" class="navigation navigation-prev " aria-label="Previous page: Launching a Cluster"><i class="fa fa-angle-left"></i></a>
+        
+        
+        <a href="../../Docs/managing/basepaths.html" class="navigation navigation-next " aria-label="Next page: BasePath Locking and Updating"><i class="fa fa-angle-right"></i></a>
+        
+    </div>
+</div>
+
+        
+<script src="../../gitbook/app.js"></script>
+
+    
+    <script src="../../gitbook/plugins/gitbook-plugin-github/plugin.js"></script>
+    
+
+    
+    <script src="../../gitbook/plugins/gitbook-plugin-copy-code-button/toggle.js"></script>
+    
+
+    
+    <script src="../../gitbook/plugins/gitbook-plugin-search/lunr.min.js"></script>
+    
+
+    
+    <script src="../../gitbook/plugins/gitbook-plugin-search/search.js"></script>
+    
+
+    
+    <script src="../../gitbook/plugins/gitbook-plugin-fontsettings/buttons.js"></script>
+    
+
+<script>
+require(["gitbook"], function(gitbook) {
+    var config = {"github":{"url":"https://github.com/HubSpot/Baragon"},"copy-code-button":{},"search":{"maxIndexSize":1000000},"fontsettings":{"theme":"white","family":"sans","size":2}};
+    gitbook.start(config);
+});
+</script>
+
+        <!-- body:end -->
+    </body>
+    <!-- End of book Baragon -->
+</html>

@@ -1,0 +1,646 @@
+<!DOCTYPE HTML>
+<html lang="en" >
+    <!-- Start book Baragon -->
+    <head>
+        <!-- head:start -->
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <title>Example Configuration | Baragon</title>
+        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+        <meta name="description" content="">
+        <meta name="generator" content="GitBook 2.6.7">
+        
+        
+        <meta name="HandheldFriendly" content="true"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-status-bar-style" content="black">
+        <link rel="apple-touch-icon-precomposed" sizes="152x152" href="../../gitbook/images/apple-touch-icon-precomposed-152.png">
+        <link rel="shortcut icon" href="../../gitbook/images/favicon.ico" type="image/x-icon">
+        
+    <link rel="stylesheet" href="../../gitbook/style.css">
+    
+        
+        <link rel="stylesheet" href="../../gitbook/plugins/gitbook-plugin-search/search.css">
+        
+    
+        
+        <link rel="stylesheet" href="../../gitbook/plugins/gitbook-plugin-fontsettings/website.css">
+        
+    
+    
+
+        
+    
+    
+    <link rel="next" href="../../Docs/config/baragon_agent_config.html" />
+    
+    
+    <link rel="prev" href="../../Docs/development.html" />
+    
+
+        <!-- head:end -->
+    </head>
+    <body>
+        <!-- body:start -->
+        
+    <div class="book"
+        data-level="5"
+        data-chapter-title="Example Configuration"
+        data-filepath="Docs/config/config.md"
+        data-basepath="../.."
+        data-revision="Fri May 20 2016 16:53:16 GMT-0400 (EDT)"
+        data-innerlanguage="">
+    
+
+<div class="book-summary">
+    <nav role="navigation">
+        <ul class="summary">
+            
+            
+            
+            
+
+            
+
+            
+    
+        <li class="chapter " data-level="0" data-path="index.html">
+            
+                
+                    <a href="../../index.html">
+                
+                        <i class="fa fa-check"></i>
+                        
+                        Introduction
+                    </a>
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="1" >
+            
+            <span><b>1.</b> About Baragon</span>
+            
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="1.1" data-path="Docs/about/basics.html">
+            
+                
+                    <a href="../../Docs/about/basics.html">
+                
+                        <i class="fa fa-check"></i>
+                        
+                            <b>1.1.</b>
+                        
+                        Basics
+                    </a>
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2" data-path="Docs/about/getting_started.html">
+            
+                
+                    <a href="../../Docs/about/getting_started.html">
+                
+                        <i class="fa fa-check"></i>
+                        
+                            <b>1.2.</b>
+                        
+                        Getting Started
+                    </a>
+            
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+        <li class="chapter " data-level="2" data-path="Docs/api.html">
+            
+                
+                    <a href="../../Docs/api.html">
+                
+                        <i class="fa fa-check"></i>
+                        
+                            <b>2.</b>
+                        
+                        Baragon API Docs
+                    </a>
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3" data-path="Docs/managing_baragon.html">
+            
+                
+                    <a href="../../Docs/managing_baragon.html">
+                
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.</b>
+                        
+                        Managing Baragon
+                    </a>
+            
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="3.1" data-path="Docs/managing/terminology.html">
+            
+                
+                    <a href="../../Docs/managing/terminology.html">
+                
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.1.</b>
+                        
+                        Terminology
+                    </a>
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3.2" data-path="Docs/managing/launch.html">
+            
+                
+                    <a href="../../Docs/managing/launch.html">
+                
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.2.</b>
+                        
+                        Launching a Cluster
+                    </a>
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3.3" data-path="Docs/managing/requests.html">
+            
+                
+                    <a href="../../Docs/managing/requests.html">
+                
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.3.</b>
+                        
+                        Making Requests to Baragon Service
+                    </a>
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3.4" data-path="Docs/managing/basepaths.html">
+            
+                
+                    <a href="../../Docs/managing/basepaths.html">
+                
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.4.</b>
+                        
+                        BasePath Locking and Updating
+                    </a>
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3.5" data-path="Docs/managing/elb_sync.html">
+            
+                
+                    <a href="../../Docs/managing/elb_sync.html">
+                
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.5.</b>
+                        
+                        ELB Sync
+                    </a>
+            
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+        <li class="chapter " data-level="4" data-path="Docs/development.html">
+            
+                
+                    <a href="../../Docs/development.html">
+                
+                        <i class="fa fa-check"></i>
+                        
+                            <b>4.</b>
+                        
+                        Developing
+                    </a>
+            
+            
+        </li>
+    
+        <li class="chapter active" data-level="5" data-path="Docs/config/config.html">
+            
+                
+                    <a href="../../Docs/config/config.html">
+                
+                        <i class="fa fa-check"></i>
+                        
+                            <b>5.</b>
+                        
+                        Example Configuration
+                    </a>
+            
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="5.1" data-path="Docs/config/baragon_agent_config.html">
+            
+                
+                    <a href="../../Docs/config/baragon_agent_config.html">
+                
+                        <i class="fa fa-check"></i>
+                        
+                            <b>5.1.</b>
+                        
+                        Example Agent Config
+                    </a>
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="5.2" data-path="Docs/config/baragon_service_config.html">
+            
+                
+                    <a href="../../Docs/config/baragon_service_config.html">
+                
+                        <i class="fa fa-check"></i>
+                        
+                            <b>5.2.</b>
+                        
+                        Example Service Config
+                    </a>
+            
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+
+
+            
+            <li class="divider"></li>
+            <li>
+                <a href="https://www.gitbook.com" target="blank" class="gitbook-link">
+                    Published with GitBook
+                </a>
+            </li>
+            
+        </ul>
+    </nav>
+</div>
+
+    <div class="book-body">
+        <div class="body-inner">
+            <div class="book-header" role="navigation">
+    <!-- Actions Left -->
+    
+
+    <!-- Title -->
+    <h1>
+        <i class="fa fa-circle-o-notch fa-spin"></i>
+        <a href="../../" >Baragon</a>
+    </h1>
+</div>
+
+            <div class="page-wrapper" tabindex="-1" role="main">
+                <div class="page-inner">
+                
+                
+                    <section class="normal" id="section-">
+                    
+                        <h2 id="example-configuration">Example Configuration</h2>
+<h3 id="baragon-service">Baragon Service</h3>
+<h2 id="example-baragon-service-config">Example Baragon Service Config</h2>
+<pre><code class="lang-yaml"># Configuration for Baragon Service and the corresponding request worker and ui
+#
+# The `server` section is the `server` configuration for a dropwizard application.
+# `logging` and other dropwizard configurations can also be used
+server:
+  type: simple
+  applicationContextPath: /baragon/v2
+  connector:
+    type: http
+    port: 8080
+
+zookeeper:
+  quorum: localhost:2181  # comma separated list of zookeeper host:port goes here
+  zkNamespace: baragon    # name of the base zk node
+  sessionTimeoutMillis: 60000
+  connectTimeoutMillis: 5000
+  retryBaseSleepTimeMilliseconds: 1000
+  retryMaxTries: 3
+
+# Auth configuration
+auth:
+  key: test-key # This key must be provided as the authkey parameter on requests to Baragon Service
+  enabled: true # Will use the specified key for auth if set to true
+  uiWriteEnabled: true # Does this key allow edit access in BaragonUI
+
+# Master auth key, can be used to create/destroy other auth keys
+masterAuthKey: test-master-key
+
+# Hostname, used in name during creation of leader latch
+hostname: localhost
+
+# Baragon request worker configuration, used for the worker process that executes requests
+worker:
+  enabled: true # Determines if the worker should start for this instance of Baragon Service
+  intervalMs: 1000 # Interval between checks of the pending request queue
+  initialDelayMs: 0 # Initial delay before the first check of the pending request queue
+
+# (Optional) Format for building requests to Baragon Agents. First %s is substituted with the value created using 
+# the value from the agent configs baseUrlTemplate, and the second %s is substituted with the request ID, generally
+# you will not need to set this field
+agentRequestUriFormat: &quot;%s/request/%s&quot;
+
+# (Optional) Number of times to try and complete a successful request on an agent before failing the request
+agentMaxAttempts: 5
+
+# (Optional) Time to wait for a response from a Baragon Agent
+agentRequestTimeoutMs: 60000
+
+# (Optional) Configuration to purge old requests from zookeeper, defaults shown
+history:
+  purgeOldRequests: false # Should we purge old requests
+  purgeOldRequestsAfterDays: 7 # delete requests older than this many days
+  purgeWhenDateNotFound: false # if we can&apos;t determine when a request was last updated, should we delete it
+  purgeEveryHours: 24 # how often to run the purger
+
+# (Optional) Elb Sync configuration
+elb:
+  enabled: false # Determines if the ELB sync worker should start, defaults to false
+  awsAccessKeyId: somekey # AWS credentials for accessing ELB api
+  awsAccessKeySecret: somesecret # AWS credentials for accessing ELB api
+  intervalSeconds: 120 # How oftent he sync worker should run, defaults to 120s
+  initialDelaySeconds: 0 # How long to wait before starting ELB sync worker, defaults to 0
+  deregisterEnabled: false # Is the sync worker allowed to remove instances from the elb, defaults to false
+  removeKnownAgentEnabled: false # Is the sync worker allowed to remove an instance from the ELB if it is still in the known agents list, defaults to false
+  removeKnownAgentMinutes: 30 # How long must an instance be inactive before it can be removed
+  removeLastHealthyEnabled: false # If there is only one healthy instance left, can the sync worker remove it, defaults to false
+
+# (Optional) HTTP client configuration, used by Baragon Service to comunicate with Baragon Agents
+httpClient:
+  maxRequestRetry: 5 # (Optional) Defaults to 5
+  requestTimeoutInMs: 10000 # (Optional) Defaults to 10000
+  connectionTimeoutInMs: 5000 # (Optional) Defaults to 5000
+  userAgent: &quot;Baragon/0.1 (+https://github.com/HubSpot/Baragon)&quot; # (Optional) defaults to &quot;Baragon/0.1 (+https://github.com/HubSpot/Baragon)&quot;
+
+# (Optional) Baragon UI configuration
+ui:
+  title: Baragon # Shown in ui nav bar
+  navColor: null
+  baseUrl: null # Different url to host the ui, otherwise the ui will be rechable at /[contextPath]/ui
+  allowEdit: false # Allow the ui to run in edit mode (user can trigger requests and make changes), defaults to false (read-only)
+  allowEditKey: test-ui-key # A separate key to enable edit mode in an otherwiser read-only ui (can also be accomplished using an auth key with uiWriteEnabled set to true)
+
+# (Optional) enable a cors filter for this host, defaults to false
+enableCorsFilter: false
+</code></pre>
+<h3 id="baragon-agent">Baragon Agent</h3>
+<h2 id="example-baragon-agent-config">Example Baragon Agent Config</h2>
+<pre><code class="lang-yaml"># Configuration for Baragon Agent instances running on each load balancer
+#
+# Example configuration for use with nginx is shown
+#
+# The `server` section is the `server` configuration for a dropwizard application.
+# `logging` and other dropwizard configurations can also be used
+server:
+  type: simple
+  applicationContextPath: /baragon-agent/v2
+  connector:
+    type: http
+    port: 8882
+
+zookeeper:
+  quorum: localhost:2181  # comma separated list of ZK host:port goes here
+  zkNamespace: baragon    # name of the base zk node
+  sessionTimeoutMillis: 60000
+  connectTimeoutMillis: 5000
+  retryBaseSleepTimeMilliseconds: 1000
+  retryMaxTries: 3
+
+loadBalancerConfig:
+  name: loadBalancerGroupName  # load balancer group name
+  rootPath: /etc/nginx/conf.d  # base path for writing load balancer configs goes here
+  checkConfigCommand: &quot;nginx -t&quot;              # command for checking configs goes here
+  reloadConfigCommand: &quot;service nginx reload&quot; # command for reloading configs goes here
+
+# Auth configuration
+auth:
+  enabled: true
+
+# Host on which this agent is running, will be used to build the baseUrl
+hostname: localhost
+
+# (Optional) used to define the base url that Baragon Service will use to contact the Agent
+baseUrlTemplate: &quot;http://%s:%d%s&quot;
+
+# (Optional) amount of time to block other requests to this agent while an initial request is being processed
+agentLockTimeoutMs: 5000
+
+# (Optional) used in the formatTimestamp handlebars helper
+defaultDateFormat: &quot;yyyy-MM-dd hh:mm a&quot;
+
+# (Optional) enable a cors filter for this host, defaults to false
+enableCorsFilter: false
+
+# (Optional) set the heartbeat/agent-check-in interval for updating knownAgents metadata, default is 15
+heartbeatIntervalSeconds: 15
+
+# (Optional) Testing configuration
+testing:
+  enabled: false
+  applyDelayMs: 0 # delay the processing of apply requests
+  applyFailRate: 0 # Cause more failures during the application of a request
+  revertDelayMs: 0 # Delay the processing of revert requests
+  revertFailRate: 0 # Cause more failures during the processing of a revert request
+
+# Templates used to render load balancer configuration files
+templates:
+  # File to render, the file will be written to `loadBalancerConfig.rootPath`/`filename` with %s replaced by the serivce ID
+  - filename: &quot;proxy/%s.conf&quot;
+    # Handlebars template used for this file, this template will be the default for all requests if no template name is specified
+    # All variables from the BaragonService object will be available here,
+    # this includes any custom `options` fields sent in the BAragonRequest
+    #
+    # The template below is an example used to proxy requests for a service at a particular path (serviceBasePath) on this
+    # load balancer to one of the defined upstreams
+    template: |
+      # This configuration is automatically generated by Baragon, local changes may be lost!
+      #
+      # Service ID: {{{service.serviceId}}}
+      # Service base path: {{{service.serviceBasePath}}}
+      #
+      # Service owner(s):
+      {{#each service.owners}}
+      #   - {{{.}}}
+      {{else}}#   (no owners defined)
+      {{/each}}#
+      {{#if upstreams}}
+      {{#if service.options.nginxExtraConfigs}}
+      # BEGIN CUSTOM NGINX CONFIGS
+      {{#each service.options.nginxExtraConfigs}}{{{.}}}
+      {{/each}}
+      # END CUSTOM NGINX CONFIGS
+      {{/if}}
+      location {{{service.options.nginxLocationModifier}}} {{{service.serviceBasePath}}} {
+          proxy_pass_header Server;
+          proxy_set_header Host $http_host;
+          proxy_redirect off;
+          proxy_set_header X-Real-IP $remote_addr;
+          proxy_set_header X-Scheme $scheme;
+          proxy_set_header X-Request-Start &quot;${msec}&quot;;
+          {{#if service.options.nginxProxyPassOverride}}
+          proxy_pass http://{{{service.options.nginxProxyPassOverride}}};
+          {{else}}
+          proxy_pass http://baragon_{{{service.serviceId}}};
+          {{/if}}
+          proxy_connect_timeout {{firstOf service.options.nginxProxyConnectTimeout 55}};
+          proxy_read_timeout {{firstOf service.options.nginxProxyReadTimeout 60}};
+          {{#if service.options.nginxExtraLocationConfigs}}
+          # BEGIN CUSTOM NGINX LOCATION CONFIGS
+          {{#each service.options.nginxExtraLocationConfigs}}{{{.}}}
+          {{/each}}
+          # END CUSTOM NGINX LOCATION CONFIGS
+          {{/if}}
+      }
+      {{else}}
+      #
+      # Service has no defined upstreams -- delete service from Baragon if not needed
+      #
+      location {{{service.options.nginxLocationModifier}}} {{{service.serviceBasePath}}} {
+        return 503;
+      }
+      {{/if}}
+
+    # Additional templates for this file path can also be  specified and given a name. To render an alternate template for a request
+    # include the `templateName` field in your BaragonRequest
+    #
+    # The example below shows a template named `custom` which will write each line of the config defined in the `proxyConfig`
+    # section of the BaragonRequest options to the nginx config file
+    #
+    # Named templates will be written to the file path under when they are defined
+    namedTemplates:
+      custom: |
+        # This configuration is automatically generated by Baragon, local changes may be lost!
+        # Service ID: {{{service.serviceId}}}
+        # Service base path: {{{service.serviceBasePath}}}
+        # Template: loadbalancer
+        # Owners:
+        {{#each service.owners}}
+        #   - {{{.}}}
+        {{else}}
+        #   No owners!
+        {{/each}}
+        # This is a blank template for writing custom configuration
+        # BEGIN CUSTOM PROXY CONFIG
+        {{#each service.options.proxyConfig}}{{{.}}}
+        {{/each}}
+        # END CUSTOM PROXY CONFIG
+
+  # Multiple filenames to render for each request can be specified. While the file defined above writes the proxy config,
+  # this additional file will define the upstreams
+   - filename: &quot;upstreams/%s.conf&quot;
+    template: |
+      # This configuration is automatically generated by Baragon, local changes may be lost!
+      #
+      # Service ID: {{{service.serviceId}}}
+      # Service base path: {{{service.serviceBasePath}}}
+      #
+      # Service owner(s):
+      {{#each service.owners}}#   - {{{.}}}
+      {{else}}#   (no owners defined)
+      {{/each}}#
+      {{#if upstreams}}
+      upstream baragon_{{{service.serviceId}}} {
+          {{#each upstreams}}server {{{upstream}}};  # {{{requestId}}}
+          {{/each}}
+          {{#if service.options.nginxExtraUpstreamConfigs}}
+          # BEGIN CUSTOM NGINX UPSTREAM CONFIGS
+          {{#each service.options.nginxExtraUpstreamConfigs}}{{{.}}}
+          {{/each}}
+          # END CUSTOM NGINX UPSTREAM CONFIGS
+          {{/if}}
+      }
+      {{else}}
+      #
+      # Service is disabled due to no defined upstreams!
+      # It&apos;s safe to delete this file if not needed.
+      #
+      {{/if}}
+</code></pre>
+
+                    
+                    </section>
+                
+                
+                </div>
+            </div>
+        </div>
+
+        
+        <a href="../../Docs/development.html" class="navigation navigation-prev " aria-label="Previous page: Developing"><i class="fa fa-angle-left"></i></a>
+        
+        
+        <a href="../../Docs/config/baragon_agent_config.html" class="navigation navigation-next " aria-label="Next page: Example Agent Config"><i class="fa fa-angle-right"></i></a>
+        
+    </div>
+</div>
+
+        
+<script src="../../gitbook/app.js"></script>
+
+    
+    <script src="../../gitbook/plugins/gitbook-plugin-github/plugin.js"></script>
+    
+
+    
+    <script src="../../gitbook/plugins/gitbook-plugin-copy-code-button/toggle.js"></script>
+    
+
+    
+    <script src="../../gitbook/plugins/gitbook-plugin-search/lunr.min.js"></script>
+    
+
+    
+    <script src="../../gitbook/plugins/gitbook-plugin-search/search.js"></script>
+    
+
+    
+    <script src="../../gitbook/plugins/gitbook-plugin-fontsettings/buttons.js"></script>
+    
+
+<script>
+require(["gitbook"], function(gitbook) {
+    var config = {"github":{"url":"https://github.com/HubSpot/Baragon"},"copy-code-button":{},"search":{"maxIndexSize":1000000},"fontsettings":{"theme":"white","family":"sans","size":2}};
+    gitbook.start(config);
+});
+</script>
+
+        <!-- body:end -->
+    </body>
+    <!-- End of book Baragon -->
+</html>

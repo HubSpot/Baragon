@@ -1,0 +1,825 @@
+<!DOCTYPE HTML>
+<html lang="en" >
+    <!-- Start book Baragon -->
+    <head>
+        <!-- head:start -->
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <title>Baragon API Docs | Baragon</title>
+        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+        <meta name="description" content="">
+        <meta name="generator" content="GitBook 2.6.7">
+        
+        
+        <meta name="HandheldFriendly" content="true"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-status-bar-style" content="black">
+        <link rel="apple-touch-icon-precomposed" sizes="152x152" href="../gitbook/images/apple-touch-icon-precomposed-152.png">
+        <link rel="shortcut icon" href="../gitbook/images/favicon.ico" type="image/x-icon">
+        
+    <link rel="stylesheet" href="../gitbook/style.css">
+    
+        
+        <link rel="stylesheet" href="../gitbook/plugins/gitbook-plugin-search/search.css">
+        
+    
+        
+        <link rel="stylesheet" href="../gitbook/plugins/gitbook-plugin-fontsettings/website.css">
+        
+    
+    
+
+        
+    
+    
+    <link rel="next" href="../Docs/managing_baragon.html" />
+    
+    
+    <link rel="prev" href="../Docs/about/getting_started.html" />
+    
+
+        <!-- head:end -->
+    </head>
+    <body>
+        <!-- body:start -->
+        
+    <div class="book"
+        data-level="2"
+        data-chapter-title="Baragon API Docs"
+        data-filepath="Docs/api.md"
+        data-basepath=".."
+        data-revision="Fri May 20 2016 16:53:16 GMT-0400 (EDT)"
+        data-innerlanguage="">
+    
+
+<div class="book-summary">
+    <nav role="navigation">
+        <ul class="summary">
+            
+            
+            
+            
+
+            
+
+            
+    
+        <li class="chapter " data-level="0" data-path="index.html">
+            
+                
+                    <a href="../index.html">
+                
+                        <i class="fa fa-check"></i>
+                        
+                        Introduction
+                    </a>
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="1" >
+            
+            <span><b>1.</b> About Baragon</span>
+            
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="1.1" data-path="Docs/about/basics.html">
+            
+                
+                    <a href="../Docs/about/basics.html">
+                
+                        <i class="fa fa-check"></i>
+                        
+                            <b>1.1.</b>
+                        
+                        Basics
+                    </a>
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2" data-path="Docs/about/getting_started.html">
+            
+                
+                    <a href="../Docs/about/getting_started.html">
+                
+                        <i class="fa fa-check"></i>
+                        
+                            <b>1.2.</b>
+                        
+                        Getting Started
+                    </a>
+            
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+        <li class="chapter active" data-level="2" data-path="Docs/api.html">
+            
+                
+                    <a href="../Docs/api.html">
+                
+                        <i class="fa fa-check"></i>
+                        
+                            <b>2.</b>
+                        
+                        Baragon API Docs
+                    </a>
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3" data-path="Docs/managing_baragon.html">
+            
+                
+                    <a href="../Docs/managing_baragon.html">
+                
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.</b>
+                        
+                        Managing Baragon
+                    </a>
+            
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="3.1" data-path="Docs/managing/terminology.html">
+            
+                
+                    <a href="../Docs/managing/terminology.html">
+                
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.1.</b>
+                        
+                        Terminology
+                    </a>
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3.2" data-path="Docs/managing/launch.html">
+            
+                
+                    <a href="../Docs/managing/launch.html">
+                
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.2.</b>
+                        
+                        Launching a Cluster
+                    </a>
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3.3" data-path="Docs/managing/requests.html">
+            
+                
+                    <a href="../Docs/managing/requests.html">
+                
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.3.</b>
+                        
+                        Making Requests to Baragon Service
+                    </a>
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3.4" data-path="Docs/managing/basepaths.html">
+            
+                
+                    <a href="../Docs/managing/basepaths.html">
+                
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.4.</b>
+                        
+                        BasePath Locking and Updating
+                    </a>
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3.5" data-path="Docs/managing/elb_sync.html">
+            
+                
+                    <a href="../Docs/managing/elb_sync.html">
+                
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.5.</b>
+                        
+                        ELB Sync
+                    </a>
+            
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+        <li class="chapter " data-level="4" data-path="Docs/development.html">
+            
+                
+                    <a href="../Docs/development.html">
+                
+                        <i class="fa fa-check"></i>
+                        
+                            <b>4.</b>
+                        
+                        Developing
+                    </a>
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="5" data-path="Docs/config/config.html">
+            
+                
+                    <a href="../Docs/config/config.html">
+                
+                        <i class="fa fa-check"></i>
+                        
+                            <b>5.</b>
+                        
+                        Example Configuration
+                    </a>
+            
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="5.1" data-path="Docs/config/baragon_agent_config.html">
+            
+                
+                    <a href="../Docs/config/baragon_agent_config.html">
+                
+                        <i class="fa fa-check"></i>
+                        
+                            <b>5.1.</b>
+                        
+                        Example Agent Config
+                    </a>
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="5.2" data-path="Docs/config/baragon_service_config.html">
+            
+                
+                    <a href="../Docs/config/baragon_service_config.html">
+                
+                        <i class="fa fa-check"></i>
+                        
+                            <b>5.2.</b>
+                        
+                        Example Service Config
+                    </a>
+            
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+
+
+            
+            <li class="divider"></li>
+            <li>
+                <a href="https://www.gitbook.com" target="blank" class="gitbook-link">
+                    Published with GitBook
+                </a>
+            </li>
+            
+        </ul>
+    </nav>
+</div>
+
+    <div class="book-body">
+        <div class="body-inner">
+            <div class="book-header" role="navigation">
+    <!-- Actions Left -->
+    
+
+    <!-- Title -->
+    <h1>
+        <i class="fa fa-circle-o-notch fa-spin"></i>
+        <a href="../" >Baragon</a>
+    </h1>
+</div>
+
+            <div class="page-wrapper" tabindex="-1" role="main">
+                <div class="page-inner">
+                
+                
+                    <section class="normal" id="section-">
+                    
+                        <h1 id="baragonservice-api">BaragonService API</h1>
+<p><a id="top"></a>
+Listed below are the various endpoints for BaragonService along with example request payloads (where applicable) and responses. All example requests are pointed at the baragon docker host, and all request examples are written in python.</p>
+<p>| <a href="#state">State</a> | <a href="#workers">Workers</a> | <a href="#status">Status</a> | <a href="#requests">Requests</a> | <a href="#auth">Auth</a>  | <a href="#load-balancer">Load Balancer</a> | <a href="#agent">Agent API</a> |
+<a id="state"></a></p>
+<h1 id="state">State</h1>
+<h2 id="get-state">GET <code>/state</code></h2>
+<p>Returns the current list of services that Baragon is keeping track of. Returns a collection of <code>BaragonServiceState</code> objects</p>
+<h3 id="example-request">Example Request</h3>
+<pre><code class="lang-python">requests.get(&quot;192.168.33.20:8080/baragon/v2/state&quot;)
+</code></pre>
+<h3 id="example-response">Example Response</h3>
+<pre><code class="lang-json">[
+   {
+      &quot;service&quot;:{
+         &quot;serviceId&quot;:&quot;test1&quot;,
+         &quot;owners&quot;:[&quot;someone@example.com&quot;],
+         &quot;serviceBasePath&quot;:&quot;/test1&quot;,
+         &quot;loadBalancerGroups&quot;:[&quot;vagrant&quot;],
+         &quot;options&quot;:{
+             &quot;nginxExtraConfigs&quot;:[&quot;rewrite ^/test(.*) /test/path$1 last;&quot;]
+         }
+      },
+      &quot;upstreams&quot;:[{
+            &quot;upstream&quot;:&quot;example.com:80&quot;,
+            &quot;requestId&quot;:&quot;test1&quot;,
+            &quot;rackId&quot;:&quot;us_east_1a&quot;
+       }]
+   },
+      {
+      &quot;service&quot;:{
+         &quot;serviceId&quot;:&quot;test2&quot;,
+         &quot;owners&quot;:[&quot;someone@example.com&quot;],
+         &quot;serviceBasePath&quot;:&quot;/test2&quot;,
+         &quot;loadBalancerGroups&quot;:[&quot;vagrant&quot;],
+         &quot;options&quot;:{
+            &quot;nginxExtraConfigs&quot;:[&quot;rewrite ^/test2(.*) /test2/path$1 last;&quot;]
+         }
+      },
+      &quot;upstreams&quot;:[{
+            &quot;upstream&quot;:&quot;something.com:80&quot;,
+            &quot;requestId&quot;:&quot;test2&quot;,
+            &quot;rackId&quot;:&quot;us_east_1a&quot;
+       }]
+   },
+]
+</code></pre>
+<h2 id="get-stateserviceid">GET <code>/state/{serviceId}</code></h2>
+<p>Returns the details for a specific service ID (<code>BaragonServiceState</code> object).</p>
+<h3 id="example-request">Example Request</h3>
+<pre><code class="lang-python">requests.get(&quot;192.168.33.20:8080/baragon/v2/state/test1&quot;)
+</code></pre>
+<h3 id="example-response">Example Response</h3>
+<pre><code class="lang-json">{
+   &quot;service&quot;:{
+      &quot;serviceId&quot;:&quot;test1&quot;,
+      &quot;owners&quot;:[&quot;someone@example.com&quot;],
+      &quot;serviceBasePath&quot;:&quot;/test1&quot;,
+      &quot;loadBalancerGroups&quot;:[&quot;vagrant&quot;],
+      &quot;options&quot;:{
+          &quot;nginxExtraConfigs&quot;:[&quot;rewrite ^/test(.*) /test/path$1 last;&quot;]
+      }
+   },
+   &quot;upstreams&quot;:[{
+       &quot;upstream&quot;:&quot;example.com:80&quot;,
+       &quot;requestId&quot;:&quot;test1&quot;,
+       &quot;rackId&quot;:&quot;us_east_1a&quot;
+    }]
+}
+</code></pre>
+<h2 id="delete-stateserviceid">DELETE <code>/state/{serviceId}</code></h2>
+<p>Removes the service from the current state and clears any associated base paths. Returns a <code>BaragonServiceState</code> object of the deleted service.</p>
+<h3 id="example-request">Example Request</h3>
+<pre><code class="lang-python">requests.delete(&quot;192.168.33.20:8080/baragon/v2/state/test1&quot;)
+</code></pre>
+<h3 id="example-response">Example Response</h3>
+<pre><code class="lang-json">{
+   &quot;service&quot;:{
+      &quot;serviceId&quot;:&quot;test1&quot;,
+      &quot;owners&quot;:[&quot;someone@example.com&quot;],
+      &quot;serviceBasePath&quot;:&quot;/test1&quot;,
+      &quot;loadBalancerGroups&quot;:[&quot;vagrant&quot;],
+      &quot;options&quot;:{
+          &quot;nginxExtraConfigs&quot;:[&quot;rewrite ^/test(.*) /test/path$1 last;&quot;]
+      }
+   },
+   &quot;upstreams&quot;:[{
+       &quot;upstream&quot;:&quot;example.com:80&quot;,
+       &quot;requestId&quot;:&quot;test1&quot;,
+       &quot;rackId&quot;:&quot;us_east_1a&quot;
+    }]
+}
+</code></pre>
+<p><a id="workers"></a></p>
+<h1 id="workers">Workers</h1>
+<p>| <a href="#top">Top</a> | <a href="#state">State</a> | <a href="#workers">Workers</a> | <a href="#status">Status</a> | <a href="#requests">Requests</a> | <a href="#auth">Auth</a>  | <a href="#load-balancer">Load Balancer</a> | <a href="#agent">Agent API</a> |</p>
+<h2 id="get-workers">GET <code>/workers</code></h2>
+<p>Returns a list of the addresses of the currently active baragon workers.</p>
+<h3 id="example-request">Example Request</h3>
+<pre><code class="lang-python">requests.get(&quot;192.168.33.20:8080/baragon/v2/workers&quot;)
+</code></pre>
+<h3 id="example-response">Example Response</h3>
+<pre><code class="lang-json">[&quot;http://192.168.33.20:8080/baragon/v2&quot;]
+</code></pre>
+<p><a id="status"></a></p>
+<h1 id="status">Status</h1>
+<p>| <a href="#top">Top</a> | <a href="#state">State</a> | <a href="#workers">Workers</a> | <a href="#status">Status</a> | <a href="#requests">Requests</a> | <a href="#auth">Auth</a>  | <a href="#load-balancer">Load Balancer</a> | <a href="#agent">Agent API</a> |</p>
+<h2 id="get-status">GET <code>/status</code></h2>
+<p>Returns the current BaragonService status. (<code>BaragonServiceStatus</code> object)</p>
+<h3 id="example-request">Example Request</h3>
+<pre><code class="lang-python">requests.get(&quot;192.168.33.20:8080/baragon/v2/status&quot;)
+</code></pre>
+<h3 id="example-response">Example Response</h3>
+<pre><code>{
+  &quot;leader&quot;: true,                 # Is this BaragonService instance currently the leader?
+  &quot;pendingRequestCount&quot;: 0,       # Requests in the queue
+  &quot;workerLagMs&quot;: 1423,            # Time since worker last start
+  &quot;zookeeperState&quot;: &quot;CONNECTED&quot;,  # Zookeeper state
+  &quot;globalStateNodeSize&quot;: 1304     # Size of the /state zk node in bytes (to help avoid hitting the zk limit)
+}
+</code></pre><p><a id="requests"></a></p>
+<h1 id="requests">Requests</h1>
+<p>| <a href="#top">Top</a> | <a href="#state">State</a> | <a href="#workers">Workers</a> | <a href="#status">Status</a> | <a href="#requests">Requests</a> | <a href="#auth">Auth</a>  | <a href="#load-balancer">Load Balancer</a> | <a href="#agent">Agent API</a> |</p>
+<h2 id="get-request">GET <code>/request</code></h2>
+<p>Get the current pending requests. Returns a list of <code>QueuedRequestId</code> objects</p>
+<h3 id="example-request">Example Request</h3>
+<pre><code class="lang-python">requests.get(&quot;192.168.33.20:8080/baragon/v2/request&quot;)
+</code></pre>
+<h3 id="example-response">Example Response</h3>
+<pre><code>[
+   {
+      &quot;serviceId&quot;:&quot;test1&quot;,       # Service associated with the request
+      &quot;requestId&quot;:&quot;requestId1&quot;,  # Unique reqeust identifier
+      &quot;index&quot;:5                  # (ie,. fifth request Baragon has seen)
+   }
+]
+</code></pre><h2 id="post-request">POST <code>/request</code></h2>
+<p>Add a request to the queue with the given data. Returns a <code>BaragonResponse</code> object. A `BaragonResponse can have the following statuses:</p>
+<ul>
+<li><code>WAITING</code>: waiting for request to be applied on all agents</li>
+<li><code>SUCCESS</code>: request was successfully applied on all agents</li>
+<li><code>FAILED</code>: request was not successfully applied on all agents, and was rolled back</li>
+<li><code>CANCELING</code>: request is in the process of being cancelled (rolled back)</li>
+<li><code>CANCELED</code>: request was cancelled (rolled back) on all agents</li>
+<li><code>INVALID_REQUEST_NOOP</code>: request was invalid and no action was taken on any load balancer</li>
+<li><code>UNKNOWN</code>: unknown.</li>
+</ul>
+<h3 id="example-request">Example Request</h3>
+<pre><code class="lang-python">data = {
+  &quot;loadBalancerRequestId&quot;:&quot;requestId&quot;, # Unique request id
+  &quot;loadBalancerService&quot;:{
+    &quot;serviceId&quot;:&quot;testService&quot;,
+    &quot;owners&quot;:[&quot;owner@example.com&quot;],
+    &quot;serviceBasePath&quot;:&quot;/basepath&quot;,
+    &quot;loadBalancerGroups&quot;:[&quot;vagrant&quot;],
+    &quot;options&quot;:{
+          &quot;nginxExtraConfigs&quot;: [
+              &quot;rewrite ^/test(.*) /test/v1/$1 last;&quot;
+          ]
+    }
+  },
+  &quot;addUpstreams&quot;:[
+    {&quot;upstream&quot;:&quot;example.com:80&quot;,&quot;requestId&quot;:&quot;requestId&quot;,&quot;rack&quot;:&quot;us_east_1a&quot;}
+  ],
+  &quot;removeUpstreams&quot;:[]
+}
+headers = {&apos;Content-type&apos;: &apos;application/json&apos;}
+requests.post(&quot;http://192.168.33.20:8080/baragon/v2/request&quot;, data=data, headers=headers)
+</code></pre>
+<p><em>NOTE</em> The options hash can hold any objects you need it to. These values will later be available in the handlebars template under <code>service.options</code></p>
+<h3 id="example-response">Example Response</h3>
+<ul>
+<li>WAITING<pre><code class="lang-json">{
+ &quot;loadBalancerRequestId&quot;: &quot;requestId&quot;,
+ &quot;loadBalancerState&quot;: &quot;WAITING&quot;,
+ &quot;message&quot;: &quot;Queued as QueuedRequestId{serviceId=testService, requestId=requestId, index=2164}&quot;,
+ &quot;agentResponses&quot;: {
+    &quot;APPLY&quot;: [] 
+ }
+}
+</code></pre>
+</li>
+<li>SUCCESS<pre><code class="lang-json">{
+ &quot;loadBalancerRequestId&quot;: &quot;requestId&quot;,
+ &quot;loadBalancerState&quot;: &quot;SUCCESS&quot;,
+ &quot;message&quot;: &quot;APPLY request succeeded! Added upstreams [example.com:80], removed upstreams []&quot;,
+ &quot;agentResponses&quot;: {
+    &quot;APPLY&quot;: [
+       {
+          &quot;url&quot;: &quot;http://192.168.33.22:8081/baragon-agent/v2/request/requestId&quot;,
+          &quot;attempt&quot;: 0,
+          &quot;statusCode&quot;: 200,
+          &quot;content&quot;: null,
+          &quot;exception&quot;: null
+       }
+    ] 
+ }
+}
+</code></pre>
+</li>
+</ul>
+<h2 id="get-requestrequestid">GET <code>/request/{requestId}</code></h2>
+<p>Returns the status of a particular request via a <code>BaragonResponse</code> object. This is the same type of response as the initial <code>POST</code> request to the <code>/request</code> endpoint. See above for possible statuses</p>
+<h3 id="example-request">Example Request</h3>
+<pre><code class="lang-python">requests.get(&quot;192.168.33.20:8080/baragon/v2/request/requestId&quot;)
+</code></pre>
+<h3 id="example-response">Example Response</h3>
+<pre><code class="lang-json">{
+   &quot;loadBalancerRequestId&quot;: &quot;requestId&quot;,
+   &quot;loadBalancerState&quot;: &quot;SUCCESS&quot;,
+   &quot;message&quot;: &quot;Queued as QueuedRequestId{serviceId=testService, requestId=requestId, index=2164}&quot;,
+   &quot;agentResponses&quot;: {
+      &quot;APPLY&quot;: [
+         {
+            &quot;url&quot;: &quot;http://192.168.33.22:8081/baragon-agent/v2/request/MDSrequestId&quot;,
+            &quot;attempt&quot;: 0,
+            &quot;statusCode&quot;: 200,
+            &quot;content&quot;: null,
+            &quot;exception&quot;: null
+         }
+      ] 
+   }
+}
+</code></pre>
+<p><a id="auth"></a></p>
+<h1 id="auth">Auth</h1>
+<p>| <a href="#top">Top</a> | <a href="#state">State</a> | <a href="#workers">Workers</a> | <a href="#status">Status</a> | <a href="#requests">Requests</a> | <a href="#auth">Auth</a>  | <a href="#load-balancer">Load Balancer</a> | <a href="#agent">Agent API</a> |</p>
+<h2 id="get-authkeys">GET <code>/auth/keys</code></h2>
+<p>Returns the current list of auth keys (Must use the master auth key to access this)</p>
+<h3 id="example-request">Example Request</h3>
+<pre><code class="lang-python">params = {&quot;authkey&quot;:&quot;my-master-key&quot;}
+requests.get(&quot;192.168.33.20:8080/baragon/v2/auth/keys&quot;, params=params)
+</code></pre>
+<h3 id="example-response">Example Response</h3>
+<pre><code class="lang-json">[
+   {
+      &quot;value&quot;: &quot;my-regular-key&quot;,
+      &quot;owner&quot;: &quot;owner@example.com&quot;,
+      &quot;createdAt&quot;: 1409435929246,
+      &quot;expiredAt&quot;: null
+   }
+]
+</code></pre>
+<h2 id="delete-authkeyskey">DELETE <code>/auth/keys/{key}</code></h2>
+<p>Delete {key} from the list of valid auth keys (Must use the master auth key to access this)</p>
+<h3 id="example-request">Example Request</h3>
+<pre><code class="lang-python">params = {&quot;authkey&quot;:&quot;my-master-key&quot;}
+requests.delete(&quot;192.168.33.20:8080/baragon/v2/auth/keys/expiringauthkey&quot;, params=params)
+</code></pre>
+<h3 id="example-response">Example Response</h3>
+<pre><code class="lang-json">{
+   &quot;value&quot;: &quot;expiringauthkey&quot;,
+   &quot;owner&quot;: &quot;owner@example.com&quot;,
+   &quot;createdAt&quot;: 1409435929246,
+   &quot;expiredAt&quot;: null
+}
+</code></pre>
+<h2 id="post-authkeyskey">POST <code>/auth/keys/{key}</code></h2>
+<p>Add a new valid auth key (Must use the master auth key to access this)</p>
+<h3 id="example-request">Example Request</h3>
+<pre><code class="lang-python">params = {&quot;authkey&quot;:&quot;my-master-key&quot;}
+headers = {&apos;Content-type&apos;: &apos;application/json&apos;}
+data = {
+   &quot;value&quot;: &quot;newauthkey&quot;,
+   &quot;owner&quot;: &quot;owner@example.com&quot;
+}
+
+requests.post(&quot;192.168.33.20:8080/baragon/v2/auth/keys&quot;, data=data, params=params, headers=headers)
+</code></pre>
+<h3 id="example-response">Example Response</h3>
+<pre><code class="lang-json">{
+   &quot;value&quot;: &quot;expiringauthkey&quot;,
+   &quot;owner&quot;: &quot;owner@example.com&quot;,
+   &quot;createdAt&quot;: 1409435929246,
+   &quot;expiredAt&quot;: null
+}
+</code></pre>
+<p><a id="load-balancer"></a></p>
+<h1 id="load-balancer">Load Balancer</h1>
+<p>| <a href="#top">Top</a> | <a href="#state">State</a> | <a href="#workers">Workers</a> | <a href="#status">Status</a> | <a href="#requests">Requests</a> | <a href="#auth">Auth</a>  | <a href="#load-balancer">Load Balancer</a> | <a href="#agent">Agent API</a> |</p>
+<h2 id="get-loadbalancer">GET <code>/load-balancer</code></h2>
+<p>Returns a list of the current load balancer clusters/groups</p>
+<h3 id="example-request">Example Request</h3>
+<pre><code class="lang-python">requests.get(&quot;192.168.33.20:8080/baragon/v2/load-balancer&quot;)
+</code></pre>
+<h3 id="example-response">Example Response</h3>
+<pre><code class="lang-json">[
+   &quot;vagrant&quot;,
+   &quot;vagrant2&quot;
+]
+</code></pre>
+<h2 id="get-loadbalancercluster">GET <code>/load-balancer/{cluster}</code></h2>
+<p>Returns a BaragonGroup object for cluster named <code>cluster</code></p>
+<h3 id="example-request">Example Request</h3>
+<pre><code class="lang-python">requests.get(&quot;192.168.33.20:8080/load-balancer/vagrant&quot;)
+</code></pre>
+<h3 id="example-response">Example Response</h3>
+<pre><code class="lang-json">{
+   &quot;name&quot;:&quot;vagrant&quot;,
+   &quot;domain&quot;:&quot;vagrant.baragon.biz&quot;,
+   &quot;sources&quot;:[
+     &quot;my-test-elb&quot;
+   ]
+}
+</code></pre>
+<h2 id="get-loadbalancerclusteragents">GET <code>/load-balancer/{cluster}/agents</code></h2>
+<p>Returns the currently active baragon agents for the specified load balancer cluster</p>
+<h3 id="example-request">Example Request</h3>
+<pre><code class="lang-python">requests.get(&quot;192.168.33.20:8080/baragon/v2/load-balancer/vagrant/agents&quot;)
+</code></pre>
+<h3 id="example-response">Example Response</h3>
+<pre><code class="lang-json">[
+   {
+      &quot;baseAgentUri&quot;: &quot;http://192.168.33.21:8081/baragon/v2&quot;,
+      &quot;agentId&quot;: &quot;192.168.33.21:8081&quot;,
+      &quot;domain&quot;: &quot;vagrant.baragon.biz&quot;
+   }
+]
+</code></pre>
+<h2 id="get-loadbalancerclusterknownagents">GET <code>/load-balancer/{cluster}/known-agents</code></h2>
+<p>Returns all Baragon agents that Baragon service has seen for the specified load balancer cluster</p>
+<h3 id="example-request">Example Request</h3>
+<pre><code class="lang-python">requests.get(&quot;192.168.33.20:8080/baragon/v2/load-balancer/vagrant/known-agents&quot;)
+</code></pre>
+<h3 id="example-response">Example Response</h3>
+<pre><code class="lang-json">[
+   {
+      &quot;baseAgentUri&quot;: &quot;http://192.168.33.21:8081/baragon/v2&quot;,
+      &quot;agentId&quot;: &quot;192.168.33.21:8081&quot;,
+      &quot;domain&quot;: &quot;vagrant.baragon.biz&quot;,
+      &quot;lastSeenAt&quot;: 1423693860906
+   }
+]
+</code></pre>
+<h2 id="delete-loadbalancerclusterknownagentsagentid">DELETE <code>/load-balancer/{cluster}/known-agents/{agentId}</code></h2>
+<p>Remove the specified agent from the list of known agents. This will NOT remove if from the active agents if it is still connected in zookeeper</p>
+<h3 id="example-request">Example Request</h3>
+<pre><code class="lang-python">agentId = &quot;192.168.33.21:8081&quot;
+requests.delete(&quot;192.168.33.20:8080/baragon/v2/load-balancer/vagrant/known-agents/{0}&quot;.format(agentId))
+</code></pre>
+<h2 id="get-loadbalancerclusterbasepathall">GET <code>/load-balancer/{cluster}/base-path/all</code></h2>
+<p>Get the list of base paths for the specified cluster</p>
+<h3 id="example-request">Example Request</h3>
+<pre><code class="lang-python">requests.get(&quot;192.168.33.20:8080/baragon/v2/load-balancer/vagrant/base-path/all&quot;)
+</code></pre>
+<h3 id="example-response">Example Response</h3>
+<pre><code class="lang-json">[
+   &quot;/test1&quot;,
+   &quot;/test2&quot;
+]
+</code></pre>
+<h2 id="delete-loadbalancerclusterbasepath">DELETE <code>/load-balancer/{cluster}/base-path</code></h2>
+<p>Remove the lock on a base path for the specified cluster</p>
+<h3 id="example-request">Example Request</h3>
+<pre><code class="lang-python">params = {&quot;basePath&quot;:&quot;/test&quot;}
+requests.delete(&quot;192.168.33.20:8080/baragon/v2/load-balancer/vagrant/base-path&quot;, params=params)
+</code></pre>
+<h2 id="get-loadbalancerclusterbasepath">GET <code>/load-balancer/{cluster}/base-path</code></h2>
+<p>Return the service associated with the specified base path</p>
+<h3 id="example-request">Example Request</h3>
+<pre><code class="lang-python">params = {&quot;basePath&quot;:&quot;/test&quot;}
+requests.get(&quot;192.168.33.20:8080/baragon/v2/load-balancer/vagrant/base-path&quot;, params=params)
+</code></pre>
+<h3 id="example-response">Example Response</h3>
+<pre><code class="lang-json">{
+   &quot;service&quot;:{
+      &quot;serviceId&quot;:&quot;test&quot;,
+      &quot;owners&quot;:[&quot;someone@example.com&quot;],
+      &quot;serviceBasePath&quot;:&quot;/test&quot;,
+      &quot;loadBalancerGroups&quot;:[&quot;vagrant&quot;],
+      &quot;options&quot;:{
+          &quot;nginxExtraConfigs&quot;:[&quot;rewrite ^/test(.*) /test/path$1 last;&quot;]
+      }
+   },
+   &quot;upstreams&quot;:[{
+       &quot;upstream&quot;:&quot;example.com:80&quot;,
+       &quot;requestId&quot;:&quot;testrequest&quot;,
+       &quot;rackId&quot;:&quot;us_east_1a&quot;
+    }]
+}
+</code></pre>
+<h2 id="post-loadbalancerclustersources">POST <code>/load-balancer/{cluster}/sources</code></h2>
+<p>Add a traffic source (ie. ELB name). Returns a BaragonGroup object</p>
+<h3 id="example-request">Example Request</h3>
+<pre><code class="lang-python">params = {&apos;source&apos;:&apos;my-test-elb&apos;}
+requests.post(&quot;192.168.33.20:8080/load-balancer/vagrant/sources&quot;, params=params)
+</code></pre>
+<h3 id="example-response">Example Response</h3>
+<pre><code class="lang-json">{
+   &quot;name&quot;:&quot;vagrant&quot;,
+   &quot;domain&quot;:&quot;vagrant.baragon.biz&quot;,
+   &quot;sources&quot;:[
+     &quot;my-test-elb&quot;
+   ]
+}
+</code></pre>
+<h2 id="delete-loadbalancerclustersources">DELETE <code>/load-balancer/{cluster}/sources</code></h2>
+<p>Remove a traffic source (ie. ELB name). Optionally returns a BaragonGroup object</p>
+<h3 id="example-request">Example Request</h3>
+<pre><code class="lang-python">params = {&apos;source&apos;:&apos;my-test-elb&apos;}
+requests.delete(&quot;192.168.33.20:8080/load-balancer/vagrant/sources&quot;, params=params)
+</code></pre>
+<h3 id="example-response">Example Response</h3>
+<pre><code class="lang-json">{
+   &quot;name&quot;:&quot;vagrant&quot;,
+   &quot;domain&quot;:&quot;vagrant.baragon.biz&quot;,
+   &quot;sources&quot;:[]
+}
+</code></pre>
+<p>| <a href="#top">Top</a> | <a href="#state">State</a> | <a href="#workers">Workers</a> | <a href="#status">Status</a> | <a href="#requests">Requests</a> | <a href="#auth">Auth</a>  | <a href="#load-balancer">Load Balancer</a> | <a href="#agent">Agent API</a> |</p>
+<h1 id="agent-api">Agent API</h1>
+<p>The Baragon Agent API is generally only used by BaragonService to trigger requests, but the status endpoint can be useful for monitoring purposes.</p>
+<h2 id="post-requestrequestid">POST <code>/request/{requestId}</code></h2>
+<p>Execute a request with the specified <code>requestId</code>. Request data will be fetched from zookeeper by the agent so only the ID is needed.</p>
+<h3 id="example-request">Example Request</h3>
+<pre><code class="lang-python">requests.post(&quot;192.168.33.21:8882/baragon-agent/v2/request/test-1&quot;)
+</code></pre>
+<h3 id="example-response">Example Response</h3>
+<p>This can return:</p>
+<ul>
+<li><code>200</code>: Request was applied successfully</li>
+<li><code>400</code>: The request could not be completed due to an error caught by Baragon and the Agent has attempted to revert the changes</li>
+<li><code>500</code>: The request could not be completed due to an unforseen error, the Agent may not have been abel to successfully revert the changes</li>
+</ul>
+<h2 id="get-status">GET <code>/status</code></h2>
+<p>Get the status of the agent, returns a <code>BaragonAgentStatus</code> object.</p>
+<h3 id="example-request">Example Request</h3>
+<pre><code class="lang-python">requests.get(&quot;192.168.33.21:8882/baragon-agent/v2/status&quot;)
+</code></pre>
+<h3 id="example-response">Example Response</h3>
+<pre><code class="lang-python">{
+  &quot;group&quot;: &quot;vagrant&quot;, # load balancer group name from Agent config
+  &quot;validConfigs&quot;: true, # Is the current configuration valid accoridng to the provided checkConfigCommand
+  &quot;errorMessage&quot;: &quot;message&quot;, # Current error message returned by the checkConfigCommand if there is one
+  &quot;leader&quot;: true, # Is this agent currently the zk leader among agents in the same loadBalancerGroup
+  &quot;mostRecentRequestId&quot;: &quot;test1&quot;, # ID of the last request processed
+  &quot;zookeeperState&quot;: &quot;CONNECTED&quot; # Current zookeeper connection state
+}
+</code></pre>
+<p>| <a href="#top">Top</a> | <a href="#state">State</a> | <a href="#workers">Workers</a> | <a href="#status">Status</a> | <a href="#requests">Requests</a> | <a href="#auth">Auth</a>  | <a href="#load-balancer">Load Balancer</a> | <a href="#agent">Agent API</a> |</p>
+
+                    
+                    </section>
+                
+                
+                </div>
+            </div>
+        </div>
+
+        
+        <a href="../Docs/about/getting_started.html" class="navigation navigation-prev " aria-label="Previous page: Getting Started"><i class="fa fa-angle-left"></i></a>
+        
+        
+        <a href="../Docs/managing_baragon.html" class="navigation navigation-next " aria-label="Next page: Managing Baragon"><i class="fa fa-angle-right"></i></a>
+        
+    </div>
+</div>
+
+        
+<script src="../gitbook/app.js"></script>
+
+    
+    <script src="../gitbook/plugins/gitbook-plugin-github/plugin.js"></script>
+    
+
+    
+    <script src="../gitbook/plugins/gitbook-plugin-copy-code-button/toggle.js"></script>
+    
+
+    
+    <script src="../gitbook/plugins/gitbook-plugin-search/lunr.min.js"></script>
+    
+
+    
+    <script src="../gitbook/plugins/gitbook-plugin-search/search.js"></script>
+    
+
+    
+    <script src="../gitbook/plugins/gitbook-plugin-fontsettings/buttons.js"></script>
+    
+
+<script>
+require(["gitbook"], function(gitbook) {
+    var config = {"github":{"url":"https://github.com/HubSpot/Baragon"},"copy-code-button":{},"search":{"maxIndexSize":1000000},"fontsettings":{"theme":"white","family":"sans","size":2}};
+    gitbook.start(config);
+});
+</script>
+
+        <!-- body:end -->
+    </body>
+    <!-- End of book Baragon -->
+</html>
