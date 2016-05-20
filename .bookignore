@@ -1,0 +1,15 @@
+cookbook
+eclipse
+Baragon*
+mysql
+node_modules
+scripts
+target
+vagrant
+.travis.yml
+compose-dev.yml
+docker-compose.yml
+pom.xml
+dev
+docker*
+Docker*
