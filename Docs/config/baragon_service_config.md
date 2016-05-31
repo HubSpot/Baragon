@@ -1,3 +1,7 @@
+## Example Baragon Service Config
+
+{% raw %}
+```yaml
 # Configuration for Baragon Service and the corresponding request worker and ui
 #
 # The `server` section is the `server` configuration for a dropwizard application.
@@ -82,7 +86,5 @@ ui:
 
 # (Optional) enable a cors filter for this host, defaults to false
 enableCorsFilter: false
-
-
-
-
+```
+{% endraw %}
