@@ -10,13 +10,13 @@ Baragon is a system for automating load balancer configuration updates. It pairs
 - [Baragon Basics](#basics)
 - [Getting Started](#start)
   - [Quick Start](#start)
-  - [Detailed Setup Guide](docs/managing_baragon.md)
-  - [Example Baragon Service Configuration](docs/baragon_service_config.yaml)
-  - [Example Baragon Agent Configuration](docs/baragon_agent_config.yaml)
+  - [Detailed Setup Guide](Docs/managing_baragon.md)
+  - [Example Baragon Service Configuration](Docs/config/baragon_service_config.yaml)
+  - [Example Baragon Agent Configuration](Docs/config/baragon_agent_config.yaml)
 - [Quick Start With Docker Compose](#docker)
 - [BaragonUI](#ui)
-- [API Docs](docs/baragon_api_docs.md)
-- [Developing](docs/development.md)
+- [API Docs](Docs/api.md)
+- [Developing](Docs/development.md)
 
 <a id="basics"></a>
 ## Baragon Basics
@@ -27,7 +27,7 @@ Baragon is made up of two services:
 
 - BaragonAgentService -- applies changes on the actual load balancer
 
-When a web service changes (i.e. upstreams added / removed), POST a [BaragonRequest](docs/baragon_api_docs.md#requests) JSON object to BaragonService's `/[contextPath]/request` endpoint like this one:
+When a web service changes (i.e. upstreams added / removed), POST a [BaragonRequest](Docs/api.md#requests) JSON object to BaragonService's `/[contextPath]/request` endpoint like this one:
 
 ```json
 {
@@ -47,20 +47,20 @@ When a web service changes (i.e. upstreams added / removed), POST a [BaragonRequ
 - `BaragonAgent`s will apply the changes on the load balancer using templates provided in its configuration and report back a Success or Failure to `BaragonService`
 - Polling the `BaragonService` request status url (`/[contextPath]/request/{loadBalancerRequestId}`) will indicate the current status of the request
 
-Check out the [API Docs](docs/baragon_api_docs.md) for additional `BaragonRequest` fields and returned values.
+Check out the [API Docs](Docs/api.md) for additional `BaragonRequest` fields and returned values.
 
 <a id="start"></a>
 ## Getting Started
 
-For more details on configuring and using Baragon, check out the [detailed setup and management guide](docs/managing_baragon.md)
+For more details on configuring and using Baragon, check out the [detailed setup and management guide](Docs/managing_baragon.md)
 
 ** Prerequisite: A working ZooKeeper cluster **
 
 1. Build JARs via `mvn clean package`.
 
-2. Create a configuration file for Baragon Service and Baragon Agent. These are an extended version of a Dropwizard configuration file. Details on configurable fields can be found in the example configs below and in the [detailed setup and management guide](docs/managing_baragon.md) 
-  - [Example Baragon Service Configuration](docs/baragon_service_config.yaml). This will be referenced as `$SERVICE_CONFIG_YAML`.
-  - [Example Baragon Agent Configuration](docs/baragon_agent_config.yaml). This will be referenced as `$AGENT_CONFIG_YAML`.
+2. Create a configuration file for Baragon Service and Baragon Agent. These are an extended version of a Dropwizard configuration file. Details on configurable fields can be found in the example configs below and in the [detailed setup and management guide](Docs/managing_baragon.md) 
+  - [Example Baragon Service Configuration](Docs/config/baragon_service_config.yaml). This will be referenced as `$SERVICE_CONFIG_YAML`.
+  - [Example Baragon Agent Configuration](Docs/config/baragon_agent_config.yaml). This will be referenced as `$AGENT_CONFIG_YAML`.
 
 3. Copy `BaragonService-*-SNAPSHOT.jar` and `$SERVICE_CONFIG_YAML` onto one or more hosts, and start the service via `java -jar BaragonService-*-SNAPSHOT.jar server $SERVICE_CONFIG_YAML`.
 
@@ -89,4 +89,4 @@ Baragon comes with a UI for visualization and easier management of load balancer
 
 ## Baragon API Docs
 
-Full documentation on the Baragon Service API can be found [here](docs/baragon_api_docs.md)
+Full documentation on the Baragon Service API can be found [here](Docs/api.md)

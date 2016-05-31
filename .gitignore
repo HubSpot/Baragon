@@ -26,3 +26,6 @@ BaragonUI/app/env.coffee
 BaragonUI/.vee
 
 docker/configs/*
+
+_book
+node_modules

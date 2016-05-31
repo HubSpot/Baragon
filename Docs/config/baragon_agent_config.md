@@ -1,3 +1,7 @@
+## Example Baragon Agent Config
+
+{% raw %}
+```yaml
 # Configuration for Baragon Agent instances running on each load balancer
 #
 # Example configuration for use with nginx is shown
@@ -168,3 +172,5 @@ templates:
       # It's safe to delete this file if not needed.
       #
       {{/if}}
+```
+{% endraw %}
