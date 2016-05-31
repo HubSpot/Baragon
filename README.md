@@ -58,7 +58,7 @@ For more details on configuring and using Baragon, check out the [detailed setup
 
 1. Build JARs via `mvn clean package`.
 
-2. Create a configuration file for Baragon Service and Baragon Agent. These are an extended version of a Dropwizard configuration file. Details on configurable fields can be found in the example configs below and in the [detailed setup and management guide](docs/managing_baragon.md) 
+2. Create a configuration file for Baragon Service and Baragon Agent. These are an extended version of a Dropwizard configuration file. Details on configurable fields can be found in the example configs below and in the [detailed setup and management guide](Docs/managing_baragon.md) 
   - [Example Baragon Service Configuration](Docs/config/baragon_service_config.yaml). This will be referenced as `$SERVICE_CONFIG_YAML`.
   - [Example Baragon Agent Configuration](Docs/config/baragon_agent_config.yaml). This will be referenced as `$AGENT_CONFIG_YAML`.
 
