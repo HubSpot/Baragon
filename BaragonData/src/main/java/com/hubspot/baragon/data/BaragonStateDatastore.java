@@ -129,7 +129,7 @@ public class BaragonStateDatastore extends AbstractDataStore {
           LOG.info("Deleting {}", removePath);
           transaction.delete().forPath(removePath).and();
         } else {
-          LOG.warn("No upstream node found to delete for {}, calculated path {}, current upstream nodes are {}", upstreamInfo, removePath, currentUpstreams);
+          LOG.warn("No upstream node found to delete for {}, calculated path to remove was {}, current upstream nodes are {}", upstreamInfo, removePath, currentUpstreams);
         }
       }
       for (UpstreamInfo upstreamInfo : request.getAddUpstreams()) {
