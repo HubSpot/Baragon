@@ -81,6 +81,12 @@ public class BaragonServiceModule extends AbstractModule {
   }
 
   @Provides
+  @Named(BaragonDataModule.BARAGON_AGENT_BATCH_REQUEST_URI_FORMAT)
+  public String provideAgentBatchUriFormat(BaragonConfiguration configuration) {
+    return configuration.getAgentBatchRequestUriFormat();
+  }
+
+  @Provides
   @Named(BaragonDataModule.BARAGON_AGENT_MAX_ATTEMPTS)
   public Integer provideAgentMaxAttempts(BaragonConfiguration configuration) {
     return configuration.getAgentMaxAttempts();
