@@ -89,7 +89,7 @@ public class RequestTest {
     final String requestId = "test-126";
     Set<String> lbGroup = new HashSet<>();
     lbGroup.add(FAKE_LB_GROUP);
-    final BaragonService service = new BaragonService("testservice", Collections.<String>emptyList(), "/test", lbGroup, Collections.<String, Object>emptyMap());
+    final BaragonService service = new BaragonService("testservice1", Collections.<String>emptyList(), "/test", lbGroup, Collections.<String, Object>emptyMap());
 
     final UpstreamInfo upstream = new UpstreamInfo("testhost:8080", Optional.of(requestId), Optional.<String>absent());
 
@@ -116,7 +116,7 @@ public class RequestTest {
     final String requestId = "test-127";
     Set<String> lbGroup = new HashSet<>();
     lbGroup.add(FAKE_LB_GROUP);
-    final BaragonService service = new BaragonService("testservice", Collections.<String>emptyList(), "/test", lbGroup, Collections.<String, Object>emptyMap());
+    final BaragonService service = new BaragonService("testservice2", Collections.<String>emptyList(), "/test", lbGroup, Collections.<String, Object>emptyMap());
 
     final UpstreamInfo upstream = new UpstreamInfo("testhost:8080", Optional.of(requestId), Optional.<String>absent());
 
@@ -134,7 +134,7 @@ public class RequestTest {
     Set<String> lbGroup = new HashSet<>();
     lbGroup.add(REAL_LB_GROUP);
 
-    final BaragonService service = new BaragonService("testservice", Collections.<String>emptyList(), "/foo", lbGroup, Collections.<String, Object>emptyMap());
+    final BaragonService service = new BaragonService("testservice3", Collections.<String>emptyList(), "/foo", lbGroup, Collections.<String, Object>emptyMap());
 
     final UpstreamInfo upstream = new UpstreamInfo("testhost:8080", Optional.of(requestId), Optional.<String>absent());
 
@@ -163,7 +163,7 @@ public class RequestTest {
     Set<String> lbGroup = new HashSet<>();
     lbGroup.add(REAL_LB_GROUP);
 
-    final BaragonService service = new BaragonService("testservice", Collections.<String>emptyList(), "/foo", Collections.singletonList("/some-other-path"), lbGroup, Collections.<String, Object>emptyMap(), Optional.<String>absent(), Collections.<String>emptySet());
+    final BaragonService service = new BaragonService("testservice4", Collections.<String>emptyList(), "/foo", Collections.singletonList("/some-other-path"), lbGroup, Collections.<String, Object>emptyMap(), Optional.<String>absent(), Collections.<String>emptySet());
 
     final UpstreamInfo upstream = new UpstreamInfo("testhost:8080", Optional.of(requestId), Optional.<String>absent());
 
