@@ -4,6 +4,12 @@ import java.util.Arrays;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.LoggerContext;
+
+import org.slf4j.LoggerFactory;
+
 import com.google.common.base.Optional;
 import com.google.common.base.Strings;
 import com.google.inject.AbstractModule;
@@ -34,5 +40,8 @@ public class DockerTestModule extends AbstractModule {
     final int baragonPort = Integer.parseInt(System.getProperty("baragon.service.port"));
     install(new BaragonClientModule(Arrays.asList(String.format("%s:%d", getDockerAddress().or("localhost"), baragonPort))));
     BaragonClientModule.bindAuthkey(binder()).toInstance(Optional.fromNullable(Strings.emptyToNull(System.getProperty("baragon.service.auth.key"))));
+    LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
+    Logger rootLogger = context.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME);
+    rootLogger.setLevel(Level.INFO);
   }
 }

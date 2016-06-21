@@ -1,5 +1,7 @@
 package com.hubspot.baragon.service;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -7,13 +9,12 @@ import java.util.Set;
 import com.google.common.base.Optional;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
 import com.hubspot.baragon.BaragonServiceTestModule;
 import com.hubspot.baragon.data.BaragonLoadBalancerDatastore;
-import com.hubspot.baragon.data.BaragonStateDatastore;
 import com.hubspot.baragon.exceptions.InvalidRequestActionException;
 import com.hubspot.baragon.exceptions.InvalidUpstreamsException;
 import com.hubspot.baragon.exceptions.RequestAlreadyEnqueuedException;
+import com.hubspot.baragon.models.BaragonAgentMetadata;
 import com.hubspot.baragon.models.BaragonRequest;
 import com.hubspot.baragon.models.BaragonRequestState;
 import com.hubspot.baragon.models.BaragonResponse;
@@ -33,8 +34,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 @RunWith(JukitoRunner.class)
-public class RequestTests {
-  private static final Logger LOG = LoggerFactory.getLogger(RequestTests.class);
+public class RequestTest {
+  private static final Logger LOG = LoggerFactory.getLogger(RequestTest.class);
 
   public static final String REAL_LB_GROUP = "real";
   public static final String FAKE_LB_GROUP = "fake";
@@ -49,6 +50,10 @@ public class RequestTests {
   @Before
   public void setupLbGroups(BaragonLoadBalancerTestDatastore loadBalancerDatastore) {
     loadBalancerDatastore.setLoadBalancerGroupsOverride(Optional.of(Collections.singleton(REAL_LB_GROUP)));
+    BaragonAgentMetadata agent1 = BaragonAgentMetadata.fromString("http://127.0.0.1:8080/baragon-agent/v2");
+    Collection<BaragonAgentMetadata> agents = new ArrayList<>();
+    agents.add(agent1);
+    loadBalancerDatastore.setLoadBalancerAgentsOverride(Optional.of(agents));
   }
 
   @After
@@ -79,74 +84,6 @@ public class RequestTests {
     return maybeResponse;
   }
 
-  private void assertSuccessfulRequestLifecycle(RequestManager requestManager, BaragonRequestWorker requestWorker, String requestId) {
-    assertResponseStateExists(requestManager, requestId, BaragonRequestState.WAITING);  // PENDING
-
-    requestWorker.run();
-
-    assertResponseStateExists(requestManager, requestId, BaragonRequestState.WAITING);  // SEND REQUESTS
-
-    requestWorker.run();
-
-    assertResponseStateExists(requestManager, requestId, BaragonRequestState.WAITING);  // CHECK REQUESTS
-
-    requestWorker.run();
-
-    assertResponseStateExists(requestManager, requestId, BaragonRequestState.SUCCESS);  // SUCCESS
-  }
-
-  @Test
-  public void removeNonExistentUpstream(RequestManager requestManager, BaragonRequestWorker requestWorker) {
-    final String requestId = "test-125";
-    Set<String> lbGroup = new HashSet<>();
-    lbGroup.add(REAL_LB_GROUP);
-    final BaragonService service = new BaragonService("testservice", Collections.<String>emptyList(), "/test", lbGroup, Collections.<String, Object>emptyMap());
-
-    final UpstreamInfo fakeUpstream = new UpstreamInfo("testhost:8080", Optional.of(requestId), Optional.<String>absent());
-
-    final BaragonRequest request = new BaragonRequest(requestId, service, Collections.<UpstreamInfo>emptyList(), ImmutableList.of(fakeUpstream), Optional.<String>absent());
-
-    Optional<BaragonResponse> maybeResponse;
-
-    try {
-      assertResponseStateAbsent(requestManager, requestId);
-
-      LOG.info("Going to enqueue request: {}", request);
-      requestManager.enqueueRequest(request);
-
-      assertSuccessfulRequestLifecycle(requestManager, requestWorker, requestId);
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
-    }
-  }
-
-  @Test
-  public void addHttpUrlUpstream(RequestManager requestManager, BaragonRequestWorker requestWorker, BaragonStateDatastore stateDatastore) {
-    final String requestId = "test-http-url-upstream-1";
-    final String serviceId = "httpUrlUpstreamService";
-    Set<String> lbGroup = new HashSet<>();
-    lbGroup.add(REAL_LB_GROUP);
-
-    final BaragonService service = new BaragonService(serviceId, Collections.<String>emptyList(), "/http-url-upstream",lbGroup, Collections.<String, Object>emptyMap());
-
-    final UpstreamInfo httpUrlUpstream = new UpstreamInfo("http://test.com:8080/foo", Optional.of(requestId), Optional.<String>absent());
-
-    final BaragonRequest request = new BaragonRequest(requestId, service, ImmutableList.of(httpUrlUpstream), Collections.<UpstreamInfo>emptyList(), Optional.<String>absent());
-
-    try {
-      assertResponseStateAbsent(requestManager, requestId);
-
-      LOG.info("Going to enqueue request: {}", request);
-      requestManager.enqueueRequest(request);
-
-      assertSuccessfulRequestLifecycle(requestManager, requestWorker, requestId);
-
-      assertEquals(ImmutableSet.of(httpUrlUpstream), stateDatastore.getUpstreams(serviceId));
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
-    }
-  }
-
   @Test
   public void testNonExistentLoadBalancerGroup(RequestManager requestManager, BaragonRequestWorker requestWorker) {
     final String requestId = "test-126";
@@ -174,7 +111,7 @@ public class RequestTests {
     }
   }
 
-  @Test(expected = RequestAlreadyEnqueuedException.class)
+  @Test
   public void testPreexistingResponse(RequestManager requestManager) throws RequestAlreadyEnqueuedException, InvalidRequestActionException, InvalidUpstreamsException {
     final String requestId = "test-127";
     Set<String> lbGroup = new HashSet<>();
@@ -185,8 +122,9 @@ public class RequestTests {
 
     final BaragonRequest request = new BaragonRequest(requestId, service, ImmutableList.of(upstream), ImmutableList.<UpstreamInfo>of(), Optional.<String>absent());
 
-    requestManager.enqueueRequest(request);
-    requestManager.enqueueRequest(request);
+    BaragonResponse response = requestManager.enqueueRequest(request);
+    BaragonResponse repeatResponse = requestManager.enqueueRequest(request);
+    assertEquals(repeatResponse, response);
   }
 
   @Test
