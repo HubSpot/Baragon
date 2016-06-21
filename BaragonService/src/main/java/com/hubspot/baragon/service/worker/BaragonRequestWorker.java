@@ -26,6 +26,7 @@ import com.hubspot.baragon.models.InternalStatesMap;
 import com.hubspot.baragon.models.QueuedRequestId;
 import com.hubspot.baragon.models.QueuedRequestWithState;
 import com.hubspot.baragon.models.RequestAction;
+import com.hubspot.baragon.service.config.BaragonConfiguration;
 import com.hubspot.baragon.service.exceptions.BaragonExceptionNotifier;
 import com.hubspot.baragon.service.managers.AgentManager;
 import com.hubspot.baragon.service.managers.RequestManager;
@@ -43,16 +44,19 @@ public class BaragonRequestWorker implements Runnable {
   private final RequestManager requestManager;
   private final AtomicLong workerLastStartAt;
   private final BaragonExceptionNotifier exceptionNotifier;
+  private final BaragonConfiguration configuration;
 
   @Inject
   public BaragonRequestWorker(AgentManager agentManager,
                               RequestManager requestManager,
                               BaragonExceptionNotifier exceptionNotifier,
+                              BaragonConfiguration configuration,
                               @Named(BaragonDataModule.BARAGON_SERVICE_WORKER_LAST_START) AtomicLong workerLastStartAt) {
     this.agentManager = agentManager;
     this.requestManager = requestManager;
     this.workerLastStartAt = workerLastStartAt;
     this.exceptionNotifier = exceptionNotifier;
+    this.configuration = configuration;
   }
 
   private String buildResponseString(Map<String, Collection<AgentResponse>> agentResponses, AgentRequestType requestType) {
@@ -195,7 +199,9 @@ public class BaragonRequestWorker implements Runnable {
           LOG.error("Error processing request {}", queuedRequestWithState.getRequest().getLoadBalancerRequestId(), e);
         }
       } else {
-        toApply.add(queuedRequestWithState);
+        if (toApply.size() < configuration.getWorkerConfiguration().getMaxBatchSize()) {
+          toApply.add(queuedRequestWithState);
+        }
       }
     }
     results.putAll(agentManager.sendRequests(toApply));
@@ -213,23 +219,25 @@ public class BaragonRequestWorker implements Runnable {
         final Set<String> handledServices = Sets.newHashSet();
         final Set<QueuedRequestWithState> queuedRequestsWithState = Sets.newHashSet();
         for (QueuedRequestId queuedRequestId : queuedRequestIds) {
-          final String requestId = queuedRequestId.getRequestId();
-          final Optional<InternalRequestStates> maybeState = requestManager.getRequestState(requestId);
+          if (!handledServices.contains(queuedRequestId.getServiceId())) {
+            final String requestId = queuedRequestId.getRequestId();
+            final Optional<InternalRequestStates> maybeState = requestManager.getRequestState(requestId);
 
-          if (!maybeState.isPresent()) {
-            LOG.warn(String.format("%s does not have a request status!", requestId));
-            continue;
+            if (!maybeState.isPresent()) {
+              LOG.warn(String.format("%s does not have a request status!", requestId));
+              continue;
+            }
+
+            final Optional<BaragonRequest> maybeRequest = requestManager.getRequest(requestId);
+
+            if (!maybeRequest.isPresent()) {
+              LOG.warn(String.format("%s does not have a request object!", requestId));
+              continue;
+            }
+
+            queuedRequestsWithState.add(new QueuedRequestWithState(queuedRequestId, maybeRequest.get(), maybeState.get()));
+            handledServices.add(queuedRequestId.getServiceId());
           }
-
-          final Optional<BaragonRequest> maybeRequest = requestManager.getRequest(requestId);
-
-          if (!maybeRequest.isPresent()) {
-            LOG.warn(String.format("%s does not have a request object!", requestId));
-            continue;
-          }
-
-          queuedRequestsWithState.add(new QueuedRequestWithState(queuedRequestId, maybeRequest.get(), maybeState.get()));
-          handledServices.add(queuedRequestId.getServiceId());
         }
 
         Map<QueuedRequestWithState, InternalRequestStates> results = handleQueuedRequests(queuedRequestsWithState);
