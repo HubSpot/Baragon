@@ -92,6 +92,9 @@ public class BaragonConfiguration extends Configuration {
   @JsonProperty("sentry")
   private Optional<SentryConfiguration> sentryConfiguration = Optional.absent();
 
+  @JsonProperty("defaultServicePriority")
+  private double defaultServicePriority = 0.5;
+
   public ZooKeeperConfiguration getZooKeeperConfiguration() {
     return zooKeeperConfiguration;
   }
@@ -234,5 +237,13 @@ public class BaragonConfiguration extends Configuration {
 
   public void setSentryConfiguration(Optional<SentryConfiguration> sentryConfiguration) {
     this.sentryConfiguration = sentryConfiguration;
+  }
+
+  public double getDefaultServicePriority() {
+    return defaultServicePriority;
+  }
+
+  public void setDefaultServicePriority(double defaultServicePriority) {
+    this.defaultServicePriority = defaultServicePriority;
   }
 }

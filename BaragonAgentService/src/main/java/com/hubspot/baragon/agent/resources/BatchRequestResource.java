@@ -1,5 +1,6 @@
 package com.hubspot.baragon.agent.resources;
 
+import java.util.List;
 import java.util.Set;
 
 import javax.ws.rs.Consumes;
@@ -29,7 +30,7 @@ public class BatchRequestResource {
 
   @POST
   @Consumes(MediaType.APPLICATION_JSON)
-  public Set<AgentBatchResponseItem> apply(Set<BaragonRequestBatchItem> batch) throws InterruptedException {
+  public List<AgentBatchResponseItem> apply(List<BaragonRequestBatchItem> batch) throws InterruptedException {
     return agentRequestManager.processRequests(batch);
   }
 }

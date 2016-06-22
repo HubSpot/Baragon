@@ -1,6 +1,7 @@
 package com.hubspot.baragon.agent.managers;
 
 import com.google.common.base.Optional;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -68,8 +69,8 @@ public class AgentRequestManager {
     this.agentLockTimeoutMs = agentLockTimeoutMs;
   }
 
-  public Set<AgentBatchResponseItem> processRequests(Set<BaragonRequestBatchItem> batch) throws InterruptedException {
-    Set<AgentBatchResponseItem> responses = Sets.newHashSet();
+  public List<AgentBatchResponseItem> processRequests(List<BaragonRequestBatchItem> batch) throws InterruptedException {
+    List<AgentBatchResponseItem> responses = Lists.newArrayList();
     int i = 0;
     for (BaragonRequestBatchItem item : batch) {
       boolean isLast = i == batch.size() - 1;

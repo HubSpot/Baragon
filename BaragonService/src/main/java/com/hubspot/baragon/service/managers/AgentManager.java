@@ -2,6 +2,8 @@ package com.hubspot.baragon.service.managers;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -16,6 +18,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Optional;
 import com.google.common.base.Strings;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -109,7 +112,7 @@ public class AgentManager {
     return builder;
   }
 
-  private AsyncHttpClient.BoundRequestBuilder buildAgentBatchRequest(String url, Set<BaragonRequestBatchItem> batch) throws JsonProcessingException {
+  private AsyncHttpClient.BoundRequestBuilder buildAgentBatchRequest(String url, List<BaragonRequestBatchItem> batch) throws JsonProcessingException {
     final BoundRequestBuilder builder = asyncHttpClient.preparePost(url);
     if (baragonAuthKey.isPresent()) {
       builder.addQueryParameter("authkey", baragonAuthKey.get());
@@ -122,7 +125,7 @@ public class AgentManager {
   public Map<QueuedRequestWithState, InternalRequestStates> sendRequests(final Set<QueuedRequestWithState> queuedRequestsWithState) {
     Map<QueuedRequestWithState, InternalRequestStates> results = new HashMap<>();
 
-    Map<String, Set<BaragonRequestBatchItem>> requestsByGroup = new HashMap<>();
+    Map<String, List<BaragonRequestBatchItem>> requestsByGroup = new HashMap<>();
 
     for (QueuedRequestWithState queuedRequestWithState : queuedRequestsWithState) {
       final BaragonRequest request = queuedRequestWithState.getRequest();
@@ -134,16 +137,23 @@ public class AgentManager {
       }
       for (String group : loadBalancerGroupsToUpdate) {
         if (requestsByGroup.containsKey(group)) {
-            requestsByGroup.get(group).add(new BaragonRequestBatchItem(request.getLoadBalancerRequestId(), request.getAction(), InternalStatesMap.getRequestType(queuedRequestWithState.getCurrentState())));
+            requestsByGroup.get(group).add(new BaragonRequestBatchItem(request.getLoadBalancerRequestId(), request.getAction(), InternalStatesMap.getRequestType(queuedRequestWithState.getCurrentState()), request.getLoadBalancerService().getPriority().or(configuration.getDefaultServicePriority())));
         } else {
-          requestsByGroup.put(group, Sets.newHashSet(new BaragonRequestBatchItem(request.getLoadBalancerRequestId(), request.getAction(), InternalStatesMap.getRequestType(queuedRequestWithState.getCurrentState()))));
+          requestsByGroup.put(group, Lists.newArrayList(new BaragonRequestBatchItem(request.getLoadBalancerRequestId(), request.getAction(), InternalStatesMap.getRequestType(queuedRequestWithState.getCurrentState()), request.getLoadBalancerService().getPriority().or(configuration.getDefaultServicePriority()))));
         }
       }
       results.put(queuedRequestWithState, InternalStatesMap.getWaitingState(queuedRequestWithState.getCurrentState()));
     }
 
-    for (Map.Entry<String, Set<BaragonRequestBatchItem>> entry : requestsByGroup.entrySet()) {
+    for (Map.Entry<String, List<BaragonRequestBatchItem>> entry : requestsByGroup.entrySet()) {
       for (final BaragonAgentMetadata agentMetadata : loadBalancerDatastore.getAgentMetadata(entry.getKey())) {
+        Collections.sort(entry.getValue(), new Comparator<BaragonRequestBatchItem>() {
+          @Override
+          public int compare(BaragonRequestBatchItem o1, BaragonRequestBatchItem o2) {
+            return o2.getPriority().compareTo(o1.getPriority());
+          }
+        });
+
         final String baseUrl = agentMetadata.getBaseAgentUri();
         if (agentMetadata.isBatchEnabled()) {
           sendBatchRequest(baseUrl, entry.getValue());
@@ -158,7 +168,7 @@ public class AgentManager {
     return results;
   }
 
-  private void sendBatchRequest(final String baseUrl, final Set<BaragonRequestBatchItem> batch) {
+  private void sendBatchRequest(final String baseUrl, final List<BaragonRequestBatchItem> batch) {
     Set<BaragonRequestBatchItem> doNotSend = Sets.newHashSet();
     for (BaragonRequestBatchItem item : batch) {
       if (!shouldSendRequest(baseUrl, item.getRequestId(), item.getRequestType())) {
