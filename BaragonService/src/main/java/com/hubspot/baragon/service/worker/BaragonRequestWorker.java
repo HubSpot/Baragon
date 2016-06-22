@@ -3,6 +3,7 @@ package com.hubspot.baragon.service.worker;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -22,7 +23,9 @@ import com.hubspot.baragon.models.BaragonService;
 import com.hubspot.baragon.models.InternalRequestStates;
 import com.hubspot.baragon.models.InternalStatesMap;
 import com.hubspot.baragon.models.QueuedRequestId;
+import com.hubspot.baragon.models.QueuedRequestWithState;
 import com.hubspot.baragon.models.RequestAction;
+import com.hubspot.baragon.service.config.BaragonConfiguration;
 import com.hubspot.baragon.service.exceptions.BaragonExceptionNotifier;
 import com.hubspot.baragon.service.managers.AgentManager;
 import com.hubspot.baragon.service.managers.RequestManager;
@@ -40,16 +43,19 @@ public class BaragonRequestWorker implements Runnable {
   private final RequestManager requestManager;
   private final AtomicLong workerLastStartAt;
   private final BaragonExceptionNotifier exceptionNotifier;
+  private final BaragonConfiguration configuration;
 
   @Inject
   public BaragonRequestWorker(AgentManager agentManager,
                               RequestManager requestManager,
                               BaragonExceptionNotifier exceptionNotifier,
+                              BaragonConfiguration configuration,
                               @Named(BaragonDataModule.BARAGON_SERVICE_WORKER_LAST_START) AtomicLong workerLastStartAt) {
     this.agentManager = agentManager;
     this.requestManager = requestManager;
     this.workerLastStartAt = workerLastStartAt;
     this.exceptionNotifier = exceptionNotifier;
+    this.configuration = configuration;
   }
 
   private String buildResponseString(Map<String, Collection<AgentResponse>> agentResponses, AgentRequestType requestType) {
@@ -151,8 +157,7 @@ public class BaragonRequestWorker implements Runnable {
       case SEND_APPLY_REQUESTS:
       case FAILED_SEND_REVERT_REQUESTS:
       case CANCELLED_SEND_REVERT_REQUESTS:
-        agentManager.sendRequests(request, InternalStatesMap.getRequestType(currentState));
-        return InternalStatesMap.getWaitingState(currentState);
+        throw new RuntimeException(String.format("Requests in state %s must be handled by batch request sender", currentState));
 
       case FAILED_CHECK_REVERT_RESPONSES:
       case CANCELLED_CHECK_REVERT_RESPONSES:
@@ -182,37 +187,24 @@ public class BaragonRequestWorker implements Runnable {
     return message.substring(0, message.length() -1) + " ]";
   }
 
-  public void handleQueuedRequest(QueuedRequestId queuedRequestId) {
-    final String requestId = queuedRequestId.getRequestId();
-
-    final Optional<InternalRequestStates> maybeState = requestManager.getRequestState(requestId);
-
-    if (!maybeState.isPresent()) {
-      LOG.warn(String.format("%s does not have a request status!", requestId));
-      return;
+  public Map<QueuedRequestWithState, InternalRequestStates> handleQueuedRequests(Set<QueuedRequestWithState> queuedRequestsWithState) {
+    Map<QueuedRequestWithState, InternalRequestStates> results = new HashMap<>();
+    Set<QueuedRequestWithState> toApply = Sets.newHashSet();
+    for (QueuedRequestWithState queuedRequestWithState : queuedRequestsWithState) {
+      if (!queuedRequestWithState.getCurrentState().isRequireAgentRequest()) {
+        try {
+          results.put(queuedRequestWithState, handleState(queuedRequestWithState.getCurrentState(), queuedRequestWithState.getRequest()));
+        } catch (Exception e) {
+          LOG.error("Error processing request {}", queuedRequestWithState.getRequest().getLoadBalancerRequestId(), e);
+        }
+      } else {
+        if (toApply.size() < configuration.getWorkerConfiguration().getMaxBatchSize()) {
+          toApply.add(queuedRequestWithState);
+        }
+      }
     }
-
-    final InternalRequestStates currentState = maybeState.get();
-
-    final Optional<BaragonRequest> maybeRequest = requestManager.getRequest(requestId);
-
-    if (!maybeRequest.isPresent()) {
-      LOG.warn(String.format("%s does not have a request object!", requestId));
-      return;
-    }
-
-    final InternalRequestStates newState = handleState(currentState, maybeRequest.get());
-
-    if (newState != currentState) {
-      LOG.info(String.format("%s: %s --> %s", requestId, currentState, newState));
-      requestManager.setRequestState(requestId, newState);
-    }
-
-    if (InternalStatesMap.isRemovable(newState)) {
-      requestManager.removeQueuedRequest(queuedRequestId);
-      requestManager.saveResponseToHistory(maybeRequest.get(), newState);
-      requestManager.deleteRequest(requestId);
-    }
+    results.putAll(agentManager.sendRequests(toApply));
+    return results;
   }
 
   @Override
@@ -223,14 +215,42 @@ public class BaragonRequestWorker implements Runnable {
       final List<QueuedRequestId> queuedRequestIds = requestManager.getQueuedRequestIds();
 
       if (!queuedRequestIds.isEmpty()) {
-        final Set<String> handledServices = Sets.newHashSet();  // only handle one request per service at a time
-
+        final Set<String> handledServices = Sets.newHashSet();
+        final Set<QueuedRequestWithState> queuedRequestsWithState = Sets.newHashSet();
         for (QueuedRequestId queuedRequestId : queuedRequestIds) {
           if (!handledServices.contains(queuedRequestId.getServiceId())) {
-            synchronized (BaragonRequestWorker.class) {
-              handleQueuedRequest(queuedRequestId);
+            final String requestId = queuedRequestId.getRequestId();
+            final Optional<InternalRequestStates> maybeState = requestManager.getRequestState(requestId);
+
+            if (!maybeState.isPresent()) {
+              LOG.warn(String.format("%s does not have a request status!", requestId));
+              continue;
             }
+
+            final Optional<BaragonRequest> maybeRequest = requestManager.getRequest(requestId);
+
+            if (!maybeRequest.isPresent()) {
+              LOG.warn(String.format("%s does not have a request object!", requestId));
+              continue;
+            }
+
+            queuedRequestsWithState.add(new QueuedRequestWithState(queuedRequestId, maybeRequest.get(), maybeState.get()));
             handledServices.add(queuedRequestId.getServiceId());
+          }
+        }
+
+        Map<QueuedRequestWithState, InternalRequestStates> results = handleQueuedRequests(queuedRequestsWithState);
+
+        for (Map.Entry<QueuedRequestWithState, InternalRequestStates> result : results.entrySet()) {
+          if (result.getValue() != result.getKey().getCurrentState()) {
+            LOG.info(String.format("%s: %s --> %s", result.getKey().getQueuedRequestId().getRequestId(), result.getKey().getCurrentState(), result.getValue()));
+            requestManager.setRequestState(result.getKey().getQueuedRequestId().getRequestId(), result.getValue());
+          }
+
+          if (InternalStatesMap.isRemovable(result.getValue())) {
+            requestManager.removeQueuedRequest(result.getKey().getQueuedRequestId());
+            requestManager.saveResponseToHistory(result.getKey().getRequest(), result.getValue());
+            requestManager.deleteRequest(result.getKey().getQueuedRequestId().getRequestId());
           }
         }
       }

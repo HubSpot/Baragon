@@ -22,6 +22,7 @@ public class BaragonAgentMetadata {
   private final String agentId;
   private final BaragonAgentEc2Metadata ec2;
   private final Map<String, String> extraAgentData;
+  private final boolean batchEnabled;
 
   @JsonCreator
   public static BaragonAgentMetadata fromString(String value) {
@@ -31,7 +32,7 @@ public class BaragonAgentMetadata {
       throw new InvalidAgentMetadataStringException(value);
     }
 
-    return new BaragonAgentMetadata(value, matcher.group(1), Optional.<String>absent(), new BaragonAgentEc2Metadata(Optional.<String>absent(), Optional.<String>absent(), Optional.<String>absent(), Optional.<String>absent()), Collections.<String, String>emptyMap());
+    return new BaragonAgentMetadata(value, matcher.group(1), Optional.<String>absent(), new BaragonAgentEc2Metadata(Optional.<String>absent(), Optional.<String>absent(), Optional.<String>absent(), Optional.<String>absent()), Collections.<String, String>emptyMap(), false);
   }
 
   @JsonCreator
@@ -39,12 +40,14 @@ public class BaragonAgentMetadata {
                               @JsonProperty("agentId") String agentId,
                               @JsonProperty("domain") Optional<String> domain,
                               @JsonProperty("ec2") BaragonAgentEc2Metadata ec2,
-                              @JsonProperty("extraAgentData") Map<String, String> extraAgentData) {
+                              @JsonProperty("extraAgentData") Map<String, String> extraAgentData,
+                              @JsonProperty("batchEnabled") boolean batchEnabled) {
     this.baseAgentUri = baseAgentUri;
     this.domain = domain;
     this.agentId = agentId;
     this.ec2 = ec2;
     this.extraAgentData = Objects.firstNonNull(extraAgentData, Collections.<String, String>emptyMap());
+    this.batchEnabled = Objects.firstNonNull(batchEnabled, false);
   }
 
   public String getBaseAgentUri() {
@@ -68,6 +71,10 @@ public class BaragonAgentMetadata {
     return extraAgentData;
   }
 
+  public boolean isBatchEnabled() {
+    return batchEnabled;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -76,46 +83,30 @@ public class BaragonAgentMetadata {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-
-    BaragonAgentMetadata metadata = (BaragonAgentMetadata) o;
-
-    if (agentId != null ? !agentId.equals(metadata.agentId) : metadata.agentId != null) {
-      return false;
-    }
-    if (!baseAgentUri.equals(metadata.baseAgentUri)) {
-      return false;
-    }
-    if (!domain.equals(metadata.domain)) {
-      return false;
-    }
-    if (!ec2.equals(metadata.ec2)) {
-      return false;
-    }
-    if (!extraAgentData.equals(metadata.extraAgentData)) {
-      return false;
-    }
-
-    return true;
+    BaragonAgentMetadata that = (BaragonAgentMetadata) o;
+    return batchEnabled == that.batchEnabled &&
+      Objects.equal(baseAgentUri, that.baseAgentUri) &&
+      Objects.equal(domain, that.domain) &&
+      Objects.equal(agentId, that.agentId) &&
+      Objects.equal(ec2, that.ec2) &&
+      Objects.equal(extraAgentData, that.extraAgentData) &&
+      Objects.equal(batchEnabled, batchEnabled);
   }
 
   @Override
   public int hashCode() {
-    int result = baseAgentUri.hashCode();
-    result = 31 * result + domain.hashCode();
-    result = 31 * result + (agentId != null ? agentId.hashCode() : 0);
-    result = 31 * result + (ec2 != null ? ec2.hashCode() : 0);
-    result = 31 * result + extraAgentData.hashCode();
-    return result;
+    return Objects.hashCode(baseAgentUri, domain, agentId, ec2, extraAgentData, batchEnabled);
   }
 
   @Override
   public String toString() {
     return Objects.toStringHelper(this)
-            .add("baseAgentUri", baseAgentUri)
-            .add("domain", domain)
-            .add("agentId", agentId)
-            .add("ec2", ec2)
-            .add("extraAgentData", extraAgentData)
-            .toString();
+      .add("baseAgentUri", baseAgentUri)
+      .add("domain", domain)
+      .add("agentId", agentId)
+      .add("ec2", ec2)
+      .add("extraAgentData", extraAgentData)
+      .add("batchEnabled", batchEnabled)
+      .toString();
   }
 }

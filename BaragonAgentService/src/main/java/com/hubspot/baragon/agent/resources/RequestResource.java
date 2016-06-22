@@ -11,37 +11,29 @@ import javax.ws.rs.core.Response;
 
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
-import com.hubspot.baragon.agent.config.LoadBalancerConfiguration;
 import com.hubspot.baragon.agent.managers.AgentRequestManager;
 import com.hubspot.baragon.models.RequestAction;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 
 @Path("/request/{requestId}")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class RequestResource {
-  private static final Logger LOG = LoggerFactory.getLogger(RequestResource.class);
-
   private final AgentRequestManager agentRequestManager;
-  private final LoadBalancerConfiguration loadBalancerConfiguration;
 
   @Inject
-  public RequestResource(AgentRequestManager agentRequestManager,
-                         LoadBalancerConfiguration loadBalancerConfiguration) {
+  public RequestResource(AgentRequestManager agentRequestManager) {
     this.agentRequestManager = agentRequestManager;
-    this.loadBalancerConfiguration = loadBalancerConfiguration;
   }
 
   @POST
   public Response apply(@PathParam("requestId") String requestId) throws InterruptedException {
-    return agentRequestManager.processRequest(requestId, Optional.<RequestAction>absent());
+    return agentRequestManager.processRequest(requestId, Optional.<RequestAction>absent(), false);
   }
 
   @DELETE
   public Response revert(@PathParam("requestId") String requestId) throws InterruptedException {
-    return agentRequestManager.processRequest(requestId, Optional.of(RequestAction.REVERT));
+    return agentRequestManager.processRequest(requestId, Optional.of(RequestAction.REVERT), false);
   }
 
 }

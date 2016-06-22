@@ -46,4 +46,13 @@ public class BaragonLoadBalancerTestDatastore extends BaragonLoadBalancerDatasto
       return super.getAgentMetadata(clusterNames);
     }
   }
+
+  @Override
+  public Collection<BaragonAgentMetadata> getAgentMetadata(String clusterName) {
+    if (loadBalancerAgentsOverride.isPresent()) {
+      return loadBalancerAgentsOverride.get();
+    } else {
+      return super.getAgentMetadata(clusterName);
+    }
+  }
 }

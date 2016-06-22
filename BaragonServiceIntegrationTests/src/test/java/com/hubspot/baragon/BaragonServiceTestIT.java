@@ -36,7 +36,6 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertEquals;
 
-
 public class BaragonServiceTestIT {
   
   public static final String LOAD_BALANCER_GROUP = "docker-baragon";
@@ -97,7 +96,6 @@ public class BaragonServiceTestIT {
       
       state = baragonServiceClient.getRequest(requestId).get().getLoadBalancerState(); 
     }
-    LOG.info("");
     BaragonResponse resp = baragonServiceClient.getRequest(requestId).get();
     if (!resp.getLoadBalancerState().equals(targetState)) {
       throw new Exception("Request " + requestId + " stuck while waiting to reach " + targetState + ": \n" +

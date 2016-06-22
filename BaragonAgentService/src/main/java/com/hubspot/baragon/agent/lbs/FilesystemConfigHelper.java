@@ -118,7 +118,7 @@ public class FilesystemConfigHelper {
     LOG.info(String.format("Apply finished for %s", service.getServiceId()));
   }
 
-  public void apply(ServiceContext context, Optional<BaragonService> maybeOldService, boolean revertOnFailure, boolean noReload, boolean noValidate) throws InvalidConfigException, LbAdapterExecuteException, IOException, MissingTemplateException, InterruptedException, LockTimeoutException {
+  public void apply(ServiceContext context, Optional<BaragonService> maybeOldService, boolean revertOnFailure, boolean noReload, boolean noValidate, boolean delayReload) throws InvalidConfigException, LbAdapterExecuteException, IOException, MissingTemplateException, InterruptedException, LockTimeoutException {
     final BaragonService service = context.getService();
     final BaragonService oldService = maybeOldService.or(service);
 
@@ -163,10 +163,10 @@ public class FilesystemConfigHelper {
       } else {
         LOG.debug("Not validating configs due to 'noValidate' specified in request");
       }
-      if (!noReload) {
+      if (!noReload && !delayReload) {
         adapter.reloadConfigs();
       } else {
-        LOG.debug("Not reloading configs due to 'noReload' specified in request");
+        LOG.debug("Not reloading configs: {}", noReload ? "'noReload' specified in request" : "Will reload at end of request batch");
       }
     } catch (Exception e) {
       LOG.error(String.format("Caught exception while writing configs for %s, reverting to backups!", service.getServiceId()), e);
@@ -192,7 +192,7 @@ public class FilesystemConfigHelper {
     LOG.info(String.format("Apply finished for %s", service.getServiceId()));
   }
 
-  public void delete(BaragonService service, Optional<BaragonService> maybeOldService, boolean noReload, boolean noValidate) throws InvalidConfigException, LbAdapterExecuteException, IOException, MissingTemplateException, InterruptedException, LockTimeoutException {
+  public void delete(BaragonService service, Optional<BaragonService> maybeOldService, boolean noReload, boolean noValidate, boolean delayReload) throws InvalidConfigException, LbAdapterExecuteException, IOException, MissingTemplateException, InterruptedException, LockTimeoutException {
     final boolean oldServiceExists = (maybeOldService.isPresent() && configsExist(maybeOldService.get()));
     final boolean previousConfigsExist = configsExist(service);
 
@@ -213,10 +213,10 @@ public class FilesystemConfigHelper {
       } else {
         LOG.debug("Not validating configs due to 'noValidate' specified in request");
       }
-      if (!noReload) {
+      if (!noReload && !delayReload) {
         adapter.reloadConfigs();
       } else {
-        LOG.debug("Not reloading configs due to 'noReload' specified in request");
+        LOG.debug("Not reloading configs: {}", noReload ? "'noReload' specified in request" : "Will reload at end of request batch");
       }
     } catch (Exception e) {
       LOG.error(String.format("Caught exception while deleting configs for %s, reverting to backups!", service.getServiceId()), e);

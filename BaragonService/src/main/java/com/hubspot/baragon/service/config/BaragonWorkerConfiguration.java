@@ -15,6 +15,9 @@ public class BaragonWorkerConfiguration {
   @Min(0)
   private int initialDelayMs = 0;
 
+  @Min(1)
+  private int maxBatchSize = 50;
+
   public boolean isEnabled() {
     return enabled;
   }
@@ -37,5 +40,13 @@ public class BaragonWorkerConfiguration {
 
   public void setInitialDelayMs(int initialDelayMs) {
     this.initialDelayMs = initialDelayMs;
+  }
+
+  public int getMaxBatchSize() {
+    return maxBatchSize;
+  }
+
+  public void setMaxBatchSize(int maxBatchSize) {
+    this.maxBatchSize = maxBatchSize;
   }
 }

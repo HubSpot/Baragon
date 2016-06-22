@@ -1,17 +1,27 @@
 package com.hubspot.baragon.models;
 
 public enum InternalRequestStates {
-  PENDING,
-  INVALID_REQUEST_NOOP,
-  SEND_APPLY_REQUESTS,
-  CHECK_APPLY_RESPONSES,
-  COMPLETED,
-  FAILED_SEND_REVERT_REQUESTS,
-  FAILED_CHECK_REVERT_RESPONSES,
-  FAILED_REVERTED,
-  FAILED_REVERT_FAILED,
-  CANCELLED_SEND_REVERT_REQUESTS,
-  CANCELLED_CHECK_REVERT_RESPONSES,
-  CANCELLED,
-  FAILED_CANCEL_FAILED
+  PENDING(false),
+  INVALID_REQUEST_NOOP(false),
+  SEND_APPLY_REQUESTS(true),
+  CHECK_APPLY_RESPONSES(false),
+  COMPLETED(false),
+  FAILED_SEND_REVERT_REQUESTS(true),
+  FAILED_CHECK_REVERT_RESPONSES(false),
+  FAILED_REVERTED(false),
+  FAILED_REVERT_FAILED(false),
+  CANCELLED_SEND_REVERT_REQUESTS(true),
+  CANCELLED_CHECK_REVERT_RESPONSES(false),
+  CANCELLED(false),
+  FAILED_CANCEL_FAILED(false);
+
+  private final boolean requireAgentRequest;
+
+  InternalRequestStates(boolean requireAgentRequest) {
+     this.requireAgentRequest = requireAgentRequest;
+  }
+
+  public boolean isRequireAgentRequest() {
+    return requireAgentRequest;
+  }
 }
