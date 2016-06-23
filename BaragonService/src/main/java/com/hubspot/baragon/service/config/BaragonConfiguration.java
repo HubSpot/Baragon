@@ -19,6 +19,7 @@ import io.dropwizard.Configuration;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class BaragonConfiguration extends Configuration {
   public static final String DEFAULT_AGENT_REQUEST_URI_FORMAT = "%s/request/%s";
+  public static final String DEFAULT_AGENT_BATCH_REQUEST_URI_FORMAT = "%s/batch";
 
   @JsonProperty("zookeeper")
   @NotNull
@@ -42,6 +43,10 @@ public class BaragonConfiguration extends Configuration {
   @JsonProperty("agentRequestUriFormat")
   @NotEmpty
   private String agentRequestUriFormat = DEFAULT_AGENT_REQUEST_URI_FORMAT;
+
+  @JsonProperty("agentBatchRequestUriFormat")
+  @NotEmpty
+  private String agentBatchRequestUriFormat = DEFAULT_AGENT_BATCH_REQUEST_URI_FORMAT;
 
   @JsonProperty("agentMaxAttempts")
   @Min(1)
@@ -87,6 +92,9 @@ public class BaragonConfiguration extends Configuration {
   @JsonProperty("sentry")
   private Optional<SentryConfiguration> sentryConfiguration = Optional.absent();
 
+  @JsonProperty("defaultServicePriority")
+  private double defaultServicePriority = 0.5;
+
   public ZooKeeperConfiguration getZooKeeperConfiguration() {
     return zooKeeperConfiguration;
   }
@@ -105,6 +113,14 @@ public class BaragonConfiguration extends Configuration {
 
   public String getAgentRequestUriFormat() {
     return agentRequestUriFormat;
+  }
+
+  public void setAgentBatchRequestUriFormat(String agentBatchRequestUriFormat) {
+    this.agentBatchRequestUriFormat = agentBatchRequestUriFormat;
+  }
+
+  public String getAgentBatchRequestUriFormat() {
+    return agentBatchRequestUriFormat;
   }
 
   public void setAgentRequestUriFormat(String agentRequestUriFormat) {
@@ -221,5 +237,13 @@ public class BaragonConfiguration extends Configuration {
 
   public void setSentryConfiguration(Optional<SentryConfiguration> sentryConfiguration) {
     this.sentryConfiguration = sentryConfiguration;
+  }
+
+  public double getDefaultServicePriority() {
+    return defaultServicePriority;
+  }
+
+  public void setDefaultServicePriority(double defaultServicePriority) {
+    this.defaultServicePriority = defaultServicePriority;
   }
 }

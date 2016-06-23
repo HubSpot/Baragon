@@ -2,13 +2,23 @@ package com.hubspot.baragon.service.managers;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.MediaType;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Optional;
 import com.google.common.base.Strings;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -17,6 +27,7 @@ import com.hubspot.baragon.BaragonDataModule;
 import com.hubspot.baragon.data.BaragonAgentResponseDatastore;
 import com.hubspot.baragon.data.BaragonLoadBalancerDatastore;
 import com.hubspot.baragon.data.BaragonStateDatastore;
+import com.hubspot.baragon.models.AgentBatchResponseItem;
 import com.hubspot.baragon.models.AgentRequestType;
 import com.hubspot.baragon.models.AgentRequestsStatus;
 import com.hubspot.baragon.models.AgentResponse;
@@ -24,7 +35,11 @@ import com.hubspot.baragon.models.AgentResponseId;
 import com.hubspot.baragon.models.BaragonAgentMetadata;
 import com.hubspot.baragon.models.BaragonGroup;
 import com.hubspot.baragon.models.BaragonRequest;
+import com.hubspot.baragon.models.BaragonRequestBatchItem;
 import com.hubspot.baragon.models.BaragonService;
+import com.hubspot.baragon.models.InternalRequestStates;
+import com.hubspot.baragon.models.InternalStatesMap;
+import com.hubspot.baragon.models.QueuedRequestWithState;
 import com.hubspot.baragon.models.RequestAction;
 import com.hubspot.baragon.service.BaragonServiceModule;
 import com.hubspot.baragon.service.config.BaragonConfiguration;
@@ -44,18 +59,22 @@ public class AgentManager {
   private final BaragonAgentResponseDatastore agentResponseDatastore;
   private final AsyncHttpClient asyncHttpClient;
   private final String baragonAgentRequestUriFormat;
+  private final String baragonAgentBatchRequestUriFormat;
   private final Integer baragonAgentMaxAttempts;
   private final Optional<String> baragonAuthKey;
   private final Long baragonAgentRequestTimeout;
   private final BaragonConfiguration configuration;
+  private final ObjectMapper objectMapper;
 
   @Inject
   public AgentManager(BaragonLoadBalancerDatastore loadBalancerDatastore,
                       BaragonStateDatastore stateDatastore,
                       BaragonAgentResponseDatastore agentResponseDatastore,
                       BaragonConfiguration configuration,
+                      ObjectMapper objectMapper,
                       @Named(BaragonServiceModule.BARAGON_SERVICE_HTTP_CLIENT) AsyncHttpClient asyncHttpClient,
                       @Named(BaragonDataModule.BARAGON_AGENT_REQUEST_URI_FORMAT) String baragonAgentRequestUriFormat,
+                      @Named(BaragonDataModule.BARAGON_AGENT_BATCH_REQUEST_URI_FORMAT) String baragonAgentBatchRequestUriFormat,
                       @Named(BaragonDataModule.BARAGON_AGENT_MAX_ATTEMPTS) Integer baragonAgentMaxAttempts,
                       @Named(BaragonDataModule.BARAGON_AUTH_KEY) Optional<String> baragonAuthKey,
                       @Named(BaragonDataModule.BARAGON_AGENT_REQUEST_TIMEOUT_MS) Long baragonAgentRequestTimeout) {
@@ -63,8 +82,10 @@ public class AgentManager {
     this.stateDatastore = stateDatastore;
     this.agentResponseDatastore = agentResponseDatastore;
     this.configuration = configuration;
+    this.objectMapper = objectMapper;
     this.asyncHttpClient = asyncHttpClient;
     this.baragonAgentRequestUriFormat = baragonAgentRequestUriFormat;
+    this.baragonAgentBatchRequestUriFormat = baragonAgentBatchRequestUriFormat;
     this.baragonAgentMaxAttempts = baragonAgentMaxAttempts;
     this.baragonAuthKey = baragonAuthKey;
     this.baragonAgentRequestTimeout = baragonAgentRequestTimeout;
@@ -91,61 +112,173 @@ public class AgentManager {
     return builder;
   }
 
-  public void sendRequests(final BaragonRequest request, final AgentRequestType requestType) {
-    final Optional<BaragonService> maybeOriginalService = stateDatastore.getService(request.getLoadBalancerService().getServiceId());
+  private AsyncHttpClient.BoundRequestBuilder buildAgentBatchRequest(String url, List<BaragonRequestBatchItem> batch) throws JsonProcessingException {
+    final BoundRequestBuilder builder = asyncHttpClient.preparePost(url);
+    if (baragonAuthKey.isPresent()) {
+      builder.addQueryParameter("authkey", baragonAuthKey.get());
+    }
+    builder.addHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON);
+    builder.setBody(objectMapper.writeValueAsBytes(batch));
+    return builder;
+  }
 
-    final Set<String> loadBalancerGroupsToUpdate = Sets.newHashSet(request.getLoadBalancerService().getLoadBalancerGroups());
+  public Map<QueuedRequestWithState, InternalRequestStates> sendRequests(final Set<QueuedRequestWithState> queuedRequestsWithState) {
+    Map<QueuedRequestWithState, InternalRequestStates> results = new HashMap<>();
 
-    if (maybeOriginalService.isPresent()) {
-      loadBalancerGroupsToUpdate.addAll(maybeOriginalService.get().getLoadBalancerGroups());
+    Map<String, List<BaragonRequestBatchItem>> requestsByGroup = new HashMap<>();
+
+    for (QueuedRequestWithState queuedRequestWithState : queuedRequestsWithState) {
+      final BaragonRequest request = queuedRequestWithState.getRequest();
+      final Optional<BaragonService> maybeOriginalService = stateDatastore.getService(request.getLoadBalancerService().getServiceId());
+      final Set<String> loadBalancerGroupsToUpdate = Sets.newHashSet(request.getLoadBalancerService().getLoadBalancerGroups());
+
+      if (maybeOriginalService.isPresent()) {
+        loadBalancerGroupsToUpdate.addAll(maybeOriginalService.get().getLoadBalancerGroups());
+      }
+      for (String group : loadBalancerGroupsToUpdate) {
+        if (requestsByGroup.containsKey(group)) {
+            requestsByGroup.get(group).add(new BaragonRequestBatchItem(request.getLoadBalancerRequestId(), request.getAction(), InternalStatesMap.getRequestType(queuedRequestWithState.getCurrentState()), request.getLoadBalancerService().getPriority().or(configuration.getDefaultServicePriority())));
+        } else {
+          requestsByGroup.put(group, Lists.newArrayList(new BaragonRequestBatchItem(request.getLoadBalancerRequestId(), request.getAction(), InternalStatesMap.getRequestType(queuedRequestWithState.getCurrentState()), request.getLoadBalancerService().getPriority().or(configuration.getDefaultServicePriority()))));
+        }
+      }
+      results.put(queuedRequestWithState, InternalStatesMap.getWaitingState(queuedRequestWithState.getCurrentState()));
     }
 
-    final String requestId = request.getLoadBalancerRequestId();
-
-    for (final BaragonAgentMetadata agentMetadata : getAgents(loadBalancerGroupsToUpdate)) {
-      final String baseUrl = agentMetadata.getBaseAgentUri();
-
-      // wait until pending request has completed.
-      Optional<Long> maybePendingRequest = agentResponseDatastore.getPendingRequest(requestId, baseUrl);
-      if (maybePendingRequest.isPresent() && !((System.currentTimeMillis() - maybePendingRequest.get()) > baragonAgentRequestTimeout)) {
-        LOG.info(String.format("Request has been processing for %s ms", (System.currentTimeMillis() - maybePendingRequest.get())));
-        continue;
-      }
-
-      final Optional<AgentResponseId> maybeLastResponseId = agentResponseDatastore.getLastAgentResponseId(requestId, requestType, baseUrl);
-
-      // don't retry request if we've hit the max attempts, or the request was successful
-      if (maybeLastResponseId.isPresent() && (maybeLastResponseId.get().getAttempt() > baragonAgentMaxAttempts || maybeLastResponseId.get().isSuccess())) {
-        continue;
-      }
-
-      agentResponseDatastore.setPendingRequestStatus(requestId, baseUrl, true);
-
-      final String url = String.format(baragonAgentRequestUriFormat, baseUrl, requestId);
-
-      try {
-        buildAgentRequest(url, requestType).execute(new AsyncCompletionHandler<Void>() {
+    for (Map.Entry<String, List<BaragonRequestBatchItem>> entry : requestsByGroup.entrySet()) {
+      for (final BaragonAgentMetadata agentMetadata : loadBalancerDatastore.getAgentMetadata(entry.getKey())) {
+        Collections.sort(entry.getValue(), new Comparator<BaragonRequestBatchItem>() {
           @Override
-          public Void onCompleted(Response response) throws Exception {
-            LOG.info(String.format("Got HTTP %d from %s for %s", response.getStatusCode(), baseUrl, requestId));
-            final Optional<String> content = Strings.isNullOrEmpty(response.getResponseBody()) ? Optional.<String>absent() : Optional.of(response.getResponseBody());
-            agentResponseDatastore.addAgentResponse(requestId, requestType, baseUrl, url, Optional.of(response.getStatusCode()), content, Optional.<String>absent());
-            agentResponseDatastore.setPendingRequestStatus(requestId, baseUrl, false);
-            return null;
-          }
-
-          @Override
-          public void onThrowable(Throwable t) {
-            LOG.info(String.format("Got exception %s when hitting %s for %s", t, baseUrl, requestId));
-            agentResponseDatastore.addAgentResponse(requestId, requestType, baseUrl, url, Optional.<Integer>absent(), Optional.<String>absent(), Optional.of(t.getMessage()));
-            agentResponseDatastore.setPendingRequestStatus(requestId, baseUrl, false);
+          public int compare(BaragonRequestBatchItem o1, BaragonRequestBatchItem o2) {
+            return o2.getPriority().compareTo(o1.getPriority());
           }
         });
-      } catch (Exception e) {
-        LOG.info(String.format("Got exception %s when hitting %s for %s", e, baseUrl, requestId));
-        agentResponseDatastore.addAgentResponse(requestId, requestType, baseUrl, url, Optional.<Integer>absent(), Optional.<String>absent(), Optional.of(e.getMessage()));
-        agentResponseDatastore.setPendingRequestStatus(requestId, baseUrl, false);
+
+        final String baseUrl = agentMetadata.getBaseAgentUri();
+        if (agentMetadata.isBatchEnabled()) {
+          sendBatchRequest(baseUrl, entry.getValue());
+        } else {
+          for (BaragonRequestBatchItem batchItem : entry.getValue()) {
+            sendIndividualRequest(baseUrl, batchItem.getRequestId(), batchItem.getRequestType());
+          }
+        }
       }
+    }
+
+    return results;
+  }
+
+  private void sendBatchRequest(final String baseUrl, final List<BaragonRequestBatchItem> batch) {
+    Set<BaragonRequestBatchItem> doNotSend = Sets.newHashSet();
+    for (BaragonRequestBatchItem item : batch) {
+      if (!shouldSendRequest(baseUrl, item.getRequestId(), item.getRequestType())) {
+        doNotSend.add(item);
+      } else {
+        agentResponseDatastore.setPendingRequestStatus(item.getRequestId(), baseUrl, true);
+      }
+    }
+    batch.removeAll(doNotSend);
+
+    final String url = String.format(baragonAgentBatchRequestUriFormat, baseUrl);
+
+    try {
+      buildAgentBatchRequest(url, batch).execute(new AsyncCompletionHandler<Void>() {
+        @Override
+        public Void onCompleted(Response response) throws Exception {
+          LOG.info("Got HTTP {} from {} for batch request {}", response.getStatusCode(), baseUrl, batch);
+          Set<String> handledRequestIds = Sets.newHashSet();
+          if (response.getStatusCode() >= 300) {
+            LOG.error("Received invalid response from agent (status: {}, response: {})", response.getStatusCode(), response.getResponseBody());
+            for (BaragonRequestBatchItem item : batch) {
+              if (!handledRequestIds.contains(item.getRequestId())) {
+                agentResponseDatastore.addAgentResponse(item.getRequestId(), item.getRequestType(), baseUrl, url, Optional.<Integer> absent(), Optional.<String> absent(), Optional.of(String.format("Caught exception processing agent response %s", response)));
+                agentResponseDatastore.setPendingRequestStatus(item.getRequestId(), baseUrl, false);
+              }
+            }
+            return null;
+          }
+          Set<AgentBatchResponseItem> responses = objectMapper.readValue(response.getResponseBody(), new TypeReference<Set<AgentBatchResponseItem>>(){});
+          for (AgentBatchResponseItem agentResponse : responses) {
+            agentResponseDatastore.addAgentResponse(agentResponse.getRequestId(), agentResponse.getRequestType(), baseUrl, url, Optional.of(agentResponse.getStatusCode()), agentResponse.getMessage(), Optional.<String>absent());
+            agentResponseDatastore.setPendingRequestStatus(agentResponse.getRequestId(), baseUrl, false);
+            handledRequestIds.add(agentResponse.getRequestId());
+          }
+          for (BaragonRequestBatchItem item : batch) {
+            if (!handledRequestIds.contains(item.getRequestId())) {
+              agentResponseDatastore.addAgentResponse(item.getRequestId(), item.getRequestType(), baseUrl, url, Optional.<Integer> absent(), Optional.<String> absent(), Optional.of(String.format("No response in batch for request %s", item.getRequestId())));
+              agentResponseDatastore.setPendingRequestStatus(item.getRequestId(), baseUrl, false);
+            }
+          }
+          return null;
+        }
+
+        @Override
+        public void onThrowable(Throwable t) {
+          LOG.info("Got exception {} when hitting {} with batch request {}", t, baseUrl, batch);
+          for (BaragonRequestBatchItem item : batch) {
+            agentResponseDatastore.addAgentResponse(item.getRequestId(), item.getRequestType(), baseUrl, url, Optional.<Integer> absent(), Optional.<String> absent(), Optional.of(t.getMessage()));
+            agentResponseDatastore.setPendingRequestStatus(item.getRequestId(), baseUrl, false);
+          }
+        }
+      });
+    } catch (Exception e) {
+      LOG.info("Got exception {} when hitting {} with batch reqeust {}", e, baseUrl, batch);
+      for (BaragonRequestBatchItem item : batch) {
+        agentResponseDatastore.addAgentResponse(item.getRequestId(), item.getRequestType(), baseUrl, url, Optional.<Integer> absent(), Optional.<String> absent(), Optional.of(e.getMessage()));
+        agentResponseDatastore.setPendingRequestStatus(item.getRequestId(), baseUrl, false);
+      }
+    }
+
+  }
+
+  private boolean shouldSendRequest(String baseUrl, String requestId, AgentRequestType requestType) {
+    Optional<Long> maybePendingRequest = agentResponseDatastore.getPendingRequest(requestId, baseUrl);
+    if (maybePendingRequest.isPresent() && !((System.currentTimeMillis() - maybePendingRequest.get()) > baragonAgentRequestTimeout)) {
+      LOG.info(String.format("Request has been processing for %s ms", (System.currentTimeMillis() - maybePendingRequest.get())));
+      return false;
+    }
+
+    final Optional<AgentResponseId> maybeLastResponseId = agentResponseDatastore.getLastAgentResponseId(requestId, requestType, baseUrl);
+
+    // don't retry request if we've hit the max attempts, or the request was successful
+    if (maybeLastResponseId.isPresent() && (maybeLastResponseId.get().getAttempt() > baragonAgentMaxAttempts || maybeLastResponseId.get().isSuccess())) {
+      return false;
+    }
+
+    return true;
+  }
+
+  private void sendIndividualRequest(final String baseUrl, final String requestId, final AgentRequestType requestType) {
+    if (!shouldSendRequest(baseUrl, requestId, requestType)) {
+      return;
+    }
+
+    agentResponseDatastore.setPendingRequestStatus(requestId, baseUrl, true);
+
+    final String url = String.format(baragonAgentRequestUriFormat, baseUrl, requestId);
+
+    try {
+      buildAgentRequest(url, requestType).execute(new AsyncCompletionHandler<Void>() {
+        @Override
+        public Void onCompleted(Response response) throws Exception {
+          LOG.info(String.format("Got HTTP %d from %s for %s", response.getStatusCode(), baseUrl, requestId));
+          final Optional<String> content = Strings.isNullOrEmpty(response.getResponseBody()) ? Optional.<String>absent() : Optional.of(response.getResponseBody());
+          agentResponseDatastore.addAgentResponse(requestId, requestType, baseUrl, url, Optional.of(response.getStatusCode()), content, Optional.<String>absent());
+          agentResponseDatastore.setPendingRequestStatus(requestId, baseUrl, false);
+          return null;
+        }
+
+        @Override
+        public void onThrowable(Throwable t) {
+          LOG.info(String.format("Got exception %s when hitting %s for %s", t, baseUrl, requestId));
+          agentResponseDatastore.addAgentResponse(requestId, requestType, baseUrl, url, Optional.<Integer>absent(), Optional.<String>absent(), Optional.of(t.getMessage()));
+          agentResponseDatastore.setPendingRequestStatus(requestId, baseUrl, false);
+        }
+      });
+    } catch (Exception e) {
+      LOG.info(String.format("Got exception %s when hitting %s for %s", e, baseUrl, requestId));
+      agentResponseDatastore.addAgentResponse(requestId, requestType, baseUrl, url, Optional.<Integer>absent(), Optional.<String>absent(), Optional.of(e.getMessage()));
+      agentResponseDatastore.setPendingRequestStatus(requestId, baseUrl, false);
     }
   }
 
@@ -160,7 +293,7 @@ public class AgentManager {
       Optional<Long> maybePendingRequestTime = agentResponseDatastore.getPendingRequest(request.getLoadBalancerRequestId(), baseUrl);
       if (maybePendingRequestTime.isPresent()) {
         if ((System.currentTimeMillis() - maybePendingRequestTime.get()) > baragonAgentRequestTimeout) {
-          LOG.info(String.format("Request %s reached maximum pending request time", request.getLoadBalancerRequestId()));
+          LOG.info("Request {} reached maximum pending request time", request.getLoadBalancerRequestId());
           agentResponseDatastore.setPendingRequestStatus(request.getLoadBalancerRequestId(), baseUrl, false);
           return AgentRequestsStatus.FAILURE;
         } else {

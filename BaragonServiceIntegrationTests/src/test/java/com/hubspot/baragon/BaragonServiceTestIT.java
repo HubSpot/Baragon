@@ -36,7 +36,6 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertEquals;
 
-
 public class BaragonServiceTestIT {
   
   public static final String LOAD_BALANCER_GROUP = "docker-baragon";
@@ -65,7 +64,7 @@ public class BaragonServiceTestIT {
   private void setupTestService(String requestId, String serviceId, String basePath, List<String> additionalPaths, Optional<String> replaceServiceId, Optional<Map<String, Object>> options, Optional<String> template) {
     UpstreamInfo upstream = new UpstreamInfo(UPSTREAM, Optional.<String>absent(), Optional.<String>absent());
     BaragonService lbService = new BaragonService(serviceId, new ArrayList<String>(), basePath, additionalPaths,
-        new HashSet<String>(Arrays.asList(LOAD_BALANCER_GROUP)), options.isPresent() ? options.get() : new HashMap<String, Object>(), template, Collections.<String>emptySet());
+        new HashSet<String>(Arrays.asList(LOAD_BALANCER_GROUP)), options.isPresent() ? options.get() : new HashMap<String, Object>(), template, Collections.<String>emptySet(), Optional.<Double>absent());
     
     BaragonRequest request = new BaragonRequest(requestId, lbService, Arrays.asList(upstream), new ArrayList<UpstreamInfo>(), replaceServiceId);
     baragonServiceClient.enqueueRequest(request);
@@ -97,7 +96,6 @@ public class BaragonServiceTestIT {
       
       state = baragonServiceClient.getRequest(requestId).get().getLoadBalancerState(); 
     }
-    LOG.info("");
     BaragonResponse resp = baragonServiceClient.getRequest(requestId).get();
     if (!resp.getLoadBalancerState().equals(targetState)) {
       throw new Exception("Request " + requestId + " stuck while waiting to reach " + targetState + ": \n" +

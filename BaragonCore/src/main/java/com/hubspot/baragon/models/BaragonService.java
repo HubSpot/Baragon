@@ -41,6 +41,8 @@ public class BaragonService {
 
   private final Set<String> domains;
 
+  private final Optional<Double> priority;
+
   public BaragonService(@JsonProperty("serviceId") String serviceId,
                         @JsonProperty("owners") Collection<String> owners,
                         @JsonProperty("serviceBasePath") String serviceBasePath,
@@ -48,7 +50,8 @@ public class BaragonService {
                         @JsonProperty("loadBalancerGroups") Set<String> loadBalancerGroups,
                         @JsonProperty("options") Map<String, Object> options,
                         @JsonProperty("templateName") Optional<String> templateName,
-                        @JsonProperty("domains") Set<String> domains) {
+                        @JsonProperty("domains") Set<String> domains,
+                        @JsonProperty("priority") Optional<Double> priority) {
     this.serviceId = serviceId;
     this.owners = owners;
     this.serviceBasePath = serviceBasePath;
@@ -57,14 +60,15 @@ public class BaragonService {
     this.options = options;
     this.templateName = templateName;
     this.domains = Objects.firstNonNull(domains, Collections.<String>emptySet());
+    this.priority = priority;
   }
 
   public BaragonService(String serviceId, Collection<String> owners, String serviceBasePath, List<String> additionalPaths, Set<String> loadBalancerGroups, Map<String, Object> options, Optional<String> templateName) {
-    this(serviceId, owners, serviceBasePath, additionalPaths, loadBalancerGroups, options, templateName, Collections.<String>emptySet());
+    this(serviceId, owners, serviceBasePath, additionalPaths, loadBalancerGroups, options, templateName, Collections.<String>emptySet(), Optional.<Double>absent());
   }
 
   public BaragonService(String serviceId, Collection<String> owners, String serviceBasePath, Set<String> loadBalancerGroups, Map<String, Object> options) {
-    this(serviceId, owners, serviceBasePath, Collections.<String>emptyList(), loadBalancerGroups, options, Optional.<String>absent(), Collections.<String>emptySet());
+    this(serviceId, owners, serviceBasePath, Collections.<String>emptyList(), loadBalancerGroups, options, Optional.<String>absent(), Collections.<String>emptySet(), Optional.<Double>absent());
   }
 
   public String getServiceId() {
@@ -99,6 +103,10 @@ public class BaragonService {
     return domains;
   }
 
+  public Optional<Double> getPriority() {
+    return priority;
+  }
+
   @JsonIgnore
   public List<String> getAllPaths() {
     List<String> allPaths = new ArrayList<>();
@@ -122,19 +130,6 @@ public class BaragonService {
   }
 
   @Override
-  public String toString() {
-    return "BaragonService [" +
-        "serviceId='" + serviceId + '\'' +
-        ", owners=" + owners +
-        ", serviceBasePath='" + serviceBasePath + '\'' +
-        ", loadBalancerGroups=" + loadBalancerGroups +
-        ", options=" + options +
-        ", templateName=" + templateName +
-        ", domains=" + domains +
-        ']';
-  }
-
-  @Override
   public boolean equals(Object o) {
     if (this == o) {
       return true;
@@ -142,47 +137,36 @@ public class BaragonService {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-
-    BaragonService service = (BaragonService) o;
-
-    if (loadBalancerGroups != null ? !loadBalancerGroups.equals(service.loadBalancerGroups) : service.loadBalancerGroups != null) {
-      return false;
-    }
-    if (options != null ? !options.equals(service.options) : service.options != null) {
-      return false;
-    }
-    if (owners != null ? !owners.equals(service.owners) : service.owners != null) {
-      return false;
-    }
-    if (serviceBasePath != null ? !serviceBasePath.equals(service.serviceBasePath) : service.serviceBasePath != null) {
-      return false;
-    }
-    if (additionalPaths != null ? !additionalPaths.equals(service.additionalPaths) : service.additionalPaths != null) {
-      return false;
-    }
-    if (serviceId != null ? !serviceId.equals(service.serviceId) : service.serviceId != null) {
-      return false;
-    }
-    if (templateName != null ? !templateName.equals(service.templateName) : service.templateName != null) {
-      return false;
-    }
-    if (domains != null ? !domains.equals(service.domains) : service.domains != null) {
-      return false;
-    }
-
-    return true;
+    BaragonService that = (BaragonService) o;
+    return Objects.equal(serviceId, that.serviceId) &&
+      Objects.equal(owners, that.owners) &&
+      Objects.equal(serviceBasePath, that.serviceBasePath) &&
+      Objects.equal(additionalPaths, that.additionalPaths) &&
+      Objects.equal(loadBalancerGroups, that.loadBalancerGroups) &&
+      Objects.equal(options, that.options) &&
+      Objects.equal(templateName, that.templateName) &&
+      Objects.equal(domains, that.domains) &&
+      Objects.equal(priority, that.priority);
   }
 
   @Override
   public int hashCode() {
-    int result = serviceId != null ? serviceId.hashCode() : 0;
-    result = 31 * result + (owners != null ? owners.hashCode() : 0);
-    result = 31 * result + (serviceBasePath != null ? serviceBasePath.hashCode() : 0);
-    result = 31 * result + (additionalPaths != null ? additionalPaths.hashCode() : 0);
-    result = 31 * result + (loadBalancerGroups != null ? loadBalancerGroups.hashCode() : 0);
-    result = 31 * result + (options != null ? options.hashCode() : 0);
-    result = 31 * result + (templateName != null ? templateName.hashCode() : 0);
-    result = 31 * result + (domains != null ? domains.hashCode() : 0);
-    return result;
+    return Objects.hashCode(serviceId, owners, serviceBasePath, additionalPaths, loadBalancerGroups, options, templateName, domains, priority);
   }
+
+  @Override
+  public String toString() {
+    return Objects.toStringHelper(this)
+      .add("serviceId", serviceId)
+      .add("owners", owners)
+      .add("serviceBasePath", serviceBasePath)
+      .add("additionalPaths", additionalPaths)
+      .add("loadBalancerGroups", loadBalancerGroups)
+      .add("options", options)
+      .add("templateName", templateName)
+      .add("domains", domains)
+      .add("priority", priority)
+      .toString();
+  }
+
 }
