@@ -109,10 +109,18 @@ public class BaragonStateDatastore extends AbstractDataStore {
     List<String> pathsToDelete = new ArrayList<>();
     if (!request.getReplaceUpstreams().isEmpty()) {
       for (UpstreamInfo upstreamInfo : currentUpstreams) {
-        String removePath = String.format(UPSTREAM_FORMAT, serviceId, getRemovePath(currentUpstreams, upstreamInfo));
-        if (nodeExists(removePath)) {
-          pathsToDelete.add(removePath);
-          transaction.delete().forPath(removePath).and();
+        List<String> matchingUpstreamPaths = matchingUpstreamPaths(currentUpstreams, upstreamInfo);
+        if (matchingUpstreamPaths.isEmpty()) {
+          LOG.warn("No upstream node found to delete for {}, current upstream nodes are {}", upstreamInfo, currentUpstreams);
+        } else {
+          for (String matchingPath : matchingUpstreamPaths) {
+            String fullPath = String.format(UPSTREAM_FORMAT, serviceId, matchingPath);
+            if (nodeExists(fullPath) && !pathsToDelete.contains(fullPath)) {
+              LOG.info("Deleting {}", fullPath);
+              pathsToDelete.add(fullPath);
+              transaction.delete().forPath(fullPath).and();
+            }
+          }
         }
       }
       for (UpstreamInfo upstreamInfo : request.getReplaceUpstreams()) {
@@ -123,13 +131,18 @@ public class BaragonStateDatastore extends AbstractDataStore {
       }
     } else {
       for (UpstreamInfo upstreamInfo : request.getRemoveUpstreams()) {
-        String removePath = String.format(UPSTREAM_FORMAT, serviceId, getRemovePath(currentUpstreams, upstreamInfo));
-        if (nodeExists(removePath)) {
-          pathsToDelete.add(removePath);
-          LOG.info("Deleting {}", removePath);
-          transaction.delete().forPath(removePath).and();
+        List<String> matchingUpstreamPaths = matchingUpstreamPaths(currentUpstreams, upstreamInfo);
+        if (matchingUpstreamPaths.isEmpty()) {
+          LOG.warn("No upstream node found to delete for {}, current upstream nodes are {}", upstreamInfo, currentUpstreams);
         } else {
-          LOG.warn("No upstream node found to delete for {}, calculated path to remove was {}, current upstream nodes are {}", upstreamInfo, removePath, currentUpstreams);
+          for (String matchingPath : matchingUpstreamPaths) {
+            String fullPath = String.format(UPSTREAM_FORMAT, serviceId, matchingPath);
+            if (nodeExists(fullPath) && !pathsToDelete.contains(fullPath)) {
+              LOG.info("Deleting {}", fullPath);
+              pathsToDelete.add(fullPath);
+              transaction.delete().forPath(fullPath).and();
+            }
+          }
         }
       }
       for (UpstreamInfo upstreamInfo : request.getAddUpstreams()) {
@@ -159,15 +172,6 @@ public class BaragonStateDatastore extends AbstractDataStore {
       }
     }
     return matchingPaths;
-  }
-
-  private String getRemovePath(Collection<UpstreamInfo> currentUpstreams, UpstreamInfo toRemove) {
-    for (UpstreamInfo upstreamInfo : currentUpstreams) {
-      if (UpstreamInfo.upstreamAndGroupMatches(upstreamInfo, toRemove)) {
-        return upstreamInfo.getOriginalPath().or(upstreamInfo.toPath());
-      }
-    }
-    return toRemove.toPath();
   }
 
   @Timed
