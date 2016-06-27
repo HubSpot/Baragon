@@ -2,6 +2,10 @@ package com.hubspot.baragon;
 
 import java.util.concurrent.atomic.AtomicLong;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.LoggerContext;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.guava.GuavaModule;
 import com.google.inject.AbstractModule;
@@ -19,12 +23,17 @@ import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.retry.RetryOneTime;
 import org.apache.curator.test.TestingServer;
+import org.slf4j.LoggerFactory;
 
 public class BaragonServiceTestModule extends AbstractModule {
   @Override
   protected void configure() {
     bind(TestingServer.class).in(Scopes.SINGLETON);
     bind(BaragonLoadBalancerDatastore.class).to(BaragonLoadBalancerTestDatastore.class).in(Scopes.SINGLETON);
+
+    LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
+    Logger rootLogger = context.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME);
+    rootLogger.setLevel(Level.ERROR);
   }
 
   @Singleton
@@ -61,9 +70,7 @@ public class BaragonServiceTestModule extends AbstractModule {
   @Provides
   public ObjectMapper provideObjectMapper() {
     final ObjectMapper objectMapper = new ObjectMapper();
-
     objectMapper.registerModule(new GuavaModule());
-
     return objectMapper;
   }
 }
