@@ -158,7 +158,8 @@ public class AgentManager {
     return results;
   }
 
-  private void sendBatchRequest(final String baseUrl, final Set<BaragonRequestBatchItem> batch) {
+  private void sendBatchRequest(final String baseUrl, final Set<BaragonRequestBatchItem> originalBatch) {
+    final Set<BaragonRequestBatchItem> batch = Sets.newHashSet(originalBatch);
     Set<BaragonRequestBatchItem> doNotSend = Sets.newHashSet();
     for (BaragonRequestBatchItem item : batch) {
       if (!shouldSendRequest(baseUrl, item.getRequestId(), item.getRequestType())) {
