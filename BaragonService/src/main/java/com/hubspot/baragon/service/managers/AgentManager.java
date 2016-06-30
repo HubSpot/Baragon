@@ -170,20 +170,19 @@ public class AgentManager {
     batch.removeAll(doNotSend);
 
     final String url = String.format(baragonAgentBatchRequestUriFormat, baseUrl);
+    final Set<String> handledRequestIds = Sets.newHashSet();
 
     try {
       buildAgentBatchRequest(url, batch).execute(new AsyncCompletionHandler<Void>() {
         @Override
         public Void onCompleted(Response response) throws Exception {
           LOG.info("Got HTTP {} from {} for batch request {}", response.getStatusCode(), baseUrl, batch);
-          Set<String> handledRequestIds = Sets.newHashSet();
           if (response.getStatusCode() >= 300) {
             LOG.error("Received invalid response from agent (status: {}, response: {})", response.getStatusCode(), response.getResponseBody());
             for (BaragonRequestBatchItem item : batch) {
-              if (!handledRequestIds.contains(item.getRequestId())) {
-                agentResponseDatastore.addAgentResponse(item.getRequestId(), item.getRequestType(), baseUrl, url, Optional.<Integer> absent(), Optional.<String> absent(), Optional.of(String.format("Caught exception processing agent response %s", response)));
-                agentResponseDatastore.setPendingRequestStatus(item.getRequestId(), baseUrl, false);
-              }
+              agentResponseDatastore.addAgentResponse(item.getRequestId(), item.getRequestType(), baseUrl, url, Optional.<Integer> absent(), Optional.<String> absent(), Optional.of(String.format("Caught exception processing agent response %s", response)));
+              agentResponseDatastore.setPendingRequestStatus(item.getRequestId(), baseUrl, false);
+              handledRequestIds.add(item.getRequestId());
             }
             return null;
           }
@@ -204,21 +203,24 @@ public class AgentManager {
 
         @Override
         public void onThrowable(Throwable t) {
-          LOG.info("Got exception {} when hitting {} with batch request {}", t, baseUrl, batch);
+          LOG.error("Got exception when hitting {} with batch request {}", baseUrl, batch, t);
           for (BaragonRequestBatchItem item : batch) {
-            agentResponseDatastore.addAgentResponse(item.getRequestId(), item.getRequestType(), baseUrl, url, Optional.<Integer> absent(), Optional.<String> absent(), Optional.of(t.getMessage()));
-            agentResponseDatastore.setPendingRequestStatus(item.getRequestId(), baseUrl, false);
+            if (!handledRequestIds.contains(item.getRequestId())) {
+              agentResponseDatastore.addAgentResponse(item.getRequestId(), item.getRequestType(), baseUrl, url, Optional.<Integer> absent(), Optional.<String> absent(), Optional.of(t.getMessage()));
+              agentResponseDatastore.setPendingRequestStatus(item.getRequestId(), baseUrl, false);
+            }
           }
         }
       });
     } catch (Exception e) {
       LOG.info("Got exception {} when hitting {} with batch reqeust {}", e, baseUrl, batch);
       for (BaragonRequestBatchItem item : batch) {
-        agentResponseDatastore.addAgentResponse(item.getRequestId(), item.getRequestType(), baseUrl, url, Optional.<Integer> absent(), Optional.<String> absent(), Optional.of(e.getMessage()));
-        agentResponseDatastore.setPendingRequestStatus(item.getRequestId(), baseUrl, false);
+        if (!handledRequestIds.contains(item.getRequestId())) {
+          agentResponseDatastore.addAgentResponse(item.getRequestId(), item.getRequestType(), baseUrl, url, Optional.<Integer> absent(), Optional.<String> absent(), Optional.of(e.getMessage()));
+          agentResponseDatastore.setPendingRequestStatus(item.getRequestId(), baseUrl, false);
+        }
       }
     }
-
   }
 
   private boolean shouldSendRequest(String baseUrl, String requestId, AgentRequestType requestType) {
