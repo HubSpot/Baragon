@@ -9,6 +9,8 @@ import com.google.common.base.Optional;
 import com.hubspot.baragon.models.UpstreamInfo;
 
 public class CurrentRackIsPresentHelper implements Helper<Collection<UpstreamInfo>> {
+  public static final String NAME = "currentRackIsPresent";
+
   private final Optional<String> currentRackId;
 
   public CurrentRackIsPresentHelper(Optional<String> currentRackId) {
