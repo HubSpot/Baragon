@@ -76,12 +76,12 @@ public class BaragonAgentServiceModule extends AbstractModule {
   public Handlebars providesHandlebars(BaragonAgentConfiguration config, BaragonAgentMetadata agentMetadata) {
     final Handlebars handlebars = new Handlebars();
 
-    handlebars.registerHelper("formatTimestamp", new FormatTimestampHelper(config.getDefaultDateFormat()));
-    handlebars.registerHelper("firstOf", new FirstOfHelper(""));
-    handlebars.registerHelper("currentRackIsPresent", new CurrentRackIsPresentHelper(agentMetadata.getEc2().getAvailabilityZone()));
+    handlebars.registerHelper(FormatTimestampHelper.NAME, new FormatTimestampHelper(config.getDefaultDateFormat()));
+    handlebars.registerHelper(FirstOfHelper.NAME, new FirstOfHelper(""));
+    handlebars.registerHelper(CurrentRackIsPresentHelper.NAME, new CurrentRackIsPresentHelper(agentMetadata.getEc2().getAvailabilityZone()));
+    handlebars.registerHelper(ResolveHostnameHelperSource.NAME, new ResolveHostnameHelperSource());
     handlebars.registerHelpers(new PreferSameRackWeightingHelper(config, agentMetadata));
     handlebars.registerHelpers(IfEqualHelperSource.class);
-    handlebars.registerHelpers(ResolveHostnameHelperSource.class);
 
     return handlebars;
   }

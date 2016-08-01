@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 
 public class FormatTimestampHelper implements Helper<Number> {
   private static final Logger LOG = LoggerFactory.getLogger(FormatTimestampHelper.class);
+  public static final String NAME = "formatTimestamp";
 
   private final String defaultFormatString;
 
