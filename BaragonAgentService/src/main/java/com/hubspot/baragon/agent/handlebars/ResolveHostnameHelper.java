@@ -8,7 +8,7 @@ import com.github.jknack.handlebars.Helper;
 import com.github.jknack.handlebars.Options;
 import com.google.common.net.HostAndPort;
 
-public class ResolveHostnameHelperSource implements Helper<String> {
+public class ResolveHostnameHelper implements Helper<String> {
 
   public static final String NAME = "resolveHostname";
 
