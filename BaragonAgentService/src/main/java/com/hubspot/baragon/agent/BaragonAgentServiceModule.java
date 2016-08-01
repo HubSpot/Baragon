@@ -29,6 +29,7 @@ import com.hubspot.baragon.agent.handlebars.FirstOfHelper;
 import com.hubspot.baragon.agent.handlebars.FormatTimestampHelper;
 import com.hubspot.baragon.agent.handlebars.IfEqualHelperSource;
 import com.hubspot.baragon.agent.handlebars.PreferSameRackWeightingHelper;
+import com.hubspot.baragon.agent.handlebars.ResolveHostnameHelperSource;
 import com.hubspot.baragon.agent.listeners.ResyncListener;
 import com.hubspot.baragon.agent.models.FilePathFormatType;
 import com.hubspot.baragon.agent.models.LbConfigTemplate;
@@ -80,6 +81,7 @@ public class BaragonAgentServiceModule extends AbstractModule {
     handlebars.registerHelper("currentRackIsPresent", new CurrentRackIsPresentHelper(agentMetadata.getEc2().getAvailabilityZone()));
     handlebars.registerHelpers(new PreferSameRackWeightingHelper(config, agentMetadata));
     handlebars.registerHelpers(IfEqualHelperSource.class);
+    handlebars.registerHelpers(ResolveHostnameHelperSource.class);
 
     return handlebars;
   }
