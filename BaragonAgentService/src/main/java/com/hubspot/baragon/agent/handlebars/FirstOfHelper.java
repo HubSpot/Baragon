@@ -8,6 +8,8 @@ import com.google.common.base.Optional;
 import com.google.common.base.Strings;
 
 public class FirstOfHelper implements Helper<Object> {
+  public static final String NAME = "firstOf";
+
   private final Object fallback;
 
   public FirstOfHelper(Object fallback) {
