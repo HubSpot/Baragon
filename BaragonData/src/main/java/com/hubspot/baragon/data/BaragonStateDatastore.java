@@ -107,12 +107,17 @@ public class BaragonStateDatastore extends AbstractDataStore {
     }
 
     CuratorTransaction transaction = curatorFramework.inTransaction();
-    if (!request.isNoServiceUpdate()) {
-      if (nodeExists(servicePath)) {
+
+    if (nodeExists(servicePath)) {
+      if (!request.isNoServiceUpdate()) {
         transaction = transaction.setData().forPath(servicePath, serialize(request.getLoadBalancerService())).and();
+        LOG.info("Updating service '{}'", request.getLoadBalancerService().getServiceId());
       } else {
-        transaction = transaction.create().forPath(servicePath, serialize(request.getLoadBalancerService())).and();
+        LOG.info("Not updating service '{}' because noServiceUpdate=true", request.getLoadBalancerService().getServiceId());
       }
+    } else {
+      LOG.info("Creating ZK node for service '{}'", request.getLoadBalancerService().getServiceId());
+      transaction = transaction.create().forPath(servicePath, serialize(request.getLoadBalancerService())).and();
     }
 
     List<String> pathsToDelete = new ArrayList<>();
