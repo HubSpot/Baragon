@@ -19,6 +19,12 @@ public class ElbConfiguration {
   @JsonProperty("awsAccessKeySecret")
   private String awsAccessKeySecret;
 
+  @JsonProperty("awsEndpoint")
+  private String awsEndpoint;
+
+  @JsonProperty("awsRegion")
+  private String awsRegion;
+
   @Min(60)
   private int intervalSeconds = 120;
 
@@ -65,6 +71,22 @@ public class ElbConfiguration {
 
   public void setAwsAccessKeySecret(String awsAccessKeySecret) {
     this.awsAccessKeySecret = awsAccessKeySecret;
+  }
+
+  public String getAwsEndpoint() {
+    return awsEndpoint;
+  }
+
+  public void setAwsEndpoint(String awsEndpoint) {
+    this.awsEndpoint = awsEndpoint;
+  }
+
+  public String getAwsRegion() {
+    return awsRegion;
+  }
+
+  public void setAwsRegion(String awsRegion) {
+    this.awsRegion = awsRegion;
   }
 
   public int getIntervalSeconds() {
