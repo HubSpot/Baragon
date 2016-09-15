@@ -3,6 +3,9 @@ package com.hubspot.baragon.service.config;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 
+import com.google.common.base.Optional;
+import com.google.common.base.Strings;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -73,16 +76,16 @@ public class ElbConfiguration {
     this.awsAccessKeySecret = awsAccessKeySecret;
   }
 
-  public String getAwsEndpoint() {
-    return awsEndpoint;
+  public Optional<String> getAwsEndpoint() {
+    return Optional.fromNullable(Strings.emptyToNull(awsEndpoint));
   }
 
   public void setAwsEndpoint(String awsEndpoint) {
     this.awsEndpoint = awsEndpoint;
   }
 
-  public String getAwsRegion() {
-    return awsRegion;
+  public Optional<String> getAwsRegion() {
+    return Optional.fromNullable(Strings.emptyToNull(awsRegion));
   }
 
   public void setAwsRegion(String awsRegion) {

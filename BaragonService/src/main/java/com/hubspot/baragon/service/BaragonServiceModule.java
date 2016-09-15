@@ -212,11 +212,11 @@ public class BaragonServiceModule extends AbstractModule {
     } else {
       client = new AmazonElasticLoadBalancingClient();
     }
-    if (configuration.isPresent() && configuration.get().getAwsEndpoint() != null) {
-      client.setEndpoint(configuration.get().getAwsEndpoint());
+    if (configuration.isPresent() && configuration.get().getAwsEndpoint().isPresent()) {
+      client.setEndpoint(configuration.get().getAwsEndpoint().get());
     }
-    if (configuration.isPresent() && configuration.get().getAwsRegion() != null) {
-      client.setRegion(Regions.fromName(configuration.get().getAwsRegion()));
+    if (configuration.isPresent() && configuration.get().getAwsRegion().isPresent()) {
+      client.setRegion(Regions.fromName(configuration.get().getAwsRegion().get()));
     }
     return client;
   }
