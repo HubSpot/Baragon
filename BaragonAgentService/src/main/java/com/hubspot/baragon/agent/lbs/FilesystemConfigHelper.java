@@ -118,7 +118,7 @@ public class FilesystemConfigHelper {
     LOG.info(String.format("Apply finished for %s", service.getServiceId()));
   }
 
-  public void apply(ServiceContext context, Optional<BaragonService> maybeOldService, boolean revertOnFailure, boolean noReload, boolean noValidate, boolean delayReload) throws InvalidConfigException, LbAdapterExecuteException, IOException, MissingTemplateException, InterruptedException, LockTimeoutException {
+  public void apply(ServiceContext context, Optional<BaragonService> maybeOldService, boolean revertOnFailure, boolean noReload, boolean noValidate, boolean delayReload, Optional<Integer> batchItemNumber) throws InvalidConfigException, LbAdapterExecuteException, IOException, MissingTemplateException, InterruptedException, LockTimeoutException {
     final BaragonService service = context.getService();
     final BaragonService oldService = maybeOldService.or(service);
 
@@ -135,7 +135,11 @@ public class FilesystemConfigHelper {
 
     try {
       if (configsMatch(newConfigs, readConfigs(oldService))) {
-        LOG.info("    Configs are unchanged, skipping apply");
+        LOG.info("Configs are unchanged, skipping apply");
+        if (!noReload && !delayReload && batchItemNumber.isPresent() && batchItemNumber.get() > 1) {
+          LOG.debug("Item is the last in a batch, reloading configs");
+          adapter.reloadConfigs();
+        }
         return;
       }
 
