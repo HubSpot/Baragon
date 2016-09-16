@@ -73,7 +73,7 @@ public class AgentRequestManager {
     int i = 0;
     for (BaragonRequestBatchItem item : batch) {
       boolean isLast = i == batch.size() - 1;
-      responses.add(getResponseItem(processRequest(item.getRequestId(), actionForBatchItem(item), !isLast), item));
+      responses.add(getResponseItem(processRequest(item.getRequestId(), actionForBatchItem(item), !isLast, Optional.of(i)), item));
       i++;
     }
     return responses;
@@ -99,7 +99,7 @@ public class AgentRequestManager {
     }
   }
 
-  public Response processRequest(String requestId, Optional<RequestAction> maybeAction, boolean delayReload) throws InterruptedException {
+  public Response processRequest(String requestId, Optional<RequestAction> maybeAction, boolean delayReload, Optional<Integer> batchItemNumber) throws InterruptedException {
     final Optional<BaragonRequest> maybeRequest = requestDatastore.getRequest(requestId);
     if (!maybeRequest.isPresent()) {
       return Response.status(Response.Status.NOT_FOUND).entity(String.format("Request %s does not exist", requestId)).build();
@@ -117,9 +117,9 @@ public class AgentRequestManager {
         case RELOAD:
           return reload(request, delayReload);
         case REVERT:
-          return revert(request, maybeOldService, delayReload);
+          return revert(request, maybeOldService, delayReload, batchItemNumber);
         default:
-          return apply(request, maybeOldService, delayReload);
+          return apply(request, maybeOldService, delayReload, batchItemNumber);
       }
     } catch (LockTimeoutException e) {
       LOG.warn(String.format("Couldn't acquire agent lock for %s in %s ms", requestId, agentLockTimeoutMs), e);
@@ -151,11 +151,11 @@ public class AgentRequestManager {
     }
   }
 
-  private Response apply(BaragonRequest request, Optional<BaragonService> maybeOldService, boolean delayReload) throws Exception {
+  private Response apply(BaragonRequest request, Optional<BaragonService> maybeOldService, boolean delayReload, Optional<Integer> batchItemNumber) throws Exception {
     final ServiceContext update = getApplyContext(request);
     triggerTesting();
     try {
-      configHelper.apply(update, maybeOldService, true, request.isNoReload(), request.isNoValidate(), delayReload);
+      configHelper.apply(update, maybeOldService, true, request.isNoReload(), request.isNoValidate(), delayReload, batchItemNumber);
     } catch (Exception e) {
       return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
     }
@@ -163,7 +163,7 @@ public class AgentRequestManager {
     return Response.ok().build();
   }
 
-  private Response revert(BaragonRequest request, Optional<BaragonService> maybeOldService, boolean delayReload) throws Exception {
+  private Response revert(BaragonRequest request, Optional<BaragonService> maybeOldService, boolean delayReload, Optional<Integer> batchItemNumber) throws Exception {
     final ServiceContext update;
     if (movedOffLoadBalancer(maybeOldService)) {
       update = new ServiceContext(request.getLoadBalancerService(), Collections.<UpstreamInfo>emptyList(), System.currentTimeMillis(), false);
@@ -175,7 +175,7 @@ public class AgentRequestManager {
 
     LOG.info(String.format("Reverting to %s", update));
     try {
-      configHelper.apply(update, Optional.<BaragonService>absent(), false, request.isNoReload(), request.isNoValidate(), delayReload);
+      configHelper.apply(update, Optional.<BaragonService>absent(), false, request.isNoReload(), request.isNoValidate(), delayReload, batchItemNumber);
     } catch (MissingTemplateException e) {
       if (serviceDidNotPreviouslyExist(maybeOldService)) {
         return Response.ok().build();
