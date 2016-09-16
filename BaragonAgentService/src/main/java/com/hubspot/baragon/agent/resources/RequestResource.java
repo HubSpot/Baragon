@@ -28,12 +28,12 @@ public class RequestResource {
 
   @POST
   public Response apply(@PathParam("requestId") String requestId) throws InterruptedException {
-    return agentRequestManager.processRequest(requestId, Optional.<RequestAction>absent(), false);
+    return agentRequestManager.processRequest(requestId, Optional.<RequestAction>absent(), false, Optional.<Integer>absent());
   }
 
   @DELETE
   public Response revert(@PathParam("requestId") String requestId) throws InterruptedException {
-    return agentRequestManager.processRequest(requestId, Optional.of(RequestAction.REVERT), false);
+    return agentRequestManager.processRequest(requestId, Optional.of(RequestAction.REVERT), false, Optional.<Integer>absent());
   }
 
 }
