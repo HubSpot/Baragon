@@ -3,6 +3,9 @@ package com.hubspot.baragon.service.config;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 
+import com.google.common.base.Optional;
+import com.google.common.base.Strings;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -18,6 +21,12 @@ public class ElbConfiguration {
   @NotNull
   @JsonProperty("awsAccessKeySecret")
   private String awsAccessKeySecret;
+
+  @JsonProperty("awsEndpoint")
+  private String awsEndpoint;
+
+  @JsonProperty("awsRegion")
+  private String awsRegion;
 
   @Min(60)
   private int intervalSeconds = 120;
@@ -65,6 +74,22 @@ public class ElbConfiguration {
 
   public void setAwsAccessKeySecret(String awsAccessKeySecret) {
     this.awsAccessKeySecret = awsAccessKeySecret;
+  }
+
+  public Optional<String> getAwsEndpoint() {
+    return Optional.fromNullable(Strings.emptyToNull(awsEndpoint));
+  }
+
+  public void setAwsEndpoint(String awsEndpoint) {
+    this.awsEndpoint = awsEndpoint;
+  }
+
+  public Optional<String> getAwsRegion() {
+    return Optional.fromNullable(Strings.emptyToNull(awsRegion));
+  }
+
+  public void setAwsRegion(String awsRegion) {
+    this.awsRegion = awsRegion;
   }
 
   public int getIntervalSeconds() {
