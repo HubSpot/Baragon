@@ -5,6 +5,7 @@ import javax.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.base.Optional;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ElbConfiguration {
@@ -42,6 +43,12 @@ public class ElbConfiguration {
 
   @JsonProperty("checkForCorrectVpc")
   private boolean checkForCorrectVpc = false;
+
+  @JsonProperty("awsRegion")
+  private Optional<String> awsRegion = Optional.absent();
+
+  @JsonProperty("awsEndpoint")
+  private Optional<String> awsEndpoint = Optional.absent();
 
   public boolean isEnabled() {
     return enabled;
@@ -129,5 +136,21 @@ public class ElbConfiguration {
 
   public void setCheckForCorrectVpc(boolean checkForCorrectVpc) {
     this.checkForCorrectVpc = checkForCorrectVpc;
+  }
+
+  public Optional<String> getAwsRegion() {
+    return awsRegion;
+  }
+
+  public void setAwsRegion(Optional<String> awsRegion) {
+    this.awsRegion = awsRegion;
+  }
+
+  public Optional<String> getAwsEndpoint() {
+    return awsEndpoint;
+  }
+
+  public void setAwsEndpoint(Optional<String> awsEndpoint) {
+    this.awsEndpoint = awsEndpoint;
   }
 }
