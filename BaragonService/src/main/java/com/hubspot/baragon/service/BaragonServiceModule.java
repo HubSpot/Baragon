@@ -12,6 +12,7 @@ import org.apache.curator.framework.recipes.leader.LeaderLatch;
 import org.apache.curator.retry.ExponentialBackoffRetry;
 
 import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.regions.Regions;
 import com.amazonaws.services.elasticloadbalancing.AmazonElasticLoadBalancingClient;
 import com.google.common.base.Optional;
 import com.google.common.base.Strings;
@@ -205,11 +206,21 @@ public class BaragonServiceModule extends AbstractModule {
   @Provides
   @Named(BARAGON_AWS_ELB_CLIENT)
   public AmazonElasticLoadBalancingClient providesAwsElbClient(Optional<ElbConfiguration> configuration) {
+    AmazonElasticLoadBalancingClient elbClient;
     if (configuration.isPresent() && configuration.get().getAwsAccessKeyId() != null && configuration.get().getAwsAccessKeySecret() != null) {
-      return new AmazonElasticLoadBalancingClient(new BasicAWSCredentials(configuration.get().getAwsAccessKeyId(), configuration.get().getAwsAccessKeySecret()));
+      elbClient = new AmazonElasticLoadBalancingClient(new BasicAWSCredentials(configuration.get().getAwsAccessKeyId(), configuration.get().getAwsAccessKeySecret()));
     } else {
-      return new AmazonElasticLoadBalancingClient();
+      elbClient = new AmazonElasticLoadBalancingClient();
     }
+
+    if (configuration.isPresent() && configuration.get().getAwsEndpoint().isPresent()) {
+      elbClient.setEndpoint(configuration.get().getAwsEndpoint().get());
+    }
+    if (configuration.isPresent() && configuration.get().getAwsRegion().isPresent()) {
+      elbClient.configureRegion(Regions.fromName(configuration.get().getAwsRegion().get()));
+    }
+
+    return elbClient;
   }
 
   @Singleton
