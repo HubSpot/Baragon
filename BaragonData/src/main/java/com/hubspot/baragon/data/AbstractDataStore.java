@@ -128,14 +128,15 @@ public abstract class AbstractDataStore {
   protected <T> Optional<T> readFromZk(final String path, final Class<T> klass) {
     final long start = System.currentTimeMillis();
 
-    return readFromZk(path).transform(new Function<byte[], T>() {
+    Optional<byte[]> data = readFromZk(path);
 
-      @Override
-      public T apply(byte[] data) {
-        log(OperationType.READ, Optional.<Integer>absent(), Optional.of(data.length), start, path);
-        return deserialize(data, klass, path);
+    if (data.isPresent()) {
+      log(OperationType.READ, Optional.<Integer>absent(), Optional.of(data.get().length), start, path);
+      if (data.get().length > 0) {
+        return Optional.of(deserialize(data.get(), klass, path));
       }
-    });
+    }
+    return Optional.absent();
   }
 
   protected Optional<byte[]> readFromZk(String path) {
@@ -184,7 +185,7 @@ public abstract class AbstractDataStore {
     final long start = System.currentTimeMillis();
 
     try {
-      final String result = curatorFramework.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT_SEQUENTIAL).forPath(path);
+      final String result = curatorFramework.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT_SEQUENTIAL).forPath(path, new byte[] {});
       log(OperationType.WRITE, Optional.<Integer>absent(), Optional.<Integer>absent(), start, path);
       return result;
     } catch (Exception e) {
