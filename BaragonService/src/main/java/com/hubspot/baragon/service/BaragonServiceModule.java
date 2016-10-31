@@ -226,11 +226,13 @@ public class BaragonServiceModule extends AbstractModule {
   @Singleton
   @Provides
   public CuratorFramework provideCurator(ZooKeeperConfiguration config, BaragonConnectionStateListener connectionStateListener) {
-    CuratorFramework client = CuratorFrameworkFactory.newClient(
-      config.getQuorum(),
-      config.getSessionTimeoutMillis(),
-      config.getConnectTimeoutMillis(),
-      new ExponentialBackoffRetry(config.getRetryBaseSleepTimeMilliseconds(), config.getRetryMaxTries()));
+    CuratorFramework client = CuratorFrameworkFactory.builder()
+      .connectString(config.getQuorum())
+      .sessionTimeoutMs(config.getSessionTimeoutMillis())
+      .connectionTimeoutMs(config.getConnectTimeoutMillis())
+      .retryPolicy(new ExponentialBackoffRetry(config.getRetryBaseSleepTimeMilliseconds(), config.getRetryMaxTries()))
+      .defaultData(new byte[0])
+      .build();
 
     client.getConnectionStateListenable().addListener(connectionStateListener);
 
