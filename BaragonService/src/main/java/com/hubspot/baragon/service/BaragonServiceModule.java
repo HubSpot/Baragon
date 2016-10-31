@@ -231,7 +231,7 @@ public class BaragonServiceModule extends AbstractModule {
       .sessionTimeoutMs(config.getSessionTimeoutMillis())
       .connectionTimeoutMs(config.getConnectTimeoutMillis())
       .retryPolicy(new ExponentialBackoffRetry(config.getRetryBaseSleepTimeMilliseconds(), config.getRetryMaxTries()))
-      .defaultData(new byte[] {})
+      .defaultData(new byte[0])
       .build();
 
     client.getConnectionStateListenable().addListener(connectionStateListener);
