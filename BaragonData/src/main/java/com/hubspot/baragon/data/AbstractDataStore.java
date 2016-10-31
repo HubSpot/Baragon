@@ -185,7 +185,7 @@ public abstract class AbstractDataStore {
     final long start = System.currentTimeMillis();
 
     try {
-      final String result = curatorFramework.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT_SEQUENTIAL).forPath(path, new byte[] {});
+      final String result = curatorFramework.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT_SEQUENTIAL).forPath(path);
       log(OperationType.WRITE, Optional.<Integer>absent(), Optional.<Integer>absent(), start, path);
       return result;
     } catch (Exception e) {
