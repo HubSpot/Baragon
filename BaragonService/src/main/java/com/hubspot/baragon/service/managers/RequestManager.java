@@ -148,6 +148,7 @@ public class RequestManager {
         final Optional<String> maybeServiceIdForPath = loadBalancerDatastore.getBasePathServiceId(loadBalancerGroup, path);
         if (maybeServiceIdForPath.isPresent() && !maybeServiceIdForPath.get().equals(service.getServiceId())) {
           if (!request.getReplaceServiceId().isPresent() || (request.getReplaceServiceId().isPresent() && !request.getReplaceServiceId().get().equals(maybeServiceIdForPath.get()))) {
+            LOG.info("Found base path conflict for {} at path {} with service {}", service.getServiceId(), path, maybeServiceIdForPath.get());
             loadBalancerServiceIds.put(loadBalancerGroup, maybeServiceIdForPath.get());
             continue;
           }
@@ -157,6 +158,7 @@ public class RequestManager {
             Optional<String> maybeServiceForDefaultDomainPath = loadBalancerDatastore.getBasePathServiceId(loadBalancerGroup, path.replace(maybeGroup.get().getDefaultDomain().get(), ""));
             if (maybeServiceForDefaultDomainPath.isPresent() && !maybeServiceForDefaultDomainPath.get().equals(service.getServiceId())) {
               if (!request.getReplaceServiceId().isPresent() || (request.getReplaceServiceId().isPresent() && !request.getReplaceServiceId().get().equals(maybeServiceForDefaultDomainPath.get()))) {
+                LOG.info("Found base path conflict for {} at path {} with service {}", service.getServiceId(),path.replace(maybeGroup.get().getDefaultDomain().get(), ""), maybeServiceForDefaultDomainPath.get());
                 loadBalancerServiceIds.put(loadBalancerGroup, maybeServiceForDefaultDomainPath.get());
               }
             }
