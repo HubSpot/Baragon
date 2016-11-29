@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -17,6 +18,7 @@ import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import com.hubspot.baragon.BaragonDataModule;
 import com.hubspot.baragon.models.AgentRequestType;
+import com.hubspot.baragon.models.AgentRequestsStatus;
 import com.hubspot.baragon.models.AgentResponse;
 import com.hubspot.baragon.models.BaragonRequest;
 import com.hubspot.baragon.models.BaragonService;
@@ -59,10 +61,18 @@ public class BaragonRequestWorker implements Runnable {
   }
 
   private String buildResponseString(Map<String, Collection<AgentResponse>> agentResponses, AgentRequestType requestType) {
-    if (agentResponses.containsKey(requestType.name())) {
-      return JavaUtils.COMMA_JOINER.join(agentResponses.get(requestType.name()));
+    if (agentResponses.containsKey(requestType.name()) && !agentResponses.get(requestType.name()).isEmpty()) {
+      Set<String> messages = new HashSet<>();
+      for (AgentResponse response : agentResponses.get(requestType.name())) {
+        if (response.toRequestStatus() == AgentRequestsStatus.FAILURE || response.toRequestStatus() == AgentRequestsStatus.INVALID_REQUEST_NOOP) {
+          messages.add(String.format("(%s) - %s", response.getStatusCode().or(0), response.getContent().or(response.getException()).or("")));
+        } else {
+          messages.add(String.format("%s - %s", response.getUrl(), response.toRequestStatus().name()));
+        }
+      }
+      return JavaUtils.COMMA_JOINER.join(messages);
     } else {
-      return "no responses";
+      return "No agent responses";
     }
   }
 
@@ -72,11 +82,11 @@ public class BaragonRequestWorker implements Runnable {
     switch (agentManager.getRequestsStatus(request, InternalStatesMap.getRequestType(currentState))) {
       case FAILURE:
         agentResponses = agentManager.getAgentResponses(request.getLoadBalancerRequestId());
-        requestManager.setRequestMessage(request.getLoadBalancerRequestId(), String.format("Apply failed (%s), %s failed (%s)", buildResponseString(agentResponses, AgentRequestType.APPLY), InternalStatesMap.getRequestType(currentState).name(), buildResponseString(agentResponses, InternalStatesMap.getRequestType(currentState))));
+        requestManager.setRequestMessage(request.getLoadBalancerRequestId(), String.format("Apply failed {%s}, %s failed {%s}", buildResponseString(agentResponses, AgentRequestType.APPLY), InternalStatesMap.getRequestType(currentState).name(), buildResponseString(agentResponses, InternalStatesMap.getRequestType(currentState))));
         return InternalStatesMap.getFailureState(currentState);
       case SUCCESS:
         agentResponses = agentManager.getAgentResponses(request.getLoadBalancerRequestId());
-        requestManager.setRequestMessage(request.getLoadBalancerRequestId(), String.format("Apply failed (%s), %s OK.", buildResponseString(agentResponses, AgentRequestType.APPLY), InternalStatesMap.getRequestType(currentState).name()));
+        requestManager.setRequestMessage(request.getLoadBalancerRequestId(), String.format("Apply failed {%s}, %s OK.", buildResponseString(agentResponses, AgentRequestType.APPLY), InternalStatesMap.getRequestType(currentState).name()));
         requestManager.revertBasePath(request);
         return InternalStatesMap.getSuccessState(currentState);
       case RETRY:
