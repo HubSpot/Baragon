@@ -85,17 +85,17 @@ public class AgentRequestManager {
   }
 
   private Optional<RequestAction> actionForBatchItem(BaragonRequestBatchItem item) {
-    if (item.getRequestAction().isPresent()) {
-      return item.getRequestAction();
-    } else {
-      switch (item.getRequestType()) {
-        case REVERT:
-        case CANCEL:
-          return Optional.of(RequestAction.REVERT);
-        case APPLY:
-        default:
+    switch (item.getRequestType()) {
+      case REVERT:
+      case CANCEL:
+        return Optional.of(RequestAction.REVERT);
+      case APPLY:
+      default:
+        if (item.getRequestAction().isPresent()) {
+          return item.getRequestAction();
+        } else {
           return Optional.of(RequestAction.UPDATE);
-      }
+        }
     }
   }
 
