@@ -1,8 +1,9 @@
 #!/bin/bash
 
 if [ ${DOCKER_HOST} ]; then
-	HOST_AND_PORT=`echo $DOCKER_HOST | awk -F/ '{print $3}'`
-	BARAGON_HOSTNAME="${BARAGON_HOSTNAME:=HOST_AND_PORT%:*}"
+    HOST_AND_PORT=`echo $DOCKER_HOST | awk -F/ '{print $3}'`
+    DEFAULT_HOSTNAME="${HOST_AND_PORT%:*}"
+    BARAGON_HOSTNAME="${BARAGON_HOSTNAME:=$DEFAULT_HOSTNAME}"
 fi
 
 DEFAULT_URI_BASE="http://${BARAGON_HOSTNAME:=localhost}:${BARAGON_PORT:=8080}${BARAGON_UI_BASE:=/baragon/v2}"
