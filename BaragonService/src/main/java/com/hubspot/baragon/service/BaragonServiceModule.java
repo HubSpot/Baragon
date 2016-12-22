@@ -53,7 +53,8 @@ public class BaragonServiceModule extends AbstractModule {
 
   public static final String BARAGON_URI_BASE = "_baragon_uri_base";
 
-  public static final String BARAGON_AWS_ELB_CLIENT = "baragon.aws.elb.client";
+  public static final String BARAGON_AWS_ELB_CLIENT_V1 = "baragon.aws.elb.client.v1";
+  public static final String BARAGON_AWS_ELB_CLIENT_V2 = "baragon.aws.elb.client.v2";
 
   @Override
   protected void configure() {
@@ -204,13 +205,33 @@ public class BaragonServiceModule extends AbstractModule {
   }
 
   @Provides
-  @Named(BARAGON_AWS_ELB_CLIENT)
-  public AmazonElasticLoadBalancingClient providesAwsElbClient(Optional<ElbConfiguration> configuration) {
+  @Named(BARAGON_AWS_ELB_CLIENT_V1)
+  public AmazonElasticLoadBalancingClient providesAwsElbClientV1(Optional<ElbConfiguration> configuration) {
     AmazonElasticLoadBalancingClient elbClient;
     if (configuration.isPresent() && configuration.get().getAwsAccessKeyId() != null && configuration.get().getAwsAccessKeySecret() != null) {
       elbClient = new AmazonElasticLoadBalancingClient(new BasicAWSCredentials(configuration.get().getAwsAccessKeyId(), configuration.get().getAwsAccessKeySecret()));
     } else {
       elbClient = new AmazonElasticLoadBalancingClient();
+    }
+
+    if (configuration.isPresent() && configuration.get().getAwsEndpoint().isPresent()) {
+      elbClient.setEndpoint(configuration.get().getAwsEndpoint().get());
+    }
+    if (configuration.isPresent() && configuration.get().getAwsRegion().isPresent()) {
+      elbClient.configureRegion(Regions.fromName(configuration.get().getAwsRegion().get()));
+    }
+
+    return elbClient;
+  }
+
+  @Provides
+  @Named(BARAGON_AWS_ELB_CLIENT_V2)
+  public com.amazonaws.services.elasticloadbalancingv2.AmazonElasticLoadBalancingClient providesAwsElbClientV2(Optional<ElbConfiguration> configuration) {
+    com.amazonaws.services.elasticloadbalancingv2.AmazonElasticLoadBalancingClient elbClient;
+    if (configuration.isPresent() && configuration.get().getAwsAccessKeyId() != null && configuration.get().getAwsAccessKeySecret() != null) {
+      elbClient = new com.amazonaws.services.elasticloadbalancingv2.AmazonElasticLoadBalancingClient(new BasicAWSCredentials(configuration.get().getAwsAccessKeyId(), configuration.get().getAwsAccessKeySecret()));
+    } else {
+      elbClient = new com.amazonaws.services.elasticloadbalancingv2.AmazonElasticLoadBalancingClient();
     }
 
     if (configuration.isPresent() && configuration.get().getAwsEndpoint().isPresent()) {

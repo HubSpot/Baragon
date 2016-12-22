@@ -35,6 +35,7 @@
     <basepom.jar.name.format>${baragon.jar.name.format}</basepom.jar.name.format>
     <mesos.docker.tag>0.21.1-1.1.ubuntu1404</mesos.docker.tag>
     <jukito.version>1.4.1</jukito.version>
+    <aws.sdk.version>1.11.69</aws.sdk.version>
   </properties>
 
   <modules>
@@ -160,6 +161,12 @@
         <groupId>com.codahale.metrics</groupId>
         <artifactId>metrics-graphite</artifactId>
         <version>${dep.metrics.version}</version><!-- TOOD: add this to HubSpot's basepom -->
+      </dependency>
+
+      <dependency>
+        <groupId>com.amazonaws</groupId>
+        <artifactId>aws-java-sdk-elasticloadbalancingv2</artifactId>
+        <version>${aws.sdk.version}</version>
       </dependency>
 
     </dependencies>
