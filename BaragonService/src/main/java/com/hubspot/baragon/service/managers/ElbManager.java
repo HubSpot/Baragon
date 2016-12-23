@@ -21,7 +21,7 @@ import com.hubspot.baragon.service.config.ElbConfiguration;
 import com.hubspot.baragon.service.elb.ApplicationLoadBalancer;
 import com.hubspot.baragon.service.elb.ClassicLoadBalancer;
 import com.hubspot.baragon.service.elb.ElasticLoadBalancer;
-import com.hubspot.baragon.service.elb.ReigsterInstanceResult;
+import com.hubspot.baragon.service.elb.RegisterInstanceResult;
 import com.hubspot.baragon.service.exceptions.NoMatchingElbForVpcException;
 
 @Singleton
@@ -70,12 +70,12 @@ public class ElbManager {
 
   public void attemptAddAgent(BaragonAgentMetadata agent, Optional<BaragonGroup> group, String groupName) throws AmazonClientException, NoMatchingElbForVpcException {
     if (isElbEnabledAgent(agent, group, groupName)) {
-      List<ReigsterInstanceResult> results = new ArrayList<>();
+      List<RegisterInstanceResult> results = new ArrayList<>();
       for (TrafficSource source : group.get().getSources()) {
         Instance instance = new Instance(agent.getEc2().getInstanceId().get());
         results.add(getLoadBalancer(source.getType()).registerInstance(instance, source.getName(), agent));
       }
-      if (results.contains(ReigsterInstanceResult.ELB_NO_VPC_FOUND) && configuration.get().isFailWhenNoElbForVpc()) {
+      if (results.contains(RegisterInstanceResult.ELB_NO_VPC_FOUND) && configuration.get().isFailWhenNoElbForVpc()) {
         throw new NoMatchingElbForVpcException(String.format("No ELB found for vpc %s", agent.getEc2().getVpcId().or("")));
       }
     }

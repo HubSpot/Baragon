@@ -76,13 +76,13 @@ public class ClassicLoadBalancer extends ElasticLoadBalancer {
     }
   }
 
-  public ReigsterInstanceResult registerInstance(Instance instance, String elbName, BaragonAgentMetadata agent) {
-    ReigsterInstanceResult result = ReigsterInstanceResult.NOT_FOUND;
+  public RegisterInstanceResult registerInstance(Instance instance, String elbName, BaragonAgentMetadata agent) {
+    RegisterInstanceResult result = RegisterInstanceResult.NOT_FOUND;
     Optional<LoadBalancerDescription> elb = getElb(elbName);
     if (elb.isPresent()) {
-      result = ReigsterInstanceResult.ELB_NO_VPC_FOUND;
+      result = RegisterInstanceResult.ELB_NO_VPC_FOUND;
       if (isVpcOk(agent, elb.get()) && !elb.get().getInstances().contains(instance)) {
-        result = ReigsterInstanceResult.ELB_AND_VPC_FOUND;
+        result = RegisterInstanceResult.ELB_AND_VPC_FOUND;
         checkAZEnabled(agent, elbName, elb.get());
         RegisterInstancesWithLoadBalancerRequest request = new RegisterInstancesWithLoadBalancerRequest(elbName, Arrays.asList(instance));
         elbClient.registerInstancesWithLoadBalancer(request);

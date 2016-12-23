@@ -33,7 +33,7 @@ public abstract class ElasticLoadBalancer {
 
   abstract public boolean isInstanceHealthy(String instanceId, String name);
   abstract public void removeInstance(Instance instance, String elbName, String agentId);
-  abstract public ReigsterInstanceResult registerInstance(Instance instance, String elbName, BaragonAgentMetadata agent);
+  abstract public RegisterInstanceResult registerInstance(Instance instance, String elbName, BaragonAgentMetadata agent);
   abstract public void syncAll(Collection<BaragonGroup> groups);
 
   Optional<BaragonKnownAgentMetadata> knownAgent(BaragonGroup group, Instance instance) {

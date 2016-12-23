@@ -41,8 +41,8 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
 
   }
 
-  public ReigsterInstanceResult registerInstance(Instance instance, String elbName, BaragonAgentMetadata agent) {
-    return ReigsterInstanceResult.ELB_AND_VPC_FOUND;
+  public RegisterInstanceResult registerInstance(Instance instance, String elbName, BaragonAgentMetadata agent) {
+    return RegisterInstanceResult.ELB_AND_VPC_FOUND;
   }
 
   public void syncAll(Collection<BaragonGroup> groups) {
