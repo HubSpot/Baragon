@@ -15,6 +15,7 @@ import com.amazonaws.services.elasticloadbalancingv2.AmazonElasticLoadBalancingC
 import com.amazonaws.services.elasticloadbalancingv2.model.AvailabilityZone;
 import com.amazonaws.services.elasticloadbalancingv2.model.DeregisterTargetsRequest;
 import com.amazonaws.services.elasticloadbalancingv2.model.DescribeLoadBalancersRequest;
+import com.amazonaws.services.elasticloadbalancingv2.model.DescribeLoadBalancersResult;
 import com.amazonaws.services.elasticloadbalancingv2.model.DescribeTargetGroupsRequest;
 import com.amazonaws.services.elasticloadbalancingv2.model.DescribeTargetHealthRequest;
 import com.amazonaws.services.elasticloadbalancingv2.model.DescribeTargetHealthResult;
@@ -27,6 +28,7 @@ import com.amazonaws.services.elasticloadbalancingv2.model.TargetHealthDescripti
 import com.amazonaws.services.elasticloadbalancingv2.model.TargetHealthStateEnum;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import com.hubspot.baragon.data.BaragonKnownAgentsDatastore;
@@ -91,26 +93,31 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
 
   @Override
   public void syncAll(Collection<BaragonGroup> baragonGroups) {
+    Collection<LoadBalancer> allLoadBalancers = getAllLoadBalancers(baragonGroups);
     try {
       for (BaragonGroup baragonGroup : baragonGroups) {
         if (baragonGroup.getSources().isEmpty()) {
           LOG.debug("No traffic sources present for group {}", baragonGroup.getName());
         } else {
-          Collection<LoadBalancer> elbsForBaragonGroup = getLoadBalancersByBaragonGroup(baragonGroup);
+          Collection<LoadBalancer> elbsForBaragonGroup = getLoadBalancersByBaragonGroup(allLoadBalancers, baragonGroup);
           Collection<BaragonAgentMetadata> baragonAgents = getAgentsByBaragonGroup(baragonGroup);
 
-          LOG.debug("Registering TargetGroup for baragon group {}", baragonGroup.getName());
+
+          LOG.debug("Looking for TargetGroup for baragon group {}", baragonGroup.getName());
           Optional<TargetGroup> maybeTargetGroup = guaranteeTargetGroupFor(baragonGroup);
           if (maybeTargetGroup.isPresent()) {
             TargetGroup targetGroup = maybeTargetGroup.get();
+            Collection<TargetDescription> targets = targetsInTargetGroup(targetGroup);
 
             LOG.debug("Registering new instances for group {}", baragonGroup.getName());
-            guaranteeRegistered(targetGroup, baragonAgents, elbsForBaragonGroup);
+            guaranteeRegistered(targetGroup, targets, baragonAgents, elbsForBaragonGroup);
 
             if (configuration.isPresent() && configuration.get().isDeregisterEnabled()) {
               LOG.debug("De-registering old instances for group {}", baragonGroup.getName());
-              deregisterIfOld(baragonGroup, targetGroup, baragonAgents);
+              deregisterIfOld(baragonGroup, targetGroup, baragonAgents, targets);
             }
+          } else {
+            LOG.debug("Not TargetGroup for Baragon Group {}", baragonGroup);
           }
 
           LOG.debug("ELB sync complete for group {}", baragonGroup);
@@ -125,23 +132,54 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
     }
   }
 
-  private Collection<LoadBalancer> getLoadBalancersByBaragonGroup(BaragonGroup baragonGroup) {
-    Set<TrafficSource> trafficSources = baragonGroup.getSources();
-    Set<String> trafficSourceNames = new HashSet<>();
-    for (TrafficSource trafficSource : trafficSources) {
-      if (trafficSource.getType() == TrafficSourceType.APPLICATION) {
-        trafficSourceNames.add(trafficSource.getName());
+  private Collection<LoadBalancer> getAllLoadBalancers(Collection<BaragonGroup> baragonGroups) {
+    Set<String> trafficSources = new HashSet<>();
+    for (BaragonGroup baragonGroup : baragonGroups) {
+      for (TrafficSource trafficSource : baragonGroup.getSources()) {
+        if (trafficSource.getType() == TrafficSourceType.APPLICATION) {
+          trafficSources.add(trafficSource.getName());
+        }
       }
     }
 
+    Collection<LoadBalancer> loadBalancers = new HashSet<>();
     DescribeLoadBalancersRequest loadBalancersRequest = new DescribeLoadBalancersRequest()
-        .withNames(trafficSourceNames);
-    return elbClient.describeLoadBalancers(loadBalancersRequest)
-        .getLoadBalancers();
+        .withNames(trafficSources);
+    DescribeLoadBalancersResult result = elbClient.describeLoadBalancers(loadBalancersRequest);
+    String nextPage = result.getNextMarker();
+    loadBalancers.addAll(result.getLoadBalancers());
+
+    while (! nextPage.isEmpty()) {
+      loadBalancersRequest = new DescribeLoadBalancersRequest()
+          .withMarker(nextPage);
+      result = elbClient.describeLoadBalancers(loadBalancersRequest);
+      nextPage = result.getNextMarker();
+      loadBalancers.addAll(result.getLoadBalancers());
+    }
+
+    return loadBalancers;
+  }
+
+  private Collection<LoadBalancer> getLoadBalancersByBaragonGroup(Collection<LoadBalancer> allLoadBalancers, BaragonGroup baragonGroup) {
+    Set<TrafficSource> trafficSources = baragonGroup.getSources();
+    Set<String> trafficSourceNames = new HashSet<>();
+    Collection<LoadBalancer> loadBalancersForGroup = new HashSet<>();
+
+    for (TrafficSource trafficSource : trafficSources) {
+      trafficSourceNames.add(trafficSource.getName());
+    }
+
+    for (LoadBalancer loadBalancer : allLoadBalancers) {
+      if (trafficSourceNames.contains(loadBalancer.getLoadBalancerName())) {
+        loadBalancersForGroup.add(loadBalancer);
+      }
+    }
+
+    return loadBalancersForGroup;
   }
 
   /**
-   * Ensure that the given baragon agent is attached to the given load balancer. When this function
+   * Ensure that the given baragon agent is attached to the given target group. When this function
    * completes, the baragon agent will be attached to the load balancer, whether or not it originally
    * was.
    *
@@ -149,6 +187,7 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
    * @param loadBalancers Load balancer to register with
    */
   private void guaranteeRegistered(TargetGroup targetGroup,
+                                   Collection<TargetDescription> targets,
                                    Collection<BaragonAgentMetadata> baragonAgents,
                                    Collection<LoadBalancer> loadBalancers) {
     /*
@@ -162,8 +201,8 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
       guaranteeSameVPC(targetGroup, baragonAgents, loadBalancers);
     }
 
-    guaranteeHasAllTargets(targetGroup, baragonAgents);
     guaranteeAzEnabled(baragonAgents, loadBalancers);
+    guaranteeHasAllTargets(targetGroup, targets, baragonAgents);
     //guaranteeListenersPresent(targetGroup, loadBalancers);
   }
 
@@ -174,25 +213,25 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
    * @param targetGroup TargetGroup to check for old agents
    * @param agents Known agents, to be used as a reference sheet
    */
-  private void deregisterIfOld(BaragonGroup baragonGroup, TargetGroup targetGroup, Collection<BaragonAgentMetadata> agents) {
-    Collection<TargetDescription> targets = targetsInTargetGroup(targetGroup);
-    Collection<TargetDescription> removeableTargets = listOldTargets(baragonGroup, targets, agents);
+  private void deregisterIfOld(BaragonGroup baragonGroup, TargetGroup targetGroup,
+                               Collection<BaragonAgentMetadata> agents, Collection<TargetDescription> targets) {
+    Collection<TargetDescription> removableTargets = listOldTargets(baragonGroup, targets, agents);
 
-    for (TargetDescription removeableTarget : removeableTargets) {
+    for (TargetDescription removableTarget : removableTargets) {
       try {
-        if (isLastHealthyInstance(removeableTarget, targetGroup)
+        if (isLastHealthyInstance(removableTarget, targetGroup)
             && configuration.isPresent()
             && !configuration.get().isRemoveLastHealthyEnabled()) {
-          LOG.info("Will not de-register target {} because it is last healthy instance in {}", removeableTarget, targetGroup);
+          LOG.info("Will not de-register target {} because it is last healthy instance in {}", removableTarget, targetGroup);
         } else {
           elbClient.deregisterTargets(new DeregisterTargetsRequest()
               .withTargetGroupArn(targetGroup.getTargetGroupArn())
-              .withTargets(removeableTarget));
-          LOG.info("De-registered target {} from target group {}", removeableTarget, targetGroup);
+              .withTargets(removableTarget));
+          LOG.info("De-registered target {} from target group {}", removableTarget, targetGroup);
         }
       } catch (AmazonClientException acexn) {
         LOG.error("Could not de-register target {} from target group {} due to error",
-            removeableTarget, targetGroup, acexn);
+            removableTarget, targetGroup, acexn);
         exceptionNotifier.notify(acexn, ImmutableMap
             .of("targetGroup", targetGroup.getTargetGroupName()));
       }
@@ -218,16 +257,19 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
     for (BaragonAgentMetadata agent : agents) {
       if (agent.getEc2().getVpcId().isPresent()) {
         if (! agent.getEc2().getVpcId().get().equals(vpcId)) {
-          LOG.warn("Agent {} not on same VPC as its target group {}", agent, targetGroup);
+          LOG.error("Agent {} not on same VPC as its target group {}", agent, targetGroup);
+          throw new IllegalStateException(String.format("Agent %s not on same VPC as its target group %s", agent, targetGroup));
         }
       } else {
-        LOG.warn("Agent {} not assigned to a VPC", agent);
+        LOG.error("Agent {} not assigned to a VPC", agent);
+        throw new IllegalStateException(String.format("Agent %s not assigned to a VPC", agent));
       }
     }
 
     for (LoadBalancer loadBalancer : loadBalancers) {
       if (!vpcId.equals(loadBalancer.getVpcId())) {
-        LOG.warn("Load balancer {} on different VPC from target group {}", loadBalancer, targetGroup);
+        LOG.error("Load balancer {} on different VPC from target group {}", loadBalancer, targetGroup);
+        throw new IllegalStateException(String.format("Load balancer %s on different VPC from target group %s", loadBalancer, targetGroup));
       }
     }
   }
@@ -282,12 +324,14 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
 
   private void guaranteeHasAllSubnets(Collection<String> subnetIds, LoadBalancer loadBalancer) {
     Collection<String> subnetsOnLoadBalancer = getSubnetsFromLoadBalancer(loadBalancer);
-    Collection<String> subnetsToAdd = new HashSet<>();
+    Set<String> subnetsToAdd = new HashSet<>();
     for (String subnetId : subnetIds) {
       if (! subnetsOnLoadBalancer.contains(subnetId)) {
         subnetsToAdd.add(subnetId);
       }
     }
+
+    subnetsToAdd = Sets.union(new HashSet<>(subnetsOnLoadBalancer), subnetsToAdd);
 
     try {
       SetSubnetsRequest subnetsRequest = new SetSubnetsRequest()
@@ -311,12 +355,13 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
    * @param baragonAgents agents to be registered
    */
   private void guaranteeHasAllTargets(TargetGroup targetGroup,
+                                      Collection<TargetDescription> targets,
                                       Collection<BaragonAgentMetadata> baragonAgents) {
     Collection<TargetDescription> targetDescriptions = new HashSet<>();
     for (BaragonAgentMetadata agent : baragonAgents) {
       try {
         if (agent.getEc2().getInstanceId().isPresent()) {
-          if (agentShouldRegisterInTargetGroup(agent.getEc2().getInstanceId().get(), targetGroup)) {
+          if (agentShouldRegisterInTargetGroup(agent.getEc2().getInstanceId().get(), targetGroup, targets)) {
             String instanceId = agent.getEc2().getInstanceId().get();
             targetDescriptions.add(new TargetDescription().withId(instanceId));
             LOG.info("Will register agent {} to target in group {}", agent, targetGroup);
@@ -324,7 +369,6 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
             LOG.debug("Agent {} is already registered", agent);
           }
         } else {
-        /* Is this really an appropriate thing to do here? */
           throw new IllegalArgumentException(
               String.format("Agent instance ID must be present to register with an ELB (Agent %s)",
                   agent.toString()));
@@ -353,15 +397,10 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
     }
   }
 
-  private boolean agentShouldRegisterInTargetGroup(String baragonAgentInstanceId, TargetGroup targetGroup) {
-    DescribeTargetHealthRequest targetHealthRequest = new DescribeTargetHealthRequest()
-        .withTargetGroupArn(targetGroup.getTargetGroupArn());
-    List<TargetHealthDescription> targets = elbClient.describeTargetHealth(targetHealthRequest)
-        .getTargetHealthDescriptions();
-
+  private boolean agentShouldRegisterInTargetGroup(String baragonAgentInstanceId, TargetGroup targetGroup, Collection<TargetDescription> targets) {
     boolean shouldRegister = true;
-    for (TargetHealthDescription targetHealthDescription : targets) {
-      if (targetHealthDescription.getTarget().getId().equals(baragonAgentInstanceId)) {
+    for (TargetDescription target : targets) {
+      if (target.getId().equals(baragonAgentInstanceId)) {
         shouldRegister = false;
       }
     }
