@@ -1,7 +1,6 @@
 package com.hubspot.baragon.service.elb;
 
 import java.util.Collection;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -35,7 +34,6 @@ import com.hubspot.baragon.data.BaragonKnownAgentsDatastore;
 import com.hubspot.baragon.data.BaragonLoadBalancerDatastore;
 import com.hubspot.baragon.models.BaragonAgentMetadata;
 import com.hubspot.baragon.models.BaragonGroup;
-import com.hubspot.baragon.models.BaragonKnownAgentMetadata;
 import com.hubspot.baragon.models.TrafficSource;
 import com.hubspot.baragon.models.TrafficSourceType;
 import com.hubspot.baragon.service.BaragonServiceModule;
@@ -472,30 +470,5 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
 
   private Collection<BaragonAgentMetadata> getAgentsByBaragonGroup(BaragonGroup baragonGroup) {
     return loadBalancerDatastore.getAgentMetadata(baragonGroup.getName());
-  }
-
-  private Optional<BaragonKnownAgentMetadata> knownAgent(BaragonGroup baragonGroup, String instanceId) {
-    Collection<BaragonKnownAgentMetadata> knownAgents = knownAgentsDatastore.getKnownAgentsMetadata(baragonGroup.getName());
-    for (BaragonKnownAgentMetadata knownAgent : knownAgents) {
-      if (knownAgent.getEc2().getInstanceId().isPresent() && knownAgent.getEc2().getInstanceId().get().equals(instanceId)) {
-        return Optional.of(knownAgent);
-      }
-    }
-    return Optional.absent();
-  }
-
-  private boolean canDeregisterAgent(BaragonGroup baragonGroup, String instanceId) {
-    Optional<BaragonKnownAgentMetadata> knownAgent = knownAgent(baragonGroup, instanceId);
-    if (knownAgent.isPresent()) {
-      if (configuration.isPresent() && configuration.get().isRemoveKnownAgentEnabled()) {
-        Date lastSeen = new Date(knownAgent.get().getLastSeenAt());
-        Date threshold = new Date(System.currentTimeMillis() - (configuration.get().getRemoveKnownAgentMinutes() * 60000L));
-        return lastSeen.before(threshold);
-      } else {
-        return false;
-      }
-    } else {
-      return true;
-    }
   }
 }

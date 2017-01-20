@@ -280,7 +280,7 @@ public class ClassicLoadBalancer extends ElasticLoadBalancer {
     for (LoadBalancerDescription elb : elbs) {
       if (group.getSources().contains(new TrafficSource(elb.getLoadBalancerName(), TrafficSourceType.CLASSIC))) {
         for (Instance instance : elb.getInstances()) {
-          if (!agentInstanceIds.contains(instance.getInstanceId()) && canDeregisterAgent(group, instance)) {
+          if (!agentInstanceIds.contains(instance.getInstanceId()) && canDeregisterAgent(group, instance.getInstanceId())) {
             List<Instance> instanceList = new ArrayList<>(1);
             instanceList.add(instance);
             requests.add(new DeregisterInstancesFromLoadBalancerRequest(elb.getLoadBalancerName(), instanceList));
