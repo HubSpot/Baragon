@@ -71,7 +71,7 @@ public class ClassicLoadBalancer extends ElasticLoadBalancer {
         elbClient.deregisterInstancesFromLoadBalancer(request);
         LOG.info("Deregistered instance {} from ELB {}", request.getInstances(), request.getLoadBalancerName());
       } else {
-        LOG.debug("Agent {} already registered with ELB {}", agentId, elbName);
+        LOG.debug("Agent {} already de-registered from ELB {}", agentId, elbName);
       }
     }
   }
