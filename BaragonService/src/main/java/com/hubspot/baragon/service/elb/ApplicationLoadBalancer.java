@@ -26,6 +26,7 @@ import com.amazonaws.services.elasticloadbalancingv2.model.TargetGroup;
 import com.amazonaws.services.elasticloadbalancingv2.model.TargetHealthDescription;
 import com.amazonaws.services.elasticloadbalancingv2.model.TargetHealthStateEnum;
 import com.google.common.base.Optional;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;
@@ -92,11 +93,12 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
   @Override
   public void syncAll(Collection<BaragonGroup> baragonGroups) {
     Collection<LoadBalancer> allLoadBalancers = getAllLoadBalancers(baragonGroups);
-    try {
-      for (BaragonGroup baragonGroup : baragonGroups) {
-        if (baragonGroup.getSources().isEmpty()) {
-          LOG.debug("No traffic sources present for group {}", baragonGroup.getName());
-        } else {
+    for (BaragonGroup baragonGroup : baragonGroups) {
+      if (baragonGroup.getSources().isEmpty()) {
+        LOG.debug("No traffic sources present for group {}", baragonGroup.getName());
+      }
+      else {
+        try {
           Collection<LoadBalancer> elbsForBaragonGroup = getLoadBalancersByBaragonGroup(allLoadBalancers, baragonGroup);
           Collection<BaragonAgentMetadata> baragonAgents = getAgentsByBaragonGroup(baragonGroup);
 
@@ -112,21 +114,21 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
 
             if (configuration.isPresent() && configuration.get().isDeregisterEnabled()) {
               LOG.debug("De-registering old instances for group {}", baragonGroup.getName());
-              deregisterIfOld(baragonGroup, targetGroup, baragonAgents, targets);
+              deregisterRemovableTargets(baragonGroup, targetGroup, baragonAgents, targets);
             }
           } else {
-            LOG.debug("Not TargetGroup for Baragon Group {}", baragonGroup);
+            LOG.debug("No TargetGroup for Baragon Group {}", baragonGroup);
           }
 
           LOG.debug("ELB sync complete for group {}", baragonGroup);
+        } catch (AmazonClientException acexn) {
+          LOG.error("Could not retrieve elb information due to ELB client error {}", acexn);
+          exceptionNotifier.notify(acexn, ImmutableMap.of("groups", baragonGroups == null ? "" : baragonGroups.toString()));
+        } catch (Exception exn) {
+          LOG.error("Could not process ELB sync due to error {}", exn);
+          exceptionNotifier.notify(exn, ImmutableMap.of("groups", baragonGroups == null ? "" : baragonGroups.toString()));
         }
       }
-    } catch (AmazonClientException acexn) {
-      LOG.error("Could not retrieve elb information due to ELB client error {}", acexn);
-      exceptionNotifier.notify(acexn, ImmutableMap.of("groups", baragonGroups == null ? "" : baragonGroups.toString()));
-    } catch (Exception exn) {
-      LOG.error("Could not process ELB sync due to error {}", exn);
-      exceptionNotifier.notify(exn, ImmutableMap.of("groups", baragonGroups == null ? "" : baragonGroups.toString()));
     }
   }
 
@@ -147,7 +149,7 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
     String nextPage = result.getNextMarker();
     loadBalancers.addAll(result.getLoadBalancers());
 
-    while (! nextPage.isEmpty()) {
+    while (!Strings.isNullOrEmpty(nextPage)) {
       loadBalancersRequest = new DescribeLoadBalancersRequest()
           .withMarker(nextPage);
       result = elbClient.describeLoadBalancers(loadBalancersRequest);
@@ -211,9 +213,10 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
    * @param targetGroup TargetGroup to check for old agents
    * @param agents Known agents, to be used as a reference sheet
    */
-  private void deregisterIfOld(BaragonGroup baragonGroup, TargetGroup targetGroup,
-                               Collection<BaragonAgentMetadata> agents, Collection<TargetDescription> targets) {
-    Collection<TargetDescription> removableTargets = listOldTargets(baragonGroup, targets, agents);
+  private void deregisterRemovableTargets(BaragonGroup baragonGroup, TargetGroup targetGroup,
+                                          Collection<BaragonAgentMetadata> agents,
+                                          Collection<TargetDescription> targets) {
+    Collection<TargetDescription> removableTargets = listRemovableTargets(baragonGroup, targets, agents);
 
     for (TargetDescription removableTarget : removableTargets) {
       try {
@@ -444,14 +447,14 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
     return targetDescriptions;
   }
 
-  private Collection<TargetDescription> listOldTargets(BaragonGroup baragonGroup,
-                                                       Collection<TargetDescription> targetsOnGroup,
-                                                       Collection<BaragonAgentMetadata> knownAgents) {
-    Collection<String> knownAgentIds = agentIds(knownAgents);
+  private Collection<TargetDescription> listRemovableTargets(BaragonGroup baragonGroup,
+                                                             Collection<TargetDescription> targetsOnGroup,
+                                                             Collection<BaragonAgentMetadata> agentsInBaragonGroup) {
+    Collection<String> agentIds = instanceIds(agentsInBaragonGroup);
 
     Collection<TargetDescription> removableTargets = new HashSet<>();
     for (TargetDescription targetDescription : targetsOnGroup) {
-      if (! knownAgentIds.contains(targetDescription.getId()) && canDeregisterAgent(baragonGroup, targetDescription.getId())) {
+      if (! agentIds.contains(targetDescription.getId()) && canDeregisterAgent(baragonGroup, targetDescription.getId())) {
         LOG.info("Will attempt to deregister target {}", targetDescription.getId());
         removableTargets.add(targetDescription);
       }
@@ -460,12 +463,14 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
     return removableTargets;
   }
 
-  private Collection<String> agentIds(Collection<BaragonAgentMetadata> agents) {
-    Collection<String> agentIds = new HashSet<>();
+  private Collection<String> instanceIds(Collection<BaragonAgentMetadata> agents) {
+    Collection<String> instanceIds = new HashSet<>();
     for (BaragonAgentMetadata agent : agents) {
-      agentIds.add(agent.getAgentId());
+      if (agent.getEc2().getInstanceId().isPresent()) {
+        instanceIds.add(agent.getEc2().getInstanceId().get());
+      }
     }
-    return agentIds;
+    return instanceIds;
   }
 
   private Collection<BaragonAgentMetadata> getAgentsByBaragonGroup(BaragonGroup baragonGroup) {
