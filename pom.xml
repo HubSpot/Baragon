@@ -6,7 +6,7 @@
   <parent>
     <groupId>com.hubspot</groupId>
     <artifactId>basepom</artifactId>
-    <version>15.3</version>
+    <version>15.7</version>
   </parent>
 
   <artifactId>Baragon</artifactId>
@@ -35,6 +35,7 @@
     <basepom.jar.name.format>${baragon.jar.name.format}</basepom.jar.name.format>
     <mesos.docker.tag>0.21.1-1.1.ubuntu1404</mesos.docker.tag>
     <jukito.version>1.4.1</jukito.version>
+    <com.sun.jersey.version>1.19</com.sun.jersey.version>
   </properties>
 
   <modules>
@@ -96,7 +97,7 @@
       <dependency>
         <groupId>com.hubspot.dropwizard</groupId>
         <artifactId>dropwizard-guice</artifactId>
-        <version>0.7.2.1</version>
+        <version>1.0.0.1</version>
       </dependency>
 
       <!-- Horizon -->
@@ -145,21 +146,15 @@
 
       <!-- metrics -->
       <dependency>
+        <groupId>io.dropwizard.metrics</groupId>
+        <artifactId>metrics-graphite</artifactId>
+        <version>${dep.dropwizard-metrics.version}</version>
+      </dependency>
+
+      <dependency>
         <groupId>com.palominolabs.metrics</groupId>
         <artifactId>metrics-guice</artifactId>
-        <version>3.1.1</version>
-      </dependency>
-
-      <dependency>
-        <groupId>com.codahale.metrics</groupId>
-        <artifactId>metrics-annotation</artifactId>
-        <version>${dep.metrics.version}</version><!-- TOOD: add this to HubSpot's basepom -->
-      </dependency>
-
-      <dependency>
-        <groupId>com.codahale.metrics</groupId>
-        <artifactId>metrics-graphite</artifactId>
-        <version>${dep.metrics.version}</version><!-- TOOD: add this to HubSpot's basepom -->
+        <version>${dep.metrics-guice.version}</version>
       </dependency>
 
     </dependencies>
