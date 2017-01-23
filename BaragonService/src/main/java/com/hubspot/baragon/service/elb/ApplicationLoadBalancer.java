@@ -123,10 +123,10 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
           LOG.debug("ELB sync complete for group {}", baragonGroup);
         } catch (AmazonClientException acexn) {
           LOG.error("Could not retrieve elb information due to ELB client error {}", acexn);
-          exceptionNotifier.notify(acexn, ImmutableMap.of("groups", baragonGroups == null ? "" : baragonGroups.toString()));
+          exceptionNotifier.notify(acexn, ImmutableMap.of("baragonGroup", baragonGroup.toString()));
         } catch (Exception exn) {
           LOG.error("Could not process ELB sync due to error {}", exn);
-          exceptionNotifier.notify(exn, ImmutableMap.of("groups", baragonGroups == null ? "" : baragonGroups.toString()));
+          exceptionNotifier.notify(exn, ImmutableMap.of("groups", baragonGroup.toString()));
         }
       }
     }
