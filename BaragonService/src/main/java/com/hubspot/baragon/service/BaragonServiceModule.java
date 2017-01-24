@@ -51,7 +51,7 @@ public class BaragonServiceModule extends AbstractModule {
 
   public static final String BARAGON_MASTER_AUTH_KEY = "baragon.master.auth.key";
 
-  public static final String BARAGON_URI_BASE = "_baragon_uri_base";
+  public static final String BARAGON_URI_BASE = "baragon.uri.base";
 
   public static final String BARAGON_AWS_ELB_CLIENT = "baragon.aws.elb.client";
 
@@ -183,9 +183,9 @@ public class BaragonServiceModule extends AbstractModule {
 
   @Provides
   @Named(BARAGON_URI_BASE)
-  String getSingularityUriBase(final BaragonConfiguration configuration) {
-    final String singularityUiPrefix = configuration.getUiConfiguration().getBaseUrl().or(((SimpleServerFactory) configuration.getServerFactory()).getApplicationContextPath());
-    return (singularityUiPrefix.endsWith("/")) ?  singularityUiPrefix.substring(0, singularityUiPrefix.length() - 1) : singularityUiPrefix;
+  String getBaragonUriBase(final BaragonConfiguration configuration) {
+    final String baragonUiPrefix = configuration.getUiConfiguration().getBaseUrl().or(((SimpleServerFactory) configuration.getServerFactory()).getApplicationContextPath());
+    return (baragonUiPrefix.endsWith("/")) ?  baragonUiPrefix.substring(0, baragonUiPrefix.length() - 1) : baragonUiPrefix;
   }
 
   @Provides
