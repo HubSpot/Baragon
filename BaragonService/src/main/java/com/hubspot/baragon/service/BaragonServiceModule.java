@@ -16,7 +16,7 @@ import com.amazonaws.regions.Regions;
 import com.amazonaws.services.elasticloadbalancing.AmazonElasticLoadBalancingClient;
 import com.google.common.base.Optional;
 import com.google.common.base.Strings;
-import com.google.inject.AbstractModule;
+import com.google.inject.Binder;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.google.inject.multibindings.Multibinder;
@@ -35,13 +35,14 @@ import com.hubspot.baragon.service.listeners.ElbSyncWorkerListener;
 import com.hubspot.baragon.service.listeners.RequestPurgingListener;
 import com.hubspot.baragon.service.listeners.RequestWorkerListener;
 import com.hubspot.baragon.utils.JavaUtils;
+import com.hubspot.dropwizard.guicier.DropwizardAwareModule;
 import com.ning.http.client.AsyncHttpClient;
 import com.ning.http.client.AsyncHttpClientConfig;
 
 import io.dropwizard.jetty.HttpConnectorFactory;
 import io.dropwizard.server.SimpleServerFactory;
 
-public class BaragonServiceModule extends AbstractModule {
+public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfiguration> {
   public static final String BARAGON_SERVICE_SCHEDULED_EXECUTOR = "baragon.service.scheduledExecutor";
 
   public static final String BARAGON_SERVICE_HTTP_PORT = "baragon.service.http.port";
@@ -56,10 +57,10 @@ public class BaragonServiceModule extends AbstractModule {
   public static final String BARAGON_AWS_ELB_CLIENT = "baragon.aws.elb.client";
 
   @Override
-  protected void configure() {
-    install(new BaragonDataModule());
+  public void configure(Binder binder) {
+    binder.install(new BaragonDataModule());
 
-    Multibinder<AbstractLatchListener> latchBinder = Multibinder.newSetBinder(binder(), AbstractLatchListener.class);
+    Multibinder<AbstractLatchListener> latchBinder = Multibinder.newSetBinder(binder, AbstractLatchListener.class);
     latchBinder.addBinding().to(RequestWorkerListener.class);
     latchBinder.addBinding().to(ElbSyncWorkerListener.class);
     latchBinder.addBinding().to(RequestPurgingListener.class);

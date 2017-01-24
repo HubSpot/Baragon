@@ -1,10 +1,9 @@
 package com.hubspot.baragon.service;
 
-import com.google.inject.Stage;
-import com.hubspot.baragon.auth.BaragonAuthUpdater;
 import com.hubspot.baragon.service.bundles.CorsBundle;
 import com.hubspot.baragon.service.config.BaragonConfiguration;
-import com.hubspot.dropwizard.guice.GuiceBundle;
+import com.hubspot.baragon.service.resources.BaragonResourcesModule;
+import com.hubspot.dropwizard.guicier.GuiceBundle;
 import com.palominolabs.metrics.guice.MetricsInstrumentationModule;
 
 import io.dropwizard.Application;
@@ -17,16 +16,15 @@ public class BaragonService extends Application<BaragonConfiguration> {
 
   @Override
   public void initialize(Bootstrap<BaragonConfiguration> bootstrap) {
-    GuiceBundle<BaragonConfiguration> guiceBundle = GuiceBundle.<BaragonConfiguration>newBuilder()
-        .addModule(new BaragonServiceModule())
-        .addModule(new MetricsInstrumentationModule(bootstrap.getMetricRegistry()))
-        .enableAutoConfig(getClass().getPackage().getName(), BaragonAuthUpdater.class.getPackage().getName())
-        .setConfigClass(BaragonConfiguration.class)
-        .build(Stage.DEVELOPMENT);
+    GuiceBundle<BaragonConfiguration> guiceBundle = GuiceBundle.defaultBuilder(BaragonConfiguration.class)
+        .modules(new BaragonServiceModule())
+        .modules(new MetricsInstrumentationModule(bootstrap.getMetricRegistry()))
+        .modules(new BaragonResourcesModule())
+        .build();
 
     bootstrap.addBundle(new CorsBundle());
     bootstrap.addBundle(guiceBundle);
-    bootstrap.addBundle(new ViewBundle());
+    bootstrap.addBundle(new ViewBundle<BaragonConfiguration>());
     bootstrap.addBundle(new AssetsBundle("/assets/static/", "/static/"));
   }
 

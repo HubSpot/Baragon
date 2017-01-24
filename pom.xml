@@ -97,8 +97,8 @@
       <!-- Dropwizard -->
       <dependency>
         <groupId>com.hubspot.dropwizard</groupId>
-        <artifactId>dropwizard-guice</artifactId>
-        <version>1.0.0.1</version>
+        <artifactId>dropwizard-guicier</artifactId>
+        <version>1.0.0.3</version>
       </dependency>
 
       <!-- Horizon -->

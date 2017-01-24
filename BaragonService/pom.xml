@@ -16,7 +16,7 @@
   <dependencies>
     <dependency>
       <groupId>com.hubspot.dropwizard</groupId>
-      <artifactId>dropwizard-guice</artifactId>
+      <artifactId>dropwizard-guicier</artifactId>
     </dependency>
     <dependency>
       <groupId>io.dropwizard</groupId>
