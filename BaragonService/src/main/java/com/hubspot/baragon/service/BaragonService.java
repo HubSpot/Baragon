@@ -20,7 +20,6 @@ public class BaragonService extends Application<BaragonConfiguration> {
         .modules(new BaragonServiceModule())
         .modules(new MetricsInstrumentationModule(bootstrap.getMetricRegistry()))
         .modules(new BaragonResourcesModule())
-        .enableGuiceEnforcer(false) // TODO: Fix our modules so we don't need this anymore
         .build();
 
     bootstrap.addBundle(new CorsBundle());

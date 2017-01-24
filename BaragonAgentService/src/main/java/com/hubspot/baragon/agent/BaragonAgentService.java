@@ -23,7 +23,6 @@ public class BaragonAgentService extends Application<BaragonAgentConfiguration> 
     guiceBundle = GuiceBundle.defaultBuilder(BaragonAgentConfiguration.class)
         .modules(new BaragonAgentServiceModule())
         .modules(new MetricsInstrumentationModule(bootstrap.getMetricRegistry()))
-        .enableGuiceEnforcer(false) // TODO: Fix our modules so we don't need this anymore
         .build();
 
     bootstrap.addBundle(new CorsBundle());
