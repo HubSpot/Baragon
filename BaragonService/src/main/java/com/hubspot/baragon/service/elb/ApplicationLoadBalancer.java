@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.amazonaws.AmazonClientException;
+import com.amazonaws.AmazonServiceException;
 import com.amazonaws.services.elasticloadbalancing.model.Instance;
 import com.amazonaws.services.elasticloadbalancingv2.AmazonElasticLoadBalancingClient;
 import com.amazonaws.services.elasticloadbalancingv2.model.AvailabilityZone;
@@ -80,14 +81,49 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
   }
 
   @Override
-  public void removeInstance(Instance instance, String elbName, String agentId) {
-    /* TODO: Need to map v1 Instance -> v2 Target */
+  public void removeInstance(Instance instance, String trafficSourceName, String agentId) {
+    Optional<TargetGroup> maybeTargetGroup = getTargetGroup(trafficSourceName);
+    if (maybeTargetGroup.isPresent()) {
+      TargetGroup targetGroup = maybeTargetGroup.get();
+      TargetDescription targetDescription = new TargetDescription()
+          .withId(instance.getInstanceId());
+
+      DeregisterTargetsRequest deregisterTargetsRequest = new DeregisterTargetsRequest()
+          .withTargets(targetDescription)
+          .withTargetGroupArn(targetGroup.getTargetGroupArn());
+      try {
+        elbClient.deregisterTargets(deregisterTargetsRequest);
+        LOG.info("De-registered instance {} from target group {}", instance.getInstanceId(), targetGroup);
+      } catch (AmazonServiceException exn) {
+        LOG.debug("Instance {} not found at target group {}", instance.getInstanceId(), targetGroup);
+      }
+    }
   }
 
   @Override
-  public RegisterInstanceResult registerInstance(Instance instance, String elbName, BaragonAgentMetadata agent) {
-    /* TODO: Need to map v1 Instance -> v2 Target */
-    return RegisterInstanceResult.ELB_AND_VPC_FOUND;
+  public RegisterInstanceResult registerInstance(Instance instance, String trafficSourceName, BaragonAgentMetadata agent) {
+    Optional<TargetGroup> maybeTargetGroup = getTargetGroup(trafficSourceName);
+
+    if (! maybeTargetGroup.isPresent()) {
+      LOG.debug("Target group with name {} not found", trafficSourceName);
+      return RegisterInstanceResult.NOT_FOUND;
+    } else {
+      TargetGroup targetGroup = maybeTargetGroup.get();
+
+      if (! isVpcOkay(agent, targetGroup)) {
+        LOG.debug("VPC not configured to accept agent {}", agent);
+        return RegisterInstanceResult.ELB_NO_VPC_FOUND;
+      } else {
+        TargetDescription newTarget = new TargetDescription()
+            .withId(instance.getInstanceId());
+        RegisterTargetsRequest registerTargetsRequest = new RegisterTargetsRequest()
+            .withTargets(newTarget)
+            .withTargetGroupArn(targetGroup.getTargetGroupArn());
+        elbClient.registerTargets(registerTargetsRequest);
+        LOG.info("Registered instance {} with target group {}", newTarget.getId(), targetGroup);
+        return RegisterInstanceResult.ELB_AND_VPC_FOUND;
+      }
+    }
   }
 
   @Override
@@ -129,6 +165,33 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
           exceptionNotifier.notify(exn, ImmutableMap.of("groups", baragonGroup.toString()));
         }
       }
+    }
+  }
+
+  private Optional<TargetGroup> getTargetGroup(String trafficSourceName) {
+    DescribeTargetGroupsRequest targetGroupsRequest = new DescribeTargetGroupsRequest()
+        .withNames(trafficSourceName);
+    List<TargetGroup> maybeTargetGroup = elbClient
+        .describeTargetGroups(targetGroupsRequest)
+        .getTargetGroups();
+
+    if (maybeTargetGroup.size() > 0) {
+      return Optional.of(maybeTargetGroup.get(0));
+    } else {
+      return Optional.absent();
+    }
+  }
+
+  private boolean isVpcOkay(BaragonAgentMetadata agent, TargetGroup targetGroup) {
+    if (configuration.isPresent() && configuration.get().isCheckForCorrectVpc()) {
+      if (agent.getEc2().getVpcId().isPresent()) {
+        String vpcId = agent.getEc2().getVpcId().get();
+        return vpcId.equals(targetGroup.getVpcId());
+      } else {
+        return false;
+      }
+    } else {
+      return true;
     }
   }
 
