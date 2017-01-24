@@ -8,7 +8,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import com.google.inject.Inject;
-import com.hubspot.baragon.auth.BaragonAuthFeature.BaragonAuthFilter;
 import com.hubspot.baragon.managers.BaragonAuthManager;
 
 @RunWith(JukitoRunner.class)

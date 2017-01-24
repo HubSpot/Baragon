@@ -2,11 +2,13 @@ package com.hubspot.baragon.agent;
 
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.eclipse.jetty.server.Server;
+
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
+
 import io.dropwizard.lifecycle.ServerLifecycleListener;
-import org.eclipse.jetty.server.Server;
 
 public class ServerProvider implements Provider<Optional<Server>>, ServerLifecycleListener
 {

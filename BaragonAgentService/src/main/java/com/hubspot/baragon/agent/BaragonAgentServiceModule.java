@@ -22,6 +22,7 @@ import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.google.inject.Binder;
 import com.google.inject.Provides;
+import com.google.inject.Scopes;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import com.hubspot.baragon.BaragonDataModule;
@@ -48,10 +49,7 @@ import com.hubspot.baragon.agent.managed.LifecycleHelper;
 import com.hubspot.baragon.agent.managers.AgentRequestManager;
 import com.hubspot.baragon.agent.models.FilePathFormatType;
 import com.hubspot.baragon.agent.models.LbConfigTemplate;
-import com.hubspot.baragon.agent.resources.BatchRequestResource;
-import com.hubspot.baragon.agent.resources.MetricsResource;
-import com.hubspot.baragon.agent.resources.RequestResource;
-import com.hubspot.baragon.agent.resources.StatusResource;
+import com.hubspot.baragon.agent.resources.BargonAgentResourcesModule;
 import com.hubspot.baragon.agent.workers.AgentHeartbeatWorker;
 import com.hubspot.baragon.config.AuthConfiguration;
 import com.hubspot.baragon.config.HttpClientConfiguration;
@@ -86,33 +84,32 @@ public class BaragonAgentServiceModule extends DropwizardAwareModule<BaragonAgen
 
   @Override
   public void configure(Binder binder) {
+    binder.requireExplicitBindings();
+    binder.requireExactBindingAnnotations();
+    binder.requireAtInjectOnConstructors();
+
     binder.install(new BaragonDataModule());
+    binder.install(new BargonAgentResourcesModule());
 
     // Healthchecks
-    binder.bind(LoadBalancerHealthcheck.class);
-    binder.bind(ZooKeeperHealthcheck.class);
-    binder.bind(ConfigChecker.class);
+    binder.bind(LoadBalancerHealthcheck.class).in(Scopes.SINGLETON);
+    binder.bind(ZooKeeperHealthcheck.class).in(Scopes.SINGLETON);
+    binder.bind(ConfigChecker.class).in(Scopes.SINGLETON);
 
     // Managed
-    binder.bind(BaragonAgentGraphiteReporterManaged.class);
-    binder.bind(BootstrapManaged.class);
-    binder.bind(LifecycleHelper.class);
-
-    // Resources
-    binder.bind(BatchRequestResource.class);
-    binder.bind(MetricsResource.class);
-    binder.bind(RequestResource.class);
-    binder.bind(StatusResource.class);
+    binder.bind(BaragonAgentGraphiteReporterManaged.class).in(Scopes.SINGLETON);
+    binder.bind(BootstrapManaged.class).in(Scopes.SINGLETON);
+    binder.bind(LifecycleHelper.class).in(Scopes.SINGLETON);
 
     // Manager
-    binder.bind(AgentRequestManager.class);
+    binder.bind(AgentRequestManager.class).in(Scopes.SINGLETON);
 
-    binder.bind(ResyncListener.class);
-    binder.bind(LocalLbAdapter.class);
-    binder.bind(LbConfigGenerator.class);
-    binder.bind(ServerProvider.class);
-    binder.bind(FilesystemConfigHelper.class);
-    binder.bind(AgentHeartbeatWorker.class);
+    binder.bind(ResyncListener.class).in(Scopes.SINGLETON);
+    binder.bind(LocalLbAdapter.class).in(Scopes.SINGLETON);
+    binder.bind(LbConfigGenerator.class).in(Scopes.SINGLETON);
+    binder.bind(ServerProvider.class).in(Scopes.SINGLETON);
+    binder.bind(FilesystemConfigHelper.class).in(Scopes.SINGLETON);
+    binder.bind(AgentHeartbeatWorker.class).in(Scopes.SINGLETON);
   }
 
   @Provides
@@ -280,7 +277,7 @@ public class BaragonAgentServiceModule extends DropwizardAwareModule<BaragonAgen
 
   @Singleton
   @Provides
-  public CuratorFramework provideCurator(ZooKeeperConfiguration config, BaragonConnectionStateListener connectionStateListener, ResyncListener resyncListener) {
+  public CuratorFramework provideCurator(ZooKeeperConfiguration config, BaragonConnectionStateListener connectionStateListener) {
     CuratorFramework client = CuratorFrameworkFactory.newClient(
       config.getQuorum(),
       config.getSessionTimeoutMillis(),
@@ -288,7 +285,6 @@ public class BaragonAgentServiceModule extends DropwizardAwareModule<BaragonAgen
       new ExponentialBackoffRetry(config.getRetryBaseSleepTimeMilliseconds(), config.getRetryMaxTries()));
 
     client.getConnectionStateListenable().addListener(connectionStateListener);
-    client.getConnectionStateListenable().addListener(resyncListener);
 
     client.start();
 

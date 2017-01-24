@@ -18,6 +18,7 @@ import com.google.common.base.Optional;
 import com.google.common.base.Strings;
 import com.google.inject.Binder;
 import com.google.inject.Provides;
+import com.google.inject.Scopes;
 import com.google.inject.Singleton;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Named;
@@ -72,35 +73,39 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
 
   @Override
   public void configure(Binder binder) {
+    binder.requireExplicitBindings();
+    binder.requireExactBindingAnnotations();
+    binder.requireAtInjectOnConstructors();
+
     binder.install(new BaragonDataModule());
     binder.install(new BaragonResourcesModule());
 
     // Healthcheck
-    binder.bind(ZooKeeperHealthcheck.class);
-    binder.bind(BaragonExceptionNotifier.class);
+    binder.bind(ZooKeeperHealthcheck.class).in(Scopes.SINGLETON);
+    binder.bind(BaragonExceptionNotifier.class).in(Scopes.SINGLETON);
 
     // Managed
-    binder.bind(BaragonExceptionNotifierManaged.class);
-    binder.bind(BaragonGraphiteReporterManaged.class);
-    binder.bind(BaragonManaged.class);
+    binder.bind(BaragonExceptionNotifierManaged.class).in(Scopes.SINGLETON);
+    binder.bind(BaragonGraphiteReporterManaged.class).in(Scopes.SINGLETON);
+    binder.bind(BaragonManaged.class).in(Scopes.SINGLETON);
 
     // Managers
-    binder.bind(AgentManager.class);
-    binder.bind(ElbManager.class);
-    binder.bind(RequestManager.class);
-    binder.bind(ServiceManager.class);
-    binder.bind(StatusManager.class);
+    binder.bind(AgentManager.class).in(Scopes.SINGLETON);
+    binder.bind(ElbManager.class).in(Scopes.SINGLETON);
+    binder.bind(RequestManager.class).in(Scopes.SINGLETON);
+    binder.bind(ServiceManager.class).in(Scopes.SINGLETON);
+    binder.bind(StatusManager.class).in(Scopes.SINGLETON);
 
     // Workers
-    binder.bind(BaragonElbSyncWorker.class);
-    binder.bind(BaragonRequestWorker.class);
-    binder.bind(RequestPurgingWorker.class);
+    binder.bind(BaragonElbSyncWorker.class).in(Scopes.SINGLETON);
+    binder.bind(BaragonRequestWorker.class).in(Scopes.SINGLETON);
+    binder.bind(RequestPurgingWorker.class).in(Scopes.SINGLETON);
 
 
     Multibinder<AbstractLatchListener> latchBinder = Multibinder.newSetBinder(binder, AbstractLatchListener.class);
-    latchBinder.addBinding().to(RequestWorkerListener.class);
-    latchBinder.addBinding().to(ElbSyncWorkerListener.class);
-    latchBinder.addBinding().to(RequestPurgingListener.class);
+    latchBinder.addBinding().to(RequestWorkerListener.class).in(Scopes.SINGLETON);
+    latchBinder.addBinding().to(ElbSyncWorkerListener.class).in(Scopes.SINGLETON);
+    latchBinder.addBinding().to(RequestPurgingListener.class).in(Scopes.SINGLETON);
   }
 
   @Provides
