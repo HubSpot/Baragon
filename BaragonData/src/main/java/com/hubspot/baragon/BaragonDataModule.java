@@ -4,8 +4,9 @@ import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicReference;
 
-import io.dropwizard.setup.Bootstrap;
-import io.dropwizard.setup.Environment;
+import org.apache.curator.framework.CuratorFramework;
+import org.apache.curator.framework.recipes.cache.PathChildrenCache;
+import org.apache.curator.framework.state.ConnectionState;
 
 import com.codahale.metrics.MetricRegistry;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -16,14 +17,25 @@ import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Named;
+import com.hubspot.baragon.cache.BaragonStateCache;
 import com.hubspot.baragon.config.AuthConfiguration;
+import com.hubspot.baragon.data.BaragonAgentResponseDatastore;
 import com.hubspot.baragon.data.BaragonAuthDatastore;
+import com.hubspot.baragon.data.BaragonConnectionStateListener;
+import com.hubspot.baragon.data.BaragonKnownAgentsDatastore;
+import com.hubspot.baragon.data.BaragonLoadBalancerDatastore;
+import com.hubspot.baragon.data.BaragonRequestDatastore;
+import com.hubspot.baragon.data.BaragonResponseHistoryDatastore;
+import com.hubspot.baragon.data.BaragonStateDatastore;
+import com.hubspot.baragon.data.BaragonWorkerDatastore;
+import com.hubspot.baragon.data.BaragonZkMetaDatastore;
 import com.hubspot.baragon.migrations.UpstreamsMigration;
 import com.hubspot.baragon.migrations.ZkDataMigration;
+import com.hubspot.baragon.migrations.ZkDataMigrationRunner;
 import com.hubspot.baragon.models.BaragonAuthKey;
-import org.apache.curator.framework.CuratorFramework;
-import org.apache.curator.framework.recipes.cache.PathChildrenCache;
-import org.apache.curator.framework.state.ConnectionState;
+import com.hubspot.baragon.utils.ZkParallelFetcher;
+
+import io.dropwizard.setup.Environment;
 
 
 public class BaragonDataModule extends AbstractModule {
@@ -48,6 +60,25 @@ public class BaragonDataModule extends AbstractModule {
 
   @Override
   protected void configure() {
+    bind(BaragonStateCache.class);
+
+    // Datastores
+    bind(BaragonAuthDatastore.class);
+    bind(BaragonKnownAgentsDatastore.class);
+    bind(BaragonLoadBalancerDatastore.class);
+    bind(BaragonStateDatastore.class);
+    bind(BaragonWorkerDatastore.class);
+    bind(BaragonAgentResponseDatastore.class);
+    bind(BaragonRequestDatastore.class);
+    bind(BaragonResponseHistoryDatastore.class);
+    bind(BaragonZkMetaDatastore.class);
+
+    bind(ZkParallelFetcher.class);
+
+    bind(BaragonConnectionStateListener.class);
+    bind(ZkDataMigrationRunner.class);
+
+
     Multibinder<ZkDataMigration> zkMigrationBinder = Multibinder.newSetBinder(binder(), ZkDataMigration.class);
     zkMigrationBinder.addBinding().to(UpstreamsMigration.class);
   }

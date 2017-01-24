@@ -30,10 +30,24 @@ import com.hubspot.baragon.data.BaragonWorkerDatastore;
 import com.hubspot.baragon.service.config.BaragonConfiguration;
 import com.hubspot.baragon.service.config.ElbConfiguration;
 import com.hubspot.baragon.service.config.SentryConfiguration;
+import com.hubspot.baragon.service.exceptions.BaragonExceptionNotifier;
+import com.hubspot.baragon.service.healthcheck.ZooKeeperHealthcheck;
 import com.hubspot.baragon.service.listeners.AbstractLatchListener;
 import com.hubspot.baragon.service.listeners.ElbSyncWorkerListener;
 import com.hubspot.baragon.service.listeners.RequestPurgingListener;
 import com.hubspot.baragon.service.listeners.RequestWorkerListener;
+import com.hubspot.baragon.service.managed.BaragonExceptionNotifierManaged;
+import com.hubspot.baragon.service.managed.BaragonGraphiteReporterManaged;
+import com.hubspot.baragon.service.managed.BaragonManaged;
+import com.hubspot.baragon.service.managers.AgentManager;
+import com.hubspot.baragon.service.managers.ElbManager;
+import com.hubspot.baragon.service.managers.RequestManager;
+import com.hubspot.baragon.service.managers.ServiceManager;
+import com.hubspot.baragon.service.managers.StatusManager;
+import com.hubspot.baragon.service.resources.BaragonResourcesModule;
+import com.hubspot.baragon.service.worker.BaragonElbSyncWorker;
+import com.hubspot.baragon.service.worker.BaragonRequestWorker;
+import com.hubspot.baragon.service.worker.RequestPurgingWorker;
 import com.hubspot.baragon.utils.JavaUtils;
 import com.hubspot.dropwizard.guicier.DropwizardAwareModule;
 import com.ning.http.client.AsyncHttpClient;
@@ -59,6 +73,29 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
   @Override
   public void configure(Binder binder) {
     binder.install(new BaragonDataModule());
+    binder.install(new BaragonResourcesModule());
+
+    // Healthcheck
+    binder.bind(ZooKeeperHealthcheck.class);
+    binder.bind(BaragonExceptionNotifier.class);
+
+    // Managed
+    binder.bind(BaragonExceptionNotifierManaged.class);
+    binder.bind(BaragonGraphiteReporterManaged.class);
+    binder.bind(BaragonManaged.class);
+
+    // Managers
+    binder.bind(AgentManager.class);
+    binder.bind(ElbManager.class);
+    binder.bind(RequestManager.class);
+    binder.bind(ServiceManager.class);
+    binder.bind(StatusManager.class);
+
+    // Workers
+    binder.bind(BaragonElbSyncWorker.class);
+    binder.bind(BaragonRequestWorker.class);
+    binder.bind(RequestPurgingWorker.class);
+
 
     Multibinder<AbstractLatchListener> latchBinder = Multibinder.newSetBinder(binder, AbstractLatchListener.class);
     latchBinder.addBinding().to(RequestWorkerListener.class);

@@ -10,12 +10,17 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.curator.framework.CuratorFramework;
+import org.apache.curator.framework.CuratorFrameworkFactory;
+import org.apache.curator.framework.recipes.leader.LeaderLatch;
+import org.apache.curator.retry.ExponentialBackoffRetry;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.jknack.handlebars.Handlebars;
 import com.google.common.base.Optional;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
-import com.google.inject.AbstractModule;
+import com.google.inject.Binder;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
@@ -30,9 +35,24 @@ import com.hubspot.baragon.agent.handlebars.FormatTimestampHelper;
 import com.hubspot.baragon.agent.handlebars.IfEqualHelperSource;
 import com.hubspot.baragon.agent.handlebars.PreferSameRackWeightingHelper;
 import com.hubspot.baragon.agent.handlebars.ResolveHostnameHelper;
+import com.hubspot.baragon.agent.healthcheck.ConfigChecker;
+import com.hubspot.baragon.agent.healthcheck.LoadBalancerHealthcheck;
+import com.hubspot.baragon.agent.healthcheck.ZooKeeperHealthcheck;
+import com.hubspot.baragon.agent.lbs.FilesystemConfigHelper;
+import com.hubspot.baragon.agent.lbs.LbConfigGenerator;
+import com.hubspot.baragon.agent.lbs.LocalLbAdapter;
 import com.hubspot.baragon.agent.listeners.ResyncListener;
+import com.hubspot.baragon.agent.managed.BaragonAgentGraphiteReporterManaged;
+import com.hubspot.baragon.agent.managed.BootstrapManaged;
+import com.hubspot.baragon.agent.managed.LifecycleHelper;
+import com.hubspot.baragon.agent.managers.AgentRequestManager;
 import com.hubspot.baragon.agent.models.FilePathFormatType;
 import com.hubspot.baragon.agent.models.LbConfigTemplate;
+import com.hubspot.baragon.agent.resources.BatchRequestResource;
+import com.hubspot.baragon.agent.resources.MetricsResource;
+import com.hubspot.baragon.agent.resources.RequestResource;
+import com.hubspot.baragon.agent.resources.StatusResource;
+import com.hubspot.baragon.agent.workers.AgentHeartbeatWorker;
 import com.hubspot.baragon.config.AuthConfiguration;
 import com.hubspot.baragon.config.HttpClientConfiguration;
 import com.hubspot.baragon.config.ZooKeeperConfiguration;
@@ -42,17 +62,15 @@ import com.hubspot.baragon.models.BaragonAgentEc2Metadata;
 import com.hubspot.baragon.models.BaragonAgentMetadata;
 import com.hubspot.baragon.models.BaragonAgentState;
 import com.hubspot.baragon.utils.JavaUtils;
+import com.hubspot.dropwizard.guicier.DropwizardAwareModule;
 import com.hubspot.horizon.HttpClient;
 import com.hubspot.horizon.HttpConfig;
 import com.hubspot.horizon.apache.ApacheHttpClient;
+
 import io.dropwizard.jetty.HttpConnectorFactory;
 import io.dropwizard.server.SimpleServerFactory;
-import org.apache.curator.framework.CuratorFramework;
-import org.apache.curator.framework.CuratorFrameworkFactory;
-import org.apache.curator.framework.recipes.leader.LeaderLatch;
-import org.apache.curator.retry.ExponentialBackoffRetry;
 
-public class BaragonAgentServiceModule extends AbstractModule {
+public class BaragonAgentServiceModule extends DropwizardAwareModule<BaragonAgentConfiguration> {
   public static final String AGENT_SCHEDULED_EXECUTOR = "baragon.service.scheduledExecutor";
 
   public static final String AGENT_LEADER_LATCH = "baragon.agent.leaderLatch";
@@ -67,8 +85,34 @@ public class BaragonAgentServiceModule extends AbstractModule {
   private static final Pattern FORMAT_PATTERN = Pattern.compile("[^%]%([+-]?\\d*.?\\d*)?[sdf]");
 
   @Override
-  protected void configure() {
-    install(new BaragonDataModule());
+  public void configure(Binder binder) {
+    binder.install(new BaragonDataModule());
+
+    // Healthchecks
+    binder.bind(LoadBalancerHealthcheck.class);
+    binder.bind(ZooKeeperHealthcheck.class);
+    binder.bind(ConfigChecker.class);
+
+    // Managed
+    binder.bind(BaragonAgentGraphiteReporterManaged.class);
+    binder.bind(BootstrapManaged.class);
+    binder.bind(LifecycleHelper.class);
+
+    // Resources
+    binder.bind(BatchRequestResource.class);
+    binder.bind(MetricsResource.class);
+    binder.bind(RequestResource.class);
+    binder.bind(StatusResource.class);
+
+    // Manager
+    binder.bind(AgentRequestManager.class);
+
+    binder.bind(ResyncListener.class);
+    binder.bind(LocalLbAdapter.class);
+    binder.bind(LbConfigGenerator.class);
+    binder.bind(ServerProvider.class);
+    binder.bind(FilesystemConfigHelper.class);
+    binder.bind(AgentHeartbeatWorker.class);
   }
 
   @Provides
