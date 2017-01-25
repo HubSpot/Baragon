@@ -28,6 +28,7 @@ import com.amazonaws.services.elasticloadbalancingv2.model.TargetHealthDescripti
 import com.amazonaws.services.elasticloadbalancingv2.model.TargetHealthStateEnum;
 import com.google.common.base.Optional;
 import com.google.common.base.Strings;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;
@@ -87,14 +88,17 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
       TargetGroup targetGroup = maybeTargetGroup.get();
       TargetDescription targetDescription = new TargetDescription()
           .withId(instance.getInstanceId());
-
-      DeregisterTargetsRequest deregisterTargetsRequest = new DeregisterTargetsRequest()
-          .withTargets(targetDescription)
-          .withTargetGroupArn(targetGroup.getTargetGroupArn());
-      try {
-        elbClient.deregisterTargets(deregisterTargetsRequest);
-        LOG.info("De-registered instance {} from target group {}", instance.getInstanceId(), targetGroup);
-      } catch (AmazonServiceException exn) {
+      if (targetsOn(targetGroup).contains(targetDescription.getId())) {
+        DeregisterTargetsRequest deregisterTargetsRequest = new DeregisterTargetsRequest()
+            .withTargets(targetDescription)
+            .withTargetGroupArn(targetGroup.getTargetGroupArn());
+        try {
+          elbClient.deregisterTargets(deregisterTargetsRequest);
+          LOG.info("De-registered instance {} from target group {}", instance.getInstanceId(), targetGroup);
+        } catch (AmazonServiceException exn) {
+          LOG.warn("Failed to de-register instance {} from target group {}", instance.getInstanceId(), targetGroup);
+        }
+      } else {
         LOG.debug("Instance {} not found at target group {}", instance.getInstanceId(), targetGroup);
       }
     }
@@ -116,12 +120,23 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
       } else {
         TargetDescription newTarget = new TargetDescription()
             .withId(instance.getInstanceId());
-        RegisterTargetsRequest registerTargetsRequest = new RegisterTargetsRequest()
-            .withTargets(newTarget)
-            .withTargetGroupArn(targetGroup.getTargetGroupArn());
-        elbClient.registerTargets(registerTargetsRequest);
-        LOG.info("Registered instance {} with target group {}", newTarget.getId(), targetGroup);
-        return RegisterInstanceResult.ELB_AND_VPC_FOUND;
+
+        if (targetsOn(targetGroup).contains(newTarget.getId())) {
+          try {
+            RegisterTargetsRequest registerTargetsRequest = new RegisterTargetsRequest()
+                .withTargets(newTarget)
+                .withTargetGroupArn(targetGroup.getTargetGroupArn());
+            elbClient.registerTargets(registerTargetsRequest);
+            LOG.info("Registered instance {} with target group {}", newTarget.getId(), targetGroup);
+            return RegisterInstanceResult.ELB_AND_VPC_FOUND;
+          } catch (AmazonServiceException exn) {
+            LOG.warn("Failed to register instance {} with target group {}", instance.getInstanceId(), targetGroup);
+            throw Throwables.propagate(exn);
+          }
+        } else {
+          LOG.debug("Instance {} already registered with target group {}", instance.getInstanceId(), targetGroup);
+          return RegisterInstanceResult.ELB_AND_VPC_FOUND;
+        }
       }
     }
   }
@@ -180,6 +195,25 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
     } else {
       return Optional.absent();
     }
+  }
+
+  /**
+   * @param targetGroup Target group to check
+   * @return the instance IDs of the targets in the given target group
+   */
+  private Collection<String> targetsOn(TargetGroup targetGroup) {
+    DescribeTargetHealthRequest targetHealthRequest = new DescribeTargetHealthRequest()
+        .withTargetGroupArn(targetGroup.getTargetGroupArn());
+    Collection<TargetHealthDescription> targetHealth = elbClient
+        .describeTargetHealth(targetHealthRequest)
+        .getTargetHealthDescriptions();
+
+    Collection<String> targets = new HashSet<>();
+    for (TargetHealthDescription targetHealthDescription : targetHealth) {
+      targets.add(targetHealthDescription.getTarget().getId());
+    }
+
+    return targets;
   }
 
   private boolean isVpcOkay(BaragonAgentMetadata agent, TargetGroup targetGroup) {
