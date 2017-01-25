@@ -38,7 +38,7 @@ public class ElbResource {
   private final Optional<ElbConfiguration> config;
 
   @Inject
-  public ElbResource(@Named(BaragonServiceModule.BARAGON_AWS_ELB_CLIENT)AmazonElasticLoadBalancingClient elbClient,
+  public ElbResource(@Named(BaragonServiceModule.BARAGON_AWS_ELB_CLIENT_V1) AmazonElasticLoadBalancingClient elbClient,
                      Optional<ElbConfiguration> config) {
     this.elbClient = elbClient;
     this.config = config;

@@ -69,9 +69,9 @@ public class ClassicLoadBalancer extends ElasticLoadBalancer {
       if (elb.get().getInstances().contains(instance)) {
         DeregisterInstancesFromLoadBalancerRequest request = new DeregisterInstancesFromLoadBalancerRequest(elbName, Arrays.asList(instance));
         elbClient.deregisterInstancesFromLoadBalancer(request);
-        LOG.info(String.format("Deregistered instance %s from ELB %s", request.getInstances(), request.getLoadBalancerName()));
+        LOG.info("Deregistered instance {} from ELB {}", request.getInstances(), request.getLoadBalancerName());
       } else {
-        LOG.debug(String.format("Agent %s already registered with ELB %s", agentId, elbName));
+        LOG.debug("Agent {} already de-registered from ELB {}", agentId, elbName);
       }
     }
   }
@@ -86,9 +86,9 @@ public class ClassicLoadBalancer extends ElasticLoadBalancer {
         checkAZEnabled(agent, elbName, elb.get());
         RegisterInstancesWithLoadBalancerRequest request = new RegisterInstancesWithLoadBalancerRequest(elbName, Arrays.asList(instance));
         elbClient.registerInstancesWithLoadBalancer(request);
-        LOG.info(String.format("Registered instances %s with ELB %s", request.getInstances(), request.getLoadBalancerName()));
+        LOG.info("Registered instances {} with ELB {}", request.getInstances(), request.getLoadBalancerName());
       } else {
-        LOG.debug(String.format("Agent %s already registered with ELB %s", agent.getAgentId(), elbName));
+        LOG.debug("Agent {} already registered with ELB {}", agent.getAgentId(), elbName);
       }
     }
     return result;
@@ -101,22 +101,22 @@ public class ClassicLoadBalancer extends ElasticLoadBalancer {
       for (BaragonGroup group : groups) {
         if (!group.getSources().isEmpty()) {
           List<LoadBalancerDescription> elbsForGroup = getElbsForGroup(elbs, group);
-          LOG.debug(String.format("Registering new instances for group %s...", group.getName()));
+          LOG.debug("Registering new instances for group {}...", group.getName());
           registerNewInstances(elbsForGroup, group);
           if (configuration.get().isDeregisterEnabled()) {
-            LOG.debug(String.format("Deregistering old instances for group %s...", group.getName()));
+            LOG.debug("Deregistering old instances for group {}...", group.getName());
             deregisterOldInstances(elbsForGroup, group);
           }
-          LOG.debug(String.format("ELB sync complete for group: %s", group.getName()));
+          LOG.debug("ELB sync complete for group: {}", group.getName());
         } else {
-          LOG.debug(String.format("No traffic sources present for group: %s", group.getName()));
+          LOG.debug("No traffic sources present for group: {}", group.getName());
         }
       }
     } catch (AmazonClientException e) {
-      LOG.error(String.format("Could not retrieve elb information due to amazon client error %s", e));
+      LOG.error("Could not retrieve elb information due to amazon client error %s", e);
       exceptionNotifier.notify(e, ImmutableMap.of("groups", groups == null ? "" : groups.toString()));
     } catch (Exception e) {
-      LOG.error(String.format("Could not process elb sync due to error %s", e));
+      LOG.error("Could not process elb sync due to error {}", e);
       exceptionNotifier.notify(e, ImmutableMap.of("groups", groups == null ? "" : groups.toString()));
     }
   }
@@ -146,17 +146,17 @@ public class ClassicLoadBalancer extends ElasticLoadBalancer {
             enableAZ(agent, availabilityZone, elb);
           }
         } catch (AmazonClientException e) {
-          LOG.error("Could not enable availability zone %s for elb %s due to error", availabilityZone, elb.getLoadBalancerName(), e);
+          LOG.error("Could not enable availability zone {} for elb {} due to error", availabilityZone, elb.getLoadBalancerName(), e);
           exceptionNotifier.notify(e, ImmutableMap.of("elb", elbName, "subnet", agent.getEc2().getSubnetId().toString(), "availabilityZone", availabilityZone));
         }
       }
     } else {
-      LOG.warn(String.format("No availability zone specified for agent %s", agent.getAgentId()));
+      LOG.warn("No availability zone specified for agent {}", agent.getAgentId());
     }
   }
 
   private void addSubnet(BaragonAgentMetadata agent, LoadBalancerDescription elb) {
-    LOG.info(String.format("Enabling subnet %s in preparation for agent %s", agent.getEc2().getSubnetId().get(), agent.getAgentId()));
+    LOG.info("Enabling subnet {} in preparation for agent {}", agent.getEc2().getSubnetId().get(), agent.getAgentId());
     AttachLoadBalancerToSubnetsRequest request = new AttachLoadBalancerToSubnetsRequest();
     request.setLoadBalancerName(elb.getLoadBalancerName());
     List<String> subnets = elb.getSubnets();
@@ -166,7 +166,7 @@ public class ClassicLoadBalancer extends ElasticLoadBalancer {
   }
 
   private void enableAZ(BaragonAgentMetadata agent, String availabilityZone, LoadBalancerDescription elb) {
-    LOG.info(String.format("Enabling availability zone %s in preparation for agent %s", availabilityZone, agent.getAgentId()));
+    LOG.info("Enabling availability zone {} in preparation for agent {}", availabilityZone, agent.getAgentId());
     List<String> availabilityZones = elb.getAvailabilityZones();
     availabilityZones.add(availabilityZone);
     EnableAvailabilityZonesForLoadBalancerRequest request = new EnableAvailabilityZonesForLoadBalancerRequest();
@@ -192,14 +192,14 @@ public class ClassicLoadBalancer extends ElasticLoadBalancer {
       for (RegisterInstancesWithLoadBalancerRequest request : requests) {
         try {
           elbClient.registerInstancesWithLoadBalancer(request);
-          LOG.info(String.format("Registered instances %s with ELB %s", request.getInstances(), request.getLoadBalancerName()));
+          LOG.info("Registered instances {} with ELB {}", request.getInstances(), request.getLoadBalancerName());
         } catch (AmazonClientException e) {
-          LOG.error(String.format("Could not register %s with elb %s due to error", request.getInstances(), request.getLoadBalancerName()), e);
+          LOG.error("Could not register {} with elb {} due to error", request.getInstances(), request.getLoadBalancerName(), e);
           exceptionNotifier.notify(e, ImmutableMap.of("elb", request.getLoadBalancerName(), "toAdd", request.getInstances().toString()));
         }
       }
     } else {
-      LOG.debug(String.format("No new instances to register for group %s", group.getName()));
+      LOG.debug("No new instances to register for group %s", group.getName());
     }
   }
 
@@ -216,16 +216,16 @@ public class ClassicLoadBalancer extends ElasticLoadBalancer {
               Instance instance = new Instance(agent.getEc2().getInstanceId().get());
               requests.add(new RegisterInstancesWithLoadBalancerRequest(source.getName(), Arrays.asList(instance)));
               checkAZEnabled(agent, source.getName(), elbs);
-              LOG.info(String.format("Will register %s-%s with ELB %s", agent.getAgentId(), agent.getEc2().getInstanceId().get(), source.getName()));
+              LOG.info("Will register {}-{} with ELB {}", agent.getAgentId(), agent.getEc2().getInstanceId().get(), source.getName());
             } else {
-              LOG.debug(String.format("Agent %s is already registered", agent));
+              LOG.debug("Agent {} is already registered", agent);
             }
           } else {
             throw new IllegalArgumentException(String.format("Agent Instance Id must be present to register with an ELB (agent: %s)", agent.getAgentId()));
           }
         }
       } catch (Exception e) {
-        LOG.error(String.format("Could not create request for BaragonAgent %s due to error: %s", agent, e));
+        LOG.error("Could not create request for BaragonAgent {} due to error: {}", agent, e);
       }
     }
     return requests;
@@ -261,16 +261,16 @@ public class ClassicLoadBalancer extends ElasticLoadBalancer {
           if (configuration.get().isRemoveLastHealthyEnabled() || !isLastHealthyInstance(request)) {
             elbClient.deregisterInstancesFromLoadBalancer(request);
           } else {
-            LOG.info(String.format("Will not deregister %s because it is the last healthy instance!", request.getInstances()));
+            LOG.info("Will not deregister {} because it is the last healthy instance!", request.getInstances());
           }
-          LOG.info(String.format("Deregistered instances %s from ELB %s", request.getInstances(), request.getLoadBalancerName()));
+          LOG.info("Deregistered instances {} from ELB {}", request.getInstances(), request.getLoadBalancerName());
         } catch (AmazonClientException e) {
-          LOG.error("Could not deregister %s from elb %s due to error %s", request.getInstances(), request.getLoadBalancerName(), e);
+          LOG.error("Could not deregister {} from elb {} due to error {}", request.getInstances(), request.getLoadBalancerName(), e);
           exceptionNotifier.notify(e, ImmutableMap.of("elb", request.getLoadBalancerName(), "toRemove", request.getInstances().toString()));
         }
       }
     } catch (Exception e) {
-      LOG.error(String.format("Will not try to deregister due to error: %s", e));
+      LOG.error("Will not try to deregister due to error: {}", e);
     }
   }
 
@@ -280,11 +280,11 @@ public class ClassicLoadBalancer extends ElasticLoadBalancer {
     for (LoadBalancerDescription elb : elbs) {
       if (group.getSources().contains(new TrafficSource(elb.getLoadBalancerName(), TrafficSourceType.CLASSIC))) {
         for (Instance instance : elb.getInstances()) {
-          if (!agentInstanceIds.contains(instance.getInstanceId()) && canDeregisterAgent(group, instance)) {
+          if (!agentInstanceIds.contains(instance.getInstanceId()) && canDeregisterAgent(group, instance.getInstanceId())) {
             List<Instance> instanceList = new ArrayList<>(1);
             instanceList.add(instance);
             requests.add(new DeregisterInstancesFromLoadBalancerRequest(elb.getLoadBalancerName(), instanceList));
-            LOG.info(String.format("Will deregister instance %s from ELB %s", instance.getInstanceId(), elb.getLoadBalancerName()));
+            LOG.info("Will deregister instance {} from ELB {}", instance.getInstanceId(), elb.getLoadBalancerName());
           }
         }
       }

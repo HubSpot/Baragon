@@ -36,10 +36,10 @@ public abstract class ElasticLoadBalancer {
   abstract public RegisterInstanceResult registerInstance(Instance instance, String elbName, BaragonAgentMetadata agent);
   abstract public void syncAll(Collection<BaragonGroup> groups);
 
-  Optional<BaragonKnownAgentMetadata> knownAgent(BaragonGroup group, Instance instance) {
+  Optional<BaragonKnownAgentMetadata> knownAgent(BaragonGroup group, String instanceId) {
     Collection<BaragonKnownAgentMetadata> knownAgents = knownAgentsDatastore.getKnownAgentsMetadata(group.getName());
     for (BaragonKnownAgentMetadata agent : knownAgents) {
-      if (agent.getEc2().getInstanceId().isPresent() && agent.getEc2().getInstanceId().get().equals(instance.getInstanceId())) {
+      if (agent.getEc2().getInstanceId().isPresent() && agent.getEc2().getInstanceId().get().equals(instanceId)) {
         return Optional.of(agent);
       }
     }
@@ -58,8 +58,8 @@ public abstract class ElasticLoadBalancer {
     return instanceIds;
   }
 
-  boolean canDeregisterAgent(BaragonGroup group, Instance instance) {
-    Optional<BaragonKnownAgentMetadata>  agent = knownAgent(group, instance);
+  boolean canDeregisterAgent(BaragonGroup group, String instanceId) {
+    Optional<BaragonKnownAgentMetadata>  agent = knownAgent(group, instanceId);
     if (!agent.isPresent()) {
       return true;
     } else {
