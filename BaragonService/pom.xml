@@ -16,7 +16,7 @@
   <dependencies>
     <dependency>
       <groupId>com.hubspot.dropwizard</groupId>
-      <artifactId>dropwizard-guice</artifactId>
+      <artifactId>dropwizard-guicier</artifactId>
     </dependency>
     <dependency>
       <groupId>io.dropwizard</groupId>
@@ -36,20 +36,20 @@
       <artifactId>metrics-guice</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.codahale.metrics</groupId>
-      <artifactId>metrics-healthchecks</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.codahale.metrics</groupId>
+      <groupId>io.dropwizard.metrics</groupId>
       <artifactId>metrics-core</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.codahale.metrics</groupId>
+      <groupId>io.dropwizard.metrics</groupId>
       <artifactId>metrics-graphite</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.codahale.metrics</groupId>
+      <groupId>io.dropwizard.metrics</groupId>
       <artifactId>metrics-annotation</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.dropwizard.metrics</groupId>
+      <artifactId>metrics-healthchecks</artifactId>
     </dependency>
     <dependency>
       <groupId>com.hubspot</groupId>
@@ -74,10 +74,6 @@
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>javax.ws.rs</groupId>
-      <artifactId>jsr311-api</artifactId>
     </dependency>
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
@@ -130,6 +126,10 @@
     <dependency>
       <groupId>javax.servlet</groupId>
       <artifactId>javax.servlet-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>javax.ws.rs</groupId>
+      <artifactId>javax.ws.rs-api</artifactId>
     </dependency>
     <dependency>
       <groupId>org.apache.curator</groupId>
