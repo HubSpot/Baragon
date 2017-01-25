@@ -23,7 +23,8 @@ public class BaragonAuthFeature implements DynamicFeature {
   @Override
   public void configure(ResourceInfo resourceInfo, FeatureContext featureContext) {
     if (authConfiguration.isEnabled()) {
-      if (resourceInfo.getResourceMethod().getAnnotation(NoAuth.class) == null) {
+      if (resourceInfo.getResourceMethod().getAnnotation(NoAuth.class) == null
+          && resourceInfo.getResourceClass().getAnnotation(NoAuth.class) == null) {
         featureContext.register(requestFilter);
       }
     }
