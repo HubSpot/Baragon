@@ -1,5 +1,6 @@
 package com.hubspot.baragon.service;
 
+import com.hubspot.baragon.auth.BaragonAuthBundle;
 import com.hubspot.baragon.service.bundles.CorsBundle;
 import com.hubspot.baragon.service.config.BaragonConfiguration;
 import com.hubspot.baragon.service.resources.BaragonResourcesModule;
@@ -23,6 +24,7 @@ public class BaragonService extends Application<BaragonConfiguration> {
         .build();
 
     bootstrap.addBundle(new CorsBundle());
+    bootstrap.addBundle(new BaragonAuthBundle());
     bootstrap.addBundle(guiceBundle);
     bootstrap.addBundle(new ViewBundle<BaragonConfiguration>());
     bootstrap.addBundle(new AssetsBundle("/assets/static/", "/static/"));
