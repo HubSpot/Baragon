@@ -1,6 +1,6 @@
 package com.hubspot.baragon.auth;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertNotNull;
 
 import org.jukito.JukitoModule;
 import org.jukito.JukitoRunner;
@@ -22,22 +22,13 @@ public class BaragonAuthFilterTest {
 
   @Test
   @Inject
-  public void itCanBuildBaragonAuthManagerInstances(BaragonAuthManager baragonAuthManager) {
-    assertThat(baragonAuthManager)
-        .isNotNull();
-  }
-
-  @Test
-  @Inject
   public void itCanBuildBaragonAuthFilter(BaragonAuthFilter baragonAuthFilter) {
-    assertThat(baragonAuthFilter)
-        .isNotNull();
+    assertNotNull(baragonAuthFilter);
   }
 
   @Test
   @Inject
   public void itCanBuildBaragonAuthFeatureInstances(BaragonAuthFeature baragonAuthFeature) {
-    assertThat(baragonAuthFeature)
-        .isNotNull();
+    assertNotNull(baragonAuthFeature);
   }
 }
