@@ -31,6 +31,8 @@ import com.hubspot.baragon.data.BaragonWorkerDatastore;
 import com.hubspot.baragon.service.config.BaragonConfiguration;
 import com.hubspot.baragon.service.config.ElbConfiguration;
 import com.hubspot.baragon.service.config.SentryConfiguration;
+import com.hubspot.baragon.service.elb.ApplicationLoadBalancer;
+import com.hubspot.baragon.service.elb.ClassicLoadBalancer;
 import com.hubspot.baragon.service.exceptions.BaragonExceptionNotifier;
 import com.hubspot.baragon.service.healthcheck.ZooKeeperHealthcheck;
 import com.hubspot.baragon.service.listeners.AbstractLatchListener;
@@ -101,6 +103,9 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
     binder.bind(BaragonElbSyncWorker.class).in(Scopes.SINGLETON);
     binder.bind(BaragonRequestWorker.class).in(Scopes.SINGLETON);
     binder.bind(RequestPurgingWorker.class).in(Scopes.SINGLETON);
+
+    binder.bind(ClassicLoadBalancer.class);
+    binder.bind(ApplicationLoadBalancer.class);
 
 
     Multibinder<AbstractLatchListener> latchBinder = Multibinder.newSetBinder(binder, AbstractLatchListener.class);

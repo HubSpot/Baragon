@@ -31,10 +31,10 @@ public abstract class ElasticLoadBalancer {
     this.knownAgentsDatastore  = knownAgentsDatastore;
   }
 
-  abstract public boolean isInstanceHealthy(String instanceId, String name);
-  abstract public void removeInstance(Instance instance, String elbName, String agentId);
-  abstract public RegisterInstanceResult registerInstance(Instance instance, String elbName, BaragonAgentMetadata agent);
-  abstract public void syncAll(Collection<BaragonGroup> groups);
+  public abstract boolean isInstanceHealthy(String instanceId, String name);
+  public abstract void removeInstance(Instance instance, String elbName, String agentId);
+  public abstract RegisterInstanceResult registerInstance(Instance instance, String elbName, BaragonAgentMetadata agent);
+  public abstract void syncAll(Collection<BaragonGroup> groups);
 
   Optional<BaragonKnownAgentMetadata> knownAgent(BaragonGroup group, String instanceId) {
     Collection<BaragonKnownAgentMetadata> knownAgents = knownAgentsDatastore.getKnownAgentsMetadata(group.getName());

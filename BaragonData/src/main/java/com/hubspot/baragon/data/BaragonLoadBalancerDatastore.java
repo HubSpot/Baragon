@@ -102,7 +102,7 @@ public class BaragonLoadBalancerDatastore extends AbstractDataStore {
   }
 
   @Timed
-  public Optional<BaragonGroup> removeSourceFromGroup(String name, String source) {
+  public Optional<BaragonGroup> removeSourceFromGroup(String name, TrafficSource source) {
     Optional<BaragonGroup> maybeGroup = getLoadBalancerGroup(name);
     if (maybeGroup.isPresent()) {
       maybeGroup.get().getSources().remove(source);

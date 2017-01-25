@@ -178,7 +178,12 @@ public class ClassicLoadBalancer extends ElasticLoadBalancer {
   private List<LoadBalancerDescription> getElbsForGroup(List<LoadBalancerDescription> elbs, BaragonGroup group) {
     List<LoadBalancerDescription> elbsForGroup = new ArrayList<>();
     for (LoadBalancerDescription elb : elbs) {
-      if (group.getSources().contains(elb.getLoadBalancerName())) {
+      List<String> trafficSourceNames = new ArrayList<>();
+      for (TrafficSource trafficSource : group.getSources()) {
+        trafficSourceNames.add(trafficSource.getName());
+      }
+
+      if (trafficSourceNames.contains(elb.getLoadBalancerName())) {
         elbsForGroup.add(elb);
       }
     }
