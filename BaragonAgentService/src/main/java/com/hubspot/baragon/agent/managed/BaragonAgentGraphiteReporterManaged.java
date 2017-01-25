@@ -3,8 +3,6 @@ package com.hubspot.baragon.agent.managed;
 import java.net.InetSocketAddress;
 import java.util.concurrent.TimeUnit;
 
-import io.dropwizard.lifecycle.Managed;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,6 +18,8 @@ import com.google.inject.Singleton;
 import com.hubspot.baragon.agent.config.BaragonAgentConfiguration;
 import com.hubspot.baragon.config.GraphiteConfiguration;
 import com.hubspot.baragon.utils.JavaUtils;
+
+import io.dropwizard.lifecycle.Managed;
 
 @Singleton
 public class BaragonAgentGraphiteReporterManaged implements Managed {
