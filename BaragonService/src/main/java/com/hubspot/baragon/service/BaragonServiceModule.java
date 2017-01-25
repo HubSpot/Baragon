@@ -16,8 +16,9 @@ import com.amazonaws.regions.Regions;
 import com.amazonaws.services.elasticloadbalancing.AmazonElasticLoadBalancingClient;
 import com.google.common.base.Optional;
 import com.google.common.base.Strings;
-import com.google.inject.AbstractModule;
+import com.google.inject.Binder;
 import com.google.inject.Provides;
+import com.google.inject.Scopes;
 import com.google.inject.Singleton;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Named;
@@ -30,18 +31,33 @@ import com.hubspot.baragon.data.BaragonWorkerDatastore;
 import com.hubspot.baragon.service.config.BaragonConfiguration;
 import com.hubspot.baragon.service.config.ElbConfiguration;
 import com.hubspot.baragon.service.config.SentryConfiguration;
+import com.hubspot.baragon.service.exceptions.BaragonExceptionNotifier;
+import com.hubspot.baragon.service.healthcheck.ZooKeeperHealthcheck;
 import com.hubspot.baragon.service.listeners.AbstractLatchListener;
 import com.hubspot.baragon.service.listeners.ElbSyncWorkerListener;
 import com.hubspot.baragon.service.listeners.RequestPurgingListener;
 import com.hubspot.baragon.service.listeners.RequestWorkerListener;
+import com.hubspot.baragon.service.managed.BaragonExceptionNotifierManaged;
+import com.hubspot.baragon.service.managed.BaragonGraphiteReporterManaged;
+import com.hubspot.baragon.service.managed.BaragonManaged;
+import com.hubspot.baragon.service.managers.AgentManager;
+import com.hubspot.baragon.service.managers.ElbManager;
+import com.hubspot.baragon.service.managers.RequestManager;
+import com.hubspot.baragon.service.managers.ServiceManager;
+import com.hubspot.baragon.service.managers.StatusManager;
+import com.hubspot.baragon.service.resources.BaragonResourcesModule;
+import com.hubspot.baragon.service.worker.BaragonElbSyncWorker;
+import com.hubspot.baragon.service.worker.BaragonRequestWorker;
+import com.hubspot.baragon.service.worker.RequestPurgingWorker;
 import com.hubspot.baragon.utils.JavaUtils;
+import com.hubspot.dropwizard.guicier.DropwizardAwareModule;
 import com.ning.http.client.AsyncHttpClient;
 import com.ning.http.client.AsyncHttpClientConfig;
 
 import io.dropwizard.jetty.HttpConnectorFactory;
 import io.dropwizard.server.SimpleServerFactory;
 
-public class BaragonServiceModule extends AbstractModule {
+public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfiguration> {
   public static final String BARAGON_SERVICE_SCHEDULED_EXECUTOR = "baragon.service.scheduledExecutor";
 
   public static final String BARAGON_SERVICE_HTTP_PORT = "baragon.service.http.port";
@@ -51,18 +67,45 @@ public class BaragonServiceModule extends AbstractModule {
 
   public static final String BARAGON_MASTER_AUTH_KEY = "baragon.master.auth.key";
 
-  public static final String BARAGON_URI_BASE = "_baragon_uri_base";
+  public static final String BARAGON_URI_BASE = "baragon.uri.base";
 
   public static final String BARAGON_AWS_ELB_CLIENT = "baragon.aws.elb.client";
 
   @Override
-  protected void configure() {
-    install(new BaragonDataModule());
+  public void configure(Binder binder) {
+    binder.requireExplicitBindings();
+    binder.requireExactBindingAnnotations();
+    binder.requireAtInjectOnConstructors();
 
-    Multibinder<AbstractLatchListener> latchBinder = Multibinder.newSetBinder(binder(), AbstractLatchListener.class);
-    latchBinder.addBinding().to(RequestWorkerListener.class);
-    latchBinder.addBinding().to(ElbSyncWorkerListener.class);
-    latchBinder.addBinding().to(RequestPurgingListener.class);
+    binder.install(new BaragonDataModule());
+    binder.install(new BaragonResourcesModule());
+
+    // Healthcheck
+    binder.bind(ZooKeeperHealthcheck.class).in(Scopes.SINGLETON);
+    binder.bind(BaragonExceptionNotifier.class).in(Scopes.SINGLETON);
+
+    // Managed
+    binder.bind(BaragonExceptionNotifierManaged.class).in(Scopes.SINGLETON);
+    binder.bind(BaragonGraphiteReporterManaged.class).in(Scopes.SINGLETON);
+    binder.bind(BaragonManaged.class).in(Scopes.SINGLETON);
+
+    // Managers
+    binder.bind(AgentManager.class).in(Scopes.SINGLETON);
+    binder.bind(ElbManager.class).in(Scopes.SINGLETON);
+    binder.bind(RequestManager.class).in(Scopes.SINGLETON);
+    binder.bind(ServiceManager.class).in(Scopes.SINGLETON);
+    binder.bind(StatusManager.class).in(Scopes.SINGLETON);
+
+    // Workers
+    binder.bind(BaragonElbSyncWorker.class).in(Scopes.SINGLETON);
+    binder.bind(BaragonRequestWorker.class).in(Scopes.SINGLETON);
+    binder.bind(RequestPurgingWorker.class).in(Scopes.SINGLETON);
+
+
+    Multibinder<AbstractLatchListener> latchBinder = Multibinder.newSetBinder(binder, AbstractLatchListener.class);
+    latchBinder.addBinding().to(RequestWorkerListener.class).in(Scopes.SINGLETON);
+    latchBinder.addBinding().to(ElbSyncWorkerListener.class).in(Scopes.SINGLETON);
+    latchBinder.addBinding().to(RequestPurgingListener.class).in(Scopes.SINGLETON);
   }
 
   @Provides
@@ -183,9 +226,9 @@ public class BaragonServiceModule extends AbstractModule {
 
   @Provides
   @Named(BARAGON_URI_BASE)
-  String getSingularityUriBase(final BaragonConfiguration configuration) {
-    final String singularityUiPrefix = configuration.getUiConfiguration().getBaseUrl().or(((SimpleServerFactory) configuration.getServerFactory()).getApplicationContextPath());
-    return (singularityUiPrefix.endsWith("/")) ?  singularityUiPrefix.substring(0, singularityUiPrefix.length() - 1) : singularityUiPrefix;
+  String getBaragonUriBase(final BaragonConfiguration configuration) {
+    final String baragonUiPrefix = configuration.getUiConfiguration().getBaseUrl().or(((SimpleServerFactory) configuration.getServerFactory()).getApplicationContextPath());
+    return (baragonUiPrefix.endsWith("/")) ?  baragonUiPrefix.substring(0, baragonUiPrefix.length() - 1) : baragonUiPrefix;
   }
 
   @Provides

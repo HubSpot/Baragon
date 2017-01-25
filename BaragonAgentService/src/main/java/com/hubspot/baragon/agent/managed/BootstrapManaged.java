@@ -5,11 +5,17 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.apache.curator.framework.CuratorFramework;
+import org.apache.curator.framework.recipes.leader.LeaderLatch;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import com.hubspot.baragon.agent.BaragonAgentServiceModule;
 import com.hubspot.baragon.agent.config.BaragonAgentConfiguration;
 import com.hubspot.baragon.agent.healthcheck.ConfigChecker;
+import com.hubspot.baragon.agent.listeners.ResyncListener;
 import com.hubspot.baragon.agent.workers.AgentHeartbeatWorker;
 import com.hubspot.baragon.data.BaragonKnownAgentsDatastore;
 import com.hubspot.baragon.data.BaragonLoadBalancerDatastore;
@@ -18,10 +24,6 @@ import com.hubspot.baragon.models.BaragonAgentState;
 import com.hubspot.baragon.models.BaragonKnownAgentMetadata;
 
 import io.dropwizard.lifecycle.Managed;
-
-import org.apache.curator.framework.recipes.leader.LeaderLatch;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class BootstrapManaged implements Managed {
   private static final Logger LOG = LoggerFactory.getLogger(BootstrapManaged.class);
@@ -34,6 +36,8 @@ public class BootstrapManaged implements Managed {
   private final ScheduledExecutorService executorService;
   private final AgentHeartbeatWorker agentHeartbeatWorker;
   private final LifecycleHelper lifecycleHelper;
+  private final CuratorFramework curatorFramework;
+  private final ResyncListener resyncListener;
   private final ConfigChecker configChecker;
   private final AtomicReference<BaragonAgentState> agentState;
 
@@ -47,12 +51,16 @@ public class BootstrapManaged implements Managed {
                           AgentHeartbeatWorker agentHeartbeatWorker,
                           BaragonAgentMetadata baragonAgentMetadata,
                           LifecycleHelper lifecycleHelper,
+                          CuratorFramework curatorFramework,
+                          ResyncListener resyncListener,
                           ConfigChecker configChecker,
                           AtomicReference<BaragonAgentState> agentState,
                           @Named(BaragonAgentServiceModule.AGENT_SCHEDULED_EXECUTOR) ScheduledExecutorService executorService,
                           @Named(BaragonAgentServiceModule.AGENT_LEADER_LATCH) LeaderLatch leaderLatch) {
     this.configuration = configuration;
     this.leaderLatch = leaderLatch;
+    this.curatorFramework = curatorFramework;
+    this.resyncListener = resyncListener;
     this.knownAgentsDatastore = knownAgentsDatastore;
     this.loadBalancerDatastore = loadBalancerDatastore;
     this.baragonAgentMetadata = baragonAgentMetadata;
@@ -89,6 +97,9 @@ public class BootstrapManaged implements Managed {
 
     LOG.info("Starting config checker");
     configCheckerFuture = executorService.scheduleAtFixedRate(configChecker, 0, configuration.getConfigCheckIntervalSecs(), TimeUnit.SECONDS);
+
+    LOG.info("Adding resync listener");
+    curatorFramework.getConnectionStateListenable().addListener(resyncListener);
 
     lifecycleHelper.writeStateFileIfConfigured();
 
