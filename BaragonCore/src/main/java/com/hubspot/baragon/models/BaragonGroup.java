@@ -14,19 +14,19 @@ public class BaragonGroup {
   private final String name;
   @Deprecated
   private Optional<String> domain;
-  private Set<String> sources;
+  private Set<TrafficSource> sources;
   private Optional<String> defaultDomain;
   private Set<String> domains;
 
   @JsonCreator
   public BaragonGroup(@JsonProperty("name") String name,
                       @JsonProperty("domain") Optional<String> domain,
-                      @JsonProperty("sources") Set<String> sources,
+                      @JsonProperty("sources") Set<TrafficSource> sources,
                       @JsonProperty("defaultDomain") Optional<String> defaultDomain,
                       @JsonProperty("domains") Set<String> domains) {
     this.name = name;
     this.domain = domain;
-    this.sources = Objects.firstNonNull(sources, Collections.<String>emptySet());
+    this.sources = Objects.firstNonNull(sources, Collections.<TrafficSource>emptySet());
     this.defaultDomain = defaultDomain;
     this.domains = Objects.firstNonNull(domains, Collections.<String>emptySet());
   }
@@ -45,11 +45,11 @@ public class BaragonGroup {
     this.domain = domain;
   }
 
-  public Set<String> getSources() {
+  public Set<TrafficSource> getSources() {
     return sources;
   }
 
-  public void setSources(Set<String> sources) {
+  public void setSources(Set<TrafficSource> sources) {
     this.sources = sources;
   }
 
