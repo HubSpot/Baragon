@@ -204,7 +204,7 @@ public class ClassicLoadBalancer extends ElasticLoadBalancer {
         }
       }
     } else {
-      LOG.debug("No new instances to register for group %s", group.getName());
+      LOG.debug("No new instances to register for group {}", group.getName());
     }
   }
 
