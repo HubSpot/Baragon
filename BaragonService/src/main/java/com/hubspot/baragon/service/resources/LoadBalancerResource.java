@@ -89,7 +89,7 @@ public class LoadBalancerResource {
   }
 
   @DELETE
-  @Path("/{clusterName/traffic-source")
+  @Path("/{clusterName}/traffic-source")
   public Optional<BaragonGroup> removeTrafficSource(@PathParam("clusterName") String clusterName, TrafficSource trafficSource) {
     return loadBalancerDatastore.removeSourceFromGroup(clusterName, trafficSource);
   }
