@@ -24,6 +24,7 @@ import com.amazonaws.services.elasticloadbalancingv2.model.RegisterTargetsReques
 import com.amazonaws.services.elasticloadbalancingv2.model.SetSubnetsRequest;
 import com.amazonaws.services.elasticloadbalancingv2.model.TargetDescription;
 import com.amazonaws.services.elasticloadbalancingv2.model.TargetGroup;
+import com.amazonaws.services.elasticloadbalancingv2.model.TargetGroupNotFoundException;
 import com.amazonaws.services.elasticloadbalancingv2.model.TargetHealthDescription;
 import com.amazonaws.services.elasticloadbalancingv2.model.TargetHealthStateEnum;
 import com.google.common.base.Optional;
@@ -186,13 +187,19 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
   private Optional<TargetGroup> getTargetGroup(String trafficSourceName) {
     DescribeTargetGroupsRequest targetGroupsRequest = new DescribeTargetGroupsRequest()
         .withNames(trafficSourceName);
-    List<TargetGroup> maybeTargetGroup = elbClient
-        .describeTargetGroups(targetGroupsRequest)
-        .getTargetGroups();
 
-    if (maybeTargetGroup.size() > 0) {
-      return Optional.of(maybeTargetGroup.get(0));
-    } else {
+    try {
+      List<TargetGroup> maybeTargetGroup = elbClient
+          .describeTargetGroups(targetGroupsRequest)
+          .getTargetGroups();
+
+      if (maybeTargetGroup.size() > 0) {
+        return Optional.of(maybeTargetGroup.get(0));
+      } else {
+        return Optional.absent();
+      }
+    } catch (TargetGroupNotFoundException exn) {
+      LOG.warn("Could not find target group with name {}", trafficSourceName);
       return Optional.absent();
     }
   }
