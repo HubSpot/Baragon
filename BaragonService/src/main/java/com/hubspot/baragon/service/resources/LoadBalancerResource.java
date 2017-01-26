@@ -69,6 +69,7 @@ public class LoadBalancerResource {
 
   @POST
   @Path("/{clusterName}/sources")
+  @Deprecated
   public BaragonGroup addSource(@PathParam("clusterName") String clusterName, @QueryParam("source") String source) {
     TrafficSource trafficSource = new TrafficSource(source, TrafficSourceType.CLASSIC);
     return loadBalancerDatastore.addSourceToGroup(clusterName, trafficSource);
@@ -76,8 +77,21 @@ public class LoadBalancerResource {
 
   @DELETE
   @Path("/{clusterName}/sources")
+  @Deprecated
   public Optional<BaragonGroup> removeSource(@PathParam("clusterName") String clusterName, @QueryParam("source") String source) {
     return loadBalancerDatastore.removeSourceFromGroup(clusterName, new TrafficSource(source, TrafficSourceType.CLASSIC));
+  }
+
+  @POST
+  @Path("/{clusterName}/traffic-source")
+  public BaragonGroup addTrafficSource(@PathParam("clusterName") String clusterName, TrafficSource trafficSource) {
+    return loadBalancerDatastore.addSourceToGroup(clusterName, trafficSource);
+  }
+
+  @DELETE
+  @Path("/{clusterName/traffic-source")
+  public Optional<BaragonGroup> removeTrafficSource(@PathParam("clusterName") String clusterName, TrafficSource trafficSource) {
+    return loadBalancerDatastore.removeSourceFromGroup(clusterName, trafficSource);
   }
 
   @POST
