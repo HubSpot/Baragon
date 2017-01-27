@@ -87,13 +87,13 @@ public class ElbManager {
         if (agent.getEc2().getInstanceId().isPresent()) {
           return true;
         } else {
-          LOG.debug(String.format("No instance id for agent %s, can't add to ELB", agent.getAgentId()));
+          LOG.debug("No instance id for agent {}, can't add to ELB", agent.getAgentId());
         }
       } else {
-        LOG.debug(String.format("No traffic sources for group %s, not adding agent %s to an ELB", group.get().getName(), agent.getAgentId()));
+        LOG.debug("No traffic sources for group {}, not adding agent {} to an ELB", group.get().getName(), agent.getAgentId());
       }
     } else {
-      LOG.debug(String.format("Group %s not found for agent %s", groupName, agent.getAgentId()));
+      LOG.debug("Group {} not found for agent {}", groupName, agent.getAgentId());
     }
     return false;
   }

@@ -39,7 +39,6 @@ import com.hubspot.baragon.data.BaragonLoadBalancerDatastore;
 import com.hubspot.baragon.models.BaragonAgentMetadata;
 import com.hubspot.baragon.models.BaragonGroup;
 import com.hubspot.baragon.models.TrafficSource;
-import com.hubspot.baragon.models.TrafficSourceType;
 import com.hubspot.baragon.service.BaragonServiceModule;
 import com.hubspot.baragon.service.config.ElbConfiguration;
 import com.hubspot.baragon.service.exceptions.BaragonExceptionNotifier;
@@ -144,7 +143,7 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
 
   @Override
   public void syncAll(Collection<BaragonGroup> baragonGroups) {
-    Collection<LoadBalancer> allLoadBalancers = getAllLoadBalancers(baragonGroups);
+    Collection<LoadBalancer> allLoadBalancers = getAllLoadBalancers();
     for (BaragonGroup baragonGroup : baragonGroups) {
       if (baragonGroup.getSources().isEmpty()) {
         LOG.debug("No traffic sources present for group {}", baragonGroup.getName());
@@ -236,19 +235,9 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
     }
   }
 
-  private Collection<LoadBalancer> getAllLoadBalancers(Collection<BaragonGroup> baragonGroups) {
-    Set<String> trafficSources = new HashSet<>();
-    for (BaragonGroup baragonGroup : baragonGroups) {
-      for (TrafficSource trafficSource : baragonGroup.getSources()) {
-        if (trafficSource.getType() == TrafficSourceType.APPLICATION) {
-          trafficSources.add(trafficSource.getName());
-        }
-      }
-    }
-
+  private Collection<LoadBalancer> getAllLoadBalancers() {
     Collection<LoadBalancer> loadBalancers = new HashSet<>();
-    DescribeLoadBalancersRequest loadBalancersRequest = new DescribeLoadBalancersRequest()
-        .withNames(trafficSources);
+    DescribeLoadBalancersRequest loadBalancersRequest = new DescribeLoadBalancersRequest();
     DescribeLoadBalancersResult result = elbClient.describeLoadBalancers(loadBalancersRequest);
     String nextPage = result.getNextMarker();
     loadBalancers.addAll(result.getLoadBalancers());
