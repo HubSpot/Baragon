@@ -17,9 +17,11 @@ import com.amazonaws.services.elasticloadbalancingv2.model.DeregisterTargetsRequ
 import com.amazonaws.services.elasticloadbalancingv2.model.DescribeLoadBalancersRequest;
 import com.amazonaws.services.elasticloadbalancingv2.model.DescribeLoadBalancersResult;
 import com.amazonaws.services.elasticloadbalancingv2.model.DescribeTargetGroupsRequest;
+import com.amazonaws.services.elasticloadbalancingv2.model.DescribeTargetGroupsResult;
 import com.amazonaws.services.elasticloadbalancingv2.model.DescribeTargetHealthRequest;
 import com.amazonaws.services.elasticloadbalancingv2.model.DescribeTargetHealthResult;
 import com.amazonaws.services.elasticloadbalancingv2.model.LoadBalancer;
+import com.amazonaws.services.elasticloadbalancingv2.model.LoadBalancerNotFoundException;
 import com.amazonaws.services.elasticloadbalancingv2.model.RegisterTargetsRequest;
 import com.amazonaws.services.elasticloadbalancingv2.model.SetSubnetsRequest;
 import com.amazonaws.services.elasticloadbalancingv2.model.TargetDescription;
@@ -183,7 +185,64 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
     }
   }
 
-  private Optional<TargetGroup> getTargetGroup(String trafficSourceName) {
+  public Collection<LoadBalancer> getAllLoadBalancers() {
+    Collection<LoadBalancer> loadBalancers = new HashSet<>();
+    DescribeLoadBalancersRequest loadBalancersRequest = new DescribeLoadBalancersRequest();
+    DescribeLoadBalancersResult result = elbClient.describeLoadBalancers(loadBalancersRequest);
+    String nextPage = result.getNextMarker();
+    loadBalancers.addAll(result.getLoadBalancers());
+
+    while (!Strings.isNullOrEmpty(nextPage)) {
+      loadBalancersRequest = new DescribeLoadBalancersRequest()
+          .withMarker(nextPage);
+      result = elbClient.describeLoadBalancers(loadBalancersRequest);
+      nextPage = result.getNextMarker();
+      loadBalancers.addAll(result.getLoadBalancers());
+    }
+
+    return loadBalancers;
+  }
+
+  public Optional<LoadBalancer> getLoadBalancer(String loadBalancer) {
+    DescribeLoadBalancersRequest request = new DescribeLoadBalancersRequest()
+        .withNames(loadBalancer);
+
+    try {
+      List<LoadBalancer> maybeLoadBalancer = elbClient
+          .describeLoadBalancers(request)
+          .getLoadBalancers();
+
+      if (maybeLoadBalancer.size() > 0) {
+        return Optional.of(maybeLoadBalancer.get(0));
+      } else {
+        return Optional.absent();
+      }
+    } catch (LoadBalancerNotFoundException notFound) {
+      LOG.warn("Could not find load balancer with name {}", loadBalancer);
+      return Optional.absent();
+    }
+  }
+
+  public Collection<TargetGroup> getAllTargetGroups() {
+    Collection<TargetGroup> targetGroups = new HashSet<>();
+    DescribeTargetGroupsRequest request = new DescribeTargetGroupsRequest();
+    DescribeTargetGroupsResult result = elbClient.describeTargetGroups(request);
+    String nextMarker = result.getNextMarker();
+    targetGroups.addAll(result.getTargetGroups());
+
+
+    while (!Strings.isNullOrEmpty(nextMarker)) {
+      DescribeTargetGroupsRequest nextRequest = new DescribeTargetGroupsRequest()
+          .withMarker(nextMarker);
+      DescribeTargetGroupsResult nextResult = elbClient.describeTargetGroups(nextRequest);
+      nextMarker = nextResult.getNextMarker();
+      targetGroups.addAll(nextResult.getTargetGroups());
+    }
+
+    return targetGroups;
+  }
+
+  public Optional<TargetGroup> getTargetGroup(String trafficSourceName) {
     DescribeTargetGroupsRequest targetGroupsRequest = new DescribeTargetGroupsRequest()
         .withNames(trafficSourceName);
 
@@ -233,24 +292,6 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
     } else {
       return true;
     }
-  }
-
-  private Collection<LoadBalancer> getAllLoadBalancers() {
-    Collection<LoadBalancer> loadBalancers = new HashSet<>();
-    DescribeLoadBalancersRequest loadBalancersRequest = new DescribeLoadBalancersRequest();
-    DescribeLoadBalancersResult result = elbClient.describeLoadBalancers(loadBalancersRequest);
-    String nextPage = result.getNextMarker();
-    loadBalancers.addAll(result.getLoadBalancers());
-
-    while (!Strings.isNullOrEmpty(nextPage)) {
-      loadBalancersRequest = new DescribeLoadBalancersRequest()
-          .withMarker(nextPage);
-      result = elbClient.describeLoadBalancers(loadBalancersRequest);
-      nextPage = result.getNextMarker();
-      loadBalancers.addAll(result.getLoadBalancers());
-    }
-
-    return loadBalancers;
   }
 
   private Collection<LoadBalancer> getLoadBalancersByBaragonGroup(Collection<LoadBalancer> allLoadBalancers, BaragonGroup baragonGroup) {
