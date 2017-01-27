@@ -14,6 +14,7 @@ import com.amazonaws.services.elasticloadbalancing.model.Instance;
 import com.amazonaws.services.elasticloadbalancingv2.AmazonElasticLoadBalancingClient;
 import com.amazonaws.services.elasticloadbalancingv2.model.AvailabilityZone;
 import com.amazonaws.services.elasticloadbalancingv2.model.DeregisterTargetsRequest;
+import com.amazonaws.services.elasticloadbalancingv2.model.DeregisterTargetsResult;
 import com.amazonaws.services.elasticloadbalancingv2.model.DescribeLoadBalancersRequest;
 import com.amazonaws.services.elasticloadbalancingv2.model.DescribeLoadBalancersResult;
 import com.amazonaws.services.elasticloadbalancingv2.model.DescribeTargetGroupsRequest;
@@ -85,25 +86,47 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
 
   @Override
   public void removeInstance(Instance instance, String trafficSourceName, String agentId) {
+    removeInstance(instance.getInstanceId(), trafficSourceName);
+  }
+
+  public Optional<DeregisterTargetsResult> removeInstance(String instanceId, String trafficSourceName) {
     Optional<TargetGroup> maybeTargetGroup = getTargetGroup(trafficSourceName);
     if (maybeTargetGroup.isPresent()) {
       TargetGroup targetGroup = maybeTargetGroup.get();
       TargetDescription targetDescription = new TargetDescription()
-          .withId(instance.getInstanceId());
+          .withId(instanceId);
       if (targetsOn(targetGroup).contains(targetDescription.getId())) {
         DeregisterTargetsRequest deregisterTargetsRequest = new DeregisterTargetsRequest()
             .withTargets(targetDescription)
             .withTargetGroupArn(targetGroup.getTargetGroupArn());
         try {
-          elbClient.deregisterTargets(deregisterTargetsRequest);
-          LOG.info("De-registered instance {} from target group {}", instance.getInstanceId(), targetGroup);
+          DeregisterTargetsResult result = elbClient.deregisterTargets(deregisterTargetsRequest);
+          LOG.info("De-registered instance {} from target group {}", instanceId, targetGroup);
+          return Optional.of(result);
         } catch (AmazonServiceException exn) {
-          LOG.warn("Failed to de-register instance {} from target group {}", instance.getInstanceId(), targetGroup);
+          LOG.warn("Failed to de-register instance {} from target group {}", instanceId, targetGroup);
         }
       } else {
-        LOG.debug("Instance {} not found at target group {}", instance.getInstanceId(), targetGroup);
+        LOG.debug("Instance {} not found at target group {}", instanceId, targetGroup);
       }
     }
+
+    return Optional.absent();
+  }
+
+  public Collection<TargetDescription> getTargetsOn(TargetGroup targetGroup) {
+    DescribeTargetHealthRequest targetHealthRequest = new DescribeTargetHealthRequest()
+        .withTargetGroupArn(targetGroup.getTargetGroupArn());
+    Collection<TargetHealthDescription> targetHealth = elbClient
+        .describeTargetHealth(targetHealthRequest)
+        .getTargetHealthDescriptions();
+
+    Collection<TargetDescription> targets = new HashSet<>();
+    for (TargetHealthDescription targetHealthDescription : targetHealth) {
+      targets.add(targetHealthDescription.getTarget());
+    }
+
+    return targets;
   }
 
   @Override
@@ -120,26 +143,39 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
         LOG.debug("VPC not configured to accept agent {}", agent);
         return RegisterInstanceResult.ELB_NO_VPC_FOUND;
       } else {
-        TargetDescription newTarget = new TargetDescription()
-            .withId(instance.getInstanceId());
-
-        if (targetsOn(targetGroup).contains(newTarget.getId())) {
-          try {
-            RegisterTargetsRequest registerTargetsRequest = new RegisterTargetsRequest()
-                .withTargets(newTarget)
-                .withTargetGroupArn(targetGroup.getTargetGroupArn());
-            elbClient.registerTargets(registerTargetsRequest);
-            LOG.info("Registered instance {} with target group {}", newTarget.getId(), targetGroup);
-            return RegisterInstanceResult.ELB_AND_VPC_FOUND;
-          } catch (AmazonServiceException exn) {
-            LOG.warn("Failed to register instance {} with target group {}", instance.getInstanceId(), targetGroup);
-            throw Throwables.propagate(exn);
-          }
-        } else {
-          LOG.debug("Instance {} already registered with target group {}", instance.getInstanceId(), targetGroup);
-          return RegisterInstanceResult.ELB_AND_VPC_FOUND;
-        }
+        return registerInstance(instance.getInstanceId(), targetGroup);
       }
+    }
+  }
+
+  public RegisterInstanceResult registerInstance(String instanceId, String targetGroup) {
+    Optional<TargetGroup> maybeTargetGroup = getTargetGroup(targetGroup);
+    if (maybeTargetGroup.isPresent()) {
+      return registerInstance(instanceId, maybeTargetGroup.get());
+    } else {
+      return RegisterInstanceResult.NOT_FOUND;
+    }
+  }
+
+  private RegisterInstanceResult registerInstance(String instanceId, TargetGroup targetGroup) {
+    TargetDescription newTarget = new TargetDescription()
+        .withId(instanceId);
+
+    if (targetsOn(targetGroup).contains(newTarget.getId())) {
+      try {
+        RegisterTargetsRequest registerTargetsRequest = new RegisterTargetsRequest()
+            .withTargets(newTarget)
+            .withTargetGroupArn(targetGroup.getTargetGroupArn());
+        elbClient.registerTargets(registerTargetsRequest);
+        LOG.info("Registered instance {} with target group {}", newTarget.getId(), targetGroup);
+        return RegisterInstanceResult.ELB_AND_VPC_FOUND;
+      } catch (AmazonServiceException exn) {
+        LOG.warn("Failed to register instance {} with target group {}", instanceId, targetGroup);
+        throw Throwables.propagate(exn);
+      }
+    } else {
+      LOG.debug("Instance {} already registered with target group {}", instanceId, targetGroup);
+      return RegisterInstanceResult.ELB_AND_VPC_FOUND;
     }
   }
 
