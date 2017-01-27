@@ -6,28 +6,17 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 
-import org.jukito.JukitoModule;
-import org.jukito.JukitoRunner;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
-import org.junit.runner.RunWith;
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import com.google.inject.Inject;
 
 import io.dropwizard.configuration.ConfigurationSourceProvider;
 import io.dropwizard.jackson.Jackson;
 
-@RunWith(JukitoRunner.class)
 public class MergingConfigProviderTest {
-
-  @Rule
-  public ExpectedException expectedException = ExpectedException.none();
-
   private static final String DEFAULT_PATH = "/configs/default.yaml";
   private static final String OVERRIDE_PATH = "/configs/override.yaml";
   private static final String JUST_A_STRING_PATH = "/configs/just_a_string.yaml";
@@ -35,19 +24,9 @@ public class MergingConfigProviderTest {
 
   private static final YAMLFactory YAML_FACTORY = new YAMLFactory();
 
-  public static class Module extends JukitoModule {
-    @Override
-    protected void configureTest() {
-      ObjectMapper mapper = Jackson.newObjectMapper()
-          .setSerializationInclusion(Include.NON_NULL)
-          .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-
-      bind(ObjectMapper.class).toInstance(mapper);
-    }
-  }
-
-  @Inject
-  ObjectMapper objectMapper;
+  ObjectMapper objectMapper = Jackson.newObjectMapper()
+      .setSerializationInclusion(Include.NON_NULL)
+      .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
   private ConfigurationSourceProvider buildConfigSourceProvider(String baseFileName) {
     final Class<?> klass = this.getClass();
@@ -83,30 +62,26 @@ public class MergingConfigProviderTest {
     assertEquals("master-auth-key", mergedConfig.getMasterAuthKey());
   }
 
-  @Test
+  @Test(expected = IllegalArgumentException.class)
   public void itThrowsExnOnNonObjectOverride() throws Exception {
-    expectedException.expect(IllegalArgumentException.class);
     buildConfigSourceProvider(DEFAULT_PATH)
         .open(JUST_A_STRING_PATH);
   }
 
-  @Test
+  @Test(expected = IllegalArgumentException.class)
   public void itThrowsExnOnNonObjectDefault() throws Exception {
-    expectedException.expect(IllegalArgumentException.class);
     buildConfigSourceProvider(JUST_A_STRING_PATH)
         .open(OVERRIDE_PATH);
   }
 
-  @Test
+  @Test(expected = FileNotFoundException.class)
   public void itThrowsExnOnNotFoundOverridePath() throws Exception {
-    expectedException.expect(FileNotFoundException.class);
     buildConfigSourceProvider(DEFAULT_PATH)
         .open(DOESNT_EXIST_PATH);
   }
 
-  @Test
+  @Test(expected = FileNotFoundException.class)
   public void itThrowsExnOnNotFoundDefaultPath() throws Exception {
-    expectedException.expect(FileNotFoundException.class);
     buildConfigSourceProvider(DOESNT_EXIST_PATH)
         .open(OVERRIDE_PATH);
   }

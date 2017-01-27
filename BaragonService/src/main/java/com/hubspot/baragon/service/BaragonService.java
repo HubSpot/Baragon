@@ -1,9 +1,12 @@
 package com.hubspot.baragon.service;
 
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.google.common.base.Strings;
 import com.google.inject.Stage;
 import com.hubspot.baragon.auth.BaragonAuthUpdater;
 import com.hubspot.baragon.service.bundles.CorsBundle;
 import com.hubspot.baragon.service.config.BaragonConfiguration;
+import com.hubspot.baragon.service.config.MergingConfigProvider;
 import com.hubspot.dropwizard.guice.GuiceBundle;
 import com.palominolabs.metrics.guice.MetricsInstrumentationModule;
 
@@ -14,9 +17,19 @@ import io.dropwizard.setup.Environment;
 import io.dropwizard.views.ViewBundle;
 
 public class BaragonService extends Application<BaragonConfiguration> {
+  private static final String BARAGON_DEFAULT_CONFIG_LOCATION = "baragonDefaultConfiguration";
 
   @Override
   public void initialize(Bootstrap<BaragonConfiguration> bootstrap) {
+    if (!Strings.isNullOrEmpty(System.getProperty(BARAGON_DEFAULT_CONFIG_LOCATION))) {
+      bootstrap.setConfigurationSourceProvider(
+          new MergingConfigProvider(
+              bootstrap.getConfigurationSourceProvider(),
+              System.getProperty(BARAGON_DEFAULT_CONFIG_LOCATION),
+              bootstrap.getObjectMapper(),
+              new YAMLFactory()));
+    }
+
     GuiceBundle<BaragonConfiguration> guiceBundle = GuiceBundle.<BaragonConfiguration>newBuilder()
         .addModule(new BaragonServiceModule())
         .addModule(new MetricsInstrumentationModule(bootstrap.getMetricRegistry()))
