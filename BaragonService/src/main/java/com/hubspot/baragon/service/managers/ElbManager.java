@@ -106,7 +106,7 @@ public class ElbManager {
 
   private ElasticLoadBalancer getLoadBalancer(TrafficSourceType type) {
     switch (type) {
-      case APPLICATION:
+      case ALB_TARGET_GROUP:
         return applicationLoadBalancer;
       case CLASSIC:
       default:

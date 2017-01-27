@@ -1,5 +1,5 @@
 package com.hubspot.baragon.models;
 
 public enum TrafficSourceType {
-  CLASSIC, APPLICATION, NETWORK
+  CLASSIC, ALB_TARGET_GROUP, NETWORK
 }
