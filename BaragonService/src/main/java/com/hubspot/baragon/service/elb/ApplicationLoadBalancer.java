@@ -17,13 +17,16 @@ import com.amazonaws.services.elasticloadbalancingv2.model.DeregisterTargetsRequ
 import com.amazonaws.services.elasticloadbalancingv2.model.DescribeLoadBalancersRequest;
 import com.amazonaws.services.elasticloadbalancingv2.model.DescribeLoadBalancersResult;
 import com.amazonaws.services.elasticloadbalancingv2.model.DescribeTargetGroupsRequest;
+import com.amazonaws.services.elasticloadbalancingv2.model.DescribeTargetGroupsResult;
 import com.amazonaws.services.elasticloadbalancingv2.model.DescribeTargetHealthRequest;
 import com.amazonaws.services.elasticloadbalancingv2.model.DescribeTargetHealthResult;
 import com.amazonaws.services.elasticloadbalancingv2.model.LoadBalancer;
+import com.amazonaws.services.elasticloadbalancingv2.model.LoadBalancerNotFoundException;
 import com.amazonaws.services.elasticloadbalancingv2.model.RegisterTargetsRequest;
 import com.amazonaws.services.elasticloadbalancingv2.model.SetSubnetsRequest;
 import com.amazonaws.services.elasticloadbalancingv2.model.TargetDescription;
 import com.amazonaws.services.elasticloadbalancingv2.model.TargetGroup;
+import com.amazonaws.services.elasticloadbalancingv2.model.TargetGroupNotFoundException;
 import com.amazonaws.services.elasticloadbalancingv2.model.TargetHealthDescription;
 import com.amazonaws.services.elasticloadbalancingv2.model.TargetHealthStateEnum;
 import com.google.common.base.Optional;
@@ -38,7 +41,6 @@ import com.hubspot.baragon.data.BaragonLoadBalancerDatastore;
 import com.hubspot.baragon.models.BaragonAgentMetadata;
 import com.hubspot.baragon.models.BaragonGroup;
 import com.hubspot.baragon.models.TrafficSource;
-import com.hubspot.baragon.models.TrafficSourceType;
 import com.hubspot.baragon.service.BaragonServiceModule;
 import com.hubspot.baragon.service.config.ElbConfiguration;
 import com.hubspot.baragon.service.exceptions.BaragonExceptionNotifier;
@@ -143,7 +145,7 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
 
   @Override
   public void syncAll(Collection<BaragonGroup> baragonGroups) {
-    Collection<LoadBalancer> allLoadBalancers = getAllLoadBalancers(baragonGroups);
+    Collection<LoadBalancer> allLoadBalancers = getAllLoadBalancers();
     for (BaragonGroup baragonGroup : baragonGroups) {
       if (baragonGroup.getSources().isEmpty()) {
         LOG.debug("No traffic sources present for group {}", baragonGroup.getName());
@@ -183,16 +185,79 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
     }
   }
 
-  private Optional<TargetGroup> getTargetGroup(String trafficSourceName) {
+  public Collection<LoadBalancer> getAllLoadBalancers() {
+    Collection<LoadBalancer> loadBalancers = new HashSet<>();
+    DescribeLoadBalancersRequest loadBalancersRequest = new DescribeLoadBalancersRequest();
+    DescribeLoadBalancersResult result = elbClient.describeLoadBalancers(loadBalancersRequest);
+    String nextPage = result.getNextMarker();
+    loadBalancers.addAll(result.getLoadBalancers());
+
+    while (!Strings.isNullOrEmpty(nextPage)) {
+      loadBalancersRequest = new DescribeLoadBalancersRequest()
+          .withMarker(nextPage);
+      result = elbClient.describeLoadBalancers(loadBalancersRequest);
+      nextPage = result.getNextMarker();
+      loadBalancers.addAll(result.getLoadBalancers());
+    }
+
+    return loadBalancers;
+  }
+
+  public Optional<LoadBalancer> getLoadBalancer(String loadBalancer) {
+    DescribeLoadBalancersRequest request = new DescribeLoadBalancersRequest()
+        .withNames(loadBalancer);
+
+    try {
+      List<LoadBalancer> maybeLoadBalancer = elbClient
+          .describeLoadBalancers(request)
+          .getLoadBalancers();
+
+      if (maybeLoadBalancer.size() > 0) {
+        return Optional.of(maybeLoadBalancer.get(0));
+      } else {
+        return Optional.absent();
+      }
+    } catch (LoadBalancerNotFoundException notFound) {
+      LOG.warn("Could not find load balancer with name {}", loadBalancer);
+      return Optional.absent();
+    }
+  }
+
+  public Collection<TargetGroup> getAllTargetGroups() {
+    Collection<TargetGroup> targetGroups = new HashSet<>();
+    DescribeTargetGroupsRequest request = new DescribeTargetGroupsRequest();
+    DescribeTargetGroupsResult result = elbClient.describeTargetGroups(request);
+    String nextMarker = result.getNextMarker();
+    targetGroups.addAll(result.getTargetGroups());
+
+
+    while (!Strings.isNullOrEmpty(nextMarker)) {
+      DescribeTargetGroupsRequest nextRequest = new DescribeTargetGroupsRequest()
+          .withMarker(nextMarker);
+      DescribeTargetGroupsResult nextResult = elbClient.describeTargetGroups(nextRequest);
+      nextMarker = nextResult.getNextMarker();
+      targetGroups.addAll(nextResult.getTargetGroups());
+    }
+
+    return targetGroups;
+  }
+
+  public Optional<TargetGroup> getTargetGroup(String trafficSourceName) {
     DescribeTargetGroupsRequest targetGroupsRequest = new DescribeTargetGroupsRequest()
         .withNames(trafficSourceName);
-    List<TargetGroup> maybeTargetGroup = elbClient
-        .describeTargetGroups(targetGroupsRequest)
-        .getTargetGroups();
 
-    if (maybeTargetGroup.size() > 0) {
-      return Optional.of(maybeTargetGroup.get(0));
-    } else {
+    try {
+      List<TargetGroup> maybeTargetGroup = elbClient
+          .describeTargetGroups(targetGroupsRequest)
+          .getTargetGroups();
+
+      if (maybeTargetGroup.size() > 0) {
+        return Optional.of(maybeTargetGroup.get(0));
+      } else {
+        return Optional.absent();
+      }
+    } catch (TargetGroupNotFoundException exn) {
+      LOG.warn("Could not find target group with name {}", trafficSourceName);
       return Optional.absent();
     }
   }
@@ -227,34 +292,6 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
     } else {
       return true;
     }
-  }
-
-  private Collection<LoadBalancer> getAllLoadBalancers(Collection<BaragonGroup> baragonGroups) {
-    Set<String> trafficSources = new HashSet<>();
-    for (BaragonGroup baragonGroup : baragonGroups) {
-      for (TrafficSource trafficSource : baragonGroup.getSources()) {
-        if (trafficSource.getType() == TrafficSourceType.APPLICATION) {
-          trafficSources.add(trafficSource.getName());
-        }
-      }
-    }
-
-    Collection<LoadBalancer> loadBalancers = new HashSet<>();
-    DescribeLoadBalancersRequest loadBalancersRequest = new DescribeLoadBalancersRequest()
-        .withNames(trafficSources);
-    DescribeLoadBalancersResult result = elbClient.describeLoadBalancers(loadBalancersRequest);
-    String nextPage = result.getNextMarker();
-    loadBalancers.addAll(result.getLoadBalancers());
-
-    while (!Strings.isNullOrEmpty(nextPage)) {
-      loadBalancersRequest = new DescribeLoadBalancersRequest()
-          .withMarker(nextPage);
-      result = elbClient.describeLoadBalancers(loadBalancersRequest);
-      nextPage = result.getNextMarker();
-      loadBalancers.addAll(result.getLoadBalancers());
-    }
-
-    return loadBalancers;
   }
 
   private Collection<LoadBalancer> getLoadBalancersByBaragonGroup(Collection<LoadBalancer> allLoadBalancers, BaragonGroup baragonGroup) {
