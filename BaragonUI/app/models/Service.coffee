@@ -89,7 +89,7 @@ class Service extends Model
                         loadBalancerGroups: @attributes.service.loadBalancerGroups
                         options: @attributes.options
                     addUpstreams: []
-                    removeUpstreams: [getByUpsteamName(upstream, requestId)]
+                    removeUpstreams: [@getByUpsteamName(upstream, requestId)]
                     noValidate: noValidate,
                     noReload: noReload
                 }
