@@ -1,8 +1,10 @@
 package com.hubspot.baragon.service.views;
 
-import com.hubspot.baragon.service.config.BaragonConfiguration;
-import io.dropwizard.views.View;
 import static com.google.common.base.Preconditions.checkNotNull;
+
+import com.hubspot.baragon.service.config.BaragonConfiguration;
+
+import io.dropwizard.views.View;
 
 public class IndexView extends View {
 
@@ -20,6 +22,7 @@ public class IndexView extends View {
 
     String rawAppRoot = String.format("%s%s", baragonUriBase, appRoot);
 
+    // TEMP
     this.appRoot = (rawAppRoot.endsWith("/")) ? rawAppRoot.substring(0, rawAppRoot.length() - 1) : rawAppRoot;
     this.staticRoot = String.format("%s/static", baragonUriBase);
     this.apiRoot = String.format("%s", baragonUriBase);
