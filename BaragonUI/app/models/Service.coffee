@@ -89,7 +89,7 @@ class Service extends Model
                         loadBalancerGroups: @attributes.service.loadBalancerGroups
                         options: @attributes.options
                     addUpstreams: []
-                    removeUpstreams: [{upstream: upstream, request: requestId}]
+                    removeUpstreams: [@getByUpsteamName(upstream, requestId)]
                     noValidate: noValidate,
                     noReload: noReload
                 }
@@ -101,6 +101,12 @@ class Service extends Model
         })
 
     requestId: -> "#{@serviceId}-#{Date.now()}"
+
+    getByUpsteamName: (upstream, requestId) =>
+        for key in @attributes.upstreams
+            if (key.upstream == upstream)
+              return $.extend({}, key, {requestId: requestId})
+        return {upstream: upstream, requestId: requestId}
 
 
     promptDelete: (callback) =>
