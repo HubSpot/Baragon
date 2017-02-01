@@ -34,9 +34,14 @@ class Group extends Model
             type: "DELETE"
 
     addSource: (source) =>
+        body =
+          name: source["source-name"]
+          type: source["source-type"]
         $.ajax
-            url: "#{ @url() }/sources?authkey=#{ localStorage.getItem 'baragonAuthKey' }&source=#{source}"
-            type: "POST"
+            url: "#{ @url() }/traffic-source?authkey=#{ localStorage.getItem 'baragonAuthKey' }"
+            type: 'POST'
+            contentType: 'application/json'
+            data: JSON.stringify(body)
 
     promptRemoveSource: (source, callback) =>
         vex.dialog.confirm
@@ -53,7 +58,11 @@ class Group extends Model
 
     promptAddSource: (callback) =>
         input = """
-                <input name="source" type="text" placeholder="Traffic Source Name" required />
+                <input name="source-name" type="text" placeholder="Traffic Source Name" required />
+                <select name="source-type" class="form-control">
+                  <option value="CLASSIC">Classic Load Balancer</option>
+                  <option value="ALB_TARGET_GROUP">Target Group</option>
+                </select>
             """
         vex.dialog.confirm
             message: @sourceAddTemplate
@@ -65,7 +74,6 @@ class Group extends Model
                 vex.dialog.buttons.NO
             ]
             callback: (data) =>
-                return if data is false
-                @addSource(data.source).done callback
+                @addSource(data).done callback
 
 module.exports = Group
