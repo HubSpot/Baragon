@@ -1,0 +1,6 @@
+zookeeper:
+  connectTimeoutMillis: 100
+  retryBaseSleepTimeMilliseconds: 100
+  zkNamespace: "default-namespace"
+agentMaxAttempts: 2
+hostname: localhost

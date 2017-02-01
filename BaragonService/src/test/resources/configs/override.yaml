@@ -1,0 +1,6 @@
+zookeeper:
+  quorum: "override-quorum"
+  sessionTimeoutMillis: 100
+  zkNamespace: "override-namespace"
+hostname: "127.0.0.1"
+masterAuthKey: "master-auth-key"
