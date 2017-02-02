@@ -2,6 +2,8 @@ package com.hubspot.baragon.service.resources;
 
 import java.util.Collection;
 
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -84,13 +86,15 @@ public class LoadBalancerResource {
 
   @POST
   @Path("/{clusterName}/traffic-source")
-  public BaragonGroup addTrafficSource(@PathParam("clusterName") String clusterName, TrafficSource trafficSource) {
+  public BaragonGroup addTrafficSource(@PathParam("clusterName") String clusterName,
+                                       @NotNull @Valid TrafficSource trafficSource) {
     return loadBalancerDatastore.addSourceToGroup(clusterName, trafficSource);
   }
 
   @DELETE
   @Path("/{clusterName}/traffic-source")
-  public Optional<BaragonGroup> removeTrafficSource(@PathParam("clusterName") String clusterName, TrafficSource trafficSource) {
+  public Optional<BaragonGroup> removeTrafficSource(@PathParam("clusterName") String clusterName,
+                                                    @NotNull @Valid TrafficSource trafficSource) {
     return loadBalancerDatastore.removeSourceFromGroup(clusterName, trafficSource);
   }
 
