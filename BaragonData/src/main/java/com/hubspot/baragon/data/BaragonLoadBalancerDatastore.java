@@ -26,6 +26,7 @@ import com.google.inject.Singleton;
 import com.hubspot.baragon.config.ZooKeeperConfiguration;
 import com.hubspot.baragon.models.BaragonAgentMetadata;
 import com.hubspot.baragon.models.BaragonGroup;
+import com.hubspot.baragon.models.TrafficSource;
 
 @Singleton
 public class BaragonLoadBalancerDatastore extends AbstractDataStore {
@@ -87,7 +88,7 @@ public class BaragonLoadBalancerDatastore extends AbstractDataStore {
   }
 
   @Timed
-  public BaragonGroup addSourceToGroup(String name, String source) {
+  public BaragonGroup addSourceToGroup(String name, TrafficSource source) {
     Optional<BaragonGroup> maybeGroup = getLoadBalancerGroup(name);
     BaragonGroup group;
     if (maybeGroup.isPresent()) {
@@ -101,7 +102,7 @@ public class BaragonLoadBalancerDatastore extends AbstractDataStore {
   }
 
   @Timed
-  public Optional<BaragonGroup> removeSourceFromGroup(String name, String source) {
+  public Optional<BaragonGroup> removeSourceFromGroup(String name, TrafficSource source) {
     Optional<BaragonGroup> maybeGroup = getLoadBalancerGroup(name);
     if (maybeGroup.isPresent()) {
       maybeGroup.get().getSources().remove(source);
@@ -121,7 +122,7 @@ public class BaragonLoadBalancerDatastore extends AbstractDataStore {
       group.setDefaultDomain(defaultDomain);
       group.setDomains(domains);
     } else {
-      group = new BaragonGroup(name, defaultDomain, Collections.<String>emptySet(), defaultDomain, domains);
+      group = new BaragonGroup(name, defaultDomain, Collections.<TrafficSource>emptySet(), defaultDomain, domains);
     }
     writeToZk(String.format(LOAD_BALANCER_GROUP_FORMAT, name), group);
   }

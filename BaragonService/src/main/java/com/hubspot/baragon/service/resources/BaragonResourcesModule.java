@@ -7,6 +7,7 @@ public class BaragonResourcesModule extends AbstractModule {
   @Override
   protected void configure() {
     bind(AgentCheckinResource.class);
+    bind(AlbResource.class);
     bind(AuthResource.class);
     bind(ElbResource.class);
     bind(LoadBalancerResource.class);

@@ -164,6 +164,10 @@
       <artifactId>aws-java-sdk-elasticloadbalancing</artifactId>
     </dependency>
     <dependency>
+      <groupId>com.amazonaws</groupId>
+      <artifactId>aws-java-sdk-elasticloadbalancingv2</artifactId>
+    </dependency>
+    <dependency>
       <groupId>com.ning</groupId>
       <artifactId>async-http-client</artifactId>
     </dependency>

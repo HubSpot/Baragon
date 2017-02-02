@@ -159,6 +159,12 @@
         <version>${dep.metrics-guice.version}</version>
       </dependency>
 
+      <dependency>
+        <groupId>com.amazonaws</groupId>
+        <artifactId>aws-java-sdk-elasticloadbalancingv2</artifactId>
+        <version>${aws.sdk.version}</version>
+      </dependency>
+
     </dependencies>
   </dependencyManagement>
 
