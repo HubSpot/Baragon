@@ -76,6 +76,7 @@ class Group extends Model
                 vex.dialog.buttons.NO
             ]
             callback: (data) =>
+                return if data is false
                 @addSource(data).done callback
 
 module.exports = Group
