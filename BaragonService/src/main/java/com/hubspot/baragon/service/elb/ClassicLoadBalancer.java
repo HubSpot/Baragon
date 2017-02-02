@@ -180,7 +180,9 @@ public class ClassicLoadBalancer extends ElasticLoadBalancer {
     for (LoadBalancerDescription elb : elbs) {
       List<String> trafficSourceNames = new ArrayList<>();
       for (TrafficSource trafficSource : group.getSources()) {
-        trafficSourceNames.add(trafficSource.getName());
+        if (trafficSource.getType() == TrafficSourceType.CLASSIC) {
+          trafficSourceNames.add(trafficSource.getName());
+        }
       }
 
       if (trafficSourceNames.contains(elb.getLoadBalancerName())) {
