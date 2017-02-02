@@ -13,7 +13,9 @@ import javax.ws.rs.core.MediaType;
 
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.services.elasticloadbalancingv2.model.DeregisterTargetsResult;
+import com.amazonaws.services.elasticloadbalancingv2.model.Listener;
 import com.amazonaws.services.elasticloadbalancingv2.model.LoadBalancer;
+import com.amazonaws.services.elasticloadbalancingv2.model.Rule;
 import com.amazonaws.services.elasticloadbalancingv2.model.TargetDescription;
 import com.amazonaws.services.elasticloadbalancingv2.model.TargetGroup;
 import com.google.common.base.Optional;
@@ -60,6 +62,36 @@ public class AlbResource {
         } else {
           throw new BaragonWebException(String.format("ALB with name %s not found", elbName));
         }
+      } catch (AmazonClientException exn) {
+        throw new BaragonWebException(String.format("AWS client exception %s", exn));
+      }
+    } else {
+      throw new BaragonWebException("ElbSync and related actions are not currently enabled");
+    }
+  }
+
+  @GET
+  @NoAuth
+  @Path("/load-balancers/{elbName}/listeners")
+  public Collection<Listener> getListeners(@PathParam("elbName") String elbName) {
+    if (config.isPresent()) {
+      try {
+        return applicationLoadBalancer.getListenersForElb(elbName);
+      } catch (AmazonClientException exn) {
+        throw new BaragonWebException(String.format("AWS client exception %s", exn));
+      }
+    } else {
+      throw new BaragonWebException("ElbSync and related actions are not currently enabled");
+    }
+  }
+
+  @GET
+  @NoAuth
+  @Path("/load-balancers/{elbName}/listeners/{listenerArn}/rules")
+  public Collection<Rule> getRules(@PathParam("elbName") String elbName, @PathParam("listenerArn") String listenerArn) {
+    if (config.isPresent()) {
+      try {
+        return applicationLoadBalancer.getRulesByListener(listenerArn);
       } catch (AmazonClientException exn) {
         throw new BaragonWebException(String.format("AWS client exception %s", exn));
       }

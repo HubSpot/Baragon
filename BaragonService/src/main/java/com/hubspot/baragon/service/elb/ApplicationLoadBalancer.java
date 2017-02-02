@@ -1,6 +1,7 @@
 package com.hubspot.baragon.service.elb;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -15,15 +16,20 @@ import com.amazonaws.services.elasticloadbalancingv2.AmazonElasticLoadBalancingC
 import com.amazonaws.services.elasticloadbalancingv2.model.AvailabilityZone;
 import com.amazonaws.services.elasticloadbalancingv2.model.DeregisterTargetsRequest;
 import com.amazonaws.services.elasticloadbalancingv2.model.DeregisterTargetsResult;
+import com.amazonaws.services.elasticloadbalancingv2.model.DescribeListenersRequest;
+import com.amazonaws.services.elasticloadbalancingv2.model.DescribeListenersResult;
 import com.amazonaws.services.elasticloadbalancingv2.model.DescribeLoadBalancersRequest;
 import com.amazonaws.services.elasticloadbalancingv2.model.DescribeLoadBalancersResult;
+import com.amazonaws.services.elasticloadbalancingv2.model.DescribeRulesRequest;
 import com.amazonaws.services.elasticloadbalancingv2.model.DescribeTargetGroupsRequest;
 import com.amazonaws.services.elasticloadbalancingv2.model.DescribeTargetGroupsResult;
 import com.amazonaws.services.elasticloadbalancingv2.model.DescribeTargetHealthRequest;
 import com.amazonaws.services.elasticloadbalancingv2.model.DescribeTargetHealthResult;
+import com.amazonaws.services.elasticloadbalancingv2.model.Listener;
 import com.amazonaws.services.elasticloadbalancingv2.model.LoadBalancer;
 import com.amazonaws.services.elasticloadbalancingv2.model.LoadBalancerNotFoundException;
 import com.amazonaws.services.elasticloadbalancingv2.model.RegisterTargetsRequest;
+import com.amazonaws.services.elasticloadbalancingv2.model.Rule;
 import com.amazonaws.services.elasticloadbalancingv2.model.SetSubnetsRequest;
 import com.amazonaws.services.elasticloadbalancingv2.model.TargetDescription;
 import com.amazonaws.services.elasticloadbalancingv2.model.TargetGroup;
@@ -295,6 +301,39 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
       LOG.warn("Could not find target group with name {}", trafficSourceName);
       return Optional.absent();
     }
+  }
+
+  public Collection<Listener> getListenersForElb(String elbName) {
+    Optional<LoadBalancer> maybeLoadBalancer = getLoadBalancer(elbName);
+    if (maybeLoadBalancer.isPresent()) {
+      Collection<Listener> listeners = new HashSet<>();
+      DescribeListenersRequest listenersRequest = new DescribeListenersRequest()
+          .withListenerArns(maybeLoadBalancer.get().getLoadBalancerArn());
+      DescribeListenersResult result = elbClient.describeListeners(listenersRequest);
+      String nextMarker = result.getNextMarker();
+      listeners.addAll(result.getListeners());
+
+      while (! Strings.isNullOrEmpty(nextMarker)) {
+        listenersRequest = new DescribeListenersRequest()
+            .withMarker(nextMarker);
+        result = elbClient.describeListeners(listenersRequest);
+        nextMarker = result.getNextMarker();
+        listeners.addAll(result.getListeners());
+      }
+
+      return listeners;
+    } else {
+      return Collections.emptySet();
+    }
+  }
+
+  public Collection<Rule> getRulesByListener(String listenerArn) {
+    DescribeRulesRequest rulesRequest = new DescribeRulesRequest()
+        .withListenerArn(listenerArn);
+
+    return elbClient
+        .describeRules(rulesRequest)
+        .getRules();
   }
 
   /**
