@@ -61,7 +61,9 @@ class GroupDetailView extends View
             type: "DELETE"
 
     removeSource: (e) ->
-        source = $(e.target).data 'source'
+        source =
+            name: $(e.target).data 'name'
+            type: $(e.target).data 'type'
         @model.promptRemoveSource(source, => @trigger 'refreshrequest')
 
     addSource: (e) ->

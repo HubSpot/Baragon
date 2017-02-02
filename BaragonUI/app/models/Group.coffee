@@ -30,8 +30,10 @@ class Group extends Model
 
     deleteSource: (source) =>
         $.ajax
-            url: "#{ @url() }/sources?authkey=#{ localStorage.getItem 'baragonAuthKey' }&source=#{source}"
+            url: "#{ @url() }/traffic-source?authkey=#{ localStorage.getItem 'baragonAuthKey' }"
             type: "DELETE"
+            contentType: 'application/json'
+            data: JSON.stringify(source)
 
     addSource: (source) =>
         body =
@@ -45,7 +47,7 @@ class Group extends Model
 
     promptRemoveSource: (source, callback) =>
         vex.dialog.confirm
-            message: @sourceRemoveTemplate {source: source}
+            message: @sourceRemoveTemplate source
             buttons: [
                 $.extend {}, vex.dialog.buttons.YES,
                     text: 'DELETE',
