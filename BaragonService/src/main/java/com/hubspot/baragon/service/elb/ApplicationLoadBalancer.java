@@ -14,6 +14,8 @@ import com.amazonaws.AmazonServiceException;
 import com.amazonaws.services.elasticloadbalancing.model.Instance;
 import com.amazonaws.services.elasticloadbalancingv2.AmazonElasticLoadBalancingClient;
 import com.amazonaws.services.elasticloadbalancingv2.model.AvailabilityZone;
+import com.amazonaws.services.elasticloadbalancingv2.model.DeleteListenerRequest;
+import com.amazonaws.services.elasticloadbalancingv2.model.DeleteRuleRequest;
 import com.amazonaws.services.elasticloadbalancingv2.model.DeregisterTargetsRequest;
 import com.amazonaws.services.elasticloadbalancingv2.model.DeregisterTargetsResult;
 import com.amazonaws.services.elasticloadbalancingv2.model.DescribeListenersRequest;
@@ -28,6 +30,8 @@ import com.amazonaws.services.elasticloadbalancingv2.model.DescribeTargetHealthR
 import com.amazonaws.services.elasticloadbalancingv2.model.Listener;
 import com.amazonaws.services.elasticloadbalancingv2.model.LoadBalancer;
 import com.amazonaws.services.elasticloadbalancingv2.model.LoadBalancerNotFoundException;
+import com.amazonaws.services.elasticloadbalancingv2.model.ModifyListenerRequest;
+import com.amazonaws.services.elasticloadbalancingv2.model.ModifyRuleRequest;
 import com.amazonaws.services.elasticloadbalancingv2.model.RegisterTargetsRequest;
 import com.amazonaws.services.elasticloadbalancingv2.model.Rule;
 import com.amazonaws.services.elasticloadbalancingv2.model.SetSubnetsRequest;
@@ -334,6 +338,35 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
     return elbClient
         .describeRules(rulesRequest)
         .getRules();
+  }
+
+  public Listener modifyListener(ModifyListenerRequest modifyListenerRequest) {
+    return elbClient
+        .modifyListener(modifyListenerRequest)
+        .getListeners()
+        .get(0);
+  }
+
+  public void deleteListener(String listenerArn) {
+    DeleteListenerRequest deleteListenerRequest = new DeleteListenerRequest()
+        .withListenerArn(listenerArn);
+
+    elbClient
+        .deleteListener(deleteListenerRequest);
+  }
+
+  public Rule modifyRule(ModifyRuleRequest modifyRuleRequest) {
+    return elbClient
+        .modifyRule(modifyRuleRequest)
+        .getRules()
+        .get(0);
+  }
+
+  public void deleteRule(String ruleArn) {
+    DeleteRuleRequest deleteRuleRequest = new DeleteRuleRequest()
+        .withRuleArn(ruleArn);
+
+    elbClient.deleteRule(deleteRuleRequest);
   }
 
   /**
