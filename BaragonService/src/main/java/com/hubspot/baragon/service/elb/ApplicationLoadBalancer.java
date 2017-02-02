@@ -600,7 +600,7 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
       } else {
         return Optional.of(targetGroups.get(0));
       }
-    } catch (AmazonClientException exn) {
+    } catch (TargetGroupNotFoundException exn) {
       return Optional.absent();
     }
   }
