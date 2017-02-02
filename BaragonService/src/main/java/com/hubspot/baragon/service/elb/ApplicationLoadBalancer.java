@@ -42,6 +42,7 @@ import com.hubspot.baragon.data.BaragonLoadBalancerDatastore;
 import com.hubspot.baragon.models.BaragonAgentMetadata;
 import com.hubspot.baragon.models.BaragonGroup;
 import com.hubspot.baragon.models.TrafficSource;
+import com.hubspot.baragon.models.TrafficSourceType;
 import com.hubspot.baragon.service.BaragonServiceModule;
 import com.hubspot.baragon.service.config.ElbConfiguration;
 import com.hubspot.baragon.service.exceptions.BaragonExceptionNotifier;
@@ -183,39 +184,37 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
   public void syncAll(Collection<BaragonGroup> baragonGroups) {
     Collection<LoadBalancer> allLoadBalancers = getAllLoadBalancers();
     for (BaragonGroup baragonGroup : baragonGroups) {
-      if (baragonGroup.getSources().isEmpty()) {
-        LOG.debug("No traffic sources present for group {}", baragonGroup.getName());
-      }
-      else {
-        try {
-          Collection<LoadBalancer> elbsForBaragonGroup = getLoadBalancersByBaragonGroup(allLoadBalancers, baragonGroup);
-          Collection<BaragonAgentMetadata> baragonAgents = getAgentsByBaragonGroup(baragonGroup);
+      for (TrafficSource trafficSource : baragonGroup.getSources()) {
+        if (trafficSource.getType() == TrafficSourceType.ALB_TARGET_GROUP) {
+          try {
+            Collection<LoadBalancer> elbsForBaragonGroup = getLoadBalancersByBaragonGroup(allLoadBalancers, baragonGroup);
+            Collection<BaragonAgentMetadata> baragonAgents = getAgentsByBaragonGroup(baragonGroup);
 
 
-          LOG.debug("Looking for TargetGroup for baragon group {}", baragonGroup.getName());
-          Optional<TargetGroup> maybeTargetGroup = guaranteeTargetGroupFor(baragonGroup);
-          if (maybeTargetGroup.isPresent()) {
-            TargetGroup targetGroup = maybeTargetGroup.get();
-            Collection<TargetDescription> targets = targetsInTargetGroup(targetGroup);
+            LOG.debug("Looking for TargetGroup {}", trafficSource.getName());
+            Optional<TargetGroup> maybeTargetGroup = guaranteeTargetGroupFor(baragonGroup, trafficSource);
+            if (maybeTargetGroup.isPresent()) {
+              TargetGroup targetGroup = maybeTargetGroup.get();
+              Collection<TargetDescription> targets = targetsInTargetGroup(targetGroup);
 
-            LOG.debug("Registering new instances for group {}", baragonGroup.getName());
-            guaranteeRegistered(targetGroup, targets, baragonAgents, elbsForBaragonGroup);
+              LOG.debug("Registering new instances for target group {}", trafficSource.getName());
+              guaranteeRegistered(targetGroup, targets, baragonAgents, elbsForBaragonGroup);
 
-            if (configuration.isPresent() && configuration.get().isDeregisterEnabled()) {
-              LOG.debug("De-registering old instances for group {}", baragonGroup.getName());
-              deregisterRemovableTargets(baragonGroup, targetGroup, baragonAgents, targets);
+              if (configuration.isPresent() && configuration.get().isDeregisterEnabled()) {
+                LOG.debug("De-registering old instances for target group {}", trafficSource.getName());
+                deregisterRemovableTargets(baragonGroup, targetGroup, baragonAgents, targets);
+              }
+            } else {
+              LOG.debug("No TargetGroup for Baragon Group {}", baragonGroup);
             }
-          } else {
-            LOG.debug("No TargetGroup for Baragon Group {}", baragonGroup);
+            LOG.debug("ELB sync complete for group {}", baragonGroup);
+          } catch (AmazonClientException acexn) {
+            LOG.error("Could not retrieve elb information due to ELB client error", acexn);
+            exceptionNotifier.notify(acexn, ImmutableMap.of("baragonGroup", baragonGroup.toString()));
+          } catch (Exception exn) {
+            LOG.error("Could not process ELB sync", exn);
+            exceptionNotifier.notify(exn, ImmutableMap.of("groups", baragonGroup.toString()));
           }
-
-          LOG.debug("ELB sync complete for group {}", baragonGroup);
-        } catch (AmazonClientException acexn) {
-          LOG.error("Could not retrieve elb information due to ELB client error {}", acexn);
-          exceptionNotifier.notify(acexn, ImmutableMap.of("baragonGroup", baragonGroup.toString()));
-        } catch (Exception exn) {
-          LOG.error("Could not process ELB sync due to error {}", exn);
-          exceptionNotifier.notify(exn, ImmutableMap.of("groups", baragonGroup.toString()));
         }
       }
     }
@@ -589,16 +588,20 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
     return subnetIds;
   }
 
-  private Optional<TargetGroup> guaranteeTargetGroupFor(BaragonGroup baragonGroup) {
+  private Optional<TargetGroup> guaranteeTargetGroupFor(BaragonGroup baragonGroup, TrafficSource trafficSource) {
     DescribeTargetGroupsRequest targetGroupsRequest = new DescribeTargetGroupsRequest()
-        .withNames(baragonGroup.getName());
-    List<TargetGroup> targetGroups = elbClient.describeTargetGroups(targetGroupsRequest)
-        .getTargetGroups();
-    if (targetGroups.isEmpty()) {
-      LOG.info("No target group set up for BaragonGroup {}. Skipping.", baragonGroup);
+        .withNames(trafficSource.getName());
+    try {
+      List<TargetGroup> targetGroups = elbClient.describeTargetGroups(targetGroupsRequest)
+          .getTargetGroups();
+      if (targetGroups.isEmpty()) {
+        LOG.info("No target group set up for BaragonGroup {}. Skipping.", baragonGroup);
+        return Optional.absent();
+      } else {
+        return Optional.of(targetGroups.get(0));
+      }
+    } catch (TargetGroupNotFoundException exn) {
       return Optional.absent();
-    } else {
-      return Optional.of(targetGroups.get(0));
     }
   }
 
