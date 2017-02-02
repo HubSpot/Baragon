@@ -40,12 +40,18 @@
                             {{#each this}}
                                 <li class="list-group-item">
                                     {{#if ../../config.allowEdit}}
-                                        <a data-action="removeSource" title="Remove Traffic Source">
-                                            <span class="glyphicon glyphicon-remove" data-source="{{this}}"></span>
-                                        </a>
-                                        {{this}}
+                                        <span class="badge" data-action="removeSource" title="Remove Traffic Source">
+                                            <span class="glyphicon glyphicon-remove" data-name="{{ name }}" data-type="{{ type }}"></span>
+                                        </span>
+                                        <ul class="list-unstyled">
+                                          <li>Name: {{name}}</li>
+                                          <li>Type: {{type}}</li>
+                                        </ul>
                                     {{else}}
-                                        {{this}}
+                                        <ul class="list-unstyled">
+                                          <li>Name: {{name}}</li>
+                                          <li>Type: {{type}}</li>
+                                        </ul>
                                     {{/if}}
                                 </li>
                             {{/each}}
