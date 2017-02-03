@@ -194,7 +194,7 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
   public void syncAll(Collection<BaragonGroup> baragonGroups) {
     Collection<LoadBalancer> allLoadBalancers = getAllLoadBalancers();
     for (BaragonGroup baragonGroup : baragonGroups) {
-      for (TrafficSource trafficSource : baragonGroup.getSources()) {
+      for (TrafficSource trafficSource : baragonGroup.getTrafficSources()) {
         if (trafficSource.getType() == TrafficSourceType.ALB_TARGET_GROUP) {
           try {
             Collection<LoadBalancer> elbsForBaragonGroup = getLoadBalancersByBaragonGroup(allLoadBalancers, baragonGroup);
@@ -402,7 +402,7 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
   }
 
   private Collection<LoadBalancer> getLoadBalancersByBaragonGroup(Collection<LoadBalancer> allLoadBalancers, BaragonGroup baragonGroup) {
-    Set<TrafficSource> trafficSources = baragonGroup.getSources();
+    Set<TrafficSource> trafficSources = baragonGroup.getTrafficSources();
     Set<String> trafficSourceNames = new HashSet<>();
     Collection<LoadBalancer> loadBalancersForGroup = new HashSet<>();
 

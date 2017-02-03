@@ -93,9 +93,9 @@ public class BaragonLoadBalancerDatastore extends AbstractDataStore {
     BaragonGroup group;
     if (maybeGroup.isPresent()) {
       group = maybeGroup.get();
-      group.getSources().add(source);
+      group.addTrafficSource(source);
     } else {
-      group = new BaragonGroup(name, Optional.<String>absent(), Sets.newHashSet(source), Optional.<String>absent(), Collections.<String>emptySet());
+      group = new BaragonGroup(name, Optional.<String>absent(), Sets.newHashSet(source), null, Optional.<String>absent(), Collections.<String>emptySet());
     }
     writeToZk(String.format(LOAD_BALANCER_GROUP_FORMAT, name), group);
     return group;
@@ -105,7 +105,7 @@ public class BaragonLoadBalancerDatastore extends AbstractDataStore {
   public Optional<BaragonGroup> removeSourceFromGroup(String name, TrafficSource source) {
     Optional<BaragonGroup> maybeGroup = getLoadBalancerGroup(name);
     if (maybeGroup.isPresent()) {
-      maybeGroup.get().getSources().remove(source);
+      maybeGroup.get().removeTrafficSource(source);
       writeToZk(String.format(LOAD_BALANCER_GROUP_FORMAT, name), maybeGroup.get());
       return maybeGroup;
     } else {
@@ -122,7 +122,7 @@ public class BaragonLoadBalancerDatastore extends AbstractDataStore {
       group.setDefaultDomain(defaultDomain);
       group.setDomains(domains);
     } else {
-      group = new BaragonGroup(name, defaultDomain, Collections.<TrafficSource>emptySet(), defaultDomain, domains);
+      group = new BaragonGroup(name, defaultDomain, Collections.<TrafficSource>emptySet(), null, defaultDomain, domains);
     }
     writeToZk(String.format(LOAD_BALANCER_GROUP_FORMAT, name), group);
   }

@@ -1,12 +1,14 @@
 package com.hubspot.baragon.models;
 
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Optional;
 
 @JsonIgnoreProperties( ignoreUnknown = true )
@@ -14,21 +16,31 @@ public class BaragonGroup {
   private final String name;
   @Deprecated
   private Optional<String> domain;
-  private Set<TrafficSource> sources;
+  private Set<TrafficSource> trafficSources;
+  @Deprecated
+  private Set<String> sources;
   private Optional<String> defaultDomain;
   private Set<String> domains;
 
   @JsonCreator
   public BaragonGroup(@JsonProperty("name") String name,
                       @JsonProperty("domain") Optional<String> domain,
-                      @JsonProperty("sources") Set<TrafficSource> sources,
+                      @JsonProperty("trafficSources") Set<TrafficSource> trafficSources,
+                      @JsonProperty("sources") Set<String> sources,
                       @JsonProperty("defaultDomain") Optional<String> defaultDomain,
                       @JsonProperty("domains") Set<String> domains) {
     this.name = name;
     this.domain = domain;
-    this.sources = Objects.firstNonNull(sources, Collections.<TrafficSource>emptySet());
     this.defaultDomain = defaultDomain;
-    this.domains = Objects.firstNonNull(domains, Collections.<String>emptySet());
+    this.domains = MoreObjects.firstNonNull(domains, Collections.<String>emptySet());
+
+    if (sources == null) {
+      setTrafficSources(MoreObjects.firstNonNull(trafficSources, Collections.<TrafficSource>emptySet()));
+    } else if (trafficSources == null) {
+      setSources(sources);
+    } else {
+      setTrafficSources(trafficSources);
+    }
   }
 
   public String getName() {
@@ -45,12 +57,50 @@ public class BaragonGroup {
     this.domain = domain;
   }
 
-  public Set<TrafficSource> getSources() {
-    return sources;
+  @Deprecated
+  public Set<String> getSources() {
+    return this.sources;
   }
 
-  public void setSources(Set<TrafficSource> sources) {
-    this.sources = sources;
+  @Deprecated
+  public void setSources(Set<String> sources) {
+    Set<TrafficSource> trafficSources = new HashSet<>();
+    for (String source : sources) {
+      trafficSources.add(new TrafficSource(source, TrafficSourceType.CLASSIC));
+    }
+
+    this.setTrafficSources(trafficSources);
+  }
+
+  public Set<TrafficSource> getTrafficSources() {
+    return trafficSources;
+  }
+
+  public void setTrafficSources(Set<TrafficSource> sources) {
+    this.trafficSources = sources;
+
+    Set<String> classicSources = new HashSet<>();
+    for (TrafficSource source : sources) {
+      if (source.getType() == TrafficSourceType.CLASSIC) {
+        classicSources.add(source.getName());
+      }
+    }
+
+    this.sources = classicSources;
+  }
+
+  public void removeTrafficSource(TrafficSource trafficSource) {
+    this.trafficSources.remove(trafficSource);
+    if (trafficSource.getType() == TrafficSourceType.CLASSIC) {
+      sources.remove(trafficSource.getName());
+    }
+  }
+
+  public void addTrafficSource(TrafficSource trafficSource) {
+    this.trafficSources.add(trafficSource);
+    if (trafficSource.getType() == TrafficSourceType.CLASSIC) {
+      this.sources.add(trafficSource.getName());
+    }
   }
 
   public Optional<String> getDefaultDomain() {
@@ -70,52 +120,36 @@ public class BaragonGroup {
   }
 
   @Override
-  public boolean equals(Object o) {
-    if (this == o) {
+  public boolean equals(Object obj) {
+    if (this == obj) {
       return true;
     }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
+    if (obj instanceof BaragonGroup) {
+      final BaragonGroup that = (BaragonGroup) obj;
+      return Objects.equals(this.name, that.name) &&
+          Objects.equals(this.domain, that.domain) &&
+          Objects.equals(this.trafficSources, that.trafficSources) &&
+          Objects.equals(this.sources, that.sources) &&
+          Objects.equals(this.defaultDomain, that.defaultDomain) &&
+          Objects.equals(this.domains, that.domains);
     }
-
-    BaragonGroup that = (BaragonGroup) o;
-
-    if (!name.equals(that.name)) {
-      return false;
-    }
-    if (!domain.equals(that.domain)) {
-      return false;
-    }
-    if (!sources.equals(that.sources)) {
-      return false;
-    }
-    if (!defaultDomain.equals(that.defaultDomain)) {
-      return false;
-    }
-    if (!domains.equals(that.domains)) {
-      return false;
-    }
-    return true;
+    return false;
   }
 
   @Override
   public int hashCode() {
-    int result = name.hashCode();
-    result = 31 * result + domain.hashCode();
-    result = 31 * result + sources.hashCode();
-    result = 31 * result + defaultDomain.hashCode();
-    result = 31 * result + domains.hashCode();
-    return result;
+    return Objects.hash(name, domain, trafficSources, sources, defaultDomain, domains);
   }
 
   @Override
   public String toString() {
-    return "BaragonGroup [" +
-      "name=" + name +
-      ", domain=" + domain +
-      ", sources=" + sources +
-      ", defaultDomain=" + defaultDomain +
-      ", domains=" + domains +
-      ']';
+    return MoreObjects.toStringHelper(this)
+        .add("name", name)
+        .add("domain", domain)
+        .add("trafficSources", trafficSources)
+        .add("sources", sources)
+        .add("defaultDomain", defaultDomain)
+        .add("domains", domains)
+        .toString();
   }
 }
