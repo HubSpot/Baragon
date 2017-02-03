@@ -10,8 +10,10 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
 
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.services.elasticloadbalancingv2.model.CreateListenerRequest;
@@ -28,6 +30,7 @@ import com.amazonaws.services.elasticloadbalancingv2.model.Rule;
 import com.amazonaws.services.elasticloadbalancingv2.model.RuleNotFoundException;
 import com.amazonaws.services.elasticloadbalancingv2.model.TargetDescription;
 import com.amazonaws.services.elasticloadbalancingv2.model.TargetGroup;
+import com.amazonaws.services.elasticloadbalancingv2.model.TargetGroupNotFoundException;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import com.hubspot.baragon.auth.NoAuth;
@@ -70,7 +73,7 @@ public class AlbResource {
         if (maybeLoadBalancer.isPresent()) {
           return maybeLoadBalancer.get();
         } else {
-          throw new BaragonWebException(String.format("ALB with name %s not found", elbName));
+          throw new WebApplicationException(String.format("ELB %s not found", elbName), Status.NOT_FOUND);
         }
       } catch (AmazonClientException exn) {
         throw new BaragonWebException(String.format("AWS client exception %s", exn));
@@ -107,7 +110,7 @@ public class AlbResource {
               .createListener(createListenerRequest
                   .withLoadBalancerArn(maybeLoadBalancer.get().getLoadBalancerArn()));
         } else {
-          throw new BaragonWebException(String.format("Could not find an elb with name %s", elbName));
+          throw new WebApplicationException(String.format("Could not find an elb with name %s", elbName), Status.NOT_FOUND);
         }
     } else {
       throw new BaragonWebException("ElbSync and related actions are not currently enabled");
@@ -124,7 +127,7 @@ public class AlbResource {
         return applicationLoadBalancer
             .modifyListener(modifyListenerRequest.withListenerArn(listenerArn));
       } catch (ListenerNotFoundException notFound) {
-        throw new BaragonWebException(String.format("No listener with ARN %s found", listenerArn));
+        throw new WebApplicationException(String.format("No listener with ARN %s found", listenerArn), Status.NOT_FOUND);
       } catch (AmazonClientException exn) {
         throw new BaragonWebException(String.format("AWS client exception %s", exn));
       }
@@ -142,7 +145,7 @@ public class AlbResource {
         applicationLoadBalancer.deleteListener(listenerArn);
         return Response.noContent().build();
       } catch (ListenerNotFoundException notFound) {
-        throw new BaragonWebException(String.format("No listener with ARN %s found", listenerArn));
+        throw new WebApplicationException(String.format("No listener with ARN %s found", listenerArn), Status.NOT_FOUND);
       } catch (AmazonClientException exn) {
         throw new BaragonWebException(String.format("AWS client exception %s", exn));
       }
@@ -159,6 +162,8 @@ public class AlbResource {
     if (config.isPresent()) {
       try {
         return applicationLoadBalancer.getRulesByListener(listenerArn);
+      } catch (ListenerNotFoundException notFound) {
+        throw new WebApplicationException(String.format("Listener with ARN %s not found", listenerArn), Status.NOT_FOUND);
       } catch (AmazonClientException exn) {
         throw new BaragonWebException(String.format("AWS client exception %s", exn));
       }
@@ -173,9 +178,15 @@ public class AlbResource {
                          @PathParam("listenerArn") String listenerArn,
                          @Valid CreateRuleRequest createRuleRequest) {
     if (config.isPresent()) {
-      return applicationLoadBalancer
-          .createRule(createRuleRequest
-              .withListenerArn(listenerArn));
+      try {
+        return applicationLoadBalancer
+            .createRule(createRuleRequest
+                .withListenerArn(listenerArn));
+      } catch (ListenerNotFoundException notFound) {
+        throw new WebApplicationException(String.format("Listener with ARN %s not found", listenerArn), Status.NOT_FOUND);
+      } catch (AmazonClientException exn) {
+        throw new BaragonWebException(String.format("AWS client exception %s", exn));
+      }
     } else {
       throw new BaragonWebException("ElbSync and related actions are not currently enabled");
     }
@@ -192,7 +203,7 @@ public class AlbResource {
         return applicationLoadBalancer
             .modifyRule(modifyRuleRequest.withRuleArn(ruleArn));
       } catch (RuleNotFoundException notFound) {
-        throw new BaragonWebException(String.format("Rule with ARN %s found", ruleArn));
+        throw new WebApplicationException(String.format("Rule with ARN %s found", ruleArn), Status.NOT_FOUND);
       } catch (AmazonClientException exn) {
         throw new BaragonWebException(String.format("AWS client exception %s", exn));
       }
@@ -211,7 +222,7 @@ public class AlbResource {
         applicationLoadBalancer.deleteRule(ruleArn);
         return Response.noContent().build();
       } catch (RuleNotFoundException notFound) {
-        throw new BaragonWebException(String.format("Rule with ARN %s not found", ruleArn));
+        throw new WebApplicationException(String.format("Rule with ARN %s not found", ruleArn), Status.NOT_FOUND);
       } catch (AmazonClientException exn) {
         throw new BaragonWebException(String.format("Amazon client exception %s", exn));
       }
@@ -235,7 +246,11 @@ public class AlbResource {
   @PathParam("/target-groups")
   public TargetGroup createTargetGroup(@Valid CreateTargetGroupRequest createTargetGroupRequest) {
     if (config.isPresent()) {
-      return applicationLoadBalancer.createTargetGroup(createTargetGroupRequest);
+      try {
+        return applicationLoadBalancer.createTargetGroup(createTargetGroupRequest);
+      } catch (AmazonClientException exn) {
+        throw new BaragonWebException(String.format("AWS client exception %s", exn));
+      }
     } else {
       throw new BaragonWebException("ElbSync and related actions are not currently enabled");
     }
@@ -251,7 +266,7 @@ public class AlbResource {
         if (maybeTargetGroup.isPresent()) {
           return maybeTargetGroup.get();
         } else {
-          throw new BaragonWebException(String.format("TargetGroup with name %s not found", targetGroup));
+          throw new WebApplicationException(String.format("TargetGroup with name %s not found", targetGroup), Status.NOT_FOUND);
         }
       } catch (AmazonClientException exn) {
         throw new BaragonWebException(String.format("AWS Client exception %s", exn));
@@ -265,7 +280,18 @@ public class AlbResource {
   @Path("/target-groups/{targetGroup}")
   public TargetGroup modifyTargetGroup(@PathParam("targetGroup") String targetGroup,
                                        @Valid ModifyTargetGroupRequest modifyTargetGroupRequest) {
-    return applicationLoadBalancer.modifyTargetGroup(modifyTargetGroupRequest);
+    if (config.isPresent()) {
+      try {
+        return applicationLoadBalancer
+            .modifyTargetGroup(modifyTargetGroupRequest);
+      } catch (TargetGroupNotFoundException notFound) {
+        throw new WebApplicationException(String.format("Target group %s not found", targetGroup), Status.NOT_FOUND);
+      } catch (AmazonClientException exn) {
+        throw new BaragonWebException(String.format("AWS client exception %s", exn));
+      }
+    } else {
+      throw new BaragonWebException("ElbSync and related actions are not currently enabled");
+    }
   }
 
   @GET
@@ -278,7 +304,7 @@ public class AlbResource {
         if (maybeTargetGroup.isPresent()) {
           return applicationLoadBalancer.getTargetsOn(maybeTargetGroup.get());
         } else {
-          throw new BaragonWebException(String.format("TargetGroup with name %s not found", targetGroup));
+          throw new WebApplicationException(String.format("TargetGroup with name %s not found", targetGroup), Status.NOT_FOUND);
         }
       } catch (AmazonClientException exn) {
         throw new BaragonWebException(String.format("AWS Client exception %s", exn));
@@ -299,7 +325,7 @@ public class AlbResource {
       if (maybeResult.isPresent()) {
         return maybeResult.get();
       } else {
-        throw new BaragonWebException(String.format("No instance with ID %s could be found", instanceId));
+        throw new WebApplicationException(String.format("No instance with ID %s could be found", instanceId), Status.NOT_FOUND);
       }
     } else {
       throw new BaragonWebException("ElbSync and related actions not currently enabled");
@@ -315,6 +341,8 @@ public class AlbResource {
     } else if (config.isPresent()) {
       try {
         return applicationLoadBalancer.registerInstance(instanceId, targetGroup);
+      } catch (TargetGroupNotFoundException notFound) {
+        throw new WebApplicationException(String.format("Target group %s not found", targetGroup), Status.NOT_FOUND);
       } catch (AmazonClientException exn) {
         throw new BaragonWebException(String.format("Failed to add instance %s to target group %s", instanceId, targetGroup));
       }
