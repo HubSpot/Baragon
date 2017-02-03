@@ -1,9 +1,9 @@
 package com.hubspot.baragon.models;
 
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -33,13 +33,14 @@ public class BaragonGroup {
     this.domain = domain;
     this.defaultDomain = defaultDomain;
     this.domains = MoreObjects.firstNonNull(domains, Collections.<String>emptySet());
+    this.sources = Collections.emptySet();
 
-    if (sources == null) {
-      setTrafficSources(MoreObjects.firstNonNull(trafficSources, Collections.<TrafficSource>emptySet()));
-    } else if (trafficSources == null) {
-      setSources(sources);
+    if (trafficSources == null && sources != null) {
+      this.trafficSources = sources.stream()
+          .map(source -> new TrafficSource(source, TrafficSourceType.CLASSIC))
+          .collect(Collectors.toSet());
     } else {
-      setTrafficSources(trafficSources);
+      this.trafficSources = MoreObjects.firstNonNull(trafficSources, Collections.emptySet());
     }
   }
 
@@ -59,18 +60,11 @@ public class BaragonGroup {
 
   @Deprecated
   public Set<String> getSources() {
-    return this.sources;
+    return Collections.emptySet();
   }
 
   @Deprecated
-  public void setSources(Set<String> sources) {
-    Set<TrafficSource> trafficSources = new HashSet<>();
-    for (String source : sources) {
-      trafficSources.add(new TrafficSource(source, TrafficSourceType.CLASSIC));
-    }
-
-    this.setTrafficSources(trafficSources);
-  }
+  public void setSources(Set<String> sources) { }
 
   public Set<TrafficSource> getTrafficSources() {
     return trafficSources;
@@ -78,29 +72,14 @@ public class BaragonGroup {
 
   public void setTrafficSources(Set<TrafficSource> sources) {
     this.trafficSources = sources;
-
-    Set<String> classicSources = new HashSet<>();
-    for (TrafficSource source : sources) {
-      if (source.getType() == TrafficSourceType.CLASSIC) {
-        classicSources.add(source.getName());
-      }
-    }
-
-    this.sources = classicSources;
   }
 
   public void removeTrafficSource(TrafficSource trafficSource) {
     this.trafficSources.remove(trafficSource);
-    if (trafficSource.getType() == TrafficSourceType.CLASSIC) {
-      sources.remove(trafficSource.getName());
-    }
   }
 
   public void addTrafficSource(TrafficSource trafficSource) {
     this.trafficSources.add(trafficSource);
-    if (trafficSource.getType() == TrafficSourceType.CLASSIC) {
-      this.sources.add(trafficSource.getName());
-    }
   }
 
   public Optional<String> getDefaultDomain() {
