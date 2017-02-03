@@ -2,6 +2,7 @@ package com.hubspot.baragon.service.resources;
 
 import java.util.Collection;
 
+import javax.validation.Valid;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -15,12 +16,14 @@ import javax.ws.rs.core.Response;
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.services.elasticloadbalancingv2.model.CreateListenerRequest;
 import com.amazonaws.services.elasticloadbalancingv2.model.CreateRuleRequest;
+import com.amazonaws.services.elasticloadbalancingv2.model.CreateTargetGroupRequest;
 import com.amazonaws.services.elasticloadbalancingv2.model.DeregisterTargetsResult;
 import com.amazonaws.services.elasticloadbalancingv2.model.Listener;
 import com.amazonaws.services.elasticloadbalancingv2.model.ListenerNotFoundException;
 import com.amazonaws.services.elasticloadbalancingv2.model.LoadBalancer;
 import com.amazonaws.services.elasticloadbalancingv2.model.ModifyListenerRequest;
 import com.amazonaws.services.elasticloadbalancingv2.model.ModifyRuleRequest;
+import com.amazonaws.services.elasticloadbalancingv2.model.ModifyTargetGroupRequest;
 import com.amazonaws.services.elasticloadbalancingv2.model.Rule;
 import com.amazonaws.services.elasticloadbalancingv2.model.RuleNotFoundException;
 import com.amazonaws.services.elasticloadbalancingv2.model.TargetDescription;
@@ -95,7 +98,7 @@ public class AlbResource {
   @POST
   @Path("/load-balancers/{elbName}/listeners")
   public Listener createListeners(@PathParam("elbName") String elbName,
-                                  CreateListenerRequest createListenerRequest) {
+                                  @Valid CreateListenerRequest createListenerRequest) {
     if (config.isPresent()) {
         Optional<LoadBalancer> maybeLoadBalancer = applicationLoadBalancer
             .getLoadBalancer(elbName);
@@ -115,7 +118,7 @@ public class AlbResource {
   @Path("/load-balancers/{elbName}/listeners/{listenerArn}")
   public Listener updateListener(@PathParam("elbName") String elbName,
                                  @PathParam("listenerArn") String listenerArn,
-                                 ModifyListenerRequest modifyListenerRequest) {
+                                 @Valid ModifyListenerRequest modifyListenerRequest) {
     if (config.isPresent()) {
       try {
         return applicationLoadBalancer
@@ -151,7 +154,8 @@ public class AlbResource {
   @GET
   @NoAuth
   @Path("/load-balancers/{elbName}/listeners/{listenerArn}/rules")
-  public Collection<Rule> getRules(@PathParam("elbName") String elbName, @PathParam("listenerArn") String listenerArn) {
+  public Collection<Rule> getRules(@PathParam("elbName") String elbName,
+                                   @PathParam("listenerArn") String listenerArn) {
     if (config.isPresent()) {
       try {
         return applicationLoadBalancer.getRulesByListener(listenerArn);
@@ -167,7 +171,7 @@ public class AlbResource {
   @Path("/load-balancers/{elbName}/listeners/{listenerArn}/rules")
   public Rule createRule(@PathParam("elbName") String elbName,
                          @PathParam("listenerArn") String listenerArn,
-                         CreateRuleRequest createRuleRequest) {
+                         @Valid CreateRuleRequest createRuleRequest) {
     if (config.isPresent()) {
       return applicationLoadBalancer
           .createRule(createRuleRequest
@@ -182,7 +186,7 @@ public class AlbResource {
   public Rule updateRule(@PathParam("elbName") String elbName,
                          @PathParam("listenerArn") String listenerArn,
                          @PathParam("ruleArn") String ruleArn,
-                         ModifyRuleRequest modifyRuleRequest) {
+                         @Valid ModifyRuleRequest modifyRuleRequest) {
     if (config.isPresent()) {
       try {
         return applicationLoadBalancer
@@ -227,6 +231,16 @@ public class AlbResource {
     }
   }
 
+  @POST
+  @PathParam("/target-groups")
+  public TargetGroup createTargetGroup(@Valid CreateTargetGroupRequest createTargetGroupRequest) {
+    if (config.isPresent()) {
+      return applicationLoadBalancer.createTargetGroup(createTargetGroupRequest);
+    } else {
+      throw new BaragonWebException("ElbSync and related actions are not currently enabled");
+    }
+  }
+
   @GET
   @NoAuth
   @Path("/target-groups/{targetGroup}")
@@ -245,6 +259,13 @@ public class AlbResource {
     } else {
       throw new BaragonWebException("ElbSync and related actions are not currently enabled");
     }
+  }
+
+  @POST
+  @Path("/target-groups/{targetGroup}")
+  public TargetGroup modifyTargetGroup(@PathParam("targetGroup") String targetGroup,
+                                       @Valid ModifyTargetGroupRequest modifyTargetGroupRequest) {
+    return applicationLoadBalancer.modifyTargetGroup(modifyTargetGroupRequest);
   }
 
   @GET
