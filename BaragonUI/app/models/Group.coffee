@@ -12,10 +12,10 @@ class Group extends Model
     initialize: ({ @groupId }) ->
 
     parse: (data) =>
-        if data.sources
-            data.splitSources = utils.splitArray(data.sources.sort(), Math.ceil(data.sources.length/4))
+        if data.trafficSources
+            data.splitTrafficSources = utils.splitArray(data.trafficSources.sort(), Math.ceil(data.trafficSources.length / 4))
         else
-            data.splitSources = []
+            data.splitTrafficSources = []
 
         if data.domains
             if data.defaultDomain and data.defaultDomain not in data.domains

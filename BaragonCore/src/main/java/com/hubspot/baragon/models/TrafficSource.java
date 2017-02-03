@@ -2,11 +2,17 @@ package com.hubspot.baragon.models;
 
 import java.util.Objects;
 
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class TrafficSource {
+  @Size(min = 1)
   private final String name;
+
+  @NotNull
   private final TrafficSourceType type;
 
   @JsonCreator
