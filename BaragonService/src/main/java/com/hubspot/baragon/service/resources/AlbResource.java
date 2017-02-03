@@ -13,6 +13,8 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import com.amazonaws.AmazonClientException;
+import com.amazonaws.services.elasticloadbalancingv2.model.CreateListenerRequest;
+import com.amazonaws.services.elasticloadbalancingv2.model.CreateRuleRequest;
 import com.amazonaws.services.elasticloadbalancingv2.model.DeregisterTargetsResult;
 import com.amazonaws.services.elasticloadbalancingv2.model.Listener;
 import com.amazonaws.services.elasticloadbalancingv2.model.ListenerNotFoundException;
@@ -91,6 +93,25 @@ public class AlbResource {
   }
 
   @POST
+  @Path("/load-balancers/{elbName}/listeners")
+  public Listener createListeners(@PathParam("elbName") String elbName,
+                                  CreateListenerRequest createListenerRequest) {
+    if (config.isPresent()) {
+        Optional<LoadBalancer> maybeLoadBalancer = applicationLoadBalancer
+            .getLoadBalancer(elbName);
+        if (maybeLoadBalancer.isPresent()) {
+          return applicationLoadBalancer
+              .createListener(createListenerRequest
+                  .withLoadBalancerArn(maybeLoadBalancer.get().getLoadBalancerArn()));
+        } else {
+          throw new BaragonWebException(String.format("Could not find an elb with name %s", elbName));
+        }
+    } else {
+      throw new BaragonWebException("ElbSync and related actions are not currently enabled");
+    }
+  }
+
+  @POST
   @Path("/load-balancers/{elbName}/listeners/{listenerArn}")
   public Listener updateListener(@PathParam("elbName") String elbName,
                                  @PathParam("listenerArn") String listenerArn,
@@ -137,6 +158,20 @@ public class AlbResource {
       } catch (AmazonClientException exn) {
         throw new BaragonWebException(String.format("AWS client exception %s", exn));
       }
+    } else {
+      throw new BaragonWebException("ElbSync and related actions are not currently enabled");
+    }
+  }
+
+  @POST
+  @Path("/load-balancers/{elbName}/listeners/{listenerArn}/rules")
+  public Rule createRule(@PathParam("elbName") String elbName,
+                         @PathParam("listenerArn") String listenerArn,
+                         CreateRuleRequest createRuleRequest) {
+    if (config.isPresent()) {
+      return applicationLoadBalancer
+          .createRule(createRuleRequest
+              .withListenerArn(listenerArn));
     } else {
       throw new BaragonWebException("ElbSync and related actions are not currently enabled");
     }
