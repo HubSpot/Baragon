@@ -1,6 +1,7 @@
 package com.hubspot.baragon.service.elb;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -13,17 +14,28 @@ import com.amazonaws.AmazonServiceException;
 import com.amazonaws.services.elasticloadbalancing.model.Instance;
 import com.amazonaws.services.elasticloadbalancingv2.AmazonElasticLoadBalancingClient;
 import com.amazonaws.services.elasticloadbalancingv2.model.AvailabilityZone;
+import com.amazonaws.services.elasticloadbalancingv2.model.CreateListenerRequest;
+import com.amazonaws.services.elasticloadbalancingv2.model.CreateRuleRequest;
+import com.amazonaws.services.elasticloadbalancingv2.model.DeleteListenerRequest;
+import com.amazonaws.services.elasticloadbalancingv2.model.DeleteRuleRequest;
 import com.amazonaws.services.elasticloadbalancingv2.model.DeregisterTargetsRequest;
 import com.amazonaws.services.elasticloadbalancingv2.model.DeregisterTargetsResult;
+import com.amazonaws.services.elasticloadbalancingv2.model.DescribeListenersRequest;
+import com.amazonaws.services.elasticloadbalancingv2.model.DescribeListenersResult;
 import com.amazonaws.services.elasticloadbalancingv2.model.DescribeLoadBalancersRequest;
 import com.amazonaws.services.elasticloadbalancingv2.model.DescribeLoadBalancersResult;
+import com.amazonaws.services.elasticloadbalancingv2.model.DescribeRulesRequest;
 import com.amazonaws.services.elasticloadbalancingv2.model.DescribeTargetGroupsRequest;
 import com.amazonaws.services.elasticloadbalancingv2.model.DescribeTargetGroupsResult;
 import com.amazonaws.services.elasticloadbalancingv2.model.DescribeTargetHealthRequest;
 import com.amazonaws.services.elasticloadbalancingv2.model.DescribeTargetHealthResult;
+import com.amazonaws.services.elasticloadbalancingv2.model.Listener;
 import com.amazonaws.services.elasticloadbalancingv2.model.LoadBalancer;
 import com.amazonaws.services.elasticloadbalancingv2.model.LoadBalancerNotFoundException;
+import com.amazonaws.services.elasticloadbalancingv2.model.ModifyListenerRequest;
+import com.amazonaws.services.elasticloadbalancingv2.model.ModifyRuleRequest;
 import com.amazonaws.services.elasticloadbalancingv2.model.RegisterTargetsRequest;
+import com.amazonaws.services.elasticloadbalancingv2.model.Rule;
 import com.amazonaws.services.elasticloadbalancingv2.model.SetSubnetsRequest;
 import com.amazonaws.services.elasticloadbalancingv2.model.TargetDescription;
 import com.amazonaws.services.elasticloadbalancingv2.model.TargetGroup;
@@ -184,7 +196,7 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
   public void syncAll(Collection<BaragonGroup> baragonGroups) {
     Collection<LoadBalancer> allLoadBalancers = getAllLoadBalancers();
     for (BaragonGroup baragonGroup : baragonGroups) {
-      for (TrafficSource trafficSource : baragonGroup.getSources()) {
+      for (TrafficSource trafficSource : baragonGroup.getTrafficSources()) {
         if (trafficSource.getType() == TrafficSourceType.ALB_TARGET_GROUP) {
           try {
             Collection<LoadBalancer> elbsForBaragonGroup = getLoadBalancersByBaragonGroup(allLoadBalancers, baragonGroup);
@@ -297,6 +309,82 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
     }
   }
 
+  public Collection<Listener> getListenersForElb(String elbName) {
+    Optional<LoadBalancer> maybeLoadBalancer = getLoadBalancer(elbName);
+    if (maybeLoadBalancer.isPresent()) {
+      Collection<Listener> listeners = new HashSet<>();
+      DescribeListenersRequest listenersRequest = new DescribeListenersRequest()
+          .withListenerArns(maybeLoadBalancer.get().getLoadBalancerArn());
+      DescribeListenersResult result = elbClient.describeListeners(listenersRequest);
+      String nextMarker = result.getNextMarker();
+      listeners.addAll(result.getListeners());
+
+      while (! Strings.isNullOrEmpty(nextMarker)) {
+        listenersRequest = new DescribeListenersRequest()
+            .withMarker(nextMarker);
+        result = elbClient.describeListeners(listenersRequest);
+        nextMarker = result.getNextMarker();
+        listeners.addAll(result.getListeners());
+      }
+
+      return listeners;
+    } else {
+      return Collections.emptySet();
+    }
+  }
+
+  public Collection<Rule> getRulesByListener(String listenerArn) {
+    DescribeRulesRequest rulesRequest = new DescribeRulesRequest()
+        .withListenerArn(listenerArn);
+
+    return elbClient
+        .describeRules(rulesRequest)
+        .getRules();
+  }
+
+  public Listener createListener(CreateListenerRequest createListenerRequest) {
+    return elbClient
+        .createListener(createListenerRequest)
+        .getListeners()
+        .get(0);
+  }
+
+  public Listener modifyListener(ModifyListenerRequest modifyListenerRequest) {
+    return elbClient
+        .modifyListener(modifyListenerRequest)
+        .getListeners()
+        .get(0);
+  }
+
+  public void deleteListener(String listenerArn) {
+    DeleteListenerRequest deleteListenerRequest = new DeleteListenerRequest()
+        .withListenerArn(listenerArn);
+
+    elbClient
+        .deleteListener(deleteListenerRequest);
+  }
+
+  public Rule createRule(CreateRuleRequest createRuleRequest) {
+    return elbClient
+        .createRule(createRuleRequest)
+        .getRules()
+        .get(0);
+  }
+
+  public Rule modifyRule(ModifyRuleRequest modifyRuleRequest) {
+    return elbClient
+        .modifyRule(modifyRuleRequest)
+        .getRules()
+        .get(0);
+  }
+
+  public void deleteRule(String ruleArn) {
+    DeleteRuleRequest deleteRuleRequest = new DeleteRuleRequest()
+        .withRuleArn(ruleArn);
+
+    elbClient.deleteRule(deleteRuleRequest);
+  }
+
   /**
    * @param targetGroup Target group to check
    * @return the instance IDs of the targets in the given target group
@@ -330,7 +418,7 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
   }
 
   private Collection<LoadBalancer> getLoadBalancersByBaragonGroup(Collection<LoadBalancer> allLoadBalancers, BaragonGroup baragonGroup) {
-    Set<TrafficSource> trafficSources = baragonGroup.getSources();
+    Set<TrafficSource> trafficSources = baragonGroup.getTrafficSources();
     Set<String> trafficSourceNames = new HashSet<>();
     Collection<LoadBalancer> loadBalancersForGroup = new HashSet<>();
 

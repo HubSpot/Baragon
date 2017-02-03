@@ -51,7 +51,7 @@ public class ElbManager {
   }
 
   public boolean isActiveAndHealthy(Optional<BaragonGroup> group, BaragonAgentMetadata agent) {
-    for (TrafficSource source : group.get().getSources()) {
+    for (TrafficSource source : group.get().getTrafficSources()) {
       if (getLoadBalancer(source.getType()).isInstanceHealthy(agent.getEc2().getInstanceId().get(), source.getName())) {
         return true;
       }
@@ -61,7 +61,7 @@ public class ElbManager {
 
   public void attemptRemoveAgent(BaragonAgentMetadata agent, Optional<BaragonGroup> group, String groupName) throws AmazonClientException {
     if (isElbEnabledAgent(agent, group, groupName)) {
-      for (TrafficSource source : group.get().getSources()) {
+      for (TrafficSource source : group.get().getTrafficSources()) {
         Instance instance = new Instance(agent.getEc2().getInstanceId().get());
         getLoadBalancer(source.getType()).removeInstance(instance, source.getName(), agent.getAgentId());
       }
@@ -71,7 +71,7 @@ public class ElbManager {
   public void attemptAddAgent(BaragonAgentMetadata agent, Optional<BaragonGroup> group, String groupName) throws AmazonClientException, NoMatchingElbForVpcException {
     if (isElbEnabledAgent(agent, group, groupName)) {
       List<RegisterInstanceResult> results = new ArrayList<>();
-      for (TrafficSource source : group.get().getSources()) {
+      for (TrafficSource source : group.get().getTrafficSources()) {
         Instance instance = new Instance(agent.getEc2().getInstanceId().get());
         results.add(getLoadBalancer(source.getType()).registerInstance(instance, source.getName(), agent));
       }
@@ -83,7 +83,7 @@ public class ElbManager {
 
   public boolean isElbEnabledAgent(BaragonAgentMetadata agent, Optional<BaragonGroup> group, String groupName) {
     if (group.isPresent()) {
-      if (!group.get().getSources().isEmpty()) {
+      if (!group.get().getTrafficSources().isEmpty()) {
         if (agent.getEc2().getInstanceId().isPresent()) {
           return true;
         } else {

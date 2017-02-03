@@ -99,7 +99,7 @@ public class ClassicLoadBalancer extends ElasticLoadBalancer {
       List<LoadBalancerDescription> elbs = elbClient.describeLoadBalancers().getLoadBalancerDescriptions();
 
       for (BaragonGroup group : groups) {
-        if (!group.getSources().isEmpty()) {
+        if (!group.getTrafficSources().isEmpty()) {
           List<LoadBalancerDescription> elbsForGroup = getElbsForGroup(elbs, group);
           LOG.debug("Registering new instances for group {}...", group.getName());
           registerNewInstances(elbsForGroup, group);
@@ -179,7 +179,7 @@ public class ClassicLoadBalancer extends ElasticLoadBalancer {
     List<LoadBalancerDescription> elbsForGroup = new ArrayList<>();
     for (LoadBalancerDescription elb : elbs) {
       List<String> trafficSourceNames = new ArrayList<>();
-      for (TrafficSource trafficSource : group.getSources()) {
+      for (TrafficSource trafficSource : group.getTrafficSources()) {
         if (trafficSource.getType() == TrafficSourceType.CLASSIC) {
           trafficSourceNames.add(trafficSource.getName());
         }
@@ -214,7 +214,7 @@ public class ClassicLoadBalancer extends ElasticLoadBalancer {
     List<RegisterInstancesWithLoadBalancerRequest> requests = new ArrayList<>();
     for (BaragonAgentMetadata agent : agents) {
       try {
-        for (TrafficSource source : group.getSources()) {
+        for (TrafficSource source : group.getTrafficSources()) {
           if (source.getType() != TrafficSourceType.CLASSIC) {
             continue;
           }
@@ -285,7 +285,7 @@ public class ClassicLoadBalancer extends ElasticLoadBalancer {
     List<String> agentInstanceIds = agentInstanceIds(agents);
     List<DeregisterInstancesFromLoadBalancerRequest> requests = new ArrayList<>();
     for (LoadBalancerDescription elb : elbs) {
-      if (group.getSources().contains(new TrafficSource(elb.getLoadBalancerName(), TrafficSourceType.CLASSIC))) {
+      if (group.getTrafficSources().contains(new TrafficSource(elb.getLoadBalancerName(), TrafficSourceType.CLASSIC))) {
         for (Instance instance : elb.getInstances()) {
           if (!agentInstanceIds.contains(instance.getInstanceId()) && canDeregisterAgent(group, instance.getInstanceId())) {
             List<Instance> instanceList = new ArrayList<>(1);
