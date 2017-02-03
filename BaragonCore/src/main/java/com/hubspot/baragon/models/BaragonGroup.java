@@ -40,7 +40,7 @@ public class BaragonGroup {
           .map(source -> new TrafficSource(source, TrafficSourceType.CLASSIC))
           .collect(Collectors.<TrafficSource>toSet());
     } else {
-      this.trafficSources = MoreObjects.firstNonNull(trafficSources, Collections.emptySet());
+      this.trafficSources = MoreObjects.<Set<TrafficSource>>firstNonNull(trafficSources, Collections.<TrafficSource>emptySet());
     }
   }
 
