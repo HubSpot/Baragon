@@ -14,6 +14,8 @@ import com.amazonaws.AmazonServiceException;
 import com.amazonaws.services.elasticloadbalancing.model.Instance;
 import com.amazonaws.services.elasticloadbalancingv2.AmazonElasticLoadBalancingClient;
 import com.amazonaws.services.elasticloadbalancingv2.model.AvailabilityZone;
+import com.amazonaws.services.elasticloadbalancingv2.model.CreateListenerRequest;
+import com.amazonaws.services.elasticloadbalancingv2.model.CreateRuleRequest;
 import com.amazonaws.services.elasticloadbalancingv2.model.DeleteListenerRequest;
 import com.amazonaws.services.elasticloadbalancingv2.model.DeleteRuleRequest;
 import com.amazonaws.services.elasticloadbalancingv2.model.DeregisterTargetsRequest;
@@ -340,6 +342,13 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
         .getRules();
   }
 
+  public Listener createListener(CreateListenerRequest createListenerRequest) {
+    return elbClient
+        .createListener(createListenerRequest)
+        .getListeners()
+        .get(0);
+  }
+
   public Listener modifyListener(ModifyListenerRequest modifyListenerRequest) {
     return elbClient
         .modifyListener(modifyListenerRequest)
@@ -353,6 +362,13 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
 
     elbClient
         .deleteListener(deleteListenerRequest);
+  }
+
+  public Rule createRule(CreateRuleRequest createRuleRequest) {
+    return elbClient
+        .createRule(createRuleRequest)
+        .getRules()
+        .get(0);
   }
 
   public Rule modifyRule(ModifyRuleRequest modifyRuleRequest) {
