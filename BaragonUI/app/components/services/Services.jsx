@@ -9,7 +9,6 @@ import UITable from '../common/table/UITable';
 import Column from '../common/table/Column';
 
 import JSONButton from '../common/JSONButton';
-import OverlayTrigger from 'react-bootstrap/lib/OverlayTrigger';
 import ToolTip from 'react-bootstrap/lib/Tooltip';
 
 import ReloadServiceButton from '../common/modalButtons/ReloadServiceButton';
@@ -72,6 +71,7 @@ class Services extends Component {
             className="actions-column"
             cellRender={
               (cellData, rowData) => {
+                // TODO - only show if allowEdit is set
                 const deleteService = (
                   <DeleteServiceButton serviceId={rowData.service.serviceId} />
                 );

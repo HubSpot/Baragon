@@ -20,5 +20,15 @@ export const SubmitRequest = buildJsonApiAction(
   (request) => ({
     url: `/request`,
     request
-  })
+  }),
+  (request) => request.loadBalancerRequestId
+);
+
+export const FetchRequestResponse = buildApiAction(
+  'FETCH_REQUEST_RESPONSE',
+  (requestId, renderNotFoundIf404 = true) => ({
+    url: `/request/${requestId}`,
+    renderNotFoundIf404
+  }),
+  (requestId) => requestId
 );

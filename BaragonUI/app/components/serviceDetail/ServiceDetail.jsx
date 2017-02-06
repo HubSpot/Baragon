@@ -9,7 +9,10 @@ import Utils from '../../utils';
 class ServiceDetail extends Component {
   render() {
     // TODO - render out info nicely
+    //  - JSON button (or other display?) for request history items
     // - reload / delete service / json button (use existing modals)
+    // - Remove upstream (requires new modal + building request json)
+    //   - submit request modal should either show request json or link to page for it
     return <h1>Service Detail</h1>
   }
 

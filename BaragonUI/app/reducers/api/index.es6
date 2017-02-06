@@ -13,7 +13,9 @@ import {
 
 import {
   FetchQueuedRequests,
-  FetchRequestHistory
+  FetchRequestHistory,
+  FetchRequestResponse,
+  SubmitRequest
 } from '../../actions/api/requests';
 
 import {
@@ -27,7 +29,9 @@ import {
 
 import {
   FetchBaragonServices,
-  FetchService
+  FetchService,
+  DeleteService,
+  ReloadService
 } from '../../actions/api/services';
 
 
@@ -43,7 +47,11 @@ const agents = buildKeyedApiActionReducer(FetchGroupAgents, []);
 const knownAgents = buildKeyedApiActionReducer(FetchGroupKnownAgents, []);
 const services = buildApiActionReducer(FetchBaragonServices, []);
 const service = buildKeyedApiActionReducer(FetchService, []);
-const requestHistory = buildKeyedApiActionReducer(FetchRequestHistory, [])
+const deleteService = buildKeyedApiActionReducer(DeleteService, []);
+const reloadService = buildKeyedApiActionReducer(ReloadService, []);
+const requestHistory = buildKeyedApiActionReducer(FetchRequestHistory, []);
+const requestResponse = buildKeyedApiActionReducer(FetchRequestResponse, []);
+const submitRequest = buildKeyedApiActionReducer(SubmitRequest, []);
 
 export default combineReducers({
   status,
@@ -56,5 +64,9 @@ export default combineReducers({
   knownAgents,
   services,
   service,
-  requestHistory
+  deleteService,
+  reloadService,
+  requestHistory,
+  requestResponse,
+  submitRequest
 });

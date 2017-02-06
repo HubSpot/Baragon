@@ -7,6 +7,8 @@ import { refresh } from '../../actions/ui/status';
 
 const StatusPage = (props) => {
   return (
+    // TODO - nice layout of data
+    // - search by request ID? Link to page for individual request?
     <h1>Status</h1>
   );
 };
