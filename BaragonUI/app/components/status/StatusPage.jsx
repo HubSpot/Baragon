@@ -5,10 +5,6 @@ import { Link } from 'react-router';
 import rootComponent from '../../rootComponent';
 import { refresh } from '../../actions/ui/status';
 
-import { FetchBaragonStatus } from '../../actions/api/status';
-import { FetchBaragonServiceWorkers } from '../../actions/api/workers';
-import { FetchQueuedRequests } from '../../actions/api/requests';
-
 const StatusPage = (props) => {
   return (
     <h1>Status</h1>

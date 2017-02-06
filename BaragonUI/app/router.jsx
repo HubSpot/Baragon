@@ -7,12 +7,20 @@ import { syncHistoryWithStore } from 'react-router-redux';
 import Application from './components/common/Application';
 import NotFound from './components/common/NotFound';
 import StatusPage from './components/status/StatusPage';
+import Services from './components/services/Services';
+import ServiceDetail from './components/serviceDetail/ServiceDetail';
+import Groups from './components/groups/Groups';
+import GroupDetail from './components/groupDetail/GroupDetail';
 
 const getFilenameFromSplat = (splat) => _.last(splat.split('/'));
 
 const routes = (
   <Route path="/" component={Application}>
     <IndexRoute component={StatusPage} title="Status" />
+    <Route path="services" component={Services} title="Services" />
+    <Route path="service/:serviceId" component={ServiceDetail} title={(params) => `${params.serviceId}`} />
+    <Route path="groups" component={Groups} title="Groups" />
+    <Route path="group/:groupId" component={GroupDetail} title={(params) => `${params.groupId}`} />
     <Route path="*" component={NotFound} title="Not Found" />
   </Route>);
 
