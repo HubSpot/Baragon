@@ -32,7 +32,7 @@ export function buildApiAction(actionName, opts = {}, keyFunc = undefined) {
     if (Utils.isIn(apiResponse.status, options.catchStatusCodes) || apiResponse.status === 404 && options.renderNotFoundIf404) {
       return action;
     }
-    if (apiResponse.status === 502) { // Singularity is deploying
+    if (apiResponse.status === 502) { // Baragon is deploying
       Messenger().info({
         message: 'Baragon is deploying, your requests cannot be handled. Things should resolve in a few seconds so just hang tight!'
       });
