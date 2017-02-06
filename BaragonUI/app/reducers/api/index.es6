@@ -33,15 +33,15 @@ import {
 
 
 const status = buildApiActionReducer(FetchBaragonStatus);
-const workers = buildApiActionReducer(FetchBaragonServiceWorkers);
-const queuedRequests = buildApiActionReducer(FetchQueuedRequests);
-const groups = buildApiActionReducer(FetchBaragonGroups);
+const workers = buildApiActionReducer(FetchBaragonServiceWorkers, []);
+const queuedRequests = buildApiActionReducer(FetchQueuedRequests, []);
+const groups = buildApiActionReducer(FetchBaragonGroups, []);
 const group = buildKeyedApiActionReducer(FetchGroup, []);
 const basePaths = buildKeyedApiActionReducer(FetchGroupBasePaths, []);
 const targetCount = buildKeyedApiActionReducer(FetchGroupTargetCount, 0);
 const agents = buildKeyedApiActionReducer(FetchGroupAgents, []);
 const knownAgents = buildKeyedApiActionReducer(FetchGroupKnownAgents, []);
-const services = buildApiActionReducer(FetchBaragonServices);
+const services = buildApiActionReducer(FetchBaragonServices, []);
 const service = buildKeyedApiActionReducer(FetchService, []);
 const requestHistory = buildKeyedApiActionReducer(FetchRequestHistory, [])
 

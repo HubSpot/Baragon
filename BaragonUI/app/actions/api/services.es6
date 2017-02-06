@@ -1,4 +1,4 @@
-import { buildApiAction } from './base';
+import { buildApiAction, buildJsonApiAction } from './base';
 
 export const FetchBaragonServices = buildApiAction(
   'FETCH_BARAGON_SERVICES',
@@ -12,4 +12,20 @@ export const FetchService = buildApiAction(
     renderNotFoundIf404
   }),
   (serviceId) => serviceId
+);
+
+export const DeleteService = buildJsonApiAction(
+  'DELETE_SERVICE',
+  'DELETE',
+  (serviceId) => ({
+    url: `/state/${serviceId}`,
+  })
+);
+
+export const ReloadService = buildJsonApiAction(
+  'RELOAD_SERVICE',
+  'POST',
+  (serviceId) => ({
+    url: `/state/${serviceId}/reload`,
+  })
 );

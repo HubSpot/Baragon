@@ -2,7 +2,7 @@ import { buildApiAction } from './base';
 
 export const FetchBaragonGroups = buildApiAction(
   'FETCH_BARAGON_GROUPS',
-  {url: '/load-balancer'}
+  {url: '/load-balancer/all'}
 );
 
 export const FetchGroup = buildApiAction(
@@ -42,7 +42,7 @@ export const FetchGroupAgents = buildApiAction(
 );
 
 export const FetchGroupKnownAgents = buildApiAction(
-  'FETCH_GROUP',
+  'FETCH_GROUP_KNOWN_AGENTS',
   (groupId, renderNotFoundIf404) => ({
     url: `/load-balancer/${groupId}/known-agents`,
     renderNotFoundIf404

@@ -1,4 +1,4 @@
-import { buildApiAction } from './base';
+import { buildApiAction, buildJsonApiAction } from './base';
 
 export const FetchQueuedRequests = buildApiAction(
   'FETCH_QUEUED_REQUESTS',
@@ -12,4 +12,13 @@ export const FetchRequestHistory = buildApiAction(
     renderNotFoundIf404
   }),
   (serviceId) => serviceId
+);
+
+export const SubmitRequest = buildJsonApiAction(
+ 'SUBMIT_REQUEST',
+  'POST',
+  (request) => ({
+    url: `/request`,
+    request
+  })
 );

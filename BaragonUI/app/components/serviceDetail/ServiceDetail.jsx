@@ -8,6 +8,8 @@ import Utils from '../../utils';
 
 class ServiceDetail extends Component {
   render() {
+    // TODO - render out info nicely
+    // - reload / delete service / json button (use existing modals)
     return <h1>Service Detail</h1>
   }
 
