@@ -1,0 +1,73 @@
+@import colors
+@import nib
+
+.page-loader
+    height 2em
+    width 2em
+    border-radius 100%
+    border .25em solid transparent
+    border-top-color $grey
+    border-right-color $grey
+    z-index 300
+    backface-visibility hidden
+    animation spinner 700ms linear infinite
+
+    &.small
+        border-width 1px
+        height 1em
+        width 1em
+
+    &.fixed
+        position fixed
+        margin auto
+        top 0
+        left 0
+        bottom 0
+        right 0
+
+    &.centered
+        margin 0 auto
+
+        &.cushy
+            margin-top 3em
+            margin-bottom 3em
+
+    &.inline-left
+        display inline-block
+        margin-right 5px
+
+.loader-small
+    height 1em
+    width 1em
+    display inline-block
+    margin 0 0.5em
+
+.page-loader-fixed
+    position: fixed
+    top: 50%
+    left: 50%
+    transform: translate(-50%, -50%)
+
+.page-loader-with-message
+    text-align center
+    margin 2em 0
+    color #888
+
+    .page-loader
+        margin-bottom 2em
+        border-top-color #707070
+        border-right-color #707070
+
+    p
+        font-size 1.3em
+        font-weight 300
+        letter-spacing .03em
+
+.empty-table-message + .page-loader-with-message
+    margin-top 3em
+
+@keyframes spinner
+    0%
+        transform rotate(0deg)
+    100%
+        transform rotate(360deg)
