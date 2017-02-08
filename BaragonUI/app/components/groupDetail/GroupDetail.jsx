@@ -8,6 +8,7 @@ import Column from '../common/table/Column';
 import AddTrafficSourceButton from '../common/modalButtons/AddTrafficSourceButton';
 import RemoveTrafficSourceButton from '../common/modalButtons/RemoveTrafficSourceButton';
 import RemoveKnownAgentButton from '../common/modalButtons/RemoveKnownAgentButton';
+import ModifyCountButton from '../common/modalButtons/ModifyCountButton';
 
 import { refresh } from '../../actions/ui/groupDetail'
 
@@ -54,7 +55,7 @@ class GroupDetail extends Component {
   titleBar(groupName, domainName, targetCount, editable) {
     const modifyTarget = () => {
       if (editable) {
-        return <a href="#"><span className="glyphicon glyphicon-edit"></span></a>
+        return <ModifyCountButton groupName={groupName} currentCount={targetCount} />
       }
     }
 

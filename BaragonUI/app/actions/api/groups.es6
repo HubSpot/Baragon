@@ -87,3 +87,12 @@ export const RemoveBasePath = buildApiAction(
   }),
   (groupId) => groupId
 );
+
+export const ModifyTargetCount = buildApiAction(
+  'MODIFY_GROUP_TARGET_COUNT',
+  (groupId, newTargetCount) => ({
+    url: `/load-balancer/${groupId}/count?count=${newTargetCount}`,
+    method: 'POST'
+  }),
+  (groupId) => groupId
+)

@@ -28,8 +28,15 @@ class RemoveKnownAgentModal extends Component {
         action="Remove Known Agent"
         onConfirm={this.props.removeKnownAgent}
         buttonStyle="danger"
-        formElements={[]}>
-        Are you sure that you would like to remove this traffic source?
+        formElements={[]}
+      >
+        Are you sure you want to delete this known agent?
+        <pre>
+          {this.props.groupName}: {this.props.agentId}
+        </pre>
+        Deleting a known agent will remove it from the list of known agents for
+        this load balancer group. It will NOT remove it from the list of active
+        agents.
       </FormModal>
     );
   }
