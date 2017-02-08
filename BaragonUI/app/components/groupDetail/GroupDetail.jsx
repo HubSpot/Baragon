@@ -7,6 +7,7 @@ import UITable from '../common/table/UITable';
 import Column from '../common/table/Column';
 import AddTrafficSourceButton from '../common/modalButtons/AddTrafficSourceButton';
 import RemoveTrafficSourceButton from '../common/modalButtons/RemoveTrafficSourceButton';
+import RemoveKnownAgentButton from '../common/modalButtons/RemoveKnownAgentButton';
 
 import { refresh } from '../../actions/ui/groupDetail'
 
@@ -41,7 +42,7 @@ class GroupDetail extends Component {
         </div>
         <div className="row">
           {this.activeAgents(this.props.agents)}
-          {this.knownAgents(this.props.knownAgents, this.props.editable)}
+          {this.knownAgents(this.props.knownAgents, this.props.group, this.props.editable)}
         </div>
         <div className="row">
           {this.basePaths(this.props.basePaths, this.props.domain, this.props.editable)}
@@ -176,7 +177,7 @@ class GroupDetail extends Component {
     );
   }
 
-  knownAgents(knownAgents, editable) {
+  knownAgents(knownAgents, groupName, editable) {
     const removeColumn = () => {
       if (editable) {
         return (
@@ -185,11 +186,7 @@ class GroupDetail extends Component {
             id="removeAgent"
             key="removeAgent"
             cellData={
-              (agent) => (
-                <a title="Remove Known Agent">
-                  <span className="glyphicon glyphicon-remove"></span>
-                </a>
-              )
+              (agent) => <RemoveKnownAgentButton groupName={groupName} agentId={agent.agentId} />
             }
             sortable={false}
             />

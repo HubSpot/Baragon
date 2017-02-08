@@ -51,7 +51,7 @@ export const FetchGroupKnownAgents = buildApiAction(
 );
 
 export const AddTrafficSource = buildJsonApiAction(
-  'ADD_TRAFFIC_SOURCE',
+  'ADD_GROUP_TRAFFIC_SOURCE',
   'POST',
   (groupId, requestData) => ({
     url: `/load-balancer/${groupId}/traffic-source`,
@@ -61,7 +61,7 @@ export const AddTrafficSource = buildJsonApiAction(
 );
 
 export const RemoveTrafficSource = buildJsonApiAction(
-  'REMOVE_TRAFFIC_SOURCE',
+  'REMOVE_GROUP_TRAFFIC_SOURCE',
   'DELETE',
   (groupId, requestData) => ({
     url: `/load-balancer/${groupId}/traffic-source`,
@@ -69,3 +69,12 @@ export const RemoveTrafficSource = buildJsonApiAction(
   }),
   (groupId) => groupId
 );
+
+export const RemoveKnownAgent = buildApiAction(
+  'REMOVE_GROUP_KNOWN_AGENT',
+  (groupId, agentId) => ({
+    url: `/load-balancer/${groupId}/known-agents/${agentId}`,
+    method: 'DELETE'
+  }),
+  (groupId) => groupId
+)
