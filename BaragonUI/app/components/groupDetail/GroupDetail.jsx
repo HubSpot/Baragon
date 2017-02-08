@@ -5,11 +5,12 @@ import { Link } from 'react-router';
 
 import UITable from '../common/table/UITable';
 import Column from '../common/table/Column';
-import AddTrafficSourceButton from '../common/modalButtons/AddTrafficSourceButton'
+import AddTrafficSourceButton from '../common/modalButtons/AddTrafficSourceButton';
+import RemoveTrafficSourceButton from '../common/modalButtons/RemoveTrafficSourceButton';
+
+import { refresh } from '../../actions/ui/groupDetail'
 
 import rootComponent from '../../rootComponent';
-import { AddTrafficSource } from '../../actions/api/groups';
-import { refresh } from '../../actions/ui/groupDetail';
 import Utils from '../../utils';
 
 class GroupDetail extends Component {
@@ -22,9 +23,7 @@ class GroupDetail extends Component {
     targetCount: React.PropTypes.number,
     agents: React.PropTypes.array,
     knownAgents: React.PropTypes.array,
-    editable: React.PropTypes.bool,
-
-    addTrafficSource: React.PropTypes.func
+    editable: React.PropTypes.bool
   };
 
   render() {
@@ -104,18 +103,17 @@ class GroupDetail extends Component {
   trafficSources(trafficSources, groupName, editable) {
     const addButton = () => {
       if (editable) {
-        // TODO
         return <AddTrafficSourceButton groupName={groupName} />
       } else {
         return null;
       }
     }
-    const removeButton = () => {
+    const removeButton = (trafficSource) => {
       if (editable) {
         return (
-          <a className="icon badge" title="Remove Traffic Source">
-            <span className="glyphicon glyphicon-remove"></span>
-          </a>
+          <span className="pull-right">
+            <RemoveTrafficSourceButton groupName={groupName} trafficSource={trafficSource} />
+          </span>
         );
       } else {
         return null;
@@ -125,7 +123,7 @@ class GroupDetail extends Component {
     const trafficSourceRenderer = (trafficSource) => {
       return (
         <li className="list-group-item">
-          {removeButton()}
+          {removeButton(trafficSource)}
           <ul className="list-unstyled">
             <li>Name: {trafficSource.name}</li>
             <li>Type: {trafficSource.type}</li>
@@ -319,5 +317,5 @@ export default connect((state, ownProps) => ({
   agents: Utils.maybe(state, ['api', 'agents', ownProps.params.groupId, 'data']),
   knownAgents: Utils.maybe(state, ['api', 'knownAgents', ownProps.params.groupId, 'data']),
   trafficSources: Utils.maybe(state, ['api', 'group', ownProps.params.groupId, 'data', 'trafficSources']),
-  editable: true // TODO
+  editable: true // TODO,
 }))(rootComponent(GroupDetail, (props) => refresh(props.params.groupId)));

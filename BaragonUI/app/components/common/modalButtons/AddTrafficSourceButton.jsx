@@ -8,7 +8,7 @@ import { getClickComponent } from '../modal/ModalWrapper';
 
 import AddTrafficSourceModal from './AddTrafficSourceModal';
 
-const deleteTooltip = (
+const AddTrafficSourceTooltip = (
   <ToolTip id="addTrafficSource">
     Add Traffic Source
   </ToolTip>
@@ -23,8 +23,8 @@ export default class AddTrafficSourceButton extends Component {
 
   static defaultProps = {
     children: (
-      <OverlayTrigger placement="top" id="view-delete-overlay" overlay={deleteTooltip}>
-        <a className="btn btn-primary" data-action="delete">
+      <OverlayTrigger placement="top" id="view-add-traffic-source-overlay" overlay={AddTrafficSourceTooltip}>
+        <a className="btn btn-primary">
           + Add Traffic Source
         </a>
       </OverlayTrigger>

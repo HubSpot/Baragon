@@ -59,3 +59,13 @@ export const AddTrafficSource = buildJsonApiAction(
   }),
   (groupId) => groupId
 );
+
+export const RemoveTrafficSource = buildJsonApiAction(
+  'REMOVE_TRAFFIC_SOURCE',
+  'DELETE',
+  (groupId, requestData) => ({
+    url: `/load-balancer/${groupId}/traffic-source`,
+    body: requestData
+  }),
+  (groupId) => groupId
+);

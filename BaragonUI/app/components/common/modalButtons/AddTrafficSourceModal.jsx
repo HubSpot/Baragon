@@ -1,7 +1,7 @@
 import React, { Component, PropTypes } from 'react';
 import { connect } from 'react-redux';
 
-import { AddTrafficSource } from '../../../actions/api/groups';
+import { AddTrafficSource, FetchGroup } from '../../../actions/api/groups';
 
 import FormModal from '../modal/FormModal';
 
@@ -23,16 +23,31 @@ class AddTrafficSourceModal extends Component {
         action="Add Traffic Source"
         onConfirm={this.props.addTrafficSource}
         buttonStyle="primary"
-        formElements={[]}>
-        Please specificy the traffic source type (ie, either a classic load
-        balancer or a target group) and the traffic source's name.
+        formElements={[
+          {
+            name: 'type',
+            type: FormModal.INPUT_TYPES.RADIO,
+            label: 'Type: ',
+            values: [
+              {value: 'CLASSIC', label: 'Classic Load Balancer'},
+              {value: 'ALB_TARGET_GROUP', label: 'Target Group'}],
+            isRequired: true
+          },
+          {
+            name: 'name',
+            type: FormModal.INPUT_TYPES.STRING,
+            label: 'Name: '
+          }
+        ]}>
+        Please specify the traffic source type and the traffic source's name.
       </FormModal>
     );
   }
 }
 
 const mapDispatchToProps = (dispatch, ownProps) => ({
-  addTrafficSource: () => dispatch(AddTrafficSource.trigger(ownProps.groupName, {name: "test", type: "CLASSIC"}))
+  addTrafficSource: (data) => dispatch(AddTrafficSource.trigger(ownProps.groupName, data))
+      .then(response => dispatch(FetchGroup.trigger(ownProps.groupName)))
       .then(response => (ownProps.then && ownProps.then(response)))
 });
 
