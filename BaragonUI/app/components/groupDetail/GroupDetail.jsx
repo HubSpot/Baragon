@@ -45,7 +45,7 @@ class GroupDetail extends Component {
           {this.knownAgents(this.props.knownAgents, this.props.group, this.props.editable)}
         </div>
         <div className="row">
-          {this.basePaths(this.props.basePaths, this.props.domain, this.props.editable)}
+          {this.basePaths(this.props.basePaths, this.props.domain, this.props.group, this.props.editable)}
         </div>
       </div>
     )
@@ -240,14 +240,14 @@ class GroupDetail extends Component {
     );
   }
 
-  basePaths(basePaths, defaultDomain, editable) {
-    const removeButton = () => {
+  basePaths(basePaths, defaultDomain, groupName, editable) {
+    const removeButton = (basePath) => {
       if (editable) {
         return (
-          // TODO actions
-          <a title="Remove Base Path Lock">
-            <span className="glyphicon glyphicon-remove"></span>
-          </a>
+          <RemoveBasePathButton
+            groupName={groupName}
+            basePath={basePath}
+          />
         );
       } else {
         return null;
@@ -263,7 +263,7 @@ class GroupDetail extends Component {
     const renderBasePath = (element) => {
       return (
         <li className="list-group-item">
-          {removeButton()}
+          {removeButton(element)}
           {pathToLink(element)}
         </li>
       );

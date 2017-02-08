@@ -77,4 +77,13 @@ export const RemoveKnownAgent = buildApiAction(
     method: 'DELETE'
   }),
   (groupId) => groupId
-)
+);
+
+export const RemoveBasePath = buildApiAction(
+  'REMOVE_GROUP_BASE_PATH',
+  (groupId, basePath) => ({
+    url: `/load-balancer/${groupId}/base-path?basePath=${basePath}`,
+    method: 'DELETE'
+  }),
+  (groupId) => groupId
+);
