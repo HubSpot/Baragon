@@ -5,8 +5,10 @@ import { Link } from 'react-router';
 
 import UITable from '../common/table/UITable';
 import Column from '../common/table/Column';
+import AddTrafficSourceButton from '../common/modalButtons/AddTrafficSourceButton'
 
 import rootComponent from '../../rootComponent';
+import { AddTrafficSource } from '../../actions/api/groups';
 import { refresh } from '../../actions/ui/groupDetail';
 import Utils from '../../utils';
 
@@ -15,21 +17,17 @@ class GroupDetail extends Component {
     domain: React.PropTypes.string,
     domainsServed: React.PropTypes.array,
     params: PropTypes.object.isRequired,
-    group: React.PropTypes.object,
+    group: React.PropTypes.string,
     basePaths: React.PropTypes.array,
     targetCount: React.PropTypes.number,
     agents: React.PropTypes.array,
     knownAgents: React.PropTypes.array,
-    editable: React.PropTypes.bool
+    editable: React.PropTypes.bool,
+
+    addTrafficSource: React.PropTypes.func
   };
 
   render() {
-    // TODO - nicely render all of the group details + wire up actions
-    // - add/remove traffic source (requires new modal)
-    // - json button, use existing component
-    // - remove known agent (requires new modal)
-    // - remove base path (requires new modal)
-    // return <h1>Group Detail</h1>
     return (
       <div>
         <div className="row">
@@ -40,7 +38,7 @@ class GroupDetail extends Component {
           {this.domains(this.props.domainsServed, this.props.domain)}
         </div>
         <div className="row">
-          {this.trafficSources(this.props.trafficSources, this.props.editable)}
+          {this.trafficSources(this.props.trafficSources, this.props.group, this.props.editable)}
         </div>
         <div className="row">
           {this.activeAgents(this.props.agents)}
@@ -103,11 +101,11 @@ class GroupDetail extends Component {
     );
   }
 
-  trafficSources(trafficSources, editable) {
+  trafficSources(trafficSources, groupName, editable) {
     const addButton = () => {
       if (editable) {
         // TODO
-        return <a className="btn btn-primary" title="Add Traffic Source">+ Add Traffic Source</a>
+        return <AddTrafficSourceButton groupName={groupName} />
       } else {
         return null;
       }
@@ -313,13 +311,13 @@ class GroupDetail extends Component {
 }
 
 export default connect((state, ownProps) => ({
-  domain: 'temp', // TODO
-  domainsServed: ['junkyard.hubteamqa.com', 'candidate.hubteam.com', 'zorse.hubteam.com', 'nav.hubteam.com', 'fake.hubteam.com'], // TODO
-  group: Utils.maybe(state, ['api', 'group', ownProps.params.groupId, 'data']),
+  domain: Utils.maybe(state, ['api', 'group', ownProps.params.groupId, 'data', 'domain']),
+  domainsServed: Utils.maybe(state, ['api', 'group', ownProps.params.groupId, 'data', 'domains']),
+  group: ownProps.params.groupId,
   basePaths: Utils.maybe(state, ['api', 'basePaths', ownProps.params.groupId, 'data']),
   targetCount: Utils.maybe(state, ['api', 'targetCount', ownProps.params.groupId, 'data']),
   agents: Utils.maybe(state, ['api', 'agents', ownProps.params.groupId, 'data']),
   knownAgents: Utils.maybe(state, ['api', 'knownAgents', ownProps.params.groupId, 'data']),
-  trafficSources: Utils.maybe(state, ['api', 'trafficSources', ownProps.params.groupId, 'data']),
+  trafficSources: Utils.maybe(state, ['api', 'group', ownProps.params.groupId, 'data', 'trafficSources']),
   editable: true // TODO
 }))(rootComponent(GroupDetail, (props) => refresh(props.params.groupId)));

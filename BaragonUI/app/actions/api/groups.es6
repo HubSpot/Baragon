@@ -1,4 +1,4 @@
-import { buildApiAction } from './base';
+import { buildApiAction, buildJsonApiAction } from './base';
 
 export const FetchBaragonGroups = buildApiAction(
   'FETCH_BARAGON_GROUPS',
@@ -46,6 +46,16 @@ export const FetchGroupKnownAgents = buildApiAction(
   (groupId, renderNotFoundIf404) => ({
     url: `/load-balancer/${groupId}/known-agents`,
     renderNotFoundIf404
+  }),
+  (groupId) => groupId
+);
+
+export const AddTrafficSource = buildJsonApiAction(
+  'ADD_TRAFFIC_SOURCE',
+  'POST',
+  (groupId, requestData) => ({
+    url: `/load-balancer/${groupId}/traffic-source`,
+    body: requestData
   }),
   (groupId) => groupId
 );

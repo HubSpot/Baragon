@@ -58,6 +58,7 @@ export default combineReducers({
   workers,
   queuedRequests,
   groups,
+  group,
   basePaths,
   targetCount,
   agents,
