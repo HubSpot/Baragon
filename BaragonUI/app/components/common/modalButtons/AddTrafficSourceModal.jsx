@@ -1,7 +1,7 @@
 import React, { Component, PropTypes } from 'react';
 import { connect } from 'react-redux';
 
-import { AddTrafficSource, FetchGroup } from '../../../actions/api/groups';
+import { AddTrafficSource } from '../../../actions/api/groups';
 
 import FormModal from '../modal/FormModal';
 
@@ -47,7 +47,6 @@ class AddTrafficSourceModal extends Component {
 
 const mapDispatchToProps = (dispatch, ownProps) => ({
   addTrafficSource: (data) => dispatch(AddTrafficSource.trigger(ownProps.groupName, data))
-      .then(response => dispatch(FetchGroup.trigger(ownProps.groupName)))
       .then(response => (ownProps.then && ownProps.then(response)))
 });
 

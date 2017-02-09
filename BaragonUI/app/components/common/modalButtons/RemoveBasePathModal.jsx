@@ -1,7 +1,7 @@
 import React, { Component, PropTypes } from 'react';
 import { connect } from 'react-redux';
 
-import { RemoveBasePath, FetchGroupBasePaths } from '../../../actions/api/groups';
+import { RemoveBasePath } from '../../../actions/api/groups';
 
 import FormModal from '../modal/FormModal';
 
@@ -9,7 +9,7 @@ class RemoveBasePathModal extends Component {
   static propTypes = {
     groupName: PropTypes.string.isRequired,
     basePath: PropTypes.string.isRequired,
-    addTrafficSource: PropTypes.func.isRequired
+    removeBasePath: PropTypes.func.isRequired
   };
 
   show() {
@@ -39,7 +39,6 @@ class RemoveBasePathModal extends Component {
 
 const mapDispatchToProps = (dispatch, ownProps) => ({
   removeBasePath: () => dispatch(RemoveBasePath.trigger(ownProps.groupName, ownProps.basePath))
-      .then(response => dispatch(FetchGroupBasePaths.trigger(ownProps.groupName)))
       .then(response => (ownProps.then && ownProps.then(response)))
 });
 

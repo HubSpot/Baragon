@@ -1,10 +1,7 @@
 import React, { Component, PropTypes } from 'react';
 import { connect } from 'react-redux';
 
-import {
-  ModifyTargetCount,
-  FetchGroupTargetCount
-} from '../../../actions/api/groups';
+import { ModifyTargetCount } from '../../../actions/api/groups';
 
 import FormModal from '../modal/FormModal';
 
@@ -33,6 +30,7 @@ class ModifyCountModal extends Component {
             type: FormModal.INPUT_TYPES.NUMBER,
             label: 'New Count: ',
             defaultValue: this.props.currentCount,
+            min: 1,
             isRequired: true
           }]}>
         Please specity the new target agent count.
@@ -47,7 +45,7 @@ class ModifyCountModal extends Component {
 
 const mapDispatchToProps = (dispatch, ownProps) => ({
   modifyCount: (data) => dispatch(ModifyTargetCount.trigger(ownProps.groupName, data.newCount))
-      .then(response => dispatch(FetchGroupTargetCount.trigger(ownProps.groupName)))
+      // .then(response => dispatch(FetchGroupTargetCount.trigger(ownProps.groupName)))
       .then(response => (ownProps.then && ownProps.then(response)))
 });
 

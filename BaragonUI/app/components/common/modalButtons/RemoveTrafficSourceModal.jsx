@@ -1,7 +1,7 @@
 import React, { Component, PropTypes } from 'react';
 import { connect } from 'react-redux';
 
-import { RemoveTrafficSource, FetchGroup } from '../../../actions/api/groups';
+import { RemoveTrafficSource } from '../../../actions/api/groups';
 
 import FormModal from '../modal/FormModal';
 
@@ -42,7 +42,6 @@ class RemoveTrafficSourceModal extends Component {
 
 const mapDispatchToProps = (dispatch, ownProps) => ({
   removeTrafficSource: () => dispatch(RemoveTrafficSource.trigger(ownProps.groupName, ownProps.trafficSource))
-      .then(response => dispatch(FetchGroup.trigger(ownProps.groupName)))
       .then(response => (ownProps.then && ownProps.then(response)))
 });
 

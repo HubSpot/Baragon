@@ -1,11 +1,7 @@
 import React, { Component, PropTypes } from 'react';
 import { connect } from 'react-redux';
 
-import {
-  RemoveKnownAgent,
-  FetchGroupKnownAgents,
-  FetchGroupAgents
-} from '../../../actions/api/groups';
+import { RemoveKnownAgent } from '../../../actions/api/groups';
 
 import FormModal from '../modal/FormModal';
 
@@ -44,8 +40,8 @@ class RemoveKnownAgentModal extends Component {
 
 const mapDispatchToProps = (dispatch, ownProps) => ({
   removeKnownAgent: (data) => dispatch(RemoveKnownAgent.trigger(ownProps.groupName, ownProps.agentId))
-      .then(response => dispatch(FetchGroupKnownAgents.trigger(ownProps.groupName)))
-      .then(response => dispatch(FetchGroupAgents.trigger(ownProps.groupName)))
+      // .then(response => dispatch(FetchGroupKnownAgents.trigger(ownProps.groupName)))
+      // .then(response => dispatch(FetchGroupAgents.trigger(ownProps.groupName)))
       .then(response => (ownProps.then && ownProps.then(response)))
 });
 

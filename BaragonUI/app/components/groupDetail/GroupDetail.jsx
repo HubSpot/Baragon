@@ -3,14 +3,20 @@ import { connect } from 'react-redux';
 import classNames from 'classnames';
 import { Link } from 'react-router';
 
-import UITable from '../common/table/UITable';
-import Column from '../common/table/Column';
-import AddTrafficSourceButton from '../common/modalButtons/AddTrafficSourceButton';
-import RemoveTrafficSourceButton from '../common/modalButtons/RemoveTrafficSourceButton';
-import RemoveKnownAgentButton from '../common/modalButtons/RemoveKnownAgentButton';
-import ModifyCountButton from '../common/modalButtons/ModifyCountButton';
+
+
+import GroupTitleBar from './GroupTitleBar';
+import GroupDomains from './GroupDomains';
+import GroupTrafficSources from './GroupTrafficSources';
+import GroupBasePaths from './GroupBasePaths';
+import GroupAgents from './GroupAgents';
+import GroupKnownAgents from './GroupKnownAgents';
 
 import { refresh } from '../../actions/ui/groupDetail'
+import {
+  FetchGroupTargetCount,
+  FetchGroup
+} from '../../actions/api/groups';
 
 import rootComponent from '../../rootComponent';
 import Utils from '../../utils';
@@ -24,289 +30,69 @@ class GroupDetail extends Component {
     basePaths: React.PropTypes.array,
     targetCount: React.PropTypes.number,
     agents: React.PropTypes.array,
+    trafficSources: React.PropTypes.array,
     knownAgents: React.PropTypes.array,
-    editable: React.PropTypes.bool
+    editable: React.PropTypes.bool,
+
+    afterModifyTargetCount: React.PropTypes.func.isRequired,
+    afterAddTrafficSource: React.PropTypes.func.isRequired,
+    afterRemoveTrafficSource: React.PropTypes.func.isRequired,
+    afterRemoveBasePath: React.PropTypes.func.isRequired,
   };
 
   render() {
     return (
       <div>
         <div className="row">
-          {this.titleBar(this.props.group, this.props.domain,
-             this.props.targetCount, this.props.editable)}
+          <GroupTitleBar
+            group={this.props.group}
+            domain={this.props.domain}
+            targetCount={this.props.targetCount}
+            editable={this.props.editable}
+            afterModifyTargetCount={this.props.afterModifyTargetCount}
+          />
          </div>
          <div className="row">
-          {this.domains(this.props.domainsServed, this.props.domain)}
+           <GroupDomains
+             domains={this.props.domainsServed}
+             defaultDomain={this.props.domain}
+            />
         </div>
         <div className="row">
-          {this.trafficSources(this.props.trafficSources, this.props.group, this.props.editable)}
-        </div>
-        <div className="row">
-          {this.activeAgents(this.props.agents)}
-          {this.knownAgents(this.props.knownAgents, this.props.group, this.props.editable)}
-        </div>
-        <div className="row">
-          {this.basePaths(this.props.basePaths, this.props.domain, this.props.group, this.props.editable)}
-        </div>
-      </div>
-    )
-  }
-
-  titleBar(groupName, domainName, targetCount, editable) {
-    const modifyTarget = () => {
-      if (editable) {
-        return <ModifyCountButton groupName={groupName} currentCount={targetCount} />
-      }
-    }
-
-    return (
-      <div>
-        <div className="col-md-4">
-          <h3>Group: {groupName}</h3>
-        </div>
-        <div className="col-md-5">
-          <h3>Default Domain: <a href={`http://${domainName}`}>{domainName}</a></h3>
-        </div>
-        <div className="col-md-3">
-          <h3>Target Count: {targetCount} {modifyTarget()}</h3>
-        </div>
-      </div>
-    )
-  }
-
-  domains(domainsServed, defaultDomain) {
-    if (!domainsServed || !domainsServed.length) {
-      return null;
-    }
-
-    const domainElement = (domain) => {
-      if (domain === defaultDomain) {
-        return (
-          <li className="list-group-item">
-            {defaultDomain}
-            <span className="label label-info pull-right">Default</span>
-          </li>
-        );
-      } else {
-        return <li className="list-group-item">{domain}</li>;
-      }
-    }
-
-    const domains = this.asGroups(domainsServed, domainElement);
-
-    return (
-      <div className="col-md-12">
-        <h4>Domains Served</h4>
-        {domains}
-      </div>
-    );
-  }
-
-  trafficSources(trafficSources, groupName, editable) {
-    const addButton = () => {
-      if (editable) {
-        return <AddTrafficSourceButton groupName={groupName} />
-      } else {
-        return null;
-      }
-    }
-    const removeButton = (trafficSource) => {
-      if (editable) {
-        return (
-          <span className="pull-right">
-            <RemoveTrafficSourceButton groupName={groupName} trafficSource={trafficSource} />
-          </span>
-        );
-      } else {
-        return null;
-      }
-    }
-
-    const trafficSourceRenderer = (trafficSource) => {
-      return (
-        <li className="list-group-item">
-          {removeButton(trafficSource)}
-          <ul className="list-unstyled">
-            <li>Name: {trafficSource.name}</li>
-            <li>Type: {trafficSource.type}</li>
-          </ul>
-        </li>
-      );
-    }
-
-    const sources = this.asGroups(trafficSources, trafficSourceRenderer);
-
-    return (
-      <div className="col-md-12">
-        <h4>Traffic Sources</h4>
-        {sources}
-        {addButton()}
-      </div>
-    );
-  }
-
-  activeAgents(agents) {
-    return (
-      <div className="col-md-5">
-        <h4>Active Agents</h4>
-        <UITable
-          ref="activeAgents"
-          data={agents}
-          keyGetter={(agent) => agent.agentId}
-          paginated={false}
-          >
-          <Column
-            label="ID"
-            id="activeAgentId"
-            key="activeAgentId"
-            cellData={
-              (agent) => agent.agentId
-            }
-            sortable={true}
-            />
-          <Column
-            label="Base URI"
-            id="activeAgentBaseUri"
-            key="activeAgentBaseUri"
-            cellData={
-              (agent) => (<a href={`${agent.baseAgentUri}/status`}>{agent.baseAgentUri}</a>)
-            }
-            sortable={true}
-            />
-        </UITable>
-      </div>
-    );
-  }
-
-  knownAgents(knownAgents, groupName, editable) {
-    const removeColumn = () => {
-      if (editable) {
-        return (
-          <Column
-            label=""
-            id="removeAgent"
-            key="removeAgent"
-            cellData={
-              (agent) => <RemoveKnownAgentButton groupName={groupName} agentId={agent.agentId} />
-            }
-            sortable={false}
-            />
-        );
-      } else {
-        return null;
-      }
-    }
-
-    return (
-      <div className="col-md-7">
-        <h4>Known Agents</h4>
-        <UITable
-          ref="activeAgents"
-          data={knownAgents}
-          keyGetter={(agent) => agent.agentId}
-          paginated={false}
-          >
-          <Column
-            label="ID"
-            id="activeAgentId"
-            key="activeAgentId"
-            cellData={
-              (agent) => agent.agentId
-            }
-            sortable={true}
-            />
-          <Column
-            label="Base URI"
-            id="activeAgentBaseUri"
-            key="activeAgentBaseUri"
-            cellData={
-
-              (agent) => (<a href={`${agent.baseAgentUri}/status`}>{agent.baseAgentUri}</a>)
-            }
-            sortable={true}
-            />
-          <Column
-            lable="Last Seen"
-            id="lastSeen"
-            key="lastSeen"
-            cellData={
-              // TODO timestamp from now
-              (agent) => (agent.lastSeenAt)
-            }
-            sortable={true}
-            />
-          {removeColumn()}
-        </UITable>
-      </div>
-    );
-  }
-
-  basePaths(basePaths, defaultDomain, groupName, editable) {
-    const removeButton = (basePath) => {
-      if (editable) {
-        return (
-          <RemoveBasePathButton
-            groupName={groupName}
-            basePath={basePath}
+          <GroupTrafficSources
+            trafficSources={this.props.trafficSources}
+            group={this.props.group}
+            editable={this.props.editable}
+            afterAddTrafficSource={this.props.afterAddTrafficSource}
+            afterRemoveTrafficSource={this.props.afterRemoveTrafficSource}
           />
-        );
-      } else {
-        return null;
-      }
-    }
-    const pathToLink = (path) => {
-      if (defaultDomain) {
-        return <a target="_blank" href={`http://${defaultDomain}${path}`}>{path}</a>;
-      } else {
-        return <span>{path}</span>;
-      }
-    }
-    const renderBasePath = (element) => {
-      return (
-        <li className="list-group-item">
-          {removeButton(element)}
-          {pathToLink(element)}
-        </li>
-      );
-    }
-
-    const paths = this.asGroups(basePaths, renderBasePath);
-
-    return (
-      <div className="col-md-12">
-        <h4>Base Paths</h4>
-        {paths}
-      </div>
-    );
-  }
-
-  // Map a flat array into an array of arrays of size `size`, where the last
-  // array is as long as possible
-  // [1, 2, 3, 4, 5, 6, 7], 2 -> [[1, 2], [3, 4], [5, 6], [7]]
-  // Precondition: size != 0
-  chunk(arr, size) {
-    return _.chain(arr)
-      .groupBy((elem, index) => Math.floor(index / size))
-      .toArray()
-      .value();
-  }
-
-  asGroups(arr, itemRenderer) {
-    const rowRenderer = (row) => {
-      return (
-        <div className="col-md-3">
-          <ul className="list-group">
-            { row.map( itemRenderer ) }
-          </ul>
         </div>
-      );
-    }
-
-    return this.chunk(arr, arr.length / 4).map(rowRenderer);
+        <div className="row">
+          <GroupAgents
+            agents={this.props.agents}
+          />
+          <GroupKnownAgents
+            knownAgents={this.props.knownAgents}
+            group={this.props.group}
+            editable={this.props.editable}
+            afterRemoveKnownAgent={this.props.afterRemoveKnownAgent}
+          />
+        </div>
+        <div className="row">
+          <GroupBasePaths
+            basePaths={this.props.basePaths}
+            domain={this.props.domain}
+            group={this.props.group}
+            editable={this.props.editable}
+            afterRemoveBasePath={this.props.afterRemoveBasePath}
+          />
+        </div>
+      </div>
+    )
   }
 }
 
-export default connect((state, ownProps) => ({
+const mapStateToProps = (state, ownProps) => ({
   domain: Utils.maybe(state, ['api', 'group', ownProps.params.groupId, 'data', 'domain']),
   domainsServed: Utils.maybe(state, ['api', 'group', ownProps.params.groupId, 'data', 'domains']),
   group: ownProps.params.groupId,
@@ -315,5 +101,16 @@ export default connect((state, ownProps) => ({
   agents: Utils.maybe(state, ['api', 'agents', ownProps.params.groupId, 'data']),
   knownAgents: Utils.maybe(state, ['api', 'knownAgents', ownProps.params.groupId, 'data']),
   trafficSources: Utils.maybe(state, ['api', 'group', ownProps.params.groupId, 'data', 'trafficSources']),
-  editable: true // TODO,
-}))(rootComponent(GroupDetail, (props) => refresh(props.params.groupId)));
+  editable: true
+});
+
+const mapDispatchToProps = (dispatch, ownProps) => ({
+  afterModifyTargetCount: (data) => dispatch(FetchGroupTargetCount.trigger(ownProps.params.groupId)),
+  afterAddTrafficSource: (data) => dispatch(FetchGroup.trigger(ownProps.params.groupId)),
+  afterRemoveTrafficSource: (data) => dispatch(FetchGroup.trigger(ownProps.params.groupId)),
+  afterRemoveKnownAgent: (data) => dispatch(FetchGroupKnownAgents.trigger(ownProps.params.groupId))
+                                     .then(FetchGroupAgents.trigger(ownProps.params.groupId)),
+  afterRemoveBasePath: (data) => dispatch(FetchGroupBasePaths.trigger(ownProps.params.groupId)),
+});
+
+export default connect(mapStateToProps, mapDispatchToProps)(rootComponent(GroupDetail, (props) => refresh(props.params.groupId)));

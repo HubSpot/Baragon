@@ -41,7 +41,8 @@ export default class RemoveKnownAgentButton extends Component {
           ref="modal"
           groupName={this.props.groupName}
           agentId={this.props.agentId}
-          then={this.props.then} />
+          then={this.props.then}
+        />
       </span>
     );
   }

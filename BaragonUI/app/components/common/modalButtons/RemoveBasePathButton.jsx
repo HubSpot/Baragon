@@ -6,7 +6,7 @@ import ToolTip from 'react-bootstrap/lib/Tooltip';
 
 import { getClickComponent } from '../modal/ModalWrapper';
 
-import AddTrafficSourceModal from './AddTrafficSourceModal';
+import RemoveBasePathModal from './RemoveBasePathModal';
 
 const RemoveBasePathTooltip = (
   <ToolTip id="removeBasePath">
@@ -39,8 +39,9 @@ export default class RemoveBasePathButton extends Component {
         <RemoveBasePathModal
           ref="modal"
           groupName={this.props.groupName}
-          agentId={this.props.agentId}
-          then={this.props.then} />
+          basePath={this.props.basePath}
+          then={this.props.then}
+        />
       </span>
     );
   }
