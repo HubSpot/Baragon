@@ -1,15 +1,34 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import classNames from 'classnames';
-import { Link } from 'react-router';
 import rootComponent from '../../rootComponent';
 import { refresh } from '../../actions/ui/status';
 
-const StatusPage = (props) => {
+import WorkerStatus from './WorkerStatus';
+import PendingRequests from './PendingRequests';
+import RequestSearch from './RequestSearch';
+
+const StatusPage = ({status, workers, queuedRequests}) => {
   return (
-    // TODO - nice layout of data
-    // - search by request ID? Link to page for individual request?
-    <h1>Status</h1>
+    <div>
+      <div className="row">
+        <WorkerStatus
+          workerLag={status.workerLagMs}
+          elbWorkerLag={status.elbWorkerLagMs}
+          zookeeperState={status.zookeeperState}
+          workers={workers}
+        />
+      <PendingRequests
+        queuedRequests={queuedRequests}
+      />
+      </div>
+      <div className="row">
+        <RequestSearch
+          onSearch={(text) => {
+            console.log(text);
+          }}
+        />
+      </div>
+    </div>
   );
 };
 
