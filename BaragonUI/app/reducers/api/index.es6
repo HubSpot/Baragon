@@ -1,4 +1,3 @@
-import _ from 'underscore';
 import { combineReducers } from 'redux';
 import buildApiActionReducer from './base';
 import buildKeyedApiActionReducer from './keyed';
@@ -25,7 +24,7 @@ import {
   FetchGroupTargetCount,
   FetchGroupAgents,
   FetchGroupKnownAgents
-} from '../../actions/api/groups'
+} from '../../actions/api/groups';
 
 import {
   FetchBaragonServices,
@@ -33,8 +32,6 @@ import {
   DeleteService,
   ReloadService
 } from '../../actions/api/services';
-
-
 
 const status = buildApiActionReducer(FetchBaragonStatus);
 const workers = buildApiActionReducer(FetchBaragonServiceWorkers, []);
@@ -50,7 +47,7 @@ const service = buildKeyedApiActionReducer(FetchService, []);
 const deleteService = buildKeyedApiActionReducer(DeleteService, []);
 const reloadService = buildKeyedApiActionReducer(ReloadService, []);
 const requestHistory = buildKeyedApiActionReducer(FetchRequestHistory, []);
-const requestResponse = buildKeyedApiActionReducer(FetchRequestResponse, []);
+const requestResponse = buildKeyedApiActionReducer(FetchRequestResponse, {});
 const submitRequest = buildKeyedApiActionReducer(SubmitRequest, []);
 
 export default combineReducers({
@@ -58,6 +55,7 @@ export default combineReducers({
   workers,
   queuedRequests,
   groups,
+  group,
   basePaths,
   targetCount,
   agents,
