@@ -1,11 +1,16 @@
 import React from 'react';
 import { connect } from 'react-redux';
+import { browserHistory } from 'react-router';
 import rootComponent from '../../rootComponent';
 import { refresh } from '../../actions/ui/status';
 
 import WorkerStatus from './WorkerStatus';
 import PendingRequests from './PendingRequests';
 import RequestSearch from './RequestSearch';
+
+const navigateToRequest = (requestId) => {
+  browserHistory.push(`/requests/${requestId}`);
+};
 
 const StatusPage = ({status, workers, queuedRequests}) => {
   return (
@@ -23,9 +28,7 @@ const StatusPage = ({status, workers, queuedRequests}) => {
       </div>
       <div className="row">
         <RequestSearch
-          onSearch={(text) => {
-            console.log(text);
-          }}
+          onSearch={navigateToRequest}
         />
       </div>
     </div>
