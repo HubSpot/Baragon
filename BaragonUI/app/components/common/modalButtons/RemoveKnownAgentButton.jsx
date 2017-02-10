@@ -7,7 +7,6 @@ import ToolTip from 'react-bootstrap/lib/Tooltip';
 import { getClickComponent } from '../modal/ModalWrapper';
 
 import RemoveKnownAgentModal from './RemoveKnownAgentModal';
-import AddTrafficSourceModal from './AddTrafficSourceModal';
 
 const removeKnownAgentTooltip = (
   <ToolTip id="removeKnownAgent">
