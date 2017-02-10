@@ -10,7 +10,19 @@ import SummaryPanel from './SummaryPanel';
 import AgentResponsesPanel from './AgentResponsesPanel';
 import OriginalRequestPanel from './OriginalRequestPanel';
 
-const RequestDetail = ({requestId, serviceId, agentResponses, message, request, response}) => {
+const RequestDetail = ({response}) => {
+  if (response === undefined || ! response.loadBalancerRequestId) {
+    return <div className="centered cushy page-loader"></div>;
+  }
+
+  const {
+    agentResponses,
+    message,
+    request,
+    loadBalancerRequestId: requestId,
+  } = response;
+  const {loadBalancerService: {serviceId}} = request;
+
   return (
     <div>
       <div className="row detail-header">
@@ -19,7 +31,7 @@ const RequestDetail = ({requestId, serviceId, agentResponses, message, request, 
         </div>
         <div className="col-md-2 button-container">
           <JSONButton object={response} showOverlay={true}>
-            <a className="btn btn-default">JSON</a>
+            <span className="btn btn-default">JSON</span>
           </JSONButton>
         </div>
       </div>
@@ -40,20 +52,15 @@ const RequestDetail = ({requestId, serviceId, agentResponses, message, request, 
 };
 
 RequestDetail.propTypes = {
-  requestId: PropTypes.string,
-  serviceId: PropTypes.string,
-  agentResponses: PropTypes.object,
-  message: PropTypes.string,
-  request: PropTypes.object,
-  response: PropTypes.object,
+  response: PropTypes.shape({
+    agentResponses: PropTypes.object,
+    message: PropTypes.string,
+    request: PropTypes.object,
+    loadBalancerRequestId: PropTypes.string,
+  }),
 };
 
 const mapStateToProps = (state, ownProps) => ({
-  requestId: Utils.maybe(state, ['api', 'requestResponse', ownProps.params.requestId, 'data', 'loadBalancerRequestId']),
-  serviceId: Utils.maybe(state, ['api', 'requestResponse', ownProps.params.requestId, 'data', 'request', 'loadBalancerService', 'serviceId']),
-  agentResponses: Utils.maybe(state, ['api', 'requestResponse', ownProps.params.requestId, 'data', 'agentResponses']),
-  message: Utils.maybe(state, ['api', 'requestResponse', ownProps.params.requestId, 'data', 'message']),
-  request: Utils.maybe(state, ['api', 'requestResponse', ownProps.params.requestId, 'data', 'request']),
   response: Utils.maybe(state, ['api', 'requestResponse', ownProps.params.requestId, 'data']),
 });
 
