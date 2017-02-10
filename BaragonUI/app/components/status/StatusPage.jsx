@@ -1,6 +1,6 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import { browserHistory } from 'react-router';
+import { withRouter } from 'react-router';
 import rootComponent from '../../rootComponent';
 import { refresh } from '../../actions/ui/status';
 
@@ -8,11 +8,11 @@ import WorkerStatus from './WorkerStatus';
 import PendingRequests from './PendingRequests';
 import RequestSearch from './RequestSearch';
 
-const navigateToRequest = (requestId) => {
-  browserHistory.push(`/requests/${requestId}`);
+const navigateToRequest = (router) => (requestId) => {
+  router.push(`/requests/${requestId}`);
 };
 
-const StatusPage = ({status, workers, queuedRequests}) => {
+const StatusPage = ({status, workers, queuedRequests, router}) => {
   return (
     <div>
       <div className="row">
@@ -28,7 +28,7 @@ const StatusPage = ({status, workers, queuedRequests}) => {
       </div>
       <div className="row">
         <RequestSearch
-          onSearch={navigateToRequest}
+          onSearch={navigateToRequest(router)}
         />
       </div>
     </div>
@@ -38,11 +38,13 @@ const StatusPage = ({status, workers, queuedRequests}) => {
 StatusPage.propTypes = {
   status: React.PropTypes.object,
   workers: React.PropTypes.array,
-  queuedRequests: React.PropTypes.array
+  queuedRequests: React.PropTypes.array,
+  router: React.PropTypes.object,
 };
 
-export default connect((state) => ({
+export default withRouter(connect((state, ownProps) => ({
   status: state.api.status.data,
   workers: state.api.workers.data,
-  queuedRequests: state.api.queuedRequests.data
-}))(rootComponent(StatusPage, refresh));
+  queuedRequests: state.api.queuedRequests.data,
+  router: ownProps.router,
+}))(rootComponent(StatusPage, refresh)));
