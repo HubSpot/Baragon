@@ -19,9 +19,9 @@ const routes = (
   <Route path="/" component={Application}>
     <IndexRoute component={StatusPage} title="Status" />
     <Route path="services" component={Services} title="Services" />
-    <Route path="service/:serviceId" component={ServiceDetail} title={(params) => `${params.serviceId}`} />
+    <Route path="services/:serviceId" component={ServiceDetail} title={(params) => `${params.serviceId}`} />
     <Route path="groups" component={Groups} title="Groups" />
-    <Route path="group/:groupId" component={GroupDetail} title={(params) => `${params.groupId}`} />
+    <Route path="groups/:groupId" component={GroupDetail} title={(params) => `${params.groupId}`} />
     <Route path="request/:requestId" component={RequestDetail} title={(params) => `${params.requestId}`} />
     <Route path="*" component={NotFound} title="Not Found" />
   </Route>);

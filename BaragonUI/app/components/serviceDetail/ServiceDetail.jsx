@@ -1,29 +1,58 @@
-import React, { Component, PropTypes } from 'react';
+import React, { PropTypes } from 'react';
 import { connect } from 'react-redux';
-import classNames from 'classnames';
-import { Link } from 'react-router';
 import rootComponent from '../../rootComponent';
 import { refresh } from '../../actions/ui/serviceDetail';
 import Utils from '../../utils';
 
-class ServiceDetail extends Component {
-  render() {
-    // TODO - render out info nicely
-    //  - JSON button (or other display?) for request history items
-    // - reload / delete service / json button (use existing modals)
-    // - Remove upstream (requires new modal + building request json)
-    //   - submit request modal should either show request json or link to page for it
-    return <h1>Service Detail</h1>
-  }
+import DetailHeader from './DetailHeader';
+import OwnersPanel from './OwnersPanel';
+import LoadBalancersPanel from './LoadBalancersPanel';
+import RecentRequestsPanel from './RecentRequestsPanel';
+import UpstreamsPanel from './UpstreamsPanel';
 
-  static propTypes = {
-    params: PropTypes.object.isRequired,
-    service: React.PropTypes.object,
-    requestHistory: React.PropTypes.array
-  };
-}
+const ServiceDetail = ({service, requestHistory, editable}) => {
+  const {service: serviceObject, upstreams} = service;
+  const {
+    serviceId,
+    owners,
+    loadBalancerGroups,
+    serviceBasePath: basePath
+  } = serviceObject;
+  return (
+    <div>
+      <div className="row detail-header">
+        <DetailHeader
+          id={serviceId}
+          object={service}
+          basePath={basePath}
+          editable={editable}
+        />
+      </div>
+      <div className="row">
+        <OwnersPanel owners={owners} />
+        <LoadBalancersPanel loadBalancerGroups={loadBalancerGroups} />
+      </div>
+      <div className="row">
+        <RecentRequestsPanel requests={requestHistory} />
+      </div>
+      <div className="row">
+        <UpstreamsPanel
+          upstreams={upstreams}
+          editable={editable}
+        />
+      </div>
+    </div>
+  );
+};
+
+ServiceDetail.propTypes = {
+  service: PropTypes.object,
+  requestHistory: PropTypes.array,
+  editable: PropTypes.bool,
+};
 
 export default connect((state, ownProps) => ({
   service: Utils.maybe(state, ['api', 'service', ownProps.params.serviceId, 'data']),
-  requestHistory: Utils.maybe(state, ['api', 'requestHistory', ownProps.params.serviceId, 'data'])
+  requestHistory: Utils.maybe(state, ['api', 'requestHistory', ownProps.params.serviceId, 'data']),
+  editable: true,
 }))(rootComponent(ServiceDetail, (props) => refresh(props.params.serviceId)));
