@@ -1,22 +1,8 @@
-import React from 'react';
+import React, { PropTypes } from 'react';
 
 import RemoveBasePathButton from '../common/modalButtons/RemoveBasePathButton';
 
 import { asGroups } from './util';
-
-
-export default function GroupBasePaths({basePaths, domain, group, editable, afterRemoveBasePath}) {
-  const pathColumns = asGroups(basePaths, (path, key) => {
-    return renderBasePath(path, key, domain, group, editable, afterRemoveBasePath);
-  });
-
-  return (
-    <div className="col-md-12">
-      <h4>Base Paths</h4>
-      {pathColumns}
-    </div>
-  );
-};
 
 const removeButton = (editable, group, basePath, afterRemoveBasePath) => {
   if (editable) {
@@ -30,7 +16,7 @@ const removeButton = (editable, group, basePath, afterRemoveBasePath) => {
   } else {
     return null;
   }
-}
+};
 
 const pathToLink = (path, defaultDomain) => {
   if (defaultDomain) {
@@ -38,7 +24,7 @@ const pathToLink = (path, defaultDomain) => {
   } else {
     return <span>{path}</span>;
   }
-}
+};
 
 const renderBasePath = (path, key, defaultDomain, group, editable, afterRemoveBasePath) => {
   return (
@@ -47,4 +33,27 @@ const renderBasePath = (path, key, defaultDomain, group, editable, afterRemoveBa
       {pathToLink(path, defaultDomain)}
     </li>
   );
-}
+};
+
+const GroupBasePaths = ({basePaths, domain, group, editable, afterRemoveBasePath}) => {
+  const pathColumns = asGroups(basePaths, (path, key) => {
+    return renderBasePath(path, key, domain, group, editable, afterRemoveBasePath);
+  });
+
+  return (
+    <div className="col-md-12">
+      <h4>Base Paths</h4>
+      {pathColumns}
+    </div>
+  );
+};
+
+GroupBasePaths.propTypes = {
+  basePaths: PropTypes.array,
+  domain: PropTypes.string,
+  group: PropTypes.string,
+  editable: PropTypes.bool,
+  afterRemoveBasePath: PropTypes.func,
+};
+
+export default GroupBasePaths;

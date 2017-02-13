@@ -1,44 +1,9 @@
-import React from 'react';
+import React, { PropTypes } from 'react';
 
 import UITable from '../common/table/UITable';
 import Column from '../common/table/Column';
 
 import RemoveKnownAgentButton from '../common/modalButtons/RemoveKnownAgentButton';
-
-export default function GroupKnownAgents({knownAgents, editable, group, afterRemoveKnownAgent}) {
-  if (editable) {
-    return (
-      <div className="col-md-7">
-        <h4>Known Agents</h4>
-        <UITable
-          data={knownAgents}
-          keyGetter={(agent) => agent.agentId}
-          paginated={false}
-          >
-          {agentColumn}
-          {uriColumn}
-          {lastSeenColumn}
-          {removeColumn(group, afterRemoveKnownAgent)}
-        </UITable>
-      </div>
-    );
-  } else {
-    return (
-      <div className="col-md-7">
-        <h4>Known Agents</h4>
-        <UITable
-          data={knownAgents}
-          keyGetter={(agent) => agent.agentId}
-          paginated={false}
-          >
-          {agentColumn}
-          {uriColumn}
-          {lastSeenColumn}
-        </UITable>
-      </div>
-    );
-  }
-}
 
 const removeColumn = (groupName, removeKnownAgent) => (
   <Column
@@ -50,11 +15,11 @@ const removeColumn = (groupName, removeKnownAgent) => (
         <RemoveKnownAgentButton
           groupName={groupName}
           agentId={agent.agentId}
-          then={RemoveKnownAgentButton}
+          then={removeKnownAgent}
         />)
     }
     sortable={false}
-    />
+  />
 );
 
 const agentColumn = (
@@ -93,3 +58,48 @@ const lastSeenColumn = (
     sortable={true}
   />
 );
+
+
+const GroupKnownAgents = ({knownAgents, editable, group, afterRemoveKnownAgent}) => {
+  if (editable) {
+    return (
+      <div className="col-md-7">
+        <h4>Known Agents</h4>
+        <UITable
+          data={knownAgents}
+          keyGetter={(agent) => agent.agentId}
+          paginated={false}
+          >
+          {agentColumn}
+          {uriColumn}
+          {lastSeenColumn}
+          {removeColumn(group, afterRemoveKnownAgent)}
+        </UITable>
+      </div>
+    );
+  } else {
+    return (
+      <div className="col-md-7">
+        <h4>Known Agents</h4>
+        <UITable
+          data={knownAgents}
+          keyGetter={(agent) => agent.agentId}
+          paginated={false}
+          >
+          {agentColumn}
+          {uriColumn}
+          {lastSeenColumn}
+        </UITable>
+      </div>
+    );
+  }
+};
+
+GroupKnownAgents.propTypes = {
+  knownAgents: PropTypes.array,
+  editable: PropTypes.bool,
+  group: PropTypes.string,
+  afterRemoveKnownAgent: PropTypes.func,
+};
+
+export default GroupKnownAgents;

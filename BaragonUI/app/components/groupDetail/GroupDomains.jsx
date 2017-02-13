@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { PropTypes } from 'react';
 import { asGroups } from './util';
 
 const domainElement = (domain, key, defaultDomain) => {
@@ -12,9 +12,9 @@ const domainElement = (domain, key, defaultDomain) => {
   } else {
     return <li className="list-group-item" key={key}>{domain}</li>;
   }
-}
+};
 
-export default function GroupDomains({domains, defaultDomain}) {
+const GroupDomains = ({domains, defaultDomain}) => {
   if (!domains) {
     return null;
   }
@@ -29,4 +29,11 @@ export default function GroupDomains({domains, defaultDomain}) {
       {domainColumns}
     </div>
   );
-}
+};
+
+GroupDomains.propTypes = {
+  domains: PropTypes.array,
+  defaultDomain: PropTypes.string,
+};
+
+export default GroupDomains;

@@ -1,9 +1,5 @@
 import React, { Component, PropTypes } from 'react';
 import { connect } from 'react-redux';
-import classNames from 'classnames';
-import { Link } from 'react-router';
-
-
 
 import GroupTitleBar from './GroupTitleBar';
 import GroupDomains from './GroupDomains';
@@ -12,11 +8,14 @@ import GroupBasePaths from './GroupBasePaths';
 import GroupAgents from './GroupAgents';
 import GroupKnownAgents from './GroupKnownAgents';
 
-import { refresh } from '../../actions/ui/groupDetail'
 import {
   FetchGroupTargetCount,
-  FetchGroup
+  FetchGroup,
+  FetchGroupAgents,
+  FetchGroupKnownAgents,
+  FetchGroupBasePaths,
 } from '../../actions/api/groups';
+import { refresh } from '../../actions/ui/groupDetail';
 
 import rootComponent from '../../rootComponent';
 import Utils from '../../utils';
@@ -37,6 +36,7 @@ class GroupDetail extends Component {
     afterModifyTargetCount: React.PropTypes.func.isRequired,
     afterAddTrafficSource: React.PropTypes.func.isRequired,
     afterRemoveTrafficSource: React.PropTypes.func.isRequired,
+    afterRemoveKnownAgent: React.PropTypes.func.isRequired,
     afterRemoveBasePath: React.PropTypes.func.isRequired,
   };
 
@@ -56,7 +56,7 @@ class GroupDetail extends Component {
            <GroupDomains
              domains={this.props.domainsServed}
              defaultDomain={this.props.domain}
-            />
+           />
         </div>
         <div className="row">
           <GroupTrafficSources
@@ -88,7 +88,7 @@ class GroupDetail extends Component {
           />
         </div>
       </div>
-    )
+    );
   }
 }
 
@@ -101,16 +101,16 @@ const mapStateToProps = (state, ownProps) => ({
   agents: Utils.maybe(state, ['api', 'agents', ownProps.params.groupId, 'data']),
   knownAgents: Utils.maybe(state, ['api', 'knownAgents', ownProps.params.groupId, 'data']),
   trafficSources: Utils.maybe(state, ['api', 'group', ownProps.params.groupId, 'data', 'trafficSources']),
-  editable: true
+  editable: window.config.allowEdit,
 });
 
 const mapDispatchToProps = (dispatch, ownProps) => ({
-  afterModifyTargetCount: (data) => dispatch(FetchGroupTargetCount.trigger(ownProps.params.groupId)),
-  afterAddTrafficSource: (data) => dispatch(FetchGroup.trigger(ownProps.params.groupId)),
-  afterRemoveTrafficSource: (data) => dispatch(FetchGroup.trigger(ownProps.params.groupId)),
-  afterRemoveKnownAgent: (data) => dispatch(FetchGroupKnownAgents.trigger(ownProps.params.groupId))
+  afterModifyTargetCount: () => dispatch(FetchGroupTargetCount.trigger(ownProps.params.groupId)),
+  afterAddTrafficSource: () => dispatch(FetchGroup.trigger(ownProps.params.groupId)),
+  afterRemoveTrafficSource: () => dispatch(FetchGroup.trigger(ownProps.params.groupId)),
+  afterRemoveKnownAgent: () => dispatch(FetchGroupKnownAgents.trigger(ownProps.params.groupId))
                                      .then(FetchGroupAgents.trigger(ownProps.params.groupId)),
-  afterRemoveBasePath: (data) => dispatch(FetchGroupBasePaths.trigger(ownProps.params.groupId)),
+  afterRemoveBasePath: () => dispatch(FetchGroupBasePaths.trigger(ownProps.params.groupId)),
 });
 
 export default connect(mapStateToProps, mapDispatchToProps)(rootComponent(GroupDetail, (props) => refresh(props.params.groupId)));

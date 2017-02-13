@@ -1,24 +1,9 @@
-import React from 'react';
+import React, { PropTypes } from 'react';
 
 import AddTrafficSourceButton from '../common/modalButtons/AddTrafficSourceButton';
 import RemoveTrafficSourceButton from '../common/modalButtons/RemoveTrafficSourceButton';
 
 import { asGroups } from './util';
-
-
-export default function GroupTrafficSources({trafficSources, group, editable, afterAddTrafficSource, afterRemoveTrafficSource}) {
-  const sourceColumns = asGroups(trafficSources, (trafficSource, key) => {
-    return trafficSourceRenderer(trafficSource, key, editable, group, afterRemoveTrafficSource);
-  });
-
-  return (
-    <div className="col-md-12">
-      <h4>Traffic Sources</h4>
-      {sourceColumns}
-      {addButton(editable, group, afterAddTrafficSource)}
-    </div>
-  );
-};
 
 const addButton = (editable, groupName, afterAddTrafficSource) => {
   if (editable) {
@@ -60,3 +45,30 @@ const trafficSourceRenderer = (trafficSource, key, editable, group, afterRemoveT
     </li>
   );
 };
+
+const GroupTrafficSources = ({trafficSources, group, editable, afterAddTrafficSource, afterRemoveTrafficSource}) => {
+  const sourceColumns = asGroups(trafficSources, (trafficSource, key) => {
+    return trafficSourceRenderer(trafficSource, key, editable, group, afterRemoveTrafficSource);
+  });
+
+  return (
+    <div className="col-md-12">
+      <h4>Traffic Sources</h4>
+      {sourceColumns}
+      {addButton(editable, group, afterAddTrafficSource)}
+    </div>
+  );
+};
+
+GroupTrafficSources.propTypes = {
+  trafficSources: PropTypes.arrayOf(PropTypes.shape({
+    name: PropTypes.string,
+    type: PropTypes.string,
+  })),
+  group: PropTypes.string,
+  editable: PropTypes.bool,
+  afterAddTrafficSource: PropTypes.func,
+  afterRemoveTrafficSource: PropTypes.func,
+};
+
+export default GroupTrafficSources;

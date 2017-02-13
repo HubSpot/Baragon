@@ -1,9 +1,9 @@
-import React from 'react';
+import React, { PropTypes } from 'react';
 
 import UITable from '../common/table/UITable';
 import Column from '../common/table/Column';
 
-export default function GroupAgents({agents}) {
+const GroupAgents = ({agents}) => {
   return (
     <div className="col-md-5">
       <h4>Active Agents</h4>
@@ -20,7 +20,7 @@ export default function GroupAgents({agents}) {
             (agent) => agent.agentId
           }
           sortable={true}
-          />
+        />
         <Column
           label="Base URI"
           id="activeAgentBaseUri"
@@ -29,8 +29,14 @@ export default function GroupAgents({agents}) {
             (agent) => (<a href={`${agent.baseAgentUri}/status`}>{agent.baseAgentUri}</a>)
           }
           sortable={true}
-          />
+        />
       </UITable>
     </div>
   );
-}
+};
+
+GroupAgents.propTypes = {
+  agents: PropTypes.array,
+};
+
+export default GroupAgents;
