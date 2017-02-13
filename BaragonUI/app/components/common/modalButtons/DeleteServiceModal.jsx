@@ -23,16 +23,35 @@ class DeleteServiceModal extends Component {
         action="Delete"
         onConfirm={this.props.deleteService}
         buttonStyle="danger"
-        formElements={[]}>
-        <p>Are you sure you want to reload configs this service?</p>
+        formElements={[
+          {
+            name: 'noValidate',
+            type: FormModal.INPUT_TYPES.BOOLEAN,
+            label: 'Validate new configuration after applying changes'
+          },
+          {
+            name: 'noReload',
+            type: FormModal.INPUT_TYPES.BOOLEAN,
+            label: 'Reload configuration after applying changes',
+          },
+        ]}>
+        <p>Are you sure you sure you want to delete this service?</p>
         <pre>{this.props.serviceId}</pre>
+        <p>
+          Deleting a service will remove the entry from Baragon's state node as
+          well as clearing the locks on any associated base paths. It will also
+          remove the configs from the load balancer (they will be backed up for
+          reference).
+        </p>
       </FormModal>
     );
   }
 }
 
 const mapDispatchToProps = (dispatch, ownProps) => ({
-  deleteService: () => dispatch(DeleteService.trigger(ownProps.serviceId)).then(response => (ownProps.then && ownProps.then(response)))
+  deleteService: (data) => dispatch(DeleteService
+    .trigger(ownProps.serviceId, data.noValidate, data.noReload))
+      .then(response => (ownProps.then && ownProps.then(response)))
 });
 
 export default connect(

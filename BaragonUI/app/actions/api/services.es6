@@ -1,5 +1,7 @@
 import { buildApiAction, buildJsonApiAction } from './base';
 
+const buildRequestId = (serviceId) => `${serviceId}-${Date.now()}`;
+
 export const FetchBaragonServices = buildApiAction(
   'FETCH_BARAGON_SERVICES',
   {url: '/state'}
@@ -17,8 +19,8 @@ export const FetchService = buildApiAction(
 export const DeleteService = buildJsonApiAction(
   'DELETE_SERVICE',
   'DELETE',
-  (serviceId) => ({
-    url: `/state/${serviceId}`,
+  (serviceId, noValidate = false, noReload = false) => ({
+    url: `/state/${serviceId}?noValidate=${noValidate}&noReload=${noReload}`,
   })
 );
 
@@ -28,4 +30,21 @@ export const ReloadService = buildJsonApiAction(
   (serviceId) => ({
     url: `/state/${serviceId}/reload`,
   })
+);
+
+export const RemoveUpstreams = buildJsonApiAction(
+  'REMOVE_UPSTREAMS',
+  'POST',
+  (loadBalancerService, upstreams, noValidate, noReload) => ({
+    url: '/request',
+    body: {
+      loadBalancerService,
+      noValidate,
+      noReload,
+      loadBalancerRequestId: buildRequestId(loadBalancerService.serviceId),
+      addUpstreams: [],
+      removeUpstreams: upstreams,
+    },
+  }),
+  (serviceId) => serviceId,
 );
