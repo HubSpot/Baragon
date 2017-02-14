@@ -56,7 +56,13 @@ const ServiceDetail = ({service, requestHistory, editable,
 
 ServiceDetail.propTypes = {
   service: PropTypes.object,
-  requestHistory: PropTypes.array,
+  requestHistory: PropTypes.arrayOf(PropTypes.shape({
+    agentResponses: PropTypes.object,
+    loadBalancerRequestId: PropTypes.string,
+    loadBalancerState: PropTypes.string,
+    message: PropTypes.string,
+    request: PropTypes.object,
+  })),
   editable: PropTypes.bool,
   afterRemoveUpstreams: PropTypes.func.isRequired,
   afterRemoveUpstream: PropTypes.func.isRequired,

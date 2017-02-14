@@ -15,9 +15,13 @@ const removeTooltip = (
 
 export default class RemoveUpstreamsButton extends React.Component {
   static propTypes = {
-    // TODO be more specific
     loadBalancerService: PropTypes.object,
-    upstreams: PropTypes.array,
+    upstreams: PropTypes.arrayOf(PropTypes.shape({
+      group: PropTypes.string,
+      rackId: PropTypes.string,
+      requestId: PropTypes.string.isRequired,
+      upstream: PropTypes.string.isRequired,
+    })),
     children: PropTypes.node,
     afterRemoveUpstreams: PropTypes.func,
   };

@@ -27,7 +27,7 @@ const LoadBalancersPanel = ({loadBalancerGroups}) => {
 };
 
 LoadBalancersPanel.propTypes = {
-  loadBalancerGroups: PropTypes.array,
+  loadBalancerGroups: PropTypes.arrayOf(PropTypes.string),
 };
 
 export default LoadBalancersPanel;

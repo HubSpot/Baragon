@@ -1,4 +1,5 @@
 import React from 'react';
+import fuzzy from 'fuzzy';
 
 // [T], PosInt -> [[T]]
 // [1, 2, 3, 4, 5, 6, 7], 2 -> [[1, 2], [3, 4], [5, 6], [7]]
@@ -41,4 +42,12 @@ export const iconByState = (state) => {
     default:
       return 'glyphicon glyphicon-question-sign';
   }
+};
+
+
+export const matches = (filter, elements) => {
+  return fuzzy.filter(filter, elements, {
+    extract: (element) => element.loadBalancerRequestId,
+    returnMatchInfo: true
+  }).map((match) => match.original);
 };

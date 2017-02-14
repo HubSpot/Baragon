@@ -50,8 +50,12 @@ const ButtonContainer = ({editable, serviceJson, upstreams,
 ButtonContainer.propTypes = {
   editable: PropTypes.bool.isRequired,
   serviceJson: PropTypes.object.isRequired,
-  // TODO be more specific
-  upstreams: PropTypes.array.isRequired,
+  upstreams: PropTypes.arrayOf(PropTypes.shape({
+    group: PropTypes.string,
+    rackId: PropTypes.string,
+    requestId: PropTypes.string.isRequired,
+    upstream: PropTypes.string.isRequired,
+  })).isRequired,
   afterRemoveUpstreams: PropTypes.func,
   afterReload: PropTypes.func,
   afterDelete: PropTypes.func,

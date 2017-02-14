@@ -1,11 +1,11 @@
-import React, { PropTypes } from 'react';
+import React, { Component, PropTypes } from 'react';
 import { Link } from 'react-router';
 
 import UITable from '../common/table/UITable';
 import Column from '../common/table/Column';
 import JSONButton from '../common/JSONButton';
 
-import { iconByState } from './util';
+import { iconByState, matches } from './util';
 
 const requestJSONButton = (request) => {
   if (request) {
@@ -31,7 +31,7 @@ const requestLink = ({loadBalancerRequestId}) => {
   );
 };
 
-const HistoryTable = ({history}) => {
+const HistoryTable = ({history, filter}) => {
   if (! history) {
     return (
       <div className="empty-table-message">
@@ -40,11 +40,14 @@ const HistoryTable = ({history}) => {
     );
   }
 
+  const contents = matches(filter, history);
+
   return (
     <UITable
-      data={history}
+      data={contents}
       keyGetter={(request) => request.loadBalancerRequestId}
-      paginated={false}
+      paginated={true}
+      rowChunkSize={5}
     >
       <Column
         label=""
@@ -78,25 +81,54 @@ const HistoryTable = ({history}) => {
 
 HistoryTable.propTypes = {
   history: PropTypes.arrayOf(PropTypes.object),
+  filter: PropTypes.string,
 };
 
-const RecentRequestsPanel = ({requests}) => {
-  return (
-    <div className="col-md-12">
-      <div className="panel panel-default">
-        <div className="panel-heading">
-          <h4>Recent Requests</h4>
-        </div>
-        <div className="panel-body">
-          <HistoryTable history={requests} />
+
+export default class RecentRequestsPanel extends Component {
+  static propTypes = {
+    requests: PropTypes.arrayOf(PropTypes.object)
+  }
+
+  state = {
+    filter: ''
+  }
+
+  handleSearch = (evt) => {
+    this.setState({filter: evt.target.value});
+  }
+
+  render() {
+    return (
+      <div className="col-md-12">
+        <div className="panel panel-default">
+          <div className="panel-heading">
+            <h4>Recent Requests</h4>
+          </div>
+          <div className="panel-body">
+            <div className="row">
+              <div className="col-md-5">
+                <label>
+                  Search:
+                  <input
+                    type="search"
+                    className="form-control"
+                    onKeyUp={this.handleSearch}
+                  />
+                </label>
+              </div>
+            </div>
+            <div className="row">
+              <div className="col-md-12">
+                <HistoryTable
+                  history={this.props.requests}
+                  filter={this.state.filter}
+                />
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
-  );
-};
-
-RecentRequestsPanel.propTypes = {
-  requests: PropTypes.arrayOf(PropTypes.object),
-};
-
-export default RecentRequestsPanel;
+    );
+  }
+}

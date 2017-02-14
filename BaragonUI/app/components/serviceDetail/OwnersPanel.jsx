@@ -26,7 +26,7 @@ const OwnersPanel = ({owners}) => {
 };
 
 OwnersPanel.propTypes = {
-  owners: PropTypes.array,
+  owners: PropTypes.arrayOf(PropTypes.string),
 };
 
 export default OwnersPanel;

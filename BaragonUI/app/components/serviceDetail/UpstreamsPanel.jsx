@@ -47,7 +47,12 @@ const UpstreamsPanel = ({upstreams, loadBalancerService, afterRemoveUpstream, ed
 };
 
 UpstreamsPanel.propTypes = {
-  upstreams: PropTypes.array,
+  upstreams: PropTypes.arrayOf(PropTypes.shape({
+    group: PropTypes.string,
+    rackId: PropTypes.string,
+    requestId: PropTypes.string.isRequired,
+    upstream: PropTypes.string.isRequired,
+  })),
   loadBalancerService: PropTypes.object,
   afterRemoveUpstream: PropTypes.func,
   editable: PropTypes.bool,
