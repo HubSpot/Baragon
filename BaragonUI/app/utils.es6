@@ -67,12 +67,12 @@ const Utils = {
     return false;
   },
 
-  fuzzyFilter(filter, fuzzyObjects) {
+  fuzzyFilter(filter, fuzzyObjects, primaryFieldExtractor = (it) => it.id) {
     const maxScore = _.max(fuzzyObjects, (fuzzyObject) => fuzzyObject.score).score;
     _.chain(fuzzyObjects).map((fuzzyObject) => {
-        if (fuzzyObject.original.id.toLowerCase().startsWith(filter.toLowerCase())) {
+        if (primaryFieldExtractor(fuzzyObject.original).toLowerCase().startsWith(filter.toLowerCase())) {
           fuzzyObject.score = fuzzyObject.score * 10;
-        } else if (fuzzyObject.original.id.toLowerCase().indexOf(filter.toLowerCase()) > -1) {
+        } else if (primaryFieldExtractor(fuzzyObject.original).toLowerCase().indexOf(filter.toLowerCase()) > -1) {
           fuzzyObject.score = fuzzyObject.score * 5;
         }
         return fuzzyObject;

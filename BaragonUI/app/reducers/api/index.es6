@@ -1,4 +1,3 @@
-import _ from 'underscore';
 import { combineReducers } from 'redux';
 import buildApiActionReducer from './base';
 import buildKeyedApiActionReducer from './keyed';
@@ -34,7 +33,10 @@ import {
   ReloadService
 } from '../../actions/api/services';
 
-
+import {
+  FetchElbs,
+  FetchElb
+} from '../../actions/api/elbs';
 
 const status = buildApiActionReducer(FetchBaragonStatus);
 const workers = buildApiActionReducer(FetchBaragonServiceWorkers, []);
@@ -52,6 +54,8 @@ const reloadService = buildKeyedApiActionReducer(ReloadService, []);
 const requestHistory = buildKeyedApiActionReducer(FetchRequestHistory, []);
 const requestResponse = buildKeyedApiActionReducer(FetchRequestResponse, []);
 const submitRequest = buildKeyedApiActionReducer(SubmitRequest, []);
+const elbs = buildApiActionReducer(FetchElbs, []);
+const elb = buildKeyedApiActionReducer(FetchElb, []);
 
 export default combineReducers({
   status,
@@ -68,5 +72,7 @@ export default combineReducers({
   reloadService,
   requestHistory,
   requestResponse,
-  submitRequest
+  submitRequest,
+  elbs,
+  elb
 });

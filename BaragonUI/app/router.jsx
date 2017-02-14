@@ -12,6 +12,7 @@ import ServiceDetail from './components/serviceDetail/ServiceDetail';
 import Groups from './components/groups/Groups';
 import GroupDetail from './components/groupDetail/GroupDetail';
 import RequestDetail from './components/requestDetail/RequestDetail';
+import Elbs from './components/elbs/Elbs';
 
 const getFilenameFromSplat = (splat) => _.last(splat.split('/'));
 
@@ -23,6 +24,7 @@ const routes = (
     <Route path="groups" component={Groups} title="Groups" />
     <Route path="group/:groupId" component={GroupDetail} title={(params) => `${params.groupId}`} />
     <Route path="request/:requestId" component={RequestDetail} title={(params) => `${params.requestId}`} />
+    <Route path="elbs" component={Elbs} title="Elbs" />
     <Route path="*" component={NotFound} title="Not Found" />
   </Route>);
 
