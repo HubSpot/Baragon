@@ -1,6 +1,6 @@
 import { buildApiAction, buildJsonApiAction } from './base';
 
-const buildRequestId = (serviceId) => `${serviceId}-${Date.now()}`;
+
 
 export const FetchBaragonServices = buildApiAction(
   'FETCH_BARAGON_SERVICES',
@@ -30,21 +30,4 @@ export const ReloadService = buildJsonApiAction(
   (serviceId) => ({
     url: `/state/${serviceId}/reload`,
   })
-);
-
-export const RemoveUpstreams = buildJsonApiAction(
-  'REMOVE_UPSTREAMS',
-  'POST',
-  (loadBalancerService, upstreams, noValidate, noReload) => ({
-    url: '/request',
-    body: {
-      loadBalancerService,
-      noValidate,
-      noReload,
-      loadBalancerRequestId: buildRequestId(loadBalancerService.serviceId),
-      addUpstreams: [],
-      removeUpstreams: upstreams,
-    },
-  }),
-  (serviceId) => serviceId,
 );

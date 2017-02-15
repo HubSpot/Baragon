@@ -1,11 +1,11 @@
 import React, { Component, PropTypes } from 'react';
 import { Link } from 'react-router';
+import fuzzy from 'fuzzy';
 
 import UITable from '../common/table/UITable';
 import Column from '../common/table/Column';
 import JSONButton from '../common/JSONButton';
-
-import { iconByState, matches } from './util';
+import Utils from '../../utils';
 
 const requestJSONButton = (request) => {
   if (request) {
@@ -20,7 +20,7 @@ const requestJSONButton = (request) => {
 };
 
 const iconForRequest = (request) => {
-  return <span className={`${iconByState(request.loadBalancerState)}`}></span>;
+  return <span className={`${Utils.iconByState(request.loadBalancerState)}`}></span>;
 };
 
 const requestLink = ({loadBalancerRequestId}) => {
@@ -40,11 +40,22 @@ const HistoryTable = ({history, filter}) => {
     );
   }
 
-  const contents = matches(filter, history);
+  let tableContent;
+  if (filter.trim().length === 0) {
+    tableContent = history;
+  } else {
+    const fuzzyObjects = fuzzy.filter(filter, history, {
+      extract: (request) => request.loadBalancerRequestId,
+      returnMatchInfo: true
+    });
+    tableContent = Utils.fuzzyFilter(filter, fuzzyObjects, (request) => {
+      return request.loadBalancerRequestId;
+    });
+  }
 
   return (
     <UITable
-      data={contents}
+      data={tableContent}
       keyGetter={(request) => request.loadBalancerRequestId}
       paginated={true}
       rowChunkSize={5}

@@ -17,9 +17,9 @@ export const FetchRequestHistory = buildApiAction(
 export const SubmitRequest = buildJsonApiAction(
  'SUBMIT_REQUEST',
   'POST',
-  (request) => ({
-    url: `/request`,
-    request
+  (body) => ({
+    url: '/request',
+    body
   }),
   (request) => request.loadBalancerRequestId
 );

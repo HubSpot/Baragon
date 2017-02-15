@@ -1,8 +1,7 @@
 import React, { PropTypes } from 'react';
 
-import { asGroups } from './util';
-
 import RemoveUpstreamButton from '../common/modalButtons/RemoveUpstreamButton';
+import Utils from '../../utils';
 
 const renderUpstream = (editable, loadBalancerService, afterRemoveUpstream) => (upstream) => {
   const {upstream: upstreamName, rackId, group} = upstream;
@@ -34,7 +33,7 @@ const UpstreamsPanel = ({upstreams, loadBalancerService, afterRemoveUpstream, ed
         </div>
         <div className="panel-body">
           {
-            asGroups(
+            Utils.asGroups(
               upstreams,
               2,
               renderUpstream(editable, loadBalancerService, afterRemoveUpstream)

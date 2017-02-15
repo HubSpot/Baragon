@@ -1,7 +1,8 @@
 import React, { Component, PropTypes } from 'react';
 import { connect } from 'react-redux';
 
-import { RemoveUpstreams } from '../../../actions/api/services';
+import { SubmitRequest } from '../../../actions/api/requests';
+import Utils from '../../../utils';
 
 import FormModal from '../modal/FormModal';
 
@@ -48,9 +49,18 @@ class RemoveUpstreamModal extends Component {
   }
 }
 
+const buildRequest = (ownProps, data) => ({
+  loadBalancerService: ownProps.loadBalancerService,
+  noValidate: data.noValidate,
+  noReload: data.noReload,
+  loadBalancerRequestId: Utils.buildRequestId(ownProps.loadBalancerService.serviceId),
+  addUpstreams: [],
+  removeUpstreams: [ownProps.upstream]
+});
+
 const mapDispatchToProps = (dispatch, ownProps) => ({
-  removeUpstream: (data) => dispatch(RemoveUpstreams
-    .trigger(ownProps.loadBalancerService, [ownProps.upstream], data.noValidate, data.noReload))
+  removeUpstream: (data) => dispatch(SubmitRequest
+    .trigger(buildRequest(ownProps, data)))
       .then(response => (ownProps.then && ownProps.then(response)))
 });
 

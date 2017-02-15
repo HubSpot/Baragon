@@ -1,7 +1,7 @@
 import React, { PropTypes } from 'react';
 import { Link } from 'react-router';
 
-import { asGroups } from './util';
+import Utils from '../../utils';
 
 const renderLoadBalancerGroup = (loadBalancerGroup) => {
   return (
@@ -19,7 +19,7 @@ const LoadBalancersPanel = ({loadBalancerGroups}) => {
           <h4>Load Balancer Groups</h4>
         </div>
         <div className="panel-body">
-          { asGroups(loadBalancerGroups, 2, renderLoadBalancerGroup) }
+          { Utils.asGroups(loadBalancerGroups, 2, renderLoadBalancerGroup) }
         </div>
       </div>
     </div>

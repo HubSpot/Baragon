@@ -1,6 +1,7 @@
 import React, { PropTypes } from 'react';
 
-import { asGroups } from './util';
+import Utils from '../../utils';
+
 
 const renderOwner = (owner, index) => {
   return (
@@ -18,7 +19,7 @@ const OwnersPanel = ({owners}) => {
           <h4>Owners</h4>
         </div>
         <div className="panel-body">
-          { asGroups(owners, 2, renderOwner) }
+          { Utils.asGroups(owners, 2, renderOwner) }
         </div>
       </div>
     </div>
