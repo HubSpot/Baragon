@@ -39,6 +39,12 @@ const Navigation = (props) => {
     <nav className="navbar navbar-default">
       <div className="container-fluid">
         <div className="navbar-header">
+          <button type="button" className="navbar-toggle" data-toggle="collapse" data-target="#navbar-collapse">
+            <span className="sr-only">Toggle Navigation</span>
+            <span className="icon-bar" />
+            <span className="icon-bar" />
+            <span className="icon-bar" />
+          </button>
           <Link className="navbar-brand" to="/">{config.title}</Link>
         </div>
         <div className="collapse navbar-collapse" id="navbar-collapse">
