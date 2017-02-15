@@ -18,7 +18,7 @@
             appRoot: "{{{appRoot}}}",
             apiRoot: localStorage.getItem("baragon.apiRootOverride") || "{{{apiRoot}}}",
             elbEnabled: {{{elbEnabled}}},
-            allowEdit: (localStorage.getItem("baragon.authKey") !== null || !{{authEnabled}}),
+            allowEdit: (localStorage.getItem("baragonAuthKey") !== null || !{{authEnabled}}),
             authEnabled: {{authEnabled}},
             title: "{{{title}}}",
             globalRefreshInterval: 60000

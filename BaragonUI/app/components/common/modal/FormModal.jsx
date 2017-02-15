@@ -58,12 +58,13 @@ export default class FormModal extends React.Component {
   static INPUT_TYPES = {
     BOOLEAN: 'BOOLEAN',
     STRING: 'STRING',
+    PASSWORD: 'PASSWORD',
     RADIO: 'RADIO',
     TAGS: 'TAGS',
     MULTIINPUT: 'MULTIINPUT',
     NUMBER: 'NUMBER',
     DURATION: 'DURATION',
-    SELECT: 'SELECT'
+    SELECT: 'SELECT',
   };
 
   hide() {
@@ -287,6 +288,22 @@ export default class FormModal extends React.Component {
                 </label>
                 {errorBlock}
                 {help}
+              </div>
+            </FormModal.FormItem>
+          );
+
+        case FormModal.INPUT_TYPES.PASSWORD:
+          return (
+            <FormModal.FormItem element={formElement} formState={this.state.formState} key={formElement.name}>
+              <div className={classNames('form-group', {'has-error': !!error})}>
+                <label className="control-label" htmlFor={formElement.name}>{formElement.label}</label>
+                <input
+                  type="password"
+                  name={formElement.name}
+                  className="form-control input-large"
+                  value={this.state.formState[formElement.name] || ''}
+                  onChange={(event) => this.handleFormChange(formElement.name, event.target.value)}
+                />
               </div>
             </FormModal.FormItem>
           );
