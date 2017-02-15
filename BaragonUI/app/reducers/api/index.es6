@@ -38,6 +38,11 @@ import {
   FetchElb
 } from '../../actions/api/elbs';
 
+import {
+  FetchLoadBalancers,
+  FetchTargetGroups,
+} from '../../actions/api/albs';
+
 const status = buildApiActionReducer(FetchBaragonStatus);
 const workers = buildApiActionReducer(FetchBaragonServiceWorkers, []);
 const queuedRequests = buildApiActionReducer(FetchQueuedRequests, []);
@@ -56,6 +61,8 @@ const requestResponse = buildKeyedApiActionReducer(FetchRequestResponse, []);
 const submitRequest = buildKeyedApiActionReducer(SubmitRequest, []);
 const elbs = buildApiActionReducer(FetchElbs, []);
 const elb = buildKeyedApiActionReducer(FetchElb, []);
+const loadBalancers = buildApiActionReducer(FetchLoadBalancers, []);
+const targetGroups = buildApiActionReducer(FetchTargetGroups, []);
 
 export default combineReducers({
   status,
@@ -74,5 +81,7 @@ export default combineReducers({
   requestResponse,
   submitRequest,
   elbs,
-  elb
+  elb,
+  loadBalancers,
+  targetGroups,
 });
