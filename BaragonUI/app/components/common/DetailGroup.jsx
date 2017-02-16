@@ -1,12 +1,12 @@
 import React, { PropTypes } from 'react';
 
-const DetailGroup = ({name, items, field}) => {
+const DetailGroup = ({name, width = 3, items = [], field = (it) => it}) => {
   if (! items || items.length === 0) {
     return null;
   }
 
   return (
-    <div className="col-md-3">
+    <div className={`col-md-${width}`}>
       <h4>{ name }</h4>
       <ul className="list-group">
         { items.map((item) => (
@@ -20,12 +20,9 @@ const DetailGroup = ({name, items, field}) => {
 
 DetailGroup.propTypes = {
   name: PropTypes.string.isRequired,
+  width: PropTypes.number,
   items: PropTypes.array,
   field: PropTypes.func,
-};
-
-DetailGroup.defaultProps = {
-  field: (it) => it,
 };
 
 export default DetailGroup;

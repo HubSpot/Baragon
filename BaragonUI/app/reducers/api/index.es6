@@ -24,7 +24,7 @@ import {
   FetchGroupTargetCount,
   FetchGroupAgents,
   FetchGroupKnownAgents
-} from '../../actions/api/groups'
+} from '../../actions/api/groups';
 
 import {
   FetchBaragonServices,
@@ -41,6 +41,8 @@ import {
 import {
   FetchLoadBalancers,
   FetchTargetGroups,
+  FetchTargetGroup,
+  FetchTargetGroupTargets,
 } from '../../actions/api/albs';
 
 const status = buildApiActionReducer(FetchBaragonStatus);
@@ -63,12 +65,15 @@ const elbs = buildApiActionReducer(FetchElbs, []);
 const elb = buildKeyedApiActionReducer(FetchElb, []);
 const loadBalancers = buildApiActionReducer(FetchLoadBalancers, []);
 const targetGroups = buildApiActionReducer(FetchTargetGroups, []);
+const targetGroup = buildKeyedApiActionReducer(FetchTargetGroup, {});
+const targetGroupTargets = buildKeyedApiActionReducer(FetchTargetGroupTargets, []);
 
 export default combineReducers({
   status,
   workers,
   queuedRequests,
   groups,
+  group,
   basePaths,
   targetCount,
   agents,
@@ -84,4 +89,6 @@ export default combineReducers({
   elb,
   loadBalancers,
   targetGroups,
+  targetGroup,
+  targetGroupTargets,
 });

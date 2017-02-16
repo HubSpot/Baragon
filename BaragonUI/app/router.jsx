@@ -13,8 +13,9 @@ import Groups from './components/groups/Groups';
 import GroupDetail from './components/groupDetail/GroupDetail';
 import RequestDetail from './components/requestDetail/RequestDetail';
 import Elbs from './components/elbs/Elbs';
-import ElbDetail from './components/elbDetail/elbDetail';
+import ElbDetail from './components/elbDetail/ElbDetail';
 import Albs from './components/albs/Albs';
+import TargetGroupDetail from './components/targetGroupDetail/TargetGroupDetail';
 
 const getFilenameFromSplat = (splat) => _.last(splat.split('/'));
 
@@ -29,6 +30,7 @@ const routes = (
     <Route path="elbs" component={Elbs} title="Elbs" />
     <Route path="elbs/:loadBalancerName" component={ElbDetail} title={(params) => `${params.loadBalancerName}`} />
     <Route path="albs" component={Albs} title="ALBs" />
+    <Route path="albs/target-groups/:targetGroupName" component={TargetGroupDetail} title={(params) => `${params.targetGroupName}`} />
     <Route path="*" component={NotFound} title="Not Found" />
   </Route>);
 

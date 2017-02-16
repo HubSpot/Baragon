@@ -6,8 +6,8 @@ import JSONButton from '../common/JSONButton';
 import { refresh } from '../../actions/ui/elbDetail';
 import Utils from '../../utils';
 
-import HealthCheckPanel from './healthCheckPanel';
-import DetailGroup from './detailGroup';
+import HealthCheckPanel from './HealthCheckPanel';
+import DetailGroup from '../common/DetailGroup';
 
 const DetailItem = ({name, value}) => {
   return (
@@ -20,7 +20,10 @@ const DetailItem = ({name, value}) => {
 
 DetailItem.propTypes = {
   name: PropTypes.string.isRequired,
-  value: PropTypes.string.isRequired,
+  value: PropTypes.oneOf([
+    PropTypes.string,
+    PropTypes.number,
+  ]).isRequired,
 };
 
 
