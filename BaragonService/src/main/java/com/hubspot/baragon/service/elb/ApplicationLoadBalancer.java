@@ -316,7 +316,7 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
     if (maybeLoadBalancer.isPresent()) {
       Collection<Listener> listeners = new HashSet<>();
       DescribeListenersRequest listenersRequest = new DescribeListenersRequest()
-          .withListenerArns(maybeLoadBalancer.get().getLoadBalancerArn());
+          .withLoadBalancerArn(maybeLoadBalancer.get().getLoadBalancerArn());
       DescribeListenersResult result = elbClient.describeListeners(listenersRequest);
       String nextMarker = result.getNextMarker();
       listeners.addAll(result.getListeners());
