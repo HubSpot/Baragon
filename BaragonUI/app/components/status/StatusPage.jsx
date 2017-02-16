@@ -1,26 +1,50 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import classNames from 'classnames';
-import { Link } from 'react-router';
+import { withRouter } from 'react-router';
 import rootComponent from '../../rootComponent';
 import { refresh } from '../../actions/ui/status';
 
-const StatusPage = (props) => {
+import WorkerStatus from './WorkerStatus';
+import PendingRequests from './PendingRequests';
+import RequestSearch from './RequestSearch';
+
+const navigateToRequest = (router) => (requestId) => {
+  router.push(`/requests/${requestId}`);
+};
+
+const StatusPage = ({status, workers, queuedRequests, router}) => {
   return (
-    // TODO - nice layout of data
-    // - search by request ID? Link to page for individual request?
-    <h1>Status</h1>
+    <div>
+      <div className="row">
+        <WorkerStatus
+          workerLag={status.workerLagMs}
+          elbWorkerLag={status.elbWorkerLagMs}
+          zookeeperState={status.zookeeperState}
+          workers={workers}
+        />
+      <PendingRequests
+        queuedRequests={queuedRequests}
+      />
+      </div>
+      <div className="row">
+        <RequestSearch
+          onSearch={navigateToRequest(router)}
+        />
+      </div>
+    </div>
   );
 };
 
 StatusPage.propTypes = {
   status: React.PropTypes.object,
   workers: React.PropTypes.array,
-  queuedRequests: React.PropTypes.array
+  queuedRequests: React.PropTypes.array,
+  router: React.PropTypes.object,
 };
 
-export default connect((state) => ({
+export default withRouter(connect((state, ownProps) => ({
   status: state.api.status.data,
   workers: state.api.workers.data,
-  queuedRequests: state.api.queuedRequests.data
-}))(rootComponent(StatusPage, refresh));
+  queuedRequests: state.api.queuedRequests.data,
+  router: ownProps.router,
+}))(rootComponent(StatusPage, refresh)));
