@@ -39,10 +39,12 @@ import {
 } from '../../actions/api/elbs';
 
 import {
-  FetchLoadBalancers,
   FetchTargetGroups,
   FetchTargetGroup,
   FetchTargetGroupTargets,
+  FetchLoadBalancers,
+  FetchLoadBalancer,
+  FetchLoadBalancerListeners,
 } from '../../actions/api/albs';
 
 const status = buildApiActionReducer(FetchBaragonStatus);
@@ -63,10 +65,12 @@ const requestResponse = buildKeyedApiActionReducer(FetchRequestResponse, []);
 const submitRequest = buildKeyedApiActionReducer(SubmitRequest, []);
 const elbs = buildApiActionReducer(FetchElbs, []);
 const elb = buildKeyedApiActionReducer(FetchElb, []);
-const loadBalancers = buildApiActionReducer(FetchLoadBalancers, []);
 const targetGroups = buildApiActionReducer(FetchTargetGroups, []);
 const targetGroup = buildKeyedApiActionReducer(FetchTargetGroup, {});
 const targetGroupTargets = buildKeyedApiActionReducer(FetchTargetGroupTargets, []);
+const loadBalancers = buildApiActionReducer(FetchLoadBalancers, []);
+const loadBalancer = buildKeyedApiActionReducer(FetchLoadBalancer, {});
+const loadBalancerListeners = buildKeyedApiActionReducer(FetchLoadBalancerListeners, []);
 
 export default combineReducers({
   status,
@@ -87,8 +91,10 @@ export default combineReducers({
   submitRequest,
   elbs,
   elb,
-  loadBalancers,
   targetGroups,
   targetGroup,
   targetGroupTargets,
+  loadBalancers,
+  loadBalancer,
+  loadBalancerListeners,
 });

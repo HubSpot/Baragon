@@ -1,6 +1,6 @@
 import React, { PropTypes } from 'react';
 
-const DetailGroup = ({name, width = 3, items = [], field = (it) => it}) => {
+const DetailGroup = ({name, width = 3, items = [], field = (it) => it, keyGetter = (it) => it}) => {
   if (! items || items.length === 0) {
     return null;
   }
@@ -10,7 +10,7 @@ const DetailGroup = ({name, width = 3, items = [], field = (it) => it}) => {
       <h4>{ name }</h4>
       <ul className="list-group">
         { items.map((item) => (
-          <li className="list-group-item" key={ field(item) }>
+          <li className="list-group-item" key={ keyGetter(item) }>
             { field(item) }
           </li>)) }
       </ul>
@@ -23,6 +23,7 @@ DetailGroup.propTypes = {
   width: PropTypes.number,
   items: PropTypes.array,
   field: PropTypes.func,
+  keyGetter: PropTypes.func,
 };
 
 export default DetailGroup;

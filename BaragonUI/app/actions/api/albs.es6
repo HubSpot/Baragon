@@ -1,13 +1,8 @@
-import { buildApiAction, buildJsonApiAction } from './base';
+import { buildApiAction } from './base';
 
 export const FetchTargetGroups = buildApiAction(
   'FETCH_TARGET_GROUPS',
   {url: '/albs/target-groups'}
-);
-
-export const FetchLoadBalancers = buildApiAction(
-  'FETCH_APPLICATION_LOAD_BALANCERS',
-  {url: '/albs/load-balancers'}
 );
 
 export const FetchTargetGroup = buildApiAction(
@@ -25,4 +20,25 @@ export const FetchTargetGroupTargets = buildApiAction(
     url: `/albs/target-groups/${groupName}/targets`
   }),
   (groupName) => groupName
+);
+
+export const FetchLoadBalancers = buildApiAction(
+  'FETCH_APPLICATION_LOAD_BALANCERS',
+  {url: '/albs/load-balancers'}
+);
+
+export const FetchLoadBalancer = buildApiAction(
+  'FETCH_APPLICATION_LOAD_BALANCER',
+  (loadBalancerName) => ({
+    url: `/albs/load-balancers/${loadBalancerName}`
+  }),
+  (loadBalancerName) => loadBalancerName
+);
+
+export const FetchLoadBalancerListeners = buildApiAction(
+  'FETCH_APPLICATION_LOAD_BALANCER_LISTENERS',
+  (loadBalancerName) => ({
+    url: `/albs/load-balancers/${loadBalancerName}/listeners`
+  }),
+  (loadBalancerName) => loadBalancerName
 );

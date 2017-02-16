@@ -11,7 +11,7 @@ const targetGroupName = (targetGroup) => {
 
 const TargetGroupsTable = ({targetGroups}) => {
   return (
-    <div className="col-md-12">
+    <div>
       <UITable
         data={targetGroups}
         keyGetter={(group) => /* ?? */ group.targetGroupName}

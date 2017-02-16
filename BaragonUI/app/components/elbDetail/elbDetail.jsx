@@ -20,7 +20,7 @@ const DetailItem = ({name, value}) => {
 
 DetailItem.propTypes = {
   name: PropTypes.string.isRequired,
-  value: PropTypes.oneOf([
+  value: PropTypes.oneOfType([
     PropTypes.string,
     PropTypes.number,
   ]).isRequired,
@@ -53,7 +53,12 @@ const ElbDetail = ({loadBalancerName, loadBalancer}) => {
         </div>
       </div>
       <div className="row">
-        <DetailGroup name="Instances" items={loadBalancer.instances} field={(instance) => instance.instanceId} />
+        <DetailGroup
+          name="Instances"
+          items={loadBalancer.instances}
+          keyGetter={(instance) => instance.instanceId}
+          field={(instance) => instance.instanceId}
+        />
         <DetailGroup name="Availibility Zones" items={loadBalancer.availabilityZones} />
         <DetailGroup name="Security Groups" items={loadBalancer.securityGroups} />
         <DetailGroup name="Subnets" items={loadBalancer.subnets} />

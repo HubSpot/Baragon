@@ -40,7 +40,7 @@ const TargetGroupDetail = ({targets, targetGroup}) => {
         </div>
       </div>
       <div className="row">
-        <DetailGroup name="Instances" items={targets} field={
+        <DetailGroup name="Instances" items={targets} keyGetter={(instance) => instance.id} field={
             (instance) => (
               <ul className="list-unstyled">
                 <li><strong>ID:</strong> {instance.id}</li>

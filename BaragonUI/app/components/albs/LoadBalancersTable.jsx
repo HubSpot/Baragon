@@ -10,9 +10,23 @@ const loadBalancerName = (loadBalancer) => {
   return <Link to={`/albs/load-balancers/${name}`}>{name}</Link>;
 };
 
+const loadBalancerSymbol = (loadBalancer) => {
+  const state = loadBalancer.state.code;
+
+  if (state === 'active') {
+    return <span className="glyphicon glyphicon-ok-circle active" />;
+  } else if (state === 'provisioning') {
+    return <span className="glyphicon glyphicon-time" />;
+  } else if (state === 'failed') {
+    return <span className="glyphicon glyphicon-ban-circle inactive" />;
+  } else {
+    return <span className="glyphicon glyphicon-question-sign" />;
+  }
+};
+
 const LoadBalancersTable = ({loadBalancers}) => {
   return (
-    <div className="col-md-12">
+    <div>
       <UITable
         data={loadBalancers}
         keyGetter={(loadBalancer) => /* ?? */ loadBalancer.loadBalancerName}
@@ -20,14 +34,19 @@ const LoadBalancersTable = ({loadBalancers}) => {
         rowChunkSize={5}
       >
         <Column
+          label=""
+          id="state"
+          cellData={loadBalancerSymbol}
+        />
+        <Column
           label="Name"
           id="loadBalancerName"
           cellData={loadBalancerName}
         />
         <Column
-          label="ARN"
-          id="loadBalancerArn"
-          cellData={(loadBalancer) => loadBalancer.loadBalancerArn}
+          label="DNS Name"
+          id="dnsname"
+          cellData={(loadBalancer) => loadBalancer.dnsname}
         />
         <Column
           label="VPC ID"
