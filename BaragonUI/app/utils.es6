@@ -54,6 +54,16 @@ const Utils = {
     return moment.duration(millis).humanize();
   },
 
+  humanizeWorkerLag(millis) {
+    if (millis > 1e6) {
+      return 'Not Running';
+    } else if (millis > 1e3) {
+      return `${moment.duration(millis).asSeconds()} s`;
+    } else {
+      return `${moment.duration(millis).asMilliseconds()} ms`;
+    }
+  },
+
   substituteTaskId(value, taskId) {
     return value.replace('$TASK_ID', taskId);
   },
