@@ -42,7 +42,8 @@ export default class AddTrafficSourceButton extends Component {
           ref="modal"
           groupName={this.props.groupName}
           trafficSource={this.props.trafficSource}
-          then={this.props.then} />
+          then={this.props.then}
+        />
       </span>
     );
   }

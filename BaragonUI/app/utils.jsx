@@ -1,4 +1,25 @@
+import React from 'react';
 import moment from 'moment';
+
+// [T], PosInt -> [[T]]
+// [1, 2, 3, 4, 5, 6, 7], 2 -> [[1, 2], [3, 4], [5, 6], [7]]
+const chunk = (arr, size) => {
+  return _.chain(arr)
+    .groupBy((elem, index) => Math.floor(index / size))
+    .toArray()
+    .value();
+};
+
+// ((T, PosInt) -> DOMElement) -> ([T], PosInt) -> DOMElement
+const rowRenderer = (itemRenderer, columns) => (row, index) => {
+  return (
+    <div className={`col-md-${12 / columns}`} key={index}>
+      <ul className="list-group">
+        { row.map(itemRenderer) }
+      </ul>
+    </div>
+  );
+};
 
 const Utils = {
   isIn(needle, haystack) {
@@ -67,12 +88,12 @@ const Utils = {
     return false;
   },
 
-  fuzzyFilter(filter, fuzzyObjects) {
+  fuzzyFilter(filter, fuzzyObjects, primaryField = (it) => it.id) {
     const maxScore = _.max(fuzzyObjects, (fuzzyObject) => fuzzyObject.score).score;
     _.chain(fuzzyObjects).map((fuzzyObject) => {
-        if (fuzzyObject.original.id.toLowerCase().startsWith(filter.toLowerCase())) {
+        if (primaryField(fuzzyObject.original).toLowerCase().startsWith(filter.toLowerCase())) {
           fuzzyObject.score = fuzzyObject.score * 10;
-        } else if (fuzzyObject.original.id.toLowerCase().indexOf(filter.toLowerCase()) > -1) {
+        } else if (primaryField(fuzzyObject.original).toLowerCase().indexOf(filter.toLowerCase()) > -1) {
           fuzzyObject.score = fuzzyObject.score * 5;
         }
         return fuzzyObject;
@@ -144,6 +165,35 @@ const Utils = {
       }
     }
     return array.join('&');
+  },
+
+  buildRequestId(serviceId) {
+    return `${serviceId}-${Date.now()}`;
+  },
+
+  // Render the elements in an array as `columns` number of columns
+  // of list-groups, using `itemRenderer` to turn each item into a
+  // list-group-item.
+  asGroups(arr, columns, itemRenderer) {
+    return chunk(arr, arr.length / columns)
+      .map(rowRenderer(itemRenderer, columns));
+  },
+
+  iconByState(state) {
+    switch (state) {
+      case 'SUCCESS':
+        return 'glyphicon glyphicon-ok-circle active';
+      case 'FAILED':
+        return 'glyphicon glyphicon-ban-circle inactive';
+      case 'WAITING':
+        return 'glyphicon glyphicon-time';
+      case 'CANCELING':
+        return 'glyphicon glyphicon-remove-circle inactive';
+      case 'INVALID_REQUEST_NOOP':
+        return 'glyphicon glyphicon-exclamation-sign inactive';
+      default:
+        return 'glyphicon glyphicon-question-sign';
+    }
   }
 };
 

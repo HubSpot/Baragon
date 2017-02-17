@@ -1,9 +1,8 @@
 import React, { PropTypes } from 'react';
 
+import Utils from '../../utils';
 import AddTrafficSourceButton from '../common/modalButtons/AddTrafficSourceButton';
 import RemoveTrafficSourceButton from '../common/modalButtons/RemoveTrafficSourceButton';
-
-import { asGroups } from './util';
 
 const addButton = (editable, groupName, afterAddTrafficSource) => {
   if (editable) {
@@ -47,7 +46,7 @@ const trafficSourceRenderer = (trafficSource, key, editable, group, afterRemoveT
 };
 
 const GroupTrafficSources = ({trafficSources, group, editable, afterAddTrafficSource, afterRemoveTrafficSource}) => {
-  const sourceColumns = asGroups(trafficSources, (trafficSource, key) => {
+  const sourceColumns = Utils.asGroups(trafficSources, 4, (trafficSource, key) => {
     return trafficSourceRenderer(trafficSource, key, editable, group, afterRemoveTrafficSource);
   });
 

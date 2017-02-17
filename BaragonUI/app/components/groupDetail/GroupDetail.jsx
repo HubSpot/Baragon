@@ -1,13 +1,6 @@
 import React, { Component, PropTypes } from 'react';
 import { connect } from 'react-redux';
 
-import GroupTitleBar from './GroupTitleBar';
-import GroupDomains from './GroupDomains';
-import GroupTrafficSources from './GroupTrafficSources';
-import GroupBasePaths from './GroupBasePaths';
-import GroupAgents from './GroupAgents';
-import GroupKnownAgents from './GroupKnownAgents';
-
 import {
   FetchGroupTargetCount,
   FetchGroup,
@@ -19,6 +12,14 @@ import { refresh } from '../../actions/ui/groupDetail';
 
 import rootComponent from '../../rootComponent';
 import Utils from '../../utils';
+
+import GroupTitleBar from './GroupTitleBar';
+import GroupDomains from './GroupDomains';
+import GroupTrafficSources from './GroupTrafficSources';
+import GroupBasePaths from './GroupBasePaths';
+import GroupAgents from './GroupAgents';
+import GroupKnownAgents from './GroupKnownAgents';
+
 
 class GroupDetail extends Component {
   static propTypes = {
@@ -33,11 +34,10 @@ class GroupDetail extends Component {
     knownAgents: React.PropTypes.array,
     editable: React.PropTypes.bool,
 
-    afterModifyTargetCount: React.PropTypes.func.isRequired,
-    afterAddTrafficSource: React.PropTypes.func.isRequired,
-    afterRemoveTrafficSource: React.PropTypes.func.isRequired,
-    afterRemoveKnownAgent: React.PropTypes.func.isRequired,
-    afterRemoveBasePath: React.PropTypes.func.isRequired,
+    refreshTargetCount: PropTypes.func.isRequired,
+    refreshBasePaths: PropTypes.func.isRequired,
+    refreshAgents: PropTypes.func.isRequired,
+    refreshGroup: PropTypes.func.isRequired,
   };
 
   render() {
@@ -49,7 +49,7 @@ class GroupDetail extends Component {
             domain={this.props.domain}
             targetCount={this.props.targetCount}
             editable={this.props.editable}
-            afterModifyTargetCount={this.props.afterModifyTargetCount}
+            afterModifyTargetCount={this.props.refreshTargetCount}
           />
          </div>
          <div className="row">
@@ -63,8 +63,8 @@ class GroupDetail extends Component {
             trafficSources={this.props.trafficSources}
             group={this.props.group}
             editable={this.props.editable}
-            afterAddTrafficSource={this.props.afterAddTrafficSource}
-            afterRemoveTrafficSource={this.props.afterRemoveTrafficSource}
+            afterAddTrafficSource={this.props.refreshGroup}
+            afterRemoveTrafficSource={this.props.refreshGroup}
           />
         </div>
         <div className="row">
@@ -75,7 +75,7 @@ class GroupDetail extends Component {
             knownAgents={this.props.knownAgents}
             group={this.props.group}
             editable={this.props.editable}
-            afterRemoveKnownAgent={this.props.afterRemoveKnownAgent}
+            afterRemoveKnownAgent={this.props.refreshAgents}
           />
         </div>
         <div className="row">
@@ -84,7 +84,7 @@ class GroupDetail extends Component {
             domain={this.props.domain}
             group={this.props.group}
             editable={this.props.editable}
-            afterRemoveBasePath={this.props.afterRemoveBasePath}
+            afterRemoveBasePath={this.props.refreshBasePaths}
           />
         </div>
       </div>
@@ -105,12 +105,13 @@ const mapStateToProps = (state, ownProps) => ({
 });
 
 const mapDispatchToProps = (dispatch, ownProps) => ({
-  afterModifyTargetCount: () => dispatch(FetchGroupTargetCount.trigger(ownProps.params.groupId)),
-  afterAddTrafficSource: () => dispatch(FetchGroup.trigger(ownProps.params.groupId)),
-  afterRemoveTrafficSource: () => dispatch(FetchGroup.trigger(ownProps.params.groupId)),
-  afterRemoveKnownAgent: () => dispatch(FetchGroupKnownAgents.trigger(ownProps.params.groupId))
-                                     .then(FetchGroupAgents.trigger(ownProps.params.groupId)),
-  afterRemoveBasePath: () => dispatch(FetchGroupBasePaths.trigger(ownProps.params.groupId)),
+  refreshTargetCount: () => dispatch(FetchGroupTargetCount.trigger(ownProps.params.groupId)),
+  refreshAgents: () => Promise.all([
+    FetchGroupAgents.trigger(ownProps.params.groupId),
+    FetchGroupKnownAgents.trigger(ownProps.params.groupId)
+  ]),
+  refreshBasePaths: () => dispatch(FetchGroupBasePaths.trigger(ownProps.params.groupId)),
+  refreshGroup: () => dispatch(FetchGroup.trigger(ownProps.params.groupId)),
 });
 
 export default connect(mapStateToProps, mapDispatchToProps)(rootComponent(GroupDetail, (props) => refresh(props.params.groupId)));

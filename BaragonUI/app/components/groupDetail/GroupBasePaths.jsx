@@ -1,8 +1,8 @@
 import React, { PropTypes } from 'react';
 
-import RemoveBasePathButton from '../common/modalButtons/RemoveBasePathButton';
+import Utils from '../../utils';
 
-import { asGroups } from './util';
+import RemoveBasePathButton from '../common/modalButtons/RemoveBasePathButton';
 
 const removeButton = (editable, group, basePath, afterRemoveBasePath) => {
   if (editable) {
@@ -36,7 +36,7 @@ const renderBasePath = (path, key, defaultDomain, group, editable, afterRemoveBa
 };
 
 const GroupBasePaths = ({basePaths, domain, group, editable, afterRemoveBasePath}) => {
-  const pathColumns = asGroups(basePaths, (path, key) => {
+  const pathColumns = Utils.asGroups(basePaths, (path, key) => {
     return renderBasePath(path, key, domain, group, editable, afterRemoveBasePath);
   });
 

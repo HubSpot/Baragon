@@ -1,6 +1,5 @@
 import React, { Component, PropTypes } from 'react';
 
-import { Glyphicon } from 'react-bootstrap';
 import OverlayTrigger from 'react-bootstrap/lib/OverlayTrigger';
 import ToolTip from 'react-bootstrap/lib/Tooltip';
 

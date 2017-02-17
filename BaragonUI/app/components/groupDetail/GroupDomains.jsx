@@ -1,5 +1,6 @@
 import React, { PropTypes } from 'react';
-import { asGroups } from './util';
+
+import Utils from '../../utils';
 
 const domainElement = (domain, key, defaultDomain) => {
   if (domain === defaultDomain) {
@@ -19,7 +20,7 @@ const GroupDomains = ({domains, defaultDomain}) => {
     return null;
   }
 
-  const domainColumns = asGroups(domains, (domain, key) => {
+  const domainColumns = Utils.asGroups(domains, 4, (domain, key) => {
     return domainElement(domain, key, defaultDomain);
   });
 

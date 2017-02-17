@@ -45,7 +45,6 @@ class ModifyCountModal extends Component {
 
 const mapDispatchToProps = (dispatch, ownProps) => ({
   modifyCount: (data) => dispatch(ModifyTargetCount.trigger(ownProps.groupName, data.newCount))
-      // .then(response => dispatch(FetchGroupTargetCount.trigger(ownProps.groupName)))
       .then(response => (ownProps.then && ownProps.then(response)))
 });
 

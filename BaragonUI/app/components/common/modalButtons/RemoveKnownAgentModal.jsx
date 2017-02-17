@@ -39,9 +39,7 @@ class RemoveKnownAgentModal extends Component {
 }
 
 const mapDispatchToProps = (dispatch, ownProps) => ({
-  removeKnownAgent: (data) => dispatch(RemoveKnownAgent.trigger(ownProps.groupName, ownProps.agentId))
-      // .then(response => dispatch(FetchGroupKnownAgents.trigger(ownProps.groupName)))
-      // .then(response => dispatch(FetchGroupAgents.trigger(ownProps.groupName)))
+  removeKnownAgent: () => dispatch(RemoveKnownAgent.trigger(ownProps.groupName, ownProps.agentId))
       .then(response => (ownProps.then && ownProps.then(response)))
 });
 
