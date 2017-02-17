@@ -10,7 +10,7 @@ import JSONButton from '../common/JSONButton';
 import HealthCheckPanel from './HealthCheckPanel';
 import DetailItem from './DetailItem';
 
-const TargetGroupDetail = ({targets, targetGroup}) => {
+const TargetGroupDetail = ({targets, targetGroup, editable}) => {
   return (
     <div>
       <div className="row detail-header">
@@ -25,10 +25,17 @@ const TargetGroupDetail = ({targets, targetGroup}) => {
       </div>
       <div className="row">
         <HealthCheckPanel
-          path={targetGroup.healthCheckPath}
-          interval={targetGroup.healthCheckIntervalSeconds}
-          timeout={targetGroup.healthCheckTimeoutSeconds}
-          healthyThreshold={targetGroup.healthyThresholdCount}
+          editable={editable}
+          healthCheck={({
+            targetGroupName: targetGroup.targetGroupName,
+            protocol: targetGroup.healthCheckProtocol,
+            port: targetGroup.healthCheckPort,
+            path: targetGroup.healthCheckPath,
+            interval: targetGroup.healthCheckIntervalSeconds,
+            timeout: targetGroup.healthCheckTimeoutSeconds,
+            healthyThreshold: targetGroup.healthyThresholdCount,
+            unhealthyThreshold: targetGroup.unhealthyThresholdCount
+          })}
         />
         <div className="col-md-8">
           <ul className="list-group">
@@ -61,11 +68,13 @@ TargetGroupDetail.propTypes = {
     port: PropTypes.number
   })),
   targetGroup: PropTypes.object,
+  editable: PropTypes.bool.isRequired,
 };
 
 const mapStateToProps = (state, ownProps) => ({
   targets: Utils.maybe(state, ['api', 'targetGroupTargets', ownProps.params.targetGroupName, 'data']),
-  targetGroup: Utils.maybe(state, ['api', 'targetGroup', ownProps.params.targetGroupName, 'data'])
+  targetGroup: Utils.maybe(state, ['api', 'targetGroup', ownProps.params.targetGroupName, 'data']),
+  editable: config.allowEdit,
 });
 
 export default connect(mapStateToProps)(rootComponent(TargetGroupDetail, (props) => {
