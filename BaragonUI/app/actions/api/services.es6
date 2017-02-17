@@ -1,7 +1,5 @@
 import { buildApiAction, buildJsonApiAction } from './base';
 
-
-
 export const FetchBaragonServices = buildApiAction(
   'FETCH_BARAGON_SERVICES',
   {url: '/state'}
