@@ -1,4 +1,4 @@
-import { buildApiAction } from './base';
+import { buildApiAction, buildJsonApiAction } from './base';
 
 export const FetchTargetGroups = buildApiAction(
   'FETCH_TARGET_GROUPS',
@@ -20,6 +20,15 @@ export const FetchTargetGroupTargets = buildApiAction(
     url: `/albs/target-groups/${groupName}/targets`
   }),
   (groupName) => groupName
+);
+
+export const ModifyTargetGroup = buildJsonApiAction(
+  'MODIFY_TARGET_GROUP',
+  'POST',
+  (groupName, body) => ({
+    body,
+    url: `/albs/target-groups/${groupName}`,
+  }),
 );
 
 export const FetchLoadBalancers = buildApiAction(

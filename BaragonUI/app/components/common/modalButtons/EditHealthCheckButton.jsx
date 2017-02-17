@@ -14,7 +14,7 @@ const editTooltip = (
   </ToolTip>
 );
 
-export default class DeleteServiceButton extends Component {
+export default class EditHealthCheckButton extends Component {
   static propTypes = {
     targetGroupName: PropTypes.string.isRequired,
     protocol: PropTypes.oneOf(['HTTP', 'HTTPS']).isRequired,

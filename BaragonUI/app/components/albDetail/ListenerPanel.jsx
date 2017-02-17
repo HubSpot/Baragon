@@ -1,5 +1,5 @@
 import React, { PropTypes } from 'react';
-import { Link } from 'react-router'
+import { Link } from 'react-router';
 
 const Action = ({targetGroupArn: target, action, targetGroupsMap}) => {
   const targetName = targetGroupsMap[target];

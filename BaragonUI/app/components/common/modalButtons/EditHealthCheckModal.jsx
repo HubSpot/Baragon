@@ -1,6 +1,7 @@
 import React, { Component, PropTypes } from 'react';
 import { connect } from 'react-redux';
 
+import { ModifyTargetGroup } from '../../../actions/api/albs';
 
 import FormModal from '../modal/FormModal';
 
@@ -24,9 +25,9 @@ class EditHealthCheckModal extends Component {
   render() {
     return (
       <FormModal
-        name="Modify this TargetGroup's Health Check Settings"
+        name={`Modify ${this.props.targetGroupName}'s Health Check Settings`}
         ref="editHealthCheckModal"
-        action="Delete"
+        action="Change"
         onConfirm={this.props.modifyHealthCheck}
         buttonStyle="primary"
         formElements={[
@@ -98,7 +99,8 @@ class EditHealthCheckModal extends Component {
 }
 
 const mapDispatchToProps = (dispatch, ownProps) => ({
-  modifyHealthCheck: (data) => console.log(data)
+  modifyHealthCheck: (data) => dispatch(ModifyTargetGroup.trigger(ownProps.targetGroupName, data))
+    .then(response => ownProps.then && ownProps.then(response))
 });
 
 export default connect(
