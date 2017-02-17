@@ -73,7 +73,7 @@ class Albs extends React.Component {
 }
 
 const mapStateToProps = (state) => ({
-  loadBalancers: state.api.loadBalancers.data,
+  loadBalancers: state.api.albs.data,
   targetGroups: state.api.targetGroups.data,
 });
 

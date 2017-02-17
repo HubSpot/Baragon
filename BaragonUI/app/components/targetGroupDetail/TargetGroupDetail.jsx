@@ -1,5 +1,6 @@
 import React, { PropTypes } from 'react';
 import { connect } from 'react-redux';
+import { Link } from 'react-router';
 
 import { refresh } from '../../actions/ui/targetGroupDetail';
 import Utils from '../../utils';
@@ -10,7 +11,16 @@ import JSONButton from '../common/JSONButton';
 import HealthCheckPanel from './HealthCheckPanel';
 import DetailItem from './DetailItem';
 
-const TargetGroupDetail = ({targets, targetGroup, editable}) => {
+const renderLoadBalancer = (loadBalancerArnsToNames) => (arn) => {
+  const name = loadBalancerArnsToNames[arn];
+  if (name) {
+    return <Link to={`/albs/load-balancers/${name}`}>{name}</Link>;
+  }
+
+  return arn;
+};
+
+const TargetGroupDetail = ({targets, targetGroup, loadBalancerArnsToNames, editable}) => {
   return (
     <div>
       <div className="row detail-header">
@@ -56,7 +66,12 @@ const TargetGroupDetail = ({targets, targetGroup, editable}) => {
             )
           }
         />
-        <DetailGroup name="Associated Load Balancers" items={targetGroup.loadBalancerArns} width={9} />
+        <DetailGroup
+          name="Associated Load Balancers"
+          items={targetGroup.loadBalancerArns}
+          width={9}
+          field={renderLoadBalancer(loadBalancerArnsToNames)}
+        />
       </div>
     </div>
   );
@@ -68,12 +83,22 @@ TargetGroupDetail.propTypes = {
     port: PropTypes.number
   })),
   targetGroup: PropTypes.object,
+  loadBalancerArnsToNames: PropTypes.object,
   editable: PropTypes.bool.isRequired,
+};
+
+const mapLoadBalancerArnsToNames = (loadBalancers) => {
+  const map = {};
+  loadBalancers.forEach(({loadBalancerArn, loadBalancerName}) => {
+    map[loadBalancerArn] = loadBalancerName;
+  });
+  return map;
 };
 
 const mapStateToProps = (state, ownProps) => ({
   targets: Utils.maybe(state, ['api', 'targetGroupTargets', ownProps.params.targetGroupName, 'data']),
   targetGroup: Utils.maybe(state, ['api', 'targetGroup', ownProps.params.targetGroupName, 'data']),
+  loadBalancerArnsToNames: mapLoadBalancerArnsToNames(state.api.albs.data),
   editable: config.allowEdit,
 });
 

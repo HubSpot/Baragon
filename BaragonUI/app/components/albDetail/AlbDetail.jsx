@@ -76,8 +76,8 @@ const buildTargetGroupMap = (targetGroups) => {
 
 
 const mapStateToProps = (state, ownProps) => ({
-  loadBalancer: Utils.maybe(state, ['api', 'loadBalancer', ownProps.params.albName, 'data']),
-  listeners: Utils.maybe(state, ['api', 'loadBalancerListeners', ownProps.params.albName, 'data']),
+  loadBalancer: Utils.maybe(state, ['api', 'alb', ownProps.params.albName, 'data']),
+  listeners: Utils.maybe(state, ['api', 'listeners', ownProps.params.albName, 'data']),
   targetGroupsArnsToNames: buildTargetGroupMap(Utils.maybe(state, ['api', 'targetGroups', 'data']))
 });
 

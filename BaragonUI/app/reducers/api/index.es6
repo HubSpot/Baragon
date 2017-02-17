@@ -68,9 +68,9 @@ const elb = buildKeyedApiActionReducer(FetchElb, []);
 const targetGroups = buildApiActionReducer(FetchTargetGroups, []);
 const targetGroup = buildKeyedApiActionReducer(FetchTargetGroup, {});
 const targetGroupTargets = buildKeyedApiActionReducer(FetchTargetGroupTargets, []);
-const loadBalancers = buildApiActionReducer(FetchLoadBalancers, []);
-const loadBalancer = buildKeyedApiActionReducer(FetchLoadBalancer, {});
-const loadBalancerListeners = buildKeyedApiActionReducer(FetchLoadBalancerListeners, []);
+const albs = buildApiActionReducer(FetchLoadBalancers, []);
+const alb = buildKeyedApiActionReducer(FetchLoadBalancer, {});
+const listeners = buildKeyedApiActionReducer(FetchLoadBalancerListeners, []);
 
 export default combineReducers({
   status,
@@ -94,7 +94,7 @@ export default combineReducers({
   targetGroups,
   targetGroup,
   targetGroupTargets,
-  loadBalancers,
-  loadBalancer,
-  loadBalancerListeners,
+  albs,
+  alb,
+  listeners,
 });
