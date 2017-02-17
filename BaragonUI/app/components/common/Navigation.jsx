@@ -32,6 +32,14 @@ const elbLink = (isEnabled, fragment) => {
   }
 };
 
+const albLink = (isEnabled, fragment) => {
+  if (isEnabled) {
+    return <NavLink path="/albs" name="Albs" fragment={fragment} />;
+  } else {
+    return null;
+  }
+};
+
 // put into page wrapper, render children
 const Navigation = (props) => {
   const fragment = props.location.pathname.split('/')[1];
@@ -46,6 +54,7 @@ const Navigation = (props) => {
             <NavLink path="/services" name="Services" fragment={fragment} />
             <NavLink path="/groups" name="Groups" fragment={fragment} />
             { elbLink(props.elbEnabled, fragment) }
+            { albLink(props.elbEnabled, fragment) }
           </ul>
         </div>
       </div>
