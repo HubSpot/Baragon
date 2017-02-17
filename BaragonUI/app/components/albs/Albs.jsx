@@ -3,8 +3,6 @@ import { connect } from 'react-redux';
 import rootComponent from '../../rootComponent';
 import { refresh } from '../../actions/ui/albs';
 
-import Utils from '../../utils';
-
 import TargetGroupsTable from './TargetGroupsTable';
 import LoadBalancersTable from './LoadBalancersTable';
 
@@ -34,8 +32,8 @@ Albs.propTypes = {
 };
 
 const mapStateToProps = (state) => ({
-  loadBalancers: Utils.maybe(state, ['api', 'loadBalancers', 'data']),
-  targetGroups: Utils.maybe(state, ['api', 'targetGroups', 'data'])
+  loadBalancers: state.api.loadBalancers.data,
+  targetGroups: state.api.targetGroups.data,
 });
 
 

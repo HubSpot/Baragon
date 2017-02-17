@@ -57,9 +57,7 @@ const Navigation = (props) => {
 Navigation.propTypes = {
   location: React.PropTypes.object.isRequired,
   router: React.PropTypes.object.isRequired,
-
   elbEnabled: PropTypes.bool.isRequired,
-
   toggleGlobalSearch: React.PropTypes.func
 };
 

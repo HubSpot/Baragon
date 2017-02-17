@@ -3,7 +3,8 @@ import { Link } from 'react-router';
 
 import UITable from '../common/table/UITable';
 import Column from '../common/table/Column';
-import Utils from '../../utils.es6';
+import JSONButton from '../common/JSONButton';
+import Utils from '../../utils';
 
 const loadBalancerName = (loadBalancer) => {
   const name = loadBalancer.loadBalancerName;
@@ -22,6 +23,14 @@ const loadBalancerSymbol = (loadBalancer) => {
   } else {
     return <span className="glyphicon glyphicon-question-sign" />;
   }
+};
+
+const loadBalancerJson = (loadBalancer) => {
+  return (
+    <JSONButton object={loadBalancer}>
+      <span>{'{ }'}</span>
+    </JSONButton>
+  );
 };
 
 const LoadBalancersTable = ({loadBalancers}) => {
@@ -57,6 +66,11 @@ const LoadBalancersTable = ({loadBalancers}) => {
           label="Created"
           id="createdAgo"
           cellData={(loadBalancer) => Utils.timestampFromNow(loadBalancer.createdTime)}
+        />
+        <Column
+          label=""
+          id="json"
+          cellData={loadBalancerJson}
         />
       </UITable>
     </div>

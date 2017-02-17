@@ -3,10 +3,19 @@ import { Link } from 'react-router';
 
 import UITable from '../common/table/UITable';
 import Column from '../common/table/Column';
+import JSONButton from '../common/JSONButton';
 
 const targetGroupName = (targetGroup) => {
   const name = targetGroup.targetGroupName;
   return <Link to={`/albs/target-groups/${name}`}>{name}</Link>;
+};
+
+const targetGroupJson = (targetGroup) => {
+  return (
+    <JSONButton object={targetGroup}>
+      <span>{'{ }'}</span>
+    </JSONButton>
+  );
 };
 
 const TargetGroupsTable = ({targetGroups}) => {
@@ -24,14 +33,24 @@ const TargetGroupsTable = ({targetGroups}) => {
           cellData={targetGroupName}
         />
         <Column
-          label="ARN"
-          id="targetGroupArn"
-          cellData={(group) => group.targetGroupArn}
-        />
-        <Column
           label="VPC ID"
           id="vpcId"
           cellData={(group) => group.vpcId}
+        />
+        <Column
+          label="Protocol"
+          id="protocol"
+          cellData={(group) => group.protocol}
+        />
+        <Column
+          label="Port"
+          id="port"
+          cellData={(group) => group.port}
+        />
+        <Column
+          label=""
+          id="json"
+          cellData={targetGroupJson}
         />
       </UITable>
     </div>
