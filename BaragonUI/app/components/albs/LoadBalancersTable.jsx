@@ -1,5 +1,6 @@
 import React, { PropTypes } from 'react';
 import { Link } from 'react-router';
+import fuzzy from 'fuzzy';
 
 import UITable from '../common/table/UITable';
 import Column from '../common/table/Column';
@@ -28,17 +29,28 @@ const loadBalancerSymbol = (loadBalancer) => {
 const loadBalancerJson = (loadBalancer) => {
   return (
     <JSONButton object={loadBalancer}>
-      <span>{'{ }'}</span>
+      <span className="pull-right">{'{ }'}</span>
     </JSONButton>
   );
 };
 
-const LoadBalancersTable = ({loadBalancers}) => {
+const LoadBalancersTable = ({loadBalancers, filter}) => {
+  let tableContent = [];
+  if (filter === '') {
+    tableContent = loadBalancers;
+  } else {
+    const fuzzyObjects = fuzzy.filter(filter, loadBalancers, {
+      extract: (alb) => alb.loadBalancerName,
+      returnMatchInfo: true
+    });
+    tableContent = Utils.fuzzyFilter(filter, fuzzyObjects, (alb) => alb.loadBalancerName);
+  }
+
   return (
     <div>
       <UITable
-        data={loadBalancers}
-        keyGetter={(loadBalancer) => /* ?? */ loadBalancer.loadBalancerName}
+        data={tableContent}
+        keyGetter={(loadBalancer) => loadBalancer.loadBalancerName}
         paginated={true}
         rowChunkSize={5}
       >
@@ -79,6 +91,7 @@ const LoadBalancersTable = ({loadBalancers}) => {
 
 LoadBalancersTable.propTypes = {
   loadBalancers: PropTypes.array,
+  filter: PropTypes.string,
 };
 
 

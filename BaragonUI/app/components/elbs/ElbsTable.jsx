@@ -57,7 +57,7 @@ const instanceCount = (elb) => {
 const jsonButton = (elb) => {
   return (
     <JSONButton object={elb}>
-      <span>{'{ }'}</span>
+      <span className="pull-right">{'{ }'}</span>
     </JSONButton>
   );
 };
@@ -77,7 +77,7 @@ const ElbsTable = ({elbs, filter}) => {
   return (
     <UITable
       data={tableContent}
-      keyGetter={(elb) => elb.dnsname}
+      keyGetter={(elb) => elb.loadBalancerArn}
       paginated={true}
       rowChunkSize={15}
     >

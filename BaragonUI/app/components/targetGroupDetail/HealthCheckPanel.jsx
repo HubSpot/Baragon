@@ -48,7 +48,6 @@ const HealthCheckPanel = ({editable, healthCheck}) => {
         <li className="list-group-item">
           <strong>Heath Check: </strong>{ `[${port}] ${protocol}:${path}` }
           <HeathCheckButton editable={editable} healthCheck={healthCheck} />
-          />
         </li>
         <ListItem name="Interval" value={interval} />
         <ListItem name="Timeout" value={timeout} />

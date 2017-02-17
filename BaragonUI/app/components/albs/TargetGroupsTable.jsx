@@ -1,9 +1,11 @@
 import React, { PropTypes } from 'react';
 import { Link } from 'react-router';
+import fuzzy from 'fuzzy';
 
 import UITable from '../common/table/UITable';
 import Column from '../common/table/Column';
 import JSONButton from '../common/JSONButton';
+import Utils from '../../utils';
 
 const targetGroupName = (targetGroup) => {
   const name = targetGroup.targetGroupName;
@@ -13,17 +15,28 @@ const targetGroupName = (targetGroup) => {
 const targetGroupJson = (targetGroup) => {
   return (
     <JSONButton object={targetGroup}>
-      <span>{'{ }'}</span>
+      <span className="pull-right">{'{ }'}</span>
     </JSONButton>
   );
 };
 
-const TargetGroupsTable = ({targetGroups}) => {
+const TargetGroupsTable = ({targetGroups, filter}) => {
+  let tableContent = [];
+  if (filter === '') {
+    tableContent = targetGroups;
+  } else {
+    const fuzzyObjects = fuzzy.filter(filter, targetGroups, {
+      extract: (targetGroup) => targetGroup.targetGroupName,
+      returnMatchInfo: true
+    });
+    tableContent = Utils.fuzzyFilter(filter, fuzzyObjects, (targetGroup) => targetGroup.targetGroupName);
+  }
+
   return (
     <div>
       <UITable
-        data={targetGroups}
-        keyGetter={(group) => /* ?? */ group.targetGroupName}
+        data={tableContent}
+        keyGetter={(group) => group.targetGroupArn}
         paginated={true}
         rowChunkSize={5}
       >
@@ -59,6 +72,7 @@ const TargetGroupsTable = ({targetGroups}) => {
 
 TargetGroupsTable.propTypes = {
   targetGroups: PropTypes.array,
+  filter: PropTypes.string,
 };
 
 
