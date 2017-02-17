@@ -25,7 +25,7 @@ class Groups extends Component {
             id="name"
             key="name"
             cellData={
-              (rowData) => (<Link to={`group/${rowData.name}`} title={`Details for ${rowData.name}`}>{rowData.name}</Link>)
+              (rowData) => (<Link to={`groups/${rowData.name}`} title={`Details for ${rowData.name}`}>{rowData.name}</Link>)
             }
             sortable={true}
           />

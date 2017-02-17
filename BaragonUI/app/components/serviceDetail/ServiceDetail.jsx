@@ -1,29 +1,86 @@
-import React, { Component, PropTypes } from 'react';
+import React, { PropTypes } from 'react';
 import { connect } from 'react-redux';
-import classNames from 'classnames';
-import { Link } from 'react-router';
+import { withRouter } from 'react-router';
 import rootComponent from '../../rootComponent';
 import { refresh } from '../../actions/ui/serviceDetail';
 import Utils from '../../utils';
 
-class ServiceDetail extends Component {
-  render() {
-    // TODO - render out info nicely
-    //  - JSON button (or other display?) for request history items
-    // - reload / delete service / json button (use existing modals)
-    // - Remove upstream (requires new modal + building request json)
-    //   - submit request modal should either show request json or link to page for it
-    return <h1>Service Detail</h1>
-  }
+import DetailHeader from './DetailHeader';
+import OwnersPanel from './OwnersPanel';
+import LoadBalancersPanel from './LoadBalancersPanel';
+import RecentRequestsPanel from './RecentRequestsPanel';
+import UpstreamsPanel from './UpstreamsPanel';
 
-  static propTypes = {
-    params: PropTypes.object.isRequired,
-    service: React.PropTypes.object,
-    requestHistory: React.PropTypes.array
-  };
-}
+const ServiceDetail = ({service, requestHistory, editable,
+                        afterRemoveUpstreams, afterRemoveUpstream, afterReload, afterDelete}) => {
+  const {service: serviceObject, upstreams} = service;
+  const {
+    serviceId,
+    owners,
+    loadBalancerGroups,
+    serviceBasePath: basePath
+  } = serviceObject;
+  return (
+    <div>
+      <div className="row detail-header">
+        <DetailHeader
+          id={serviceId}
+          serviceJson={service}
+          upstreams={upstreams}
+          loadBalancerService={serviceObject}
+          basePath={basePath}
+          editable={editable}
+          afterRemoveUpstreams={afterRemoveUpstreams}
+          afterReload={afterReload}
+          afterDelete={afterDelete}
+        />
+      </div>
+      <div className="row">
+        <OwnersPanel owners={owners} />
+        <LoadBalancersPanel loadBalancerGroups={loadBalancerGroups} />
+      </div>
+      <div className="row">
+        <RecentRequestsPanel requests={requestHistory} />
+      </div>
+      <div className="row">
+        <UpstreamsPanel
+          loadBalancerService={serviceObject}
+          upstreams={upstreams}
+          afterRemoveUpstream={afterRemoveUpstream}
+          editable={editable}
+        />
+      </div>
+    </div>
+  );
+};
 
-export default connect((state, ownProps) => ({
+ServiceDetail.propTypes = {
+  service: PropTypes.object,
+  requestHistory: PropTypes.arrayOf(PropTypes.shape({
+    agentResponses: PropTypes.object,
+    loadBalancerRequestId: PropTypes.string,
+    loadBalancerState: PropTypes.string,
+    message: PropTypes.string,
+    request: PropTypes.object,
+  })),
+  editable: PropTypes.bool,
+  afterRemoveUpstreams: PropTypes.func.isRequired,
+  afterRemoveUpstream: PropTypes.func.isRequired,
+  afterReload: PropTypes.func.isRequired,
+  afterDelete: PropTypes.func.isRequired,
+};
+
+const mapStateToProps = (state, ownProps) => ({
   service: Utils.maybe(state, ['api', 'service', ownProps.params.serviceId, 'data']),
-  requestHistory: Utils.maybe(state, ['api', 'requestHistory', ownProps.params.serviceId, 'data'])
-}))(rootComponent(ServiceDetail, (props) => refresh(props.params.serviceId)));
+  requestHistory: Utils.maybe(state, ['api', 'requestHistory', ownProps.params.serviceId, 'data']),
+  editable: window.config.allowEdit,
+});
+
+const mapDispatchToProps = (dispatch, ownProps) => ({
+  afterRemoveUpstreams: () => refresh(ownProps.params.serviceId)(dispatch),
+  afterRemoveUpstream: () => refresh(ownProps.params.serviceId)(dispatch),
+  afterReload: () => refresh(ownProps.params.serviceId)(dispatch),
+  afterDelete: () => ownProps.router.push('/services'),
+});
+
+export default withRouter(connect(mapStateToProps, mapDispatchToProps)(rootComponent(ServiceDetail, (props) => refresh(props.params.serviceId))));

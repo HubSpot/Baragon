@@ -30,7 +30,7 @@ import {
   FetchBaragonServices,
   FetchService,
   DeleteService,
-  ReloadService
+  ReloadService,
 } from '../../actions/api/services';
 
 const status = buildApiActionReducer(FetchBaragonStatus);

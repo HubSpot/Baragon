@@ -30,7 +30,7 @@ class Services extends Component {
             id="serviceId"
             key="serviceId"
             cellData={
-              (rowData) => (<Link to={`service/${rowData.service.serviceId}`} title={`Details for ${rowData.service.serviceId}`}>{rowData.service.serviceId}</Link>)
+              (rowData) => (<Link to={`services/${rowData.service.serviceId}`} title={`Details for ${rowData.service.serviceId}`}>{rowData.service.serviceId}</Link>)
             }
             sortable={true}
           />

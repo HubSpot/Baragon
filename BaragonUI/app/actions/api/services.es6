@@ -17,8 +17,8 @@ export const FetchService = buildApiAction(
 export const DeleteService = buildJsonApiAction(
   'DELETE_SERVICE',
   'DELETE',
-  (serviceId) => ({
-    url: `/state/${serviceId}`,
+  (serviceId, noValidate = false, noReload = false) => ({
+    url: `/state/${serviceId}?noValidate=${noValidate}&noReload=${noReload}`,
   })
 );
 
