@@ -14,4 +14,3 @@ export const refresh = (groupId) => (dispatch) =>
     dispatch(FetchGroupAgents.trigger(groupId)),
     dispatch(FetchGroupKnownAgents.trigger(groupId))
   ]);
-  
