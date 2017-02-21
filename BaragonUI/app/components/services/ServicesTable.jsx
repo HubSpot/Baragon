@@ -90,7 +90,7 @@ const upstreamsColumn = (
   />
 );
 
-const buttonsColumn = (
+const buttonsColumn = (editable) => (
   <Column
     label=""
     id="actions"
@@ -122,19 +122,11 @@ const buttonsColumn = (
           </RemoveUpstreamsButton>
         );
 
-        const onlyIfUpstreams = (button) => {
-          if (cellData.upstreams.length > 0) {
-            return button;
-          }
-
-          return null;
-        };
-
         return (
           <div className="hidden-xs">
-            {onlyIfUpstreams(reloadService)}
-            {onlyIfUpstreams(removeUpstreams)}
-            {deleteService}
+            {editable && cellData.upstreams.length > 0 && reloadService}
+            {editable && cellData.upstreams.length > 0 && removeUpstreams}
+            {editable && deleteService}
             <JSONButton className="inline" object={cellData} showOverlay={true}>
               {'{ }'}
             </JSONButton>
@@ -159,38 +151,21 @@ const tableContent = (services, filter) => {
 };
 
 const ServicesTable = ({services, filter, editable}) => {
-  if (editable) {
-    return (
-      <UITable
-        data={tableContent(services, filter)}
-        keyGetter={(service) => service.service.serviceId}
-        paginated={true}
-        rowChunkSize={15}
-      >
-        { statusColumn }
-        { idColumn }
-        { requestColumn }
-        { groupsColumn }
-        { upstreamsColumn }
-        { buttonsColumn }
-      </UITable>
-    );
-  } else {
-    return (
-      <UITable
-        data={tableContent(services, filter)}
-        keyGetter={(service) => service.service.serviceId}
-        paginated={true}
-        rowChunkSize={15}
-      >
-        { statusColumn }
-        { idColumn }
-        { requestColumn }
-        { groupsColumn }
-        { upstreamsColumn }
-      </UITable>
-    );
-  }
+  return (
+    <UITable
+      data={tableContent(services, filter)}
+      keyGetter={(service) => service.service.serviceId}
+      paginated={true}
+      rowChunkSize={15}
+    >
+      { statusColumn }
+      { idColumn }
+      { requestColumn }
+      { groupsColumn }
+      { upstreamsColumn }
+      { buttonsColumn(editable) }
+    </UITable>
+  );
 };
 
 ServicesTable.propTypes = {
