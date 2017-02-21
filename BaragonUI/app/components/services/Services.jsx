@@ -1,6 +1,7 @@
 import React, { Component, PropTypes } from 'react';
 import { connect } from 'react-redux';
 import { Link } from 'react-router';
+import { Tooltip, OverlayTrigger } from 'react-bootstrap';
 import rootComponent from '../../rootComponent';
 import { refresh } from '../../actions/ui/services';
 
@@ -11,34 +12,23 @@ import JSONButton from '../common/JSONButton';
 
 import ReloadServiceButton from '../common/modalButtons/ReloadServiceButton';
 import DeleteServiceButton from '../common/modalButtons/DeleteServiceButton';
+import RemoveUpstreamsButton from '../common/modalButtons/RemoveUpstreamsButton';
 
-const ButtonsColumn = (
+const StatusColumn = (
   <Column
     label=""
-    id="actions"
-    key="actions"
-    className="actions-column"
-    cellRender={
-      (cellData, rowData) => {
-        const deleteService = (
-          <DeleteServiceButton serviceId={rowData.service.serviceId} />
-        );
-
-        const reloadService = (
-          <ReloadServiceButton serviceId={rowData.service.serviceId} />
-        );
-
-        return (
-          <div className="hidden-xs">
-            {deleteService}
-            {reloadService}
-            <JSONButton className="inline" object={cellData} showOverlay={true}>
-              {'{ }'}
-            </JSONButton>
-          </div>
-        );
+    id="statusIcon"
+    key="statusIcon"
+    cellData={(service) => {
+      const upstreams = service.upstreams.length;
+      if (upstreams === 0) {
+        return <span className="glyphicon glyphicon-ban-circle inactive" title="No active upstreams" />;
+      } else if (upstreams === 1) {
+        return <span className="glyphicon glyphicon-ok-circle active" title="1 active upstream" />;
+      } else {
+        return <span className="glyphicon glyphicon-ok-circle active" title={`${upstreams} active upstreams`} />;
       }
-    }
+    }}
   />
 );
 
@@ -74,7 +64,17 @@ const GroupsColumn = (
     key="groups"
     cellData={
       (rowData) => {
-        return rowData.service.loadBalancerGroups.map((groupId) => {return (<Link to={`group/${groupId}`} title={`Details for ${groupId}`} key={groupId}>{groupId}</Link>);})
+        return rowData.service.loadBalancerGroups.map((groupId) => {
+          return (
+            <Link
+              to={`group/${groupId}`}
+              title={`Details for ${groupId}`}
+              key={groupId}
+            >
+            {groupId}
+            </Link>
+          );
+        });
       }
     }
     sortable={false}
@@ -90,6 +90,61 @@ const UpstreamsColumn = (
       (rowData) => rowData.upstreams.length
     }
     sortable={true}
+  />
+);
+
+const ButtonsColumn = (
+  <Column
+    label=""
+    id="actions"
+    key="actions"
+    className="actions-column"
+    cellRender={
+      (cellData, rowData) => {
+        const deleteService = (
+          <DeleteServiceButton serviceId={rowData.service.serviceId} />
+        );
+
+        const reloadService = (
+          <ReloadServiceButton serviceId={rowData.service.serviceId} />
+        );
+
+        const removeTooltip = (
+          <Tooltip id="removeUpstreams">
+            Remove all upstreams from this service
+          </Tooltip>
+        );
+
+        const removeUpstreams = (
+          <RemoveUpstreamsButton loadBalancerService={cellData.service} upstreams={cellData.upstreams}>
+            <OverlayTrigger placement="top" overlay={removeTooltip}>
+              <a>
+                <span className="glyphicon glyphicon-remove-circle" />
+              </a>
+            </OverlayTrigger>
+          </RemoveUpstreamsButton>
+        );
+
+        const onlyIfUpstreams = (button) => {
+          if (cellData.upstreams.length > 0) {
+            return button;
+          }
+
+          return null;
+        }
+
+        return (
+          <div className="hidden-xs">
+            {onlyIfUpstreams(reloadService)}
+            {onlyIfUpstreams(removeUpstreams)}
+            {deleteService}
+            <JSONButton className="inline" object={cellData} showOverlay={true}>
+              {'{ }'}
+            </JSONButton>
+          </div>
+        );
+      }
+    }
   />
 );
 
@@ -111,6 +166,7 @@ class Services extends Component {
             paginated={true}
             rowChunkSize={15}
           >
+            { StatusColumn }
             { IdColumn }
             { RequestColumn }
             { GroupsColumn }
@@ -131,6 +187,7 @@ class Services extends Component {
           paginated={true}
           rowChunkSize={15}
         >
+          { StatusColumn }
           { IdColumn }
           { RequestColumn }
           { GroupsColumn }
