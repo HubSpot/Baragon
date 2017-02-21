@@ -25,6 +25,7 @@ function getDefaultFormState(props) {
   return formState;
 }
 
+
 export default class FormModal extends React.Component {
   constructor(props) {
     super(props);
@@ -58,12 +59,13 @@ export default class FormModal extends React.Component {
   static INPUT_TYPES = {
     BOOLEAN: 'BOOLEAN',
     STRING: 'STRING',
+    PASSWORD: 'PASSWORD',
     RADIO: 'RADIO',
     TAGS: 'TAGS',
     MULTIINPUT: 'MULTIINPUT',
     NUMBER: 'NUMBER',
     DURATION: 'DURATION',
-    SELECT: 'SELECT'
+    SELECT: 'SELECT',
   };
 
   hide() {
@@ -269,6 +271,11 @@ export default class FormModal extends React.Component {
         extraHelp = 'Accepts any English duration (Days, Hr, Min...)';
       }
 
+      let isPassword = false;
+      if (formElement.type === FormModal.INPUT_TYPES.PASSWORD) {
+        isPassword = true;
+      }
+
       switch (formElement.type) {
 
         case FormModal.INPUT_TYPES.BOOLEAN:
@@ -293,11 +300,12 @@ export default class FormModal extends React.Component {
 
         case FormModal.INPUT_TYPES.DURATION:
         case FormModal.INPUT_TYPES.STRING:
+        case FormModal.INPUT_TYPES.PASSWORD:
           return (
             <FormModal.FormItem element={formElement} formState={this.state.formState} key={formElement.name}>
               <div className={classNames('form-group', {'has-error': !!error})}>
                 <label className="control-label" htmlFor={formElement.name}>{formElement.label}</label>
-                <input type="text"
+                <input type={isPassword ? 'password' : 'text'}
                   name={formElement.name}
                   className="form-control input-large"
                   value={this.state.formState[formElement.name] || ''}
