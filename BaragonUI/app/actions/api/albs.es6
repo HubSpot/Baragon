@@ -51,3 +51,11 @@ export const FetchLoadBalancerListeners = buildApiAction(
   }),
   (loadBalancerName) => loadBalancerName
 );
+
+export const FetchListenerRules = buildApiAction(
+  'FETCH_LISTENER_RULES',
+  (listenerArn) => ({
+    url: `/albs/listeners/rules/${listenerArn}`
+  }),
+  (listenerArn) => listenerArn
+);

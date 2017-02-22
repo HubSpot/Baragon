@@ -10,7 +10,7 @@ import DetailGroup from '../common/DetailGroup';
 
 import ListenerPanel from './ListenerPanel';
 
-const AlbDetail = ({loadBalancer, listeners, targetGroupsArnsToNames}) => {
+const AlbDetail = ({loadBalancer, listeners, targetGroupsArnsToNames, rulesMap}) => {
   const {
     loadBalancerName: name,
     availabilityZones: azs,
@@ -39,6 +39,13 @@ const AlbDetail = ({loadBalancer, listeners, targetGroupsArnsToNames}) => {
         </div>
       </div>
       <div className="row">
+        <ListenerPanel
+          listeners={listeners}
+          targetGroupsMap={targetGroupsArnsToNames}
+          rulesMap={rulesMap}
+        />
+      </div>
+      <div className="row">
         <DetailGroup
           name="Availibility Zones"
           items={azs}
@@ -51,10 +58,6 @@ const AlbDetail = ({loadBalancer, listeners, targetGroupsArnsToNames}) => {
           )}
         />
         <DetailGroup name="Security Groups" items={securityGroups} />
-        <ListenerPanel
-          listeners={listeners}
-          targetGroupsMap={targetGroupsArnsToNames}
-        />
       </div>
     </div>
   );
@@ -64,6 +67,7 @@ AlbDetail.propTypes = {
   loadBalancer: PropTypes.object,
   listeners: PropTypes.array,
   targetGroupsArnsToNames: PropTypes.object,
+  rulesMap: PropTypes.object,
 };
 
 const buildTargetGroupMap = (targetGroups) => {
@@ -74,11 +78,21 @@ const buildTargetGroupMap = (targetGroups) => {
   return map;
 };
 
+const getRules = (state, ownProps) => {
+  const listeners = Utils.maybe(state, ['api', 'listeners', ownProps.params.albName, 'data']) || [];
+  const rulesMap = {};
+  listeners.forEach(({listenerArn}) => {
+    rulesMap[listenerArn] = Utils.maybe(state, ['api', 'rules', listenerArn, 'data']);
+  });
+  return rulesMap;
+};
+
 
 const mapStateToProps = (state, ownProps) => ({
   loadBalancer: Utils.maybe(state, ['api', 'alb', ownProps.params.albName, 'data']),
   listeners: Utils.maybe(state, ['api', 'listeners', ownProps.params.albName, 'data']),
-  targetGroupsArnsToNames: buildTargetGroupMap(Utils.maybe(state, ['api', 'targetGroups', 'data']))
+  targetGroupsArnsToNames: buildTargetGroupMap(Utils.maybe(state, ['api', 'targetGroups', 'data'])),
+  rulesMap: getRules(state, ownProps),
 });
 
 export default connect(mapStateToProps)(rootComponent(AlbDetail, (props) => {

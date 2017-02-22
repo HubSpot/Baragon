@@ -29,22 +29,48 @@ Action.propTypes = {
   targetGroupsMap: PropTypes.object,
 };
 
-const Listener = ({protocol, port, defaultActions, targetGroupsMap}) => {
+const Rule = ({ruleConditions, isDefault, actions, targetGroupsMap}) => {
+  return (
+    <div>
+      {
+        isDefault ?
+          <h5>Default Actions:</h5> :
+          <h5>Action Rules: {ruleConditions.map((condition) => condition.values[0])}</h5>
+      }
+      <ul className="list-group row">
+        {
+          actions.map((action) => (
+            <li className="list-group-item col-md-4" key={action.targetGroupArn}>
+              <Action {...action} targetGroupsMap={targetGroupsMap} />
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  );
+};
+
+Rule.propTypes = {
+  ruleConditions: PropTypes.array,
+  isDefault: PropTypes.bool,
+  priority: PropTypes.string,
+  actions: PropTypes.arrayOf(PropTypes.shape({
+    targetGroupArn: PropTypes.string,
+    action: PropTypes.string,
+  })),
+  targetGroupsMap: PropTypes.object,
+};
+
+const Listener = ({listenerArn, protocol, port, targetGroupsMap, rules}) => {
   return (
       <ul className="list-unstyled">
+        <li><strong>ARN:</strong> {listenerArn}</li>
         <li><strong>Protocol:</strong> {protocol}</li>
         <li><strong>Port:</strong> {port}</li>
         <li>
-          <strong>Actions:</strong>
-          <ul className="list-group">
-            {
-              defaultActions.map((action) => (
-                <li className="list-group-item" key={action.targetGroupArn}>
-                  <Action {...action} targetGroupsMap={targetGroupsMap} />
-                </li>
-              ))
-            }
-          </ul>
+          {
+            rules.map((rule) => <Rule {...rule} targetGroupsMap={targetGroupsMap} key={rule.ruleArn} />)
+          }
         </li>
       </ul>
   );
@@ -59,17 +85,18 @@ Listener.propTypes = {
   })),
   listenerArn: PropTypes.string,
   targetGroupsMap: PropTypes.object,
+  rules: PropTypes.array,
 };
 
-const ListenerPanel = ({listeners, targetGroupsMap}) => {
+const ListenerPanel = ({listeners, targetGroupsMap, rulesMap}) => {
   return (
-    <div className="col-md-6">
+    <div className="col-md-12">
       <h4>Listeners</h4>
       <ul className="list-group">
         {
           listeners.map((listener) => (
             <li className="list-group-item" key={listener.listenerArn}>
-              <Listener {...listener} targetGroupsMap={targetGroupsMap} />
+              <Listener {...listener} targetGroupsMap={targetGroupsMap} rules={rulesMap[listener.listenerArn]} />
             </li>
           ))
          }
@@ -81,6 +108,7 @@ const ListenerPanel = ({listeners, targetGroupsMap}) => {
 ListenerPanel.propTypes = {
   listeners: PropTypes.array,
   targetGroupsMap: PropTypes.object,
+  rulesMap: PropTypes.object,
 };
 
 export default ListenerPanel;

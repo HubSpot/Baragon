@@ -45,6 +45,7 @@ import {
   FetchLoadBalancers,
   FetchLoadBalancer,
   FetchLoadBalancerListeners,
+  FetchListenerRules,
 } from '../../actions/api/albs';
 
 const status = buildApiActionReducer(FetchBaragonStatus);
@@ -71,6 +72,7 @@ const targetGroupTargets = buildKeyedApiActionReducer(FetchTargetGroupTargets, [
 const albs = buildApiActionReducer(FetchLoadBalancers, []);
 const alb = buildKeyedApiActionReducer(FetchLoadBalancer, {});
 const listeners = buildKeyedApiActionReducer(FetchLoadBalancerListeners, []);
+const rules = buildKeyedApiActionReducer(FetchListenerRules, []);
 
 export default combineReducers({
   status,
@@ -97,4 +99,5 @@ export default combineReducers({
   albs,
   alb,
   listeners,
+  rules,
 });

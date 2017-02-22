@@ -77,7 +77,7 @@ const ElbsTable = ({elbs, filter}) => {
   return (
     <UITable
       data={tableContent}
-      keyGetter={(elb) => elb.loadBalancerArn}
+      keyGetter={(elb) => elb.dnsname}
       paginated={true}
       rowChunkSize={15}
     >
