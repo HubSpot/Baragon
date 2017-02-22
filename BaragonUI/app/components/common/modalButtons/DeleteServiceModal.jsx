@@ -27,12 +27,14 @@ class DeleteServiceModal extends Component {
           {
             name: 'noValidate',
             type: FormModal.INPUT_TYPES.BOOLEAN,
-            label: 'Validate new configuration after applying changes'
+            label: 'Validate new configuration after applying changes',
+            defaultValue: true
           },
           {
             name: 'noReload',
             type: FormModal.INPUT_TYPES.BOOLEAN,
             label: 'Reload configuration after applying changes',
+            defaultValue: true
           },
         ]}>
         <p>Are you sure you sure you want to delete this service?</p>
@@ -50,7 +52,7 @@ class DeleteServiceModal extends Component {
 
 const mapDispatchToProps = (dispatch, ownProps) => ({
   deleteService: (data) => dispatch(DeleteService
-    .trigger(ownProps.serviceId, data.noValidate, data.noReload))
+    .trigger(ownProps.serviceId, !data.noValidate, !data.noReload))
       .then(response => (ownProps.then && ownProps.then(response)))
 });
 

@@ -185,6 +185,9 @@ const Utils = {
   // of list-groups, using `itemRenderer` to turn each item into a
   // list-group-item.
   asGroups(arr, columns, itemRenderer) {
+    if (!arr) {
+      return []
+    }
     return chunk(arr, arr.length / columns)
       .map(rowRenderer(itemRenderer, columns));
   },

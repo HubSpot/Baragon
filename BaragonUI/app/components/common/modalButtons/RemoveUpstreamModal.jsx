@@ -31,11 +31,13 @@ class RemoveUpstreamModal extends Component {
             name: 'noValidate',
             type: FormModal.INPUT_TYPES.BOOLEAN,
             label: 'Validate new configuration after applying changes',
+            defaultValue: true
           },
           {
             name: 'noReload',
             type: FormModal.INPUT_TYPES.BOOLEAN,
             label: 'Reload configuration after applying changes',
+            defaultValue: true
           },
         ]}>
         <p>Are you sure you want to remove this upstream?</p>
@@ -51,8 +53,8 @@ class RemoveUpstreamModal extends Component {
 
 const buildRequest = (ownProps, data) => ({
   loadBalancerService: ownProps.loadBalancerService,
-  noValidate: data.noValidate,
-  noReload: data.noReload,
+  noValidate: !data.noValidate,
+  noReload: !data.noReload,
   loadBalancerRequestId: Utils.buildRequestId(ownProps.loadBalancerService.serviceId),
   addUpstreams: [],
   removeUpstreams: [ownProps.upstream]

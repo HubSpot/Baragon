@@ -9,12 +9,16 @@ const SummaryPanel = ({serviceId, message}) => {
           <h4>Summary</h4>
         </div>
         <div className="panel-body">
-          <div className="col-md-3">
-            <h4>Service ID: </h4>
-            <h4><Link to={`/services/${serviceId}`}>{serviceId}</Link></h4>
+          <div className="row">
+            <div className="col-md-12">
+              <h4>Service ID: </h4>
+              <h4><Link to={`/services/${serviceId}`}>{serviceId}</Link></h4>
+            </div>
           </div>
-          <div className="col-md-9 list-group-item">
-            <h4>Message: </h4><p>{message}</p>
+          <div className="row">
+            <div className="col-md-12 list-group-item">
+              <h4>Message: </h4><p>{message}</p>
+            </div>
           </div>
         </div>
       </div>

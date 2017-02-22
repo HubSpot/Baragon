@@ -1,11 +1,10 @@
 import React from 'react';
+import { Link } from 'react-router';
 
 const pendingRequest = ({requestId, appRoot}) => {
   return (
     <li key={requestId}>
-      <a title={requestId} href={`${appRoot}/requests/${requestId}`}>
-        {requestId}
-      </a>
+      <Link to={`/requests/${requestId}`} title={requestId}>{requestId}</Link>
     </li>
   );
 };
