@@ -11,7 +11,7 @@ export const refresh = (loadBalancerName) => (dispatch) =>
     dispatch(FetchLoadBalancer.trigger(loadBalancerName)),
     dispatch(FetchLoadBalancerListeners.trigger(loadBalancerName))
       .then(listeners => Promise.all(listeners.data.map(({listenerArn}) =>
-        dispatch(FetchListenerRules.trigger(encodeURIComponent(listenerArn)))
+        dispatch(FetchListenerRules.trigger(listenerArn))
       ))),
     dispatch(FetchTargetGroups.trigger()),
   ]);

@@ -1,7 +1,7 @@
 import React, { PropTypes } from 'react';
 import { Link } from 'react-router';
 
-const Action = ({targetGroupArn: target, action, targetGroupsMap}) => {
+const Action = ({targetGroupArn: target, type: action, targetGroupsMap}) => {
   const targetName = targetGroupsMap[target];
 
   if (targetName) {
@@ -25,7 +25,7 @@ const Action = ({targetGroupArn: target, action, targetGroupsMap}) => {
 
 Action.propTypes = {
   targetGroupArn: PropTypes.string,
-  action: PropTypes.string,
+  type: PropTypes.string,
   targetGroupsMap: PropTypes.object,
 };
 
