@@ -12,6 +12,11 @@ import ServiceDetail from './components/serviceDetail/ServiceDetail';
 import Groups from './components/groups/Groups';
 import GroupDetail from './components/groupDetail/GroupDetail';
 import RequestDetail from './components/requestDetail/RequestDetail';
+import Elbs from './components/elbs/Elbs';
+import ElbDetail from './components/elbDetail/ElbDetail';
+import Albs from './components/albs/Albs';
+import TargetGroupDetail from './components/targetGroupDetail/TargetGroupDetail';
+import AlbDetail from './components/albDetail/AlbDetail';
 
 const getFilenameFromSplat = (splat) => _.last(splat.split('/'));
 
@@ -23,6 +28,13 @@ const routes = (
     <Route path="groups" component={Groups} title="Groups" />
     <Route path="groups/:groupId" component={GroupDetail} title={(params) => `${params.groupId}`} />
     <Route path="requests/:requestId" component={RequestDetail} title={(params) => `${params.requestId}`} />
+    <Route path="group/:groupId" component={GroupDetail} title={(params) => `${params.groupId}`} />
+    <Route path="request/:requestId" component={RequestDetail} title={(params) => `${params.requestId}`} />
+    <Route path="elbs" component={Elbs} title="Elbs" />
+    <Route path="elbs/:loadBalancerName" component={ElbDetail} title={(params) => `${params.loadBalancerName}`} />
+    <Route path="albs" component={Albs} title="ALBs" />
+    <Route path="albs/target-groups/:targetGroupName" component={TargetGroupDetail} title={(params) => `${params.targetGroupName}`} />
+    <Route path="albs/load-balancers/:albName" component={AlbDetail} title={(params) => `${params.albName}`} />
     <Route path="*" component={NotFound} title="Not Found" />
   </Route>);
 

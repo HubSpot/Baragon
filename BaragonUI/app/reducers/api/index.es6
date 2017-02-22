@@ -33,6 +33,21 @@ import {
   ReloadService,
 } from '../../actions/api/services';
 
+import {
+  FetchElbs,
+  FetchElb
+} from '../../actions/api/elbs';
+
+import {
+  FetchTargetGroups,
+  FetchTargetGroup,
+  FetchTargetGroupTargets,
+  FetchLoadBalancers,
+  FetchLoadBalancer,
+  FetchLoadBalancerListeners,
+  FetchListenerRules,
+} from '../../actions/api/albs';
+
 const status = buildApiActionReducer(FetchBaragonStatus);
 const workers = buildApiActionReducer(FetchBaragonServiceWorkers, []);
 const queuedRequests = buildApiActionReducer(FetchQueuedRequests, []);
@@ -49,6 +64,15 @@ const reloadService = buildKeyedApiActionReducer(ReloadService, []);
 const requestHistory = buildKeyedApiActionReducer(FetchRequestHistory, []);
 const requestResponse = buildKeyedApiActionReducer(FetchRequestResponse, {});
 const submitRequest = buildKeyedApiActionReducer(SubmitRequest, []);
+const elbs = buildApiActionReducer(FetchElbs, []);
+const elb = buildKeyedApiActionReducer(FetchElb, []);
+const targetGroups = buildApiActionReducer(FetchTargetGroups, []);
+const targetGroup = buildKeyedApiActionReducer(FetchTargetGroup, {});
+const targetGroupTargets = buildKeyedApiActionReducer(FetchTargetGroupTargets, []);
+const albs = buildApiActionReducer(FetchLoadBalancers, []);
+const alb = buildKeyedApiActionReducer(FetchLoadBalancer, {});
+const listeners = buildKeyedApiActionReducer(FetchLoadBalancerListeners, []);
+const rules = buildKeyedApiActionReducer(FetchListenerRules, []);
 
 export default combineReducers({
   status,
@@ -66,5 +90,14 @@ export default combineReducers({
   reloadService,
   requestHistory,
   requestResponse,
-  submitRequest
+  submitRequest,
+  elbs,
+  elb,
+  targetGroups,
+  targetGroup,
+  targetGroupTargets,
+  albs,
+  alb,
+  listeners,
+  rules,
 });

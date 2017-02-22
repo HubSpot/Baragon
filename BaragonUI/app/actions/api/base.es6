@@ -82,7 +82,7 @@ export function buildApiAction(actionName, opts = {}, keyFunc = undefined) {
           if (response.status === 204) {
             return Promise.resolve();
           }
-          if (response.headers.get('Content-Type') === 'application/json') {
+          if (response.headers.get('Content-Type').includes('application/json')) {
             return response.json();
           }
           return response.text();

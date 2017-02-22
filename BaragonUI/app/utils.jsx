@@ -101,12 +101,12 @@ const Utils = {
   fuzzyFilter(filter, fuzzyObjects, primaryField = (it) => it.id) {
     const maxScore = _.max(fuzzyObjects, (fuzzyObject) => fuzzyObject.score).score;
     _.chain(fuzzyObjects).map((fuzzyObject) => {
-        if (primaryField(fuzzyObject.original).toLowerCase().startsWith(filter.toLowerCase())) {
-          fuzzyObject.score = fuzzyObject.score * 10;
-        } else if (primaryField(fuzzyObject.original).toLowerCase().indexOf(filter.toLowerCase()) > -1) {
-          fuzzyObject.score = fuzzyObject.score * 5;
-        }
-        return fuzzyObject;
+      if (primaryField(fuzzyObject.original).toLowerCase().startsWith(filter.toLowerCase())) {
+        fuzzyObject.score = fuzzyObject.score * 10;
+      } else if (primaryField(fuzzyObject.original).toLowerCase().indexOf(filter.toLowerCase()) > -1) {
+        fuzzyObject.score = fuzzyObject.score * 5;
+      }
+      return fuzzyObject;
     });
     return _.uniq(
       _.pluck(
@@ -186,7 +186,7 @@ const Utils = {
   // list-group-item.
   asGroups(arr, columns, itemRenderer) {
     if (!arr) {
-      return []
+      return [];
     }
     return chunk(arr, arr.length / columns)
       .map(rowRenderer(itemRenderer, columns));

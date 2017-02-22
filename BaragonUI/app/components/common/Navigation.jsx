@@ -10,7 +10,7 @@ function isActive(navbarPath, fragment) {
   if (navbarPath === '/') {
     return fragment === '';
   }
-  return navbarPath === fragment;
+  return navbarPath === `/${fragment}`;
 }
 
 const EnableEditControls = ({allowEdit, authEnabled}) => {
@@ -32,6 +32,36 @@ EnableEditControls.propTypes = {
   authEnabled: PropTypes.bool.isRequired,
 };
 
+const NavLink = ({path, name, fragment}) => {
+  return (
+    <li className={classnames({active: isActive(path, fragment)})}>
+      <Link to={path}>{name} {isActive('/services', fragment) && <span className="sr-only">(current)</span>}</Link>
+    </li>
+  );
+};
+
+NavLink.propTypes = {
+  path: PropTypes.string.isRequired,
+  name: PropTypes.string.isRequired,
+  fragment: PropTypes.string.isRequired,
+};
+
+const elbLink = (isEnabled, fragment) => {
+  if (isEnabled) {
+    return <NavLink path="/elbs" name="Elbs" fragment={fragment} />;
+  } else {
+    return null;
+  }
+};
+
+const albLink = (isEnabled, fragment) => {
+  if (isEnabled) {
+    return <NavLink path="/albs" name="Albs" fragment={fragment} />;
+  } else {
+    return null;
+  }
+};
+
 // put into page wrapper, render children
 const Navigation = (props) => {
   const fragment = props.location.pathname.split('/')[1];
@@ -49,12 +79,10 @@ const Navigation = (props) => {
         </div>
         <div className="collapse navbar-collapse" id="navbar-collapse">
           <ul className="nav navbar-nav">
-            <li className={classnames({active: isActive('/services', fragment)})}>
-              <Link to="/services">Services {isActive('/services', fragment) && <span className="sr-only">(current)</span>}</Link>
-            </li>
-            <li className={classnames({active: isActive('/groups', fragment)})}>
-              <Link to="/groups">Groups {isActive('/groups', fragment) && <span className="sr-only">(current)</span>}</Link>
-            </li>
+            <NavLink path="/services" name="Services" fragment={fragment} />
+            <NavLink path="/groups" name="Groups" fragment={fragment} />
+            { elbLink(props.elbEnabled, fragment) }
+            { albLink(props.elbEnabled, fragment) }
           </ul>
           <EnableEditControls
             allowEdit={props.allowEdit}
@@ -73,18 +101,14 @@ Navigation.propTypes = {
 
   location: React.PropTypes.object.isRequired,
   router: React.PropTypes.object.isRequired,
+  elbEnabled: PropTypes.bool.isRequired,
   toggleGlobalSearch: React.PropTypes.func
 };
 
-const mapStateToProps = (state, ownProps) => ({
+const mapStateToProps = () => ({
   allowEdit: config.allowEdit,
   authEnabled: config.authEnabled,
+  elbEnabled: config.elbEnabled
 });
 
-function mapDispatchToProps(dispatch) {
-  return {
-    toggleGlobalSearch: () => dispatch(ToggleVisibility())
-  };
-}
-
-export default connect(mapStateToProps, mapDispatchToProps)(withRouter(Navigation));
+export default connect(mapStateToProps)(withRouter(Navigation));
