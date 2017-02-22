@@ -1,0 +1,76 @@
+@import nib
+
+// For dashboard
+.big-number-link
+    position relative
+
+    &, &:hover
+        text-decoration none
+
+    .well
+        transition background .5s
+
+        &:before
+            transition opacity .5s
+            opacity 0
+            position absolute
+            top 15px
+            right 15px
+            font-size 25px
+            color rgba(0, 0, 0, .3)
+            display block
+            z-index 1
+            pointer-events none
+
+    &.changed-direction-increase, &.changed-direction-decrease
+
+        .well
+            transition background 3s
+
+            &:before
+                content attr(data-changed-difference)
+                opacity 1
+
+    &.changed-direction-decrease .well
+        background #f3dede
+
+    &.changed-direction-increase .well
+        background #def3de
+
+.big-number
+    height 55px
+    text-align center
+
+    .number
+        font-size 36px
+        line-height 36px
+        position relative
+        top -2px
+
+    .number-label
+        font-size 19px
+        line-height 21px
+        color #aaa
+        text-transform lowercase
+        overflow ellipsis
+
+        &.small
+            font-size 14px
+
+    h3
+        margin 0 auto 5px
+        
+// For status page numbers flash
+.list-group-item
+    a
+        transition background 2s
+        padding-right: 5px
+
+    .changed-direction-decrease
+        background #f3dede
+
+    .changed-direction-increase
+        background #def3de
+        
+.changeDifference
+    padding-left 10px
