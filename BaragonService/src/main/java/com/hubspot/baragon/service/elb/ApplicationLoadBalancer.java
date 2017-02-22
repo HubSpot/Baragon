@@ -16,6 +16,7 @@ import com.amazonaws.services.elasticloadbalancingv2.AmazonElasticLoadBalancingC
 import com.amazonaws.services.elasticloadbalancingv2.model.AvailabilityZone;
 import com.amazonaws.services.elasticloadbalancingv2.model.CreateListenerRequest;
 import com.amazonaws.services.elasticloadbalancingv2.model.CreateRuleRequest;
+import com.amazonaws.services.elasticloadbalancingv2.model.CreateTargetGroupRequest;
 import com.amazonaws.services.elasticloadbalancingv2.model.DeleteListenerRequest;
 import com.amazonaws.services.elasticloadbalancingv2.model.DeleteRuleRequest;
 import com.amazonaws.services.elasticloadbalancingv2.model.DeregisterTargetsRequest;
@@ -34,6 +35,7 @@ import com.amazonaws.services.elasticloadbalancingv2.model.LoadBalancer;
 import com.amazonaws.services.elasticloadbalancingv2.model.LoadBalancerNotFoundException;
 import com.amazonaws.services.elasticloadbalancingv2.model.ModifyListenerRequest;
 import com.amazonaws.services.elasticloadbalancingv2.model.ModifyRuleRequest;
+import com.amazonaws.services.elasticloadbalancingv2.model.ModifyTargetGroupRequest;
 import com.amazonaws.services.elasticloadbalancingv2.model.RegisterTargetsRequest;
 import com.amazonaws.services.elasticloadbalancingv2.model.Rule;
 import com.amazonaws.services.elasticloadbalancingv2.model.SetSubnetsRequest;
@@ -314,7 +316,7 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
     if (maybeLoadBalancer.isPresent()) {
       Collection<Listener> listeners = new HashSet<>();
       DescribeListenersRequest listenersRequest = new DescribeListenersRequest()
-          .withListenerArns(maybeLoadBalancer.get().getLoadBalancerArn());
+          .withLoadBalancerArn(maybeLoadBalancer.get().getLoadBalancerArn());
       DescribeListenersResult result = elbClient.describeListeners(listenersRequest);
       String nextMarker = result.getNextMarker();
       listeners.addAll(result.getListeners());
@@ -383,6 +385,20 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
         .withRuleArn(ruleArn);
 
     elbClient.deleteRule(deleteRuleRequest);
+  }
+
+  public TargetGroup createTargetGroup(CreateTargetGroupRequest targetGroupRequest) {
+    return elbClient
+        .createTargetGroup(targetGroupRequest)
+        .getTargetGroups()
+        .get(0);
+  }
+
+  public TargetGroup modifyTargetGroup(ModifyTargetGroupRequest modifyTargetGroupRequest) {
+    return elbClient
+        .modifyTargetGroup(modifyTargetGroupRequest)
+        .getTargetGroups()
+        .get(0);
   }
 
   /**
