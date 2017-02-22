@@ -118,7 +118,7 @@ public class AlbResource {
   }
 
   @POST
-  @Path("/listeners/{listenerArn}")
+  @Path("/listeners/{listenerArn:.+}")
   public Listener updateListener(@PathParam("elbName") String elbName,
                                  @PathParam("listenerArn") String listenerArn,
                                  @Valid ModifyListenerRequest modifyListenerRequest) {
@@ -137,7 +137,7 @@ public class AlbResource {
   }
 
   @DELETE
-  @Path("/listeners/{listenerArn}")
+  @Path("/listeners/{listenerArn:.+}")
   public Response removeListener(@PathParam("elbName") String elbName,
                                  @PathParam("listenerArn") String listenerArn) {
     if (config.isPresent()) {
@@ -156,7 +156,7 @@ public class AlbResource {
 
   @GET
   @NoAuth
-  @Path("/listeners/{listenerArn}/rules")
+  @Path("/listeners/rules/{listenerArn:.+}")
   public Collection<Rule> getRules(@PathParam("elbName") String elbName,
                                    @PathParam("listenerArn") String listenerArn) {
     if (config.isPresent()) {
@@ -173,7 +173,7 @@ public class AlbResource {
   }
 
   @POST
-  @Path("/listeners/{listenerArn}/rules")
+  @Path("/listeners/rules/{listenerArn:.+}")
   public Rule createRule(@PathParam("elbName") String elbName,
                          @PathParam("listenerArn") String listenerArn,
                          @Valid CreateRuleRequest createRuleRequest) {
@@ -193,7 +193,7 @@ public class AlbResource {
   }
 
   @POST
-  @Path("/rules/{ruleArn}")
+  @Path("/rules/{ruleArn:.+}")
   public Rule updateRule(@PathParam("elbName") String elbName,
                          @PathParam("listenerArn") String listenerArn,
                          @PathParam("ruleArn") String ruleArn,
@@ -213,7 +213,7 @@ public class AlbResource {
   }
 
   @DELETE
-  @Path("/rules/{ruleArn}")
+  @Path("/rules/{ruleArn:.+}")
   public Response deleteRule(@PathParam("elbName") String elbName,
                              @PathParam("listenerArn") String listenerArn,
                              @PathParam("ruleArn") String ruleArn) {
