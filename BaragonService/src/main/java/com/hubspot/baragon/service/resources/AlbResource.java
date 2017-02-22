@@ -315,9 +315,9 @@ public class AlbResource {
   }
 
   @DELETE
-  @Path("/target-groups/{targetGroup}/update")
+  @Path("/target-groups/{targetGroup}/targets/{instanceId}")
   public DeregisterTargetsResult removeFromTargetGroup(@PathParam("targetGroup") String targetGroup,
-                                                       @QueryParam("instanceId") String instanceId) {
+                                                       @PathParam("instanceId") String instanceId) {
     if (instanceId == null) {
       throw new BaragonWebException("Must provide instance ID to remove target from group");
     } else if (config.isPresent()) {
@@ -333,7 +333,7 @@ public class AlbResource {
   }
 
   @POST
-  @Path("/target-group/{targetGroup}/update")
+  @Path("/target-group/{targetGroup}/targets")
   public RegisterInstanceResult addToTargetGroup(@PathParam("targetGroup") String targetGroup,
                                                  @QueryParam("instanceId") String instanceId) {
     if (instanceId == null) {
