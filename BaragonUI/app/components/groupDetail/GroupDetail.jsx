@@ -106,11 +106,10 @@ const mapStateToProps = (state, ownProps) => ({
 
 const mapDispatchToProps = (dispatch, ownProps) => ({
   refreshTargetCount: () => dispatch(FetchGroupTargetCount.trigger(ownProps.params.groupId)),
-  refreshAgents: () => new Promise((resolve) => setTimeout(resolve, 1000))
-    .then(() => Promise.all([
-      FetchGroupAgents.trigger(ownProps.params.groupId),
-      FetchGroupKnownAgents.trigger(ownProps.params.groupId)
-    ])),
+  refreshAgents: () => Promise.all([
+    dispatch(FetchGroupKnownAgents.trigger(ownProps.params.groupId)),
+    dispatch(FetchGroupAgents.trigger(ownProps.params.groupId))
+  ]),
   refreshBasePaths: () => dispatch(FetchGroupBasePaths.trigger(ownProps.params.groupId)),
   refreshGroup: () => dispatch(FetchGroup.trigger(ownProps.params.groupId)),
 });
