@@ -34,7 +34,7 @@ class Groups extends Component {
             id="trafficSources"
             key="trafficSources"
             cellData={
-              (rowData) => Utils.maybe(rowData, ['sources'], []).length
+              (rowData) => Utils.maybe(rowData, ['trafficSources'], []).length
             }
             sortable={true}
           />
