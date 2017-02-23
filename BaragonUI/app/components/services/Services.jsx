@@ -1,5 +1,6 @@
 import React, { Component, PropTypes } from 'react';
 import { connect } from 'react-redux';
+import { withRouter } from 'react-router';
 
 import { refresh } from '../../actions/ui/services';
 import rootComponent from '../../rootComponent';
@@ -10,6 +11,8 @@ class Services extends Component {
   static propTypes = {
     services: PropTypes.array,
     allowEdit: PropTypes.bool,
+    navigateToRequest: PropTypes.func,
+    refreshList: PropTypes.func,
   };
 
   state = {
@@ -44,6 +47,9 @@ class Services extends Component {
               services={this.props.services}
               filter={this.state.filter}
               editable={this.props.allowEdit}
+              afterReload={this.props.navigateToRequest}
+              afterRemoveUpstreams={this.props.navigateToRequest}
+              afterDelete={this.props.refreshList}
             />
           </div>
         </div>
@@ -52,7 +58,14 @@ class Services extends Component {
   }
 }
 
-export default connect((state) => ({
+const mapStateToProps = (state) => ({
   services: state.api.services.data,
   allowEdit: config.allowEdit,
-}))(rootComponent(Services, refresh));
+});
+
+const mapDispatchToProps = (dispatch, ownProps) => ({
+  navigateToRequest: (response) => ownProps.router.push(`/requests/${response.data.loadBalancerRequestId}`),
+  refreshList: () => refresh(dispatch)
+});
+
+export default withRouter(connect(mapStateToProps, mapDispatchToProps)(rootComponent(Services, refresh)));

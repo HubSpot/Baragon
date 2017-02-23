@@ -49,7 +49,7 @@ const uriColumn = (
 
 const lastSeenColumn = (
   <Column
-    lable="Last Seen"
+    label="Last Seen"
     id="lastSeen"
     key="lastSeen"
     cellData={

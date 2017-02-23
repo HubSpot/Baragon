@@ -90,7 +90,7 @@ const upstreamsColumn = (
   />
 );
 
-const buttonsColumn = (editable) => (
+const buttonsColumn = (editable, afterReload, afterRemoveUpstreams, afterDelete) => (
   <Column
     label=""
     id="actions"
@@ -99,11 +99,17 @@ const buttonsColumn = (editable) => (
     cellRender={
       (cellData, rowData) => {
         const deleteService = (
-          <DeleteServiceButton serviceId={rowData.service.serviceId} />
+          <DeleteServiceButton
+            serviceId={rowData.service.serviceId}
+            then={afterDelete}
+          />
         );
 
         const reloadService = (
-          <ReloadServiceButton serviceId={rowData.service.serviceId} />
+          <ReloadServiceButton
+            serviceId={rowData.service.serviceId}
+            then={afterReload}
+          />
         );
 
         const removeTooltip = (
@@ -113,7 +119,11 @@ const buttonsColumn = (editable) => (
         );
 
         const removeUpstreams = (
-          <RemoveUpstreamsButton loadBalancerService={cellData.service} upstreams={cellData.upstreams}>
+          <RemoveUpstreamsButton
+            loadBalancerService={cellData.service}
+            upstreams={cellData.upstreams}
+            afterRemoveUpstreams={afterRemoveUpstreams}
+            >
             <OverlayTrigger placement="top" overlay={removeTooltip}>
               <a>
                 <span className="glyphicon glyphicon-remove-circle" />
@@ -150,7 +160,7 @@ const tableContent = (services, filter) => {
   }
 };
 
-const ServicesTable = ({services, filter, editable}) => {
+const ServicesTable = ({services, filter, editable, afterReload, afterRemoveUpstreams, afterDelete}) => {
   return (
     <UITable
       data={tableContent(services, filter)}
@@ -163,7 +173,7 @@ const ServicesTable = ({services, filter, editable}) => {
       { requestColumn }
       { groupsColumn }
       { upstreamsColumn }
-      { buttonsColumn(editable) }
+      { buttonsColumn(editable, afterReload, afterRemoveUpstreams, afterDelete) }
     </UITable>
   );
 };
@@ -172,6 +182,9 @@ ServicesTable.propTypes = {
   services: PropTypes.array,
   filter: PropTypes.string,
   editable: PropTypes.bool,
+  afterReload: PropTypes.func,
+  afterRemoveUpstreams: PropTypes.func,
+  afterDelete: PropTypes.func,
 };
 
 export default ServicesTable;
