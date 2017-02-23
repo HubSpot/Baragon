@@ -11,8 +11,7 @@ import LoadBalancersPanel from './LoadBalancersPanel';
 import RecentRequestsPanel from './RecentRequestsPanel';
 import UpstreamsPanel from './UpstreamsPanel';
 
-const ServiceDetail = ({service, requestHistory, editable,
-                        afterRemoveUpstreams, afterRemoveUpstream, afterReload, afterDelete}) => {
+const ServiceDetail = ({service, requestHistory, editable, navigateToRequest, redirectToServicesList}) => {
   const {service: serviceObject, upstreams} = service;
   const {
     serviceId,
@@ -30,9 +29,9 @@ const ServiceDetail = ({service, requestHistory, editable,
           loadBalancerService={serviceObject}
           basePath={basePath}
           editable={editable}
-          afterRemoveUpstreams={afterRemoveUpstreams}
-          afterReload={afterReload}
-          afterDelete={afterDelete}
+          afterRemoveUpstreams={navigateToRequest}
+          afterReload={navigateToRequest}
+          afterDelete={redirectToServicesList}
         />
       </div>
       <div className="row">
@@ -46,7 +45,7 @@ const ServiceDetail = ({service, requestHistory, editable,
         <UpstreamsPanel
           loadBalancerService={serviceObject}
           upstreams={upstreams}
-          afterRemoveUpstream={afterRemoveUpstream}
+          afterRemoveUpstream={navigateToRequest}
           editable={editable}
         />
       </div>
@@ -64,10 +63,8 @@ ServiceDetail.propTypes = {
     request: PropTypes.object,
   })),
   editable: PropTypes.bool,
-  afterRemoveUpstreams: PropTypes.func.isRequired,
-  afterRemoveUpstream: PropTypes.func.isRequired,
-  afterReload: PropTypes.func.isRequired,
-  afterDelete: PropTypes.func.isRequired,
+  navigateToRequest: PropTypes.func.isRequired,
+  redirectToServicesList: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = (state, ownProps) => ({
@@ -77,10 +74,8 @@ const mapStateToProps = (state, ownProps) => ({
 });
 
 const mapDispatchToProps = (dispatch, ownProps) => ({
-  afterRemoveUpstreams: () => refresh(ownProps.params.serviceId)(dispatch),
-  afterRemoveUpstream: () => refresh(ownProps.params.serviceId)(dispatch),
-  afterReload: () => refresh(ownProps.params.serviceId)(dispatch),
-  afterDelete: () => ownProps.router.push('/services'),
+  navigateToRequest: (response) => ownProps.router.push(`/requests/${response.data.loadBalancerRequestId}`),
+  redirectToServicesList: () => ownProps.router.push('/services'),
 });
 
 export default withRouter(connect(mapStateToProps, mapDispatchToProps)(rootComponent(ServiceDetail, (props) => refresh(props.params.serviceId))));
