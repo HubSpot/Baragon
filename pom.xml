@@ -48,6 +48,7 @@
     <module>BaragonClient</module>
     <module>BaragonWatcher</module>
     <module>BaragonServiceIntegrationTests</module>
+    <module>BaragonUI</module>
   </modules>
 
   <dependencyManagement>
@@ -87,6 +88,13 @@
         <groupId>com.hubspot</groupId>
         <artifactId>BaragonServiceIntegrationTests</artifactId>
         <version>${project.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.hubspot</groupId>
+        <artifactId>BaragonUI</artifactId>
+        <version>${project.version}</version>
+        <type>pom</type>
       </dependency>
 
       <dependency>
