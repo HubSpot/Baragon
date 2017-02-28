@@ -1,0 +1,127 @@
+@import colors
+
+.table, table
+
+    tbody
+        font-size 13px
+
+    th
+        vertical-align top
+
+        td
+            padding 10px
+
+    tr.flash td
+        background rgba(0, 200, 20, .15) !important
+
+    th, td
+
+        // Regular links
+
+        &.actions-column
+            white-space nowrap
+            text-align right
+
+            a
+                margin-left 10px
+
+        // Link buttons
+
+        &.actions-column
+            padding-top 0
+            padding-bottom 0
+            padding-right 0
+            font-size 0
+
+            [title='JSON'], [data-original-title="JSON"]
+                font-weight 500
+
+            a
+                position relative
+                overflow hidden
+                padding 0 12px
+                display inline-block
+                background transparent
+                text-decoration none
+                font-size 13px
+                line-height 35px
+                margin 0
+
+                &:hover
+                    color #fff
+                    background $linkBlue
+                    box-shadow 0 -1px $linkBlue
+                    text-decoration none
+
+                &[data-action="remove"]:hover
+                    background $red
+                    box-shadow 0 -1px $red
+
+    tr:last-child td.actions-column a
+        margin-bottom -8px
+
+    .icon
+        margin-right 10px
+
+    th.half-table
+        width: 50%
+
+    a.long-link
+        max-width: 40em
+        display: inline-block
+        white-space: nowrap
+        text-overflow: ellipsis
+        overflow: hidden
+        line-height: 18px
+
+    .star
+        float left
+        font-size 15px
+        line-height 18px
+        color #ddd
+
+        &[data-starred="true"]
+            color $linkBlue
+
+.empty-table-message
+    text-align center
+    border 3px dashed #e7e7e7
+    padding 2.5em
+    color #888
+    font-size 1.3em
+    font-weight 300
+    letter-spacing .03em
+
+    p:last-child
+        margin-bottom 0
+
+table.files-table
+
+    tr td:first-child span.glyphicon
+        margin-right 1em
+
+.table-header-popover
+    font-weight normal
+    text-align center
+    font-size 12px
+    width 18em
+
+    .popover-content
+        padding 6px
+
+    p
+        margin-bottom 0
+
+th #schedule
+    display block
+
+#empty-table
+    margin-bottom 20px
+
+.count-options
+    a
+        margin-left 0.5em
+    a.inactive
+        pointer-events none
+        cursor default
+        color $base-text

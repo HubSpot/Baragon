@@ -1,40 +1,39 @@
-zk:
-  image: bobrik/zookeeper
-  net: host
-  environment:
-    ZK_CONFIG: tickTime=2000,initLimit=10,syncLimit=5,maxClientCnxns=128,forceSync=no,clientPort=2181
-    ZK_ID: 1
-  expose:
-    - "2181"
-
-service:
-  image: hubspot/baragonservice:0.5.0-SNAPSHOT
-  net: host
-  environment:
-    - DOCKER_HOST
-    - BARAGON_PORT=8080
-    - BARAGON_UI_BASE=/baragon/v2
-
-agent1:
-  image: hubspot/baragonagent:0.5.0-SNAPSHOT
-  net: host
-  environment:
-    NGINX_PORT: 80
-    BARAGON_PORT: 8882
-    BARAGON_AGENT_GROUP: test
-  volumes:
-    - ./docker/configs/1/custom:/etc/nginx/conf.d/custom
-    - ./docker/configs/1/proxy:/etc/nginx/conf.d/proxy
-    - ./docker/configs/1/upstreams:/etc/nginx/conf.d/upstreams
-
-agent2:
-  image: hubspot/baragonagent:0.5.0-SNAPSHOT
-  net: host
-  environment:
-    NGINX_PORT: 81
-    BARAGON_PORT: 8883
-    BARAGON_AGENT_GROUP: test
-  volumes:
-    - ./docker/configs/2/custom:/etc/nginx/conf.d/custom
-    - ./docker/configs/2/proxy:/etc/nginx/conf.d/proxy
-    - ./docker/configs/2/upstreams:/etc/nginx/conf.d/upstreams
+version: '2.0'
+services:
+  zk:
+    image: bobrik/zookeeper
+    network_mode: host
+    environment:
+      ZK_CONFIG: tickTime=2000,initLimit=10,syncLimit=5,maxClientCnxns=128,forceSync=no,clientPort=2181
+      ZK_ID: 1
+    expose:
+      - 2181
+  service:
+    image: hubspot/baragonservice:0.5.0-SNAPSHOT
+    network_mode: host
+    environment:
+      DOCKER_HOST:
+      BARAGON_PORT: 8080
+      BARAGON_UI_BASE: /baragon/v2
+  agent1:
+    image: hubspot/baragonagent:0.5.0-SNAPSHOT
+    network_mode: host
+    environment:
+      NGINX_PORT: 80
+      BARAGON_PORT: 8882
+      BARAGON_AGENT_GROUP: test
+    volumes:
+      - ./docker/configs/1/custom:/etc/nginx/conf.d/custom
+      - ./docker/configs/1/proxy:/etc/nginx/conf.d/proxy
+      - ./docker/configs/1/upstreams:/etc/nginx/conf.d/upstreams
+  agent2:
+    image: hubspot/baragonagent:0.5.0-SNAPSHOT
+    network_mode: host
+    environment:
+      NGINX_PORT: 81
+      BARAGON_PORT: 8883
+      BARAGON_AGENT_GROUP: test
+    volumes:
+      - ./docker/configs/2/custom:/etc/nginx/conf.d/custom
+      - ./docker/configs/2/proxy:/etc/nginx/conf.d/proxy
+      - ./docker/configs/2/upstreams:/etc/nginx/conf.d/upstreams
