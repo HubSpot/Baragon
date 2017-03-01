@@ -27,7 +27,7 @@ DetailItem.propTypes = {
 };
 
 
-const ElbDetail = ({loadBalancerName, loadBalancer}) => {
+const ElbDetail = ({loadBalancerName, loadBalancer, instances}) => {
   return (
     <div>
       <div className="row detail-header">
@@ -55,9 +55,15 @@ const ElbDetail = ({loadBalancerName, loadBalancer}) => {
       <div className="row">
         <DetailGroup
           name="Instances"
-          items={loadBalancer.instances}
+          items={instances}
           keyGetter={(instance) => instance.instanceId}
-          field={(instance) => instance.instanceId}
+          field={(instance) =>
+            <ul className="list-unstyled">
+              <li><strong>ID</strong>: {instance.instanceId}</li>
+              <li><strong>State</strong>: {instance.state}</li>
+              <li><strong>Reason</strong>: {instance.reason}</li>
+            </ul>
+          }
         />
         <DetailGroup name="Availibility Zones" items={loadBalancer.availabilityZones} />
         <DetailGroup name="Security Groups" items={loadBalancer.securityGroups} />
@@ -70,11 +76,17 @@ const ElbDetail = ({loadBalancerName, loadBalancer}) => {
 ElbDetail.propTypes = {
   loadBalancerName: PropTypes.string,
   loadBalancer: PropTypes.object,
+  instances: PropTypes.arrayOf(PropTypes.shape({
+    instanceId: PropTypes.string,
+    state: PropTypes.oneOf(['InService', 'OutOfService', 'N/A']),
+    reason: PropTypes.reason,
+  }))
 };
 
 const mapStateToProps = (state, ownProps) => ({
   loadBalancerName: ownProps.params.loadBalancerName,
   loadBalancer: Utils.maybe(state, ['api', 'elb', ownProps.params.loadBalancerName, 'data']),
+  instances: Utils.maybe(state, ['api', 'elbInstances', ownProps.params.loadBalancerName, 'data']),
 });
 
 export default connect(mapStateToProps)(rootComponent(ElbDetail, (props) =>
