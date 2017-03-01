@@ -78,7 +78,7 @@ ElbDetail.propTypes = {
   loadBalancer: PropTypes.object,
   instances: PropTypes.arrayOf(PropTypes.shape({
     instanceId: PropTypes.string,
-    state: PropTypes.oneOf(['InService', 'OutOfService', 'N/A']),
+    state: PropTypes.oneOf(['InService', 'OutOfService', 'Unknown']),
     reason: PropTypes.reason,
   }))
 };
