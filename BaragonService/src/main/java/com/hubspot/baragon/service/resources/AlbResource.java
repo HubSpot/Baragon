@@ -28,9 +28,9 @@ import com.amazonaws.services.elasticloadbalancingv2.model.ModifyRuleRequest;
 import com.amazonaws.services.elasticloadbalancingv2.model.ModifyTargetGroupRequest;
 import com.amazonaws.services.elasticloadbalancingv2.model.Rule;
 import com.amazonaws.services.elasticloadbalancingv2.model.RuleNotFoundException;
-import com.amazonaws.services.elasticloadbalancingv2.model.TargetDescription;
 import com.amazonaws.services.elasticloadbalancingv2.model.TargetGroup;
 import com.amazonaws.services.elasticloadbalancingv2.model.TargetGroupNotFoundException;
+import com.amazonaws.services.elasticloadbalancingv2.model.TargetHealthDescription;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import com.hubspot.baragon.auth.NoAuth;
@@ -297,7 +297,7 @@ public class AlbResource {
   @GET
   @NoAuth
   @Path("/target-groups/{targetGroup}/targets")
-  public Collection<TargetDescription> getTargets(@PathParam("targetGroup") String targetGroup) {
+  public Collection<TargetHealthDescription> getTargets(@PathParam("targetGroup") String targetGroup) {
     if (config.isPresent()) {
       try {
         Optional<TargetGroup> maybeTargetGroup = applicationLoadBalancer.getTargetGroup(targetGroup);
