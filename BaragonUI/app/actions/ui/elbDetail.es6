@@ -1,4 +1,7 @@
-import { FetchElb } from '../api/elbs';
+import { FetchElb, FetchElbInstances } from '../api/elbs';
 
 export const refresh = (loadBalancerName) => (dispatch) =>
-  dispatch(FetchElb.trigger(loadBalancerName));
+  Promise.all([
+    dispatch(FetchElb.trigger(loadBalancerName)),
+    dispatch(FetchElbInstances.trigger(loadBalancerName)),
+  ]);
