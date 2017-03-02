@@ -57,7 +57,7 @@ const TargetGroupDetail = ({targets, targetGroup, loadBalancerArnsToNames, edita
         </div>
       </div>
       <div className="row">
-        <DetailGroup name="Instances" items={targets} keyGetter={(instance) => instance.id} field={
+        <DetailGroup name="Instances" items={targets} keyGetter={(instance) => instance.target.id} field={
             (instance) => (
               <ul className="list-unstyled">
                 <li><strong>ID:</strong> {instance.target.id}</li>
@@ -83,7 +83,7 @@ TargetGroupDetail.propTypes = {
   targets: PropTypes.arrayOf(PropTypes.shape({
     target: PropTypes.shape({
       id: PropTypes.string,
-      port: PropTypes.string,
+      port: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
     }),
     targetHealth: PropTypes.shape({
       state: PropTypes.oneOf(['healthy', 'initial', 'unhealthy', 'unused', 'draining']),

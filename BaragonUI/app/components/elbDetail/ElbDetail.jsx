@@ -61,7 +61,7 @@ const ElbDetail = ({loadBalancerName, loadBalancer, instances}) => {
             <ul className="list-unstyled">
               <li><strong>ID</strong>: {instance.instanceId}</li>
               <li><strong>State</strong>: {instance.state}</li>
-              <li><strong>Reason</strong>: {instance.reason}</li>
+              {instance.description !== 'N/A' && <li><strong>Reason</strong>: {instance.description}</li> }
             </ul>
           }
         />
