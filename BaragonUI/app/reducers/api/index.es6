@@ -35,7 +35,8 @@ import {
 
 import {
   FetchElbs,
-  FetchElb
+  FetchElb,
+  FetchElbInstances,
 } from '../../actions/api/elbs';
 
 import {
@@ -66,6 +67,7 @@ const requestResponse = buildKeyedApiActionReducer(FetchRequestResponse, {});
 const submitRequest = buildKeyedApiActionReducer(SubmitRequest, []);
 const elbs = buildApiActionReducer(FetchElbs, []);
 const elb = buildKeyedApiActionReducer(FetchElb, []);
+const elbInstances = buildKeyedApiActionReducer(FetchElbInstances, []);
 const targetGroups = buildApiActionReducer(FetchTargetGroups, []);
 const targetGroup = buildKeyedApiActionReducer(FetchTargetGroup, {});
 const targetGroupTargets = buildKeyedApiActionReducer(FetchTargetGroupTargets, []);
@@ -93,6 +95,7 @@ export default combineReducers({
   submitRequest,
   elbs,
   elb,
+  elbInstances,
   targetGroups,
   targetGroup,
   targetGroupTargets,

@@ -13,3 +13,11 @@ export const FetchElb = buildApiAction(
   }),
   (elbName) => elbName,
 );
+
+export const FetchElbInstances = buildApiAction(
+  'FETCH_ELB_INSTANCES',
+  (elbName) => ({
+    url: `/elbs/${elbName}/instances`
+  }),
+  (elbName) => elbName
+);

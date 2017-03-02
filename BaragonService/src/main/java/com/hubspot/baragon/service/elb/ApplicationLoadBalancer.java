@@ -129,19 +129,13 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
     return Optional.absent();
   }
 
-  public Collection<TargetDescription> getTargetsOn(TargetGroup targetGroup) {
+  public Collection<TargetHealthDescription> getTargetsOn(TargetGroup targetGroup) {
     DescribeTargetHealthRequest targetHealthRequest = new DescribeTargetHealthRequest()
         .withTargetGroupArn(targetGroup.getTargetGroupArn());
-    Collection<TargetHealthDescription> targetHealth = elbClient
+
+    return elbClient
         .describeTargetHealth(targetHealthRequest)
         .getTargetHealthDescriptions();
-
-    Collection<TargetDescription> targets = new HashSet<>();
-    for (TargetHealthDescription targetHealthDescription : targetHealth) {
-      targets.add(targetHealthDescription.getTarget());
-    }
-
-    return targets;
   }
 
   @Override
