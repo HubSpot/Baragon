@@ -170,7 +170,7 @@ This will include all configs in the conf.d folder when restarting haproxy.
 <a id="singularity"></a>
 ### Integration with Singularity
 
-Integration will singularity is simple! In you `Singularity` configuration under the `loadBalancerUri` field, enter the full path to `BaragonService`'s `/request` enpoint. For example:
+Integration with Singularity is simple! In your `Singularity` configuration, under the `loadBalancerUri` field, enter the full path to `BaragonService`'s `/request` endpoint. For example:
 
 `"loadBalancerUri":"(Baragon Service host):(Baragon Service port)/(context path)/request"`
 
