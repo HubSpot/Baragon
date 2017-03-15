@@ -75,7 +75,7 @@ public class AgentCheckinResource {
     Optional<BaragonAgentMetadata> maybeAgent = loadBalancerDatastore.getAgent(clusterName, agentId);
     Optional<BaragonGroup> maybeGroup = loadBalancerDatastore.getLoadBalancerGroup(clusterName);
     if (maybeAgent.isPresent()) {
-      if (elbManager.elbEnabledAgent(maybeAgent.get(), maybeGroup, clusterName)) {
+      if (elbManager.isElbEnabledAgent(maybeAgent.get(), maybeGroup, clusterName)) {
         if (elbManager.isActiveAndHealthy(maybeGroup, maybeAgent.get())) {
           return "0";
         }

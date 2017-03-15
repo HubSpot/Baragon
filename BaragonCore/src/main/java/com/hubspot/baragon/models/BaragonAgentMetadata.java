@@ -8,6 +8,7 @@ import java.util.regex.Pattern;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 import com.google.common.base.Optional;
 import com.hubspot.baragon.exceptions.InvalidAgentMetadataStringException;
@@ -46,8 +47,8 @@ public class BaragonAgentMetadata {
     this.domain = domain;
     this.agentId = agentId;
     this.ec2 = ec2;
-    this.extraAgentData = Objects.firstNonNull(extraAgentData, Collections.<String, String>emptyMap());
-    this.batchEnabled = Objects.firstNonNull(batchEnabled, false);
+    this.extraAgentData = MoreObjects.firstNonNull(extraAgentData, Collections.<String, String>emptyMap());
+    this.batchEnabled = MoreObjects.firstNonNull(batchEnabled, false);
   }
 
   public String getBaseAgentUri() {

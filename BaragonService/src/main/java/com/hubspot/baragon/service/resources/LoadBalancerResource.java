@@ -2,6 +2,8 @@ package com.hubspot.baragon.service.resources;
 
 import java.util.Collection;
 
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -23,6 +25,8 @@ import com.hubspot.baragon.models.BaragonAgentMetadata;
 import com.hubspot.baragon.models.BaragonGroup;
 import com.hubspot.baragon.models.BaragonKnownAgentMetadata;
 import com.hubspot.baragon.models.BaragonService;
+import com.hubspot.baragon.models.TrafficSource;
+import com.hubspot.baragon.models.TrafficSourceType;
 import com.hubspot.baragon.service.config.BaragonConfiguration;
 
 @Path("/load-balancer")
@@ -67,14 +71,31 @@ public class LoadBalancerResource {
 
   @POST
   @Path("/{clusterName}/sources")
+  @Deprecated
   public BaragonGroup addSource(@PathParam("clusterName") String clusterName, @QueryParam("source") String source) {
-    return loadBalancerDatastore.addSourceToGroup(clusterName, source);
+    TrafficSource trafficSource = new TrafficSource(source, TrafficSourceType.CLASSIC);
+    return loadBalancerDatastore.addSourceToGroup(clusterName, trafficSource);
   }
 
   @DELETE
   @Path("/{clusterName}/sources")
+  @Deprecated
   public Optional<BaragonGroup> removeSource(@PathParam("clusterName") String clusterName, @QueryParam("source") String source) {
-    return loadBalancerDatastore.removeSourceFromGroup(clusterName, source);
+    return loadBalancerDatastore.removeSourceFromGroup(clusterName, new TrafficSource(source, TrafficSourceType.CLASSIC));
+  }
+
+  @POST
+  @Path("/{clusterName}/traffic-source")
+  public BaragonGroup addTrafficSource(@PathParam("clusterName") String clusterName,
+                                       @NotNull @Valid TrafficSource trafficSource) {
+    return loadBalancerDatastore.addSourceToGroup(clusterName, trafficSource);
+  }
+
+  @DELETE
+  @Path("/{clusterName}/traffic-source")
+  public Optional<BaragonGroup> removeTrafficSource(@PathParam("clusterName") String clusterName,
+                                                    @NotNull @Valid TrafficSource trafficSource) {
+    return loadBalancerDatastore.removeSourceFromGroup(clusterName, trafficSource);
   }
 
   @POST

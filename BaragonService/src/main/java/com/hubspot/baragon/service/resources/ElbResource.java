@@ -16,9 +16,12 @@ import com.amazonaws.AmazonClientException;
 import com.amazonaws.services.elasticloadbalancing.AmazonElasticLoadBalancingClient;
 import com.amazonaws.services.elasticloadbalancing.model.DeregisterInstancesFromLoadBalancerRequest;
 import com.amazonaws.services.elasticloadbalancing.model.DeregisterInstancesFromLoadBalancerResult;
+import com.amazonaws.services.elasticloadbalancing.model.DescribeInstanceHealthRequest;
+import com.amazonaws.services.elasticloadbalancing.model.DescribeInstanceHealthResult;
 import com.amazonaws.services.elasticloadbalancing.model.DescribeLoadBalancersRequest;
 import com.amazonaws.services.elasticloadbalancing.model.DescribeLoadBalancersResult;
 import com.amazonaws.services.elasticloadbalancing.model.Instance;
+import com.amazonaws.services.elasticloadbalancing.model.InstanceState;
 import com.amazonaws.services.elasticloadbalancing.model.LoadBalancerDescription;
 import com.amazonaws.services.elasticloadbalancing.model.RegisterInstancesWithLoadBalancerRequest;
 import com.amazonaws.services.elasticloadbalancing.model.RegisterInstancesWithLoadBalancerResult;
@@ -38,7 +41,7 @@ public class ElbResource {
   private final Optional<ElbConfiguration> config;
 
   @Inject
-  public ElbResource(@Named(BaragonServiceModule.BARAGON_AWS_ELB_CLIENT)AmazonElasticLoadBalancingClient elbClient,
+  public ElbResource(@Named(BaragonServiceModule.BARAGON_AWS_ELB_CLIENT_V1) AmazonElasticLoadBalancingClient elbClient,
                      Optional<ElbConfiguration> config) {
     this.elbClient = elbClient;
     this.config = config;
@@ -73,7 +76,24 @@ public class ElbResource {
       }
       throw new BaragonNotFoundException(String.format("ELB with name %s not found", elbName));
     } else {
-      throw new BaragonWebException("EElbSync and related actions are not currently enabled");
+      throw new BaragonWebException("ElbSync and related actions are not currently enabled");
+    }
+  }
+
+  @GET
+  @NoAuth
+  @Path("/{elbName}/instances")
+  public List<InstanceState> getInstancesByElb(@PathParam("elbName") String elbName) {
+    if (config.isPresent()) {
+      try {
+        DescribeInstanceHealthRequest request = new DescribeInstanceHealthRequest(elbName);
+        DescribeInstanceHealthResult result = elbClient.describeInstanceHealth(request);
+        return result.getInstanceStates();
+      } catch (AmazonClientException exn) {
+        throw new BaragonWebException(String.format("AWS Client Error %s", exn));
+      }
+    } else {
+      throw new BaragonWebException("ElbSync and related actions are not currently enabled");
     }
   }
 
