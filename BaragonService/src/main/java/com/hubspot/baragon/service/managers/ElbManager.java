@@ -13,6 +13,7 @@ import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.hubspot.baragon.data.BaragonLoadBalancerDatastore;
+import com.hubspot.baragon.models.AgentRemovedResponse;
 import com.hubspot.baragon.models.BaragonAgentMetadata;
 import com.hubspot.baragon.models.BaragonGroup;
 import com.hubspot.baragon.models.TrafficSource;
@@ -59,13 +60,25 @@ public class ElbManager {
     return false;
   }
 
-  public void attemptRemoveAgent(BaragonAgentMetadata agent, Optional<BaragonGroup> group, String groupName) throws AmazonClientException {
+  public AgentRemovedResponse attemptRemoveAgent(BaragonAgentMetadata agent, Optional<BaragonGroup> group, String groupName) throws AmazonClientException {
     if (isElbEnabledAgent(agent, group, groupName)) {
+      Optional<String> maybeExceptions = Optional.absent();
+      Optional<Long> maybeMaxDrainTime = Optional.absent();
+      boolean allRemoved = true;
       for (TrafficSource source : group.get().getTrafficSources()) {
         Instance instance = new Instance(agent.getEc2().getInstanceId().get());
-        getLoadBalancer(source.getType()).removeInstance(instance, source.getName(), agent.getAgentId());
+        AgentRemovedResponse response = getLoadBalancer(source.getType()).removeInstance(instance, source.getName(), agent.getAgentId());
+        allRemoved = allRemoved && response.isRemoved();
+        if (response.getExceptionMessage().isPresent()) {
+          maybeExceptions = Optional.of(maybeExceptions.or("") + response.getExceptionMessage().get() + "\n");
+        }
+        if (response.getConnectionDrainTimeMs().isPresent() && response.getConnectionDrainTimeMs().get() > maybeMaxDrainTime.or(-1L)) {
+          maybeMaxDrainTime = response.getConnectionDrainTimeMs();
+        }
       }
+      return new AgentRemovedResponse(maybeMaxDrainTime, allRemoved, maybeExceptions);
     }
+    return new AgentRemovedResponse(Optional.absent(), true, Optional.absent());
   }
 
   public void attemptAddAgent(BaragonAgentMetadata agent, Optional<BaragonGroup> group, String groupName) throws AmazonClientException, NoMatchingElbForVpcException {

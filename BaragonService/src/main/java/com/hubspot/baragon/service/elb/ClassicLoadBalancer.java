@@ -27,6 +27,7 @@ import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import com.hubspot.baragon.data.BaragonKnownAgentsDatastore;
 import com.hubspot.baragon.data.BaragonLoadBalancerDatastore;
+import com.hubspot.baragon.models.AgentRemovedResponse;
 import com.hubspot.baragon.models.BaragonAgentMetadata;
 import com.hubspot.baragon.models.BaragonGroup;
 import com.hubspot.baragon.models.TrafficSource;
@@ -63,7 +64,7 @@ public class ClassicLoadBalancer extends ElasticLoadBalancer {
     return instanceIsHealthy;
   }
 
-  public void removeInstance(Instance instance, String elbName, String agentId) {
+  public AgentRemovedResponse removeInstance(Instance instance, String elbName, String agentId) {
     Optional<LoadBalancerDescription> elb = getElb(elbName);
     if (elb.isPresent()) {
       if (elb.get().getInstances().contains(instance)) {
@@ -74,6 +75,7 @@ public class ClassicLoadBalancer extends ElasticLoadBalancer {
         LOG.debug("Agent {} already de-registered from ELB {}", agentId, elbName);
       }
     }
+    return new AgentRemovedResponse(Optional.absent(), true, Optional.absent());
   }
 
   public RegisterInstanceResult registerInstance(Instance instance, String elbName, BaragonAgentMetadata agent) {
