@@ -142,8 +142,10 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
 
     try {
       DescribeTargetGroupAttributesResult result = elbClient.describeTargetGroupAttributes(new DescribeTargetGroupAttributesRequest().withTargetGroupArn(targetGroupArn));
+      LOG.debug("Got target group attributes {}", result.getAttributes());
       for (TargetGroupAttribute attribute : result.getAttributes()) {
         if (attribute.getKey().equals(DEREGISTRATION_DELAY_ATTR)) {
+          LOG.info("Target group {} has connection drain time of {}s", targetGroupArn, attribute.getValue());
           maybeDrainTime = Optional.of(TimeUnit.SECONDS.toMillis(Long.parseLong(attribute.getValue())));
         }
       }
