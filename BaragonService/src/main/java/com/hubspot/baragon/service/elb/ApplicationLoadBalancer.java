@@ -121,7 +121,7 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
             .withTargets(targetDescription)
             .withTargetGroupArn(targetGroup.getTargetGroupArn());
         try {
-          elbClient.deregisterTargets(deregisterTargetsRequest).getSdkHttpMetadata().getHttpStatusCode();
+          elbClient.deregisterTargets(deregisterTargetsRequest);
           LOG.info("De-registered instance {} from target group {}", instanceId, targetGroup);
 
           return shutdownResponseWithConnectionDrainTime(targetGroup.getTargetGroupArn());
