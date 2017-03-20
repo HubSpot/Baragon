@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,12 +21,13 @@ import com.amazonaws.services.elasticloadbalancingv2.model.CreateTargetGroupRequ
 import com.amazonaws.services.elasticloadbalancingv2.model.DeleteListenerRequest;
 import com.amazonaws.services.elasticloadbalancingv2.model.DeleteRuleRequest;
 import com.amazonaws.services.elasticloadbalancingv2.model.DeregisterTargetsRequest;
-import com.amazonaws.services.elasticloadbalancingv2.model.DeregisterTargetsResult;
 import com.amazonaws.services.elasticloadbalancingv2.model.DescribeListenersRequest;
 import com.amazonaws.services.elasticloadbalancingv2.model.DescribeListenersResult;
 import com.amazonaws.services.elasticloadbalancingv2.model.DescribeLoadBalancersRequest;
 import com.amazonaws.services.elasticloadbalancingv2.model.DescribeLoadBalancersResult;
 import com.amazonaws.services.elasticloadbalancingv2.model.DescribeRulesRequest;
+import com.amazonaws.services.elasticloadbalancingv2.model.DescribeTargetGroupAttributesRequest;
+import com.amazonaws.services.elasticloadbalancingv2.model.DescribeTargetGroupAttributesResult;
 import com.amazonaws.services.elasticloadbalancingv2.model.DescribeTargetGroupsRequest;
 import com.amazonaws.services.elasticloadbalancingv2.model.DescribeTargetGroupsResult;
 import com.amazonaws.services.elasticloadbalancingv2.model.DescribeTargetHealthRequest;
@@ -41,6 +43,7 @@ import com.amazonaws.services.elasticloadbalancingv2.model.Rule;
 import com.amazonaws.services.elasticloadbalancingv2.model.SetSubnetsRequest;
 import com.amazonaws.services.elasticloadbalancingv2.model.TargetDescription;
 import com.amazonaws.services.elasticloadbalancingv2.model.TargetGroup;
+import com.amazonaws.services.elasticloadbalancingv2.model.TargetGroupAttribute;
 import com.amazonaws.services.elasticloadbalancingv2.model.TargetGroupNotFoundException;
 import com.amazonaws.services.elasticloadbalancingv2.model.TargetHealthDescription;
 import com.amazonaws.services.elasticloadbalancingv2.model.TargetHealthStateEnum;
@@ -53,6 +56,7 @@ import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import com.hubspot.baragon.data.BaragonKnownAgentsDatastore;
 import com.hubspot.baragon.data.BaragonLoadBalancerDatastore;
+import com.hubspot.baragon.models.AgentRemovedResponse;
 import com.hubspot.baragon.models.BaragonAgentMetadata;
 import com.hubspot.baragon.models.BaragonGroup;
 import com.hubspot.baragon.models.TrafficSource;
@@ -71,6 +75,7 @@ import com.hubspot.baragon.service.exceptions.BaragonExceptionNotifier;
  */
 public class ApplicationLoadBalancer extends ElasticLoadBalancer {
   private static final Logger LOG = LoggerFactory.getLogger(ApplicationLoadBalancer.class);
+  private static final String DEREGISTRATION_DELAY_ATTR = "deregistration_delay.timeout_seconds";
   private final AmazonElasticLoadBalancingClient elbClient;
 
   @Inject
@@ -100,11 +105,12 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
   }
 
   @Override
-  public void removeInstance(Instance instance, String trafficSourceName, String agentId) {
-    removeInstance(instance.getInstanceId(), trafficSourceName);
+  public AgentRemovedResponse removeInstance(Instance instance, String trafficSourceName, String agentId) {
+    return removeInstance(instance.getInstanceId(), trafficSourceName);
   }
 
-  public Optional<DeregisterTargetsResult> removeInstance(String instanceId, String trafficSourceName) {
+  public AgentRemovedResponse removeInstance(String instanceId, String trafficSourceName) {
+
     Optional<TargetGroup> maybeTargetGroup = getTargetGroup(trafficSourceName);
     if (maybeTargetGroup.isPresent()) {
       TargetGroup targetGroup = maybeTargetGroup.get();
@@ -115,9 +121,10 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
             .withTargets(targetDescription)
             .withTargetGroupArn(targetGroup.getTargetGroupArn());
         try {
-          DeregisterTargetsResult result = elbClient.deregisterTargets(deregisterTargetsRequest);
+          elbClient.deregisterTargets(deregisterTargetsRequest).getSdkHttpMetadata().getHttpStatusCode();
           LOG.info("De-registered instance {} from target group {}", instanceId, targetGroup);
-          return Optional.of(result);
+
+          return shutdownResponseWithConnectionDrainTime(targetGroup.getTargetGroupArn());
         } catch (AmazonServiceException exn) {
           LOG.warn("Failed to de-register instance {} from target group {}", instanceId, targetGroup);
         }
@@ -126,7 +133,25 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
       }
     }
 
-    return Optional.absent();
+    return new AgentRemovedResponse(Optional.absent(), false, Optional.absent());
+  }
+
+  private AgentRemovedResponse shutdownResponseWithConnectionDrainTime(String targetGroupArn) {
+    Optional<Long> maybeDrainTime = Optional.absent();
+    Optional<String> maybeException = Optional.absent();
+
+    try {
+      DescribeTargetGroupAttributesResult result = elbClient.describeTargetGroupAttributes(new DescribeTargetGroupAttributesRequest().withTargetGroupArn(targetGroupArn));
+      for (TargetGroupAttribute attribute : result.getAttributes()) {
+        if (attribute.getKey().equals(DEREGISTRATION_DELAY_ATTR)) {
+          maybeDrainTime = Optional.of(TimeUnit.SECONDS.toMillis(Long.parseLong(attribute.getValue())));
+        }
+      }
+    } catch (Exception e) {
+      LOG.warn("Error fetching connection drain time", e);
+      maybeException = Optional.of(e.getMessage());
+    }
+    return new AgentRemovedResponse(maybeDrainTime, true, maybeException);
   }
 
   public Collection<TargetHealthDescription> getTargetsOn(TargetGroup targetGroup) {

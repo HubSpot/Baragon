@@ -11,15 +11,17 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import com.hubspot.baragon.auth.NoAuth;
 import com.hubspot.baragon.data.BaragonLoadBalancerDatastore;
+import com.hubspot.baragon.models.AgentRemovedResponse;
 import com.hubspot.baragon.models.BaragonAgentMetadata;
 import com.hubspot.baragon.models.BaragonGroup;
 import com.hubspot.baragon.service.managers.ElbManager;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @Path("/checkin")
 @Consumes({MediaType.APPLICATION_JSON})
@@ -54,17 +56,20 @@ public class AgentCheckinResource {
 
   @POST
   @Path("/{clusterName}/shutdown")
-  public Response removeAgent(@PathParam("clusterName") String clusterName, BaragonAgentMetadata agent) {
+  public AgentRemovedResponse removeAgent(@PathParam("clusterName") String clusterName, BaragonAgentMetadata agent) {
     LOG.info(String.format("Notified of shutdown for agent %s", agent.getAgentId()));
+    AgentRemovedResponse response;
     try {
       if (elbManager.isElbConfigured()) {
-        elbManager.attemptRemoveAgent(agent, loadBalancerDatastore.getLoadBalancerGroup(clusterName), clusterName);
+        response = elbManager.attemptRemoveAgent(agent, loadBalancerDatastore.getLoadBalancerGroup(clusterName), clusterName);
+      } else {
+        response = new AgentRemovedResponse(Optional.absent(), true, Optional.absent());
       }
     } catch (Exception e) {
       LOG.error("Could not register agent shutdown", e);
-      return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
+      response = new AgentRemovedResponse(Optional.absent(), false, Optional.of(e.getMessage()));
     }
-    return Response.ok().build();
+    return response;
   }
 
   @GET
