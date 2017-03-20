@@ -140,7 +140,9 @@ public class LifecycleHelper {
 
     try {
       AgentRemovedResponse agentRemovedResponse = retryer.call(callable);
+      LOG.debug("Got shutdown response {}", agentRemovedResponse);
       if (agentRemovedResponse != null && agentRemovedResponse.getConnectionDrainTimeMs().isPresent()) {
+        LOG.info("Waiting for ELB connection draining ({} ms)", agentRemovedResponse.getConnectionDrainTimeMs().get());
         Thread.sleep(agentRemovedResponse.getConnectionDrainTimeMs().get());
       }
     } catch (InterruptedException ie) {
