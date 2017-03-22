@@ -20,8 +20,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 
-import ch.qos.logback.classic.LoggerContext;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import org.apache.commons.lang3.tuple.Pair;
+import org.apache.curator.framework.recipes.leader.LeaderLatch;
+import org.eclipse.jetty.server.Server;
+import org.slf4j.ILoggerFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.github.rholder.retry.Retryer;
@@ -41,24 +45,23 @@ import com.hubspot.baragon.agent.lbs.FilesystemConfigHelper;
 import com.hubspot.baragon.data.BaragonAuthDatastore;
 import com.hubspot.baragon.data.BaragonStateDatastore;
 import com.hubspot.baragon.data.BaragonWorkerDatastore;
-import com.hubspot.baragon.exceptions.AgentStartupException;
+import com.hubspot.baragon.exceptions.AgentServiceNotifyException;
 import com.hubspot.baragon.exceptions.LockTimeoutException;
+import com.hubspot.baragon.models.AgentCheckInResponse;
 import com.hubspot.baragon.models.BaragonAgentMetadata;
 import com.hubspot.baragon.models.BaragonAgentState;
 import com.hubspot.baragon.models.BaragonAuthKey;
 import com.hubspot.baragon.models.BaragonConfigFile;
 import com.hubspot.baragon.models.BaragonServiceState;
 import com.hubspot.baragon.models.ServiceContext;
+import com.hubspot.baragon.models.TrafficSourceState;
 import com.hubspot.horizon.HttpClient;
 import com.hubspot.horizon.HttpRequest;
 import com.hubspot.horizon.HttpRequest.Method;
 import com.hubspot.horizon.HttpResponse;
-import org.apache.commons.lang3.tuple.Pair;
-import org.apache.curator.framework.recipes.leader.LeaderLatch;
-import org.eclipse.jetty.server.Server;
-import org.slf4j.ILoggerFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import ch.qos.logback.classic.LoggerContext;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 public class LifecycleHelper {
   private static final Logger LOG = LoggerFactory.getLogger(LifecycleHelper.class);
@@ -110,50 +113,69 @@ public class LifecycleHelper {
     this.agentLockTimeoutMs = agentLockTimeoutMs;
   }
 
-  public void notifyServiceWithRetry(final String action) {
-    Callable<Void> callable = new Callable<Void>() {
-      public Void call() throws Exception {
-        notifyService(action);
-        return null;
-      }
-    };
+  public void notifyService(String action) throws Exception {
+    long start = System.currentTimeMillis();
+    Retryer<AgentCheckInResponse> retryer = RetryerBuilder.<AgentCheckInResponse>newBuilder()
+        .retryIfException()
+        .withStopStrategy(StopStrategies.stopAfterAttempt(configuration.getMaxNotifyServiceAttempts()))
+        .withWaitStrategy(WaitStrategies.exponentialWait(1, TimeUnit.SECONDS))
+        .build();
 
-    Retryer<Void> retryer = RetryerBuilder.<Void>newBuilder()
-      .retryIfException()
-      .withStopStrategy(StopStrategies.stopAfterAttempt(configuration.getMaxNotifyServiceAttempts()))
-      .withWaitStrategy(WaitStrategies.exponentialWait(1, TimeUnit.SECONDS))
-      .build();
-
-    try {
-      retryer.call(callable);
-    } catch (Exception e) {
-      if (action.equals("startup") && !configuration.isExitOnStartupError()) {
-        LOG.error("Could not notify service of startup", e);
-      } else {
-        throw Throwables.propagate(e);
+    AgentCheckInResponse agentCheckInResponse = retryer.call(checkInCallable(action, false));
+    while ((agentCheckInResponse.getState() != TrafficSourceState.DONE
+        && System.currentTimeMillis() - start < configuration.getAgentCheckInTimeoutMs())) {
+      try {
+        Thread.sleep(agentCheckInResponse.getWaitTime());
+      } catch (InterruptedException ie) {
+        LOG.error("Interrupted waiting for check in with service, shutting down early");
+        break;
       }
+      agentCheckInResponse = retryer.call(checkInCallable(action, true));
     }
+    LOG.info("Finished agent check in");
   }
 
-  public void notifyService(String action) throws AgentStartupException {
+  private Callable<AgentCheckInResponse> checkInCallable(String action, boolean addStatusParam) {
+    return () -> {
+      HttpResponse response = httpClient.execute(buildNotifyServiceRequest(action, addStatusParam));
+      LOG.info(String.format("Got %s response from BaragonService", response.getStatusCode()));
+      if (response.isError()) {
+        throw new AgentServiceNotifyException(String.format("Bad response received from BaragonService %s", response.getAsString()));
+      }
+      try {
+        LOG.debug("Got {} response {}", action, response.getAsString());
+        return response.getAs(AgentCheckInResponse.class);
+      } catch (Exception e) {
+        if (response.isSuccess()) {
+          LOG.warn("Unable to parse response ({}) from successful shutdown call", response.getAsString());
+          return null;
+        } else {
+          throw e;
+        }
+      }
+    };
+  }
+
+  private HttpRequest buildNotifyServiceRequest(String action, boolean addStatusParam) throws AgentServiceNotifyException {
     Collection<String> baseUris = workerDatastore.getBaseUris();
     if (!baseUris.isEmpty()) {
       HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
-        .setUrl(String.format(SERVICE_CHECKIN_URL_FORMAT, baseUris.iterator().next(), configuration.getLoadBalancerConfiguration().getName(), action))
-        .setMethod(HttpRequest.Method.POST)
-        .setBody(baragonAgentMetadata);
+          .setUrl(String.format(SERVICE_CHECKIN_URL_FORMAT, baseUris.iterator().next(), configuration.getLoadBalancerConfiguration().getName(), action))
+          .setMethod(HttpRequest.Method.POST)
+          .setBody(baragonAgentMetadata);
+
+      if (addStatusParam) {
+        requestBuilder.setQueryParam("status").to(true);
+      }
 
       Map<String, BaragonAuthKey> authKeys = authDatastore.getAuthKeyMap();
       if (!authKeys.isEmpty()) {
         requestBuilder.setQueryParam("authkey").to(authKeys.entrySet().iterator().next().getValue().getValue());
       }
 
-      HttpRequest request = requestBuilder.build();
-      HttpResponse response = httpClient.execute(request);
-      LOG.info(String.format("Got %s response from BaragonService", response.getStatusCode()));
-      if (response.isError()) {
-        throw new AgentStartupException(String.format("Bad response received from BaragonService %s", response.getAsString()));
-      }
+      return requestBuilder.build();
+    } else {
+      throw new AgentServiceNotifyException("No services available to notify");
     }
   }
 
@@ -174,7 +196,7 @@ public class LifecycleHelper {
     return (!stateFile.exists() || stateFile.delete());
   }
 
-  public void applyCurrentConfigs() throws AgentStartupException {
+  public void applyCurrentConfigs() throws AgentServiceNotifyException {
     LOG.info("Getting current state of the world from Baragon Service...");
 
     final Stopwatch stopwatch = Stopwatch.createStarted();
@@ -224,7 +246,7 @@ public class LifecycleHelper {
     }
   }
 
-  private Collection<BaragonServiceState> getGlobalStateWithRetry() throws AgentStartupException {
+  private Collection<BaragonServiceState> getGlobalStateWithRetry() throws AgentServiceNotifyException {
     Callable<Collection<BaragonServiceState>> callable = new Callable<Collection<BaragonServiceState>>() {
       public Collection<BaragonServiceState> call() throws Exception {
         return getGlobalState();
@@ -245,7 +267,7 @@ public class LifecycleHelper {
     }
   }
 
-  private Collection<BaragonServiceState> getGlobalState() throws AgentStartupException {
+  private Collection<BaragonServiceState> getGlobalState() throws AgentServiceNotifyException {
     Collection<String> baseUris = workerDatastore.getBaseUris();
     HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
         .setUrl(String.format(GLOBAL_STATE_FORMAT, baseUris.iterator().next()))
@@ -260,7 +282,7 @@ public class LifecycleHelper {
     HttpResponse response = httpClient.execute(request);
     LOG.info(String.format("Got %s response from BaragonService", response.getStatusCode()));
     if (response.isError()) {
-      throw new AgentStartupException(String.format("Bad response received from BaragonService %s", response.getAsString()));
+      throw new AgentServiceNotifyException(String.format("Bad response received from BaragonService %s", response.getAsString()));
     }
     return response.getAs(new TypeReference<Collection<BaragonServiceState>>() {});
   }
@@ -270,9 +292,10 @@ public class LifecycleHelper {
     executorService.shutdown();
     if (configuration.isDeregisterOnGracefulShutdown()) {
       LOG.info("Notifying BaragonService of shutdown...");
-      notifyServiceWithRetry("shutdown");
+      notifyService("shutdown");
     }
     if (configuration.getStateFile().isPresent()) {
+      LOG.info("Removing state file");
       removeStateFile();
     }
   }

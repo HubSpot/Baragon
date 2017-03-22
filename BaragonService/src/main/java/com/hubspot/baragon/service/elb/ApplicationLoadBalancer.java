@@ -5,6 +5,8 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,12 +22,13 @@ import com.amazonaws.services.elasticloadbalancingv2.model.CreateTargetGroupRequ
 import com.amazonaws.services.elasticloadbalancingv2.model.DeleteListenerRequest;
 import com.amazonaws.services.elasticloadbalancingv2.model.DeleteRuleRequest;
 import com.amazonaws.services.elasticloadbalancingv2.model.DeregisterTargetsRequest;
-import com.amazonaws.services.elasticloadbalancingv2.model.DeregisterTargetsResult;
 import com.amazonaws.services.elasticloadbalancingv2.model.DescribeListenersRequest;
 import com.amazonaws.services.elasticloadbalancingv2.model.DescribeListenersResult;
 import com.amazonaws.services.elasticloadbalancingv2.model.DescribeLoadBalancersRequest;
 import com.amazonaws.services.elasticloadbalancingv2.model.DescribeLoadBalancersResult;
 import com.amazonaws.services.elasticloadbalancingv2.model.DescribeRulesRequest;
+import com.amazonaws.services.elasticloadbalancingv2.model.DescribeTargetGroupAttributesRequest;
+import com.amazonaws.services.elasticloadbalancingv2.model.DescribeTargetGroupAttributesResult;
 import com.amazonaws.services.elasticloadbalancingv2.model.DescribeTargetGroupsRequest;
 import com.amazonaws.services.elasticloadbalancingv2.model.DescribeTargetGroupsResult;
 import com.amazonaws.services.elasticloadbalancingv2.model.DescribeTargetHealthRequest;
@@ -41,6 +44,7 @@ import com.amazonaws.services.elasticloadbalancingv2.model.Rule;
 import com.amazonaws.services.elasticloadbalancingv2.model.SetSubnetsRequest;
 import com.amazonaws.services.elasticloadbalancingv2.model.TargetDescription;
 import com.amazonaws.services.elasticloadbalancingv2.model.TargetGroup;
+import com.amazonaws.services.elasticloadbalancingv2.model.TargetGroupAttribute;
 import com.amazonaws.services.elasticloadbalancingv2.model.TargetGroupNotFoundException;
 import com.amazonaws.services.elasticloadbalancingv2.model.TargetHealthDescription;
 import com.amazonaws.services.elasticloadbalancingv2.model.TargetHealthStateEnum;
@@ -53,9 +57,11 @@ import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import com.hubspot.baragon.data.BaragonKnownAgentsDatastore;
 import com.hubspot.baragon.data.BaragonLoadBalancerDatastore;
+import com.hubspot.baragon.models.AgentCheckInResponse;
 import com.hubspot.baragon.models.BaragonAgentMetadata;
 import com.hubspot.baragon.models.BaragonGroup;
 import com.hubspot.baragon.models.TrafficSource;
+import com.hubspot.baragon.models.TrafficSourceState;
 import com.hubspot.baragon.models.TrafficSourceType;
 import com.hubspot.baragon.service.BaragonServiceModule;
 import com.hubspot.baragon.service.config.ElbConfiguration;
@@ -71,6 +77,7 @@ import com.hubspot.baragon.service.exceptions.BaragonExceptionNotifier;
  */
 public class ApplicationLoadBalancer extends ElasticLoadBalancer {
   private static final Logger LOG = LoggerFactory.getLogger(ApplicationLoadBalancer.class);
+  private static final String DEREGISTRATION_DELAY_ATTR = "deregistration_delay.timeout_seconds";
   private final AmazonElasticLoadBalancingClient elbClient;
 
   @Inject
@@ -100,11 +107,12 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
   }
 
   @Override
-  public void removeInstance(Instance instance, String trafficSourceName, String agentId) {
-    removeInstance(instance.getInstanceId(), trafficSourceName);
+  public AgentCheckInResponse removeInstance(Instance instance, String trafficSourceName, String agentId) {
+    return removeInstance(instance.getInstanceId(), trafficSourceName);
   }
 
-  public Optional<DeregisterTargetsResult> removeInstance(String instanceId, String trafficSourceName) {
+  public AgentCheckInResponse removeInstance(String instanceId, String trafficSourceName) {
+
     Optional<TargetGroup> maybeTargetGroup = getTargetGroup(trafficSourceName);
     if (maybeTargetGroup.isPresent()) {
       TargetGroup targetGroup = maybeTargetGroup.get();
@@ -115,18 +123,76 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
             .withTargets(targetDescription)
             .withTargetGroupArn(targetGroup.getTargetGroupArn());
         try {
-          DeregisterTargetsResult result = elbClient.deregisterTargets(deregisterTargetsRequest);
+          elbClient.deregisterTargets(deregisterTargetsRequest);
           LOG.info("De-registered instance {} from target group {}", instanceId, targetGroup);
-          return Optional.of(result);
+          return getShutdownResponse(targetGroup.getTargetGroupArn(), targetDescription, true);
         } catch (AmazonServiceException exn) {
           LOG.warn("Failed to de-register instance {} from target group {}", instanceId, targetGroup);
         }
       } else {
         LOG.debug("Instance {} not found at target group {}", instanceId, targetGroup);
       }
+    } else {
+      LOG.debug("No target group found with name {}", trafficSourceName);
     }
 
-    return Optional.absent();
+    return new AgentCheckInResponse(TrafficSourceState.DONE, Optional.absent(), 0L);
+  }
+
+  private AgentCheckInResponse getShutdownResponse(String targetGroupArn, TargetDescription targetDescription, boolean withDrainTime) {
+    Optional<String> maybeException = Optional.absent();
+    Optional<Long> maybeDrainTime = Optional.absent();
+
+    TrafficSourceState state = TrafficSourceState.PENDING;
+    if (withDrainTime) {
+      try {
+        DescribeTargetGroupAttributesResult result = elbClient.describeTargetGroupAttributes(new DescribeTargetGroupAttributesRequest().withTargetGroupArn(targetGroupArn));
+        LOG.debug("Got target group attributes {}", result.getAttributes());
+        for (TargetGroupAttribute attribute : result.getAttributes()) {
+          if (attribute.getKey().equals(DEREGISTRATION_DELAY_ATTR)) {
+            LOG.info("Target group {} has connection drain time of {}s", targetGroupArn, attribute.getValue());
+            maybeDrainTime = Optional.of(TimeUnit.SECONDS.toMillis(Long.parseLong(attribute.getValue())));
+          }
+        }
+      } catch (Exception e) {
+        LOG.warn("Error fetching connection drain time, will use default", e);
+        maybeException = Optional.of(e.getMessage());
+      }
+    }
+
+    try {
+      DescribeTargetHealthResult healthResult = elbClient.describeTargetHealth(
+          new DescribeTargetHealthRequest().withTargetGroupArn(targetGroupArn).withTargets(targetDescription));
+      if (!healthResult.getTargetHealthDescriptions().isEmpty()) {
+        switch (healthResult.getTargetHealthDescriptions().get(0).getTargetHealth().getState()) {
+          case "initial":
+          case "healthy":
+          case "unhealthy":
+          case "draining":
+            break;
+          case "unused":
+          default:
+            state = TrafficSourceState.DONE;
+        }
+      } else {
+        state = TrafficSourceState.DONE;
+      }
+    } catch (Exception e) {
+      LOG.error("Error fetching target health", e);
+    }
+    return new AgentCheckInResponse(state, maybeException, maybeDrainTime.or(configuration.get().getDefaultCheckInWaitTimeMs()));
+  }
+
+  @Override
+  public AgentCheckInResponse checkRemovedInstance(Instance instance, String trafficSourceName, String agentId) {
+    Optional<TargetGroup> maybeTargetGroup = getTargetGroup(trafficSourceName);
+    if (maybeTargetGroup.isPresent()) {
+      return getShutdownResponse(maybeTargetGroup.get().getTargetGroupArn(), new TargetDescription().withId(instance.getInstanceId()), false);
+    } else {
+      String message = String.format("Could not find target group %s", trafficSourceName);
+      LOG.error(message);
+      return new AgentCheckInResponse(TrafficSourceState.ERROR, Optional.of(message), 0L);
+    }
   }
 
   public Collection<TargetHealthDescription> getTargetsOn(TargetGroup targetGroup) {
@@ -139,52 +205,103 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
   }
 
   @Override
-  public RegisterInstanceResult registerInstance(Instance instance, String trafficSourceName, BaragonAgentMetadata agent) {
+  public AgentCheckInResponse registerInstance(Instance instance, String trafficSourceName, BaragonAgentMetadata agent) {
     Optional<TargetGroup> maybeTargetGroup = getTargetGroup(trafficSourceName);
 
-    if (! maybeTargetGroup.isPresent()) {
-      LOG.debug("Target group with name {} not found", trafficSourceName);
-      return RegisterInstanceResult.NOT_FOUND;
+    if (!maybeTargetGroup.isPresent()) {
+      String message = String.format("Target group with name %s not found", trafficSourceName);
+      LOG.debug(message);
+      return new AgentCheckInResponse(TrafficSourceState.ERROR, Optional.of(message), 0L);
     } else {
       TargetGroup targetGroup = maybeTargetGroup.get();
 
-      if (! isVpcOkay(agent, targetGroup)) {
-        LOG.debug("VPC not configured to accept agent {}", agent);
-        return RegisterInstanceResult.ELB_NO_VPC_FOUND;
+      if (!isVpcOkay(agent, targetGroup)) {
+        String message = String.format("VPC not configured to accept agent %s", agent);
+        LOG.debug(message);
+        return new AgentCheckInResponse(TrafficSourceState.ERROR, Optional.of(message), 0L);
       } else {
         return registerInstance(instance.getInstanceId(), targetGroup);
       }
     }
   }
 
-  public RegisterInstanceResult registerInstance(String instanceId, String targetGroup) {
+  public AgentCheckInResponse registerInstance(String instanceId, String targetGroup) {
     Optional<TargetGroup> maybeTargetGroup = getTargetGroup(targetGroup);
     if (maybeTargetGroup.isPresent()) {
       return registerInstance(instanceId, maybeTargetGroup.get());
     } else {
-      return RegisterInstanceResult.NOT_FOUND;
+      return new AgentCheckInResponse(TrafficSourceState.ERROR, Optional.of("Target group not found"), 0L);
     }
   }
 
-  private RegisterInstanceResult registerInstance(String instanceId, TargetGroup targetGroup) {
+  private AgentCheckInResponse registerInstance(String instanceId, TargetGroup targetGroup) {
     TargetDescription newTarget = new TargetDescription()
         .withId(instanceId);
 
-    if (targetsOn(targetGroup).contains(newTarget.getId())) {
+    if (!targetsOn(targetGroup).contains(newTarget.getId())) {
       try {
         RegisterTargetsRequest registerTargetsRequest = new RegisterTargetsRequest()
             .withTargets(newTarget)
             .withTargetGroupArn(targetGroup.getTargetGroupArn());
         elbClient.registerTargets(registerTargetsRequest);
         LOG.info("Registered instance {} with target group {}", newTarget.getId(), targetGroup);
-        return RegisterInstanceResult.ELB_AND_VPC_FOUND;
       } catch (AmazonServiceException exn) {
         LOG.warn("Failed to register instance {} with target group {}", instanceId, targetGroup);
         throw Throwables.propagate(exn);
       }
+
+      return instanceHealthResponse(newTarget, targetGroup, instanceId);
     } else {
       LOG.debug("Instance {} already registered with target group {}", instanceId, targetGroup);
-      return RegisterInstanceResult.ELB_AND_VPC_FOUND;
+      return new AgentCheckInResponse(TrafficSourceState.DONE, Optional.absent(), 0L);
+    }
+  }
+
+  private AgentCheckInResponse instanceHealthResponse(TargetDescription targetDescription, TargetGroup targetGroup, String instanceId) {
+    TrafficSourceState state = TrafficSourceState.DONE;
+    Optional<String> exception = Optional.absent();
+    try {
+      DescribeTargetHealthResult healthResult = elbClient.describeTargetHealth(
+          new DescribeTargetHealthRequest().withTargetGroupArn(targetGroup.getTargetGroupArn()).withTargets(targetDescription));
+      if (!healthResult.getTargetHealthDescriptions().isEmpty()) {
+        String targetState = healthResult.getTargetHealthDescriptions().get(0).getTargetHealth().getState();
+        switch (targetState) {
+          case "initial":
+            state = TrafficSourceState.PENDING;
+            break;
+          case "healthy":
+            state = TrafficSourceState.DONE;
+            break;
+          case "unhealthy":
+          case "draining":
+          case "unused":
+          default:
+            String message = String.format("Expected agent to be added but was in state %s", targetState);
+            exception = Optional.of(message);
+            LOG.error(message);
+            state = TrafficSourceState.ERROR;
+        }
+      } else {
+        String message = String.format("Instance %s not found in target group", instanceId);
+        LOG.error(message);
+        exception = Optional.of(message);
+        state = TrafficSourceState.ERROR;
+      }
+    } catch (Exception e) {
+      LOG.error("Error fetching target health", e);
+    }
+    return new AgentCheckInResponse(state, exception, state == TrafficSourceState.PENDING ? configuration.get().getDefaultCheckInWaitTimeMs() : 0L);
+  }
+
+  @Override
+  public AgentCheckInResponse checkRegisteredInstance(Instance instance, String trafficSourceName, BaragonAgentMetadata agent) {
+    Optional<TargetGroup> maybeTargetGroup = getTargetGroup(trafficSourceName);
+    if (maybeTargetGroup.isPresent()) {
+      return instanceHealthResponse(new TargetDescription().withId(instance.getInstanceId()), maybeTargetGroup.get(), instance.getInstanceId());
+    } else {
+      String message = String.format("Could not find target group %s", trafficSourceName);
+      LOG.error(message);
+      return new AgentCheckInResponse(TrafficSourceState.ERROR, Optional.of(message), 0L);
     }
   }
 
@@ -402,16 +519,11 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
   private Collection<String> targetsOn(TargetGroup targetGroup) {
     DescribeTargetHealthRequest targetHealthRequest = new DescribeTargetHealthRequest()
         .withTargetGroupArn(targetGroup.getTargetGroupArn());
-    Collection<TargetHealthDescription> targetHealth = elbClient
+    return elbClient
         .describeTargetHealth(targetHealthRequest)
-        .getTargetHealthDescriptions();
-
-    Collection<String> targets = new HashSet<>();
-    for (TargetHealthDescription targetHealthDescription : targetHealth) {
-      targets.add(targetHealthDescription.getTarget().getId());
-    }
-
-    return targets;
+        .getTargetHealthDescriptions().stream()
+        .map((t) -> t.getTarget().getId())
+        .collect(Collectors.toSet());
   }
 
   private boolean isVpcOkay(BaragonAgentMetadata agent, TargetGroup targetGroup) {

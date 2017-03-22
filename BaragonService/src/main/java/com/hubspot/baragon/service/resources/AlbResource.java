@@ -19,7 +19,6 @@ import com.amazonaws.AmazonClientException;
 import com.amazonaws.services.elasticloadbalancingv2.model.CreateListenerRequest;
 import com.amazonaws.services.elasticloadbalancingv2.model.CreateRuleRequest;
 import com.amazonaws.services.elasticloadbalancingv2.model.CreateTargetGroupRequest;
-import com.amazonaws.services.elasticloadbalancingv2.model.DeregisterTargetsResult;
 import com.amazonaws.services.elasticloadbalancingv2.model.Listener;
 import com.amazonaws.services.elasticloadbalancingv2.model.ListenerNotFoundException;
 import com.amazonaws.services.elasticloadbalancingv2.model.LoadBalancer;
@@ -34,9 +33,9 @@ import com.amazonaws.services.elasticloadbalancingv2.model.TargetHealthDescripti
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import com.hubspot.baragon.auth.NoAuth;
+import com.hubspot.baragon.models.AgentCheckInResponse;
 import com.hubspot.baragon.service.config.ElbConfiguration;
 import com.hubspot.baragon.service.elb.ApplicationLoadBalancer;
-import com.hubspot.baragon.service.elb.RegisterInstanceResult;
 import com.hubspot.baragon.service.exceptions.BaragonWebException;
 
 @Path("/albs")
@@ -316,17 +315,16 @@ public class AlbResource {
 
   @DELETE
   @Path("/target-groups/{targetGroup}/targets/{instanceId}")
-  public DeregisterTargetsResult removeFromTargetGroup(@PathParam("targetGroup") String targetGroup,
-                                                       @PathParam("instanceId") String instanceId) {
+  public AgentCheckInResponse removeFromTargetGroup(@PathParam("targetGroup") String targetGroup,
+                                                    @PathParam("instanceId") String instanceId) {
     if (instanceId == null) {
       throw new BaragonWebException("Must provide instance ID to remove target from group");
     } else if (config.isPresent()) {
-      Optional<DeregisterTargetsResult> maybeResult = applicationLoadBalancer.removeInstance(instanceId, targetGroup);
-      if (maybeResult.isPresent()) {
-        return maybeResult.get();
-      } else {
-        throw new WebApplicationException(String.format("No instance with ID %s could be found", instanceId), Status.NOT_FOUND);
+      AgentCheckInResponse result = applicationLoadBalancer.removeInstance(instanceId, targetGroup);
+      if (result.getExceptionMessage().isPresent()) {
+        throw new WebApplicationException(result.getExceptionMessage().get(), Status.INTERNAL_SERVER_ERROR);
       }
+      return result;
     } else {
       throw new BaragonWebException("ElbSync and related actions not currently enabled");
     }
@@ -334,7 +332,7 @@ public class AlbResource {
 
   @POST
   @Path("/target-group/{targetGroup}/targets")
-  public RegisterInstanceResult addToTargetGroup(@PathParam("targetGroup") String targetGroup,
+  public AgentCheckInResponse addToTargetGroup(@PathParam("targetGroup") String targetGroup,
                                                  @QueryParam("instanceId") String instanceId) {
     if (instanceId == null) {
       throw new BaragonWebException("Must provide instance ID to add target to group");

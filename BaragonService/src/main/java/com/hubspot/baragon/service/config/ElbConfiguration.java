@@ -50,6 +50,8 @@ public class ElbConfiguration {
   @JsonProperty("awsEndpoint")
   private Optional<String> awsEndpoint = Optional.absent();
 
+  private long defaultCheckInWaitTimeMs = 5000;
+
   public boolean isEnabled() {
     return enabled;
   }
@@ -152,5 +154,13 @@ public class ElbConfiguration {
 
   public void setAwsEndpoint(Optional<String> awsEndpoint) {
     this.awsEndpoint = awsEndpoint;
+  }
+
+  public long getDefaultCheckInWaitTimeMs() {
+    return defaultCheckInWaitTimeMs;
+  }
+
+  public void setDefaultCheckInWaitTimeMs(long defaultCheckInWaitTimeMs) {
+    this.defaultCheckInWaitTimeMs = defaultCheckInWaitTimeMs;
   }
 }
