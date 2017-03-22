@@ -125,7 +125,7 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
         try {
           elbClient.deregisterTargets(deregisterTargetsRequest);
           LOG.info("De-registered instance {} from target group {}", instanceId, targetGroup);
-          return getShutdownResponse(targetGroup.getTargetGroupArn(), targetDescription);
+          return getShutdownResponse(targetGroup.getTargetGroupArn(), targetDescription, true);
         } catch (AmazonServiceException exn) {
           LOG.warn("Failed to de-register instance {} from target group {}", instanceId, targetGroup);
         }
@@ -139,23 +139,25 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
     return new AgentCheckInResponse(TrafficSourceState.DONE, Optional.absent(), 0L);
   }
 
-  private AgentCheckInResponse getShutdownResponse(String targetGroupArn, TargetDescription targetDescription) {
+  private AgentCheckInResponse getShutdownResponse(String targetGroupArn, TargetDescription targetDescription, boolean withDrainTime) {
     Optional<String> maybeException = Optional.absent();
     Optional<Long> maybeDrainTime = Optional.absent();
 
     TrafficSourceState state = TrafficSourceState.PENDING;
-    try {
-      DescribeTargetGroupAttributesResult result = elbClient.describeTargetGroupAttributes(new DescribeTargetGroupAttributesRequest().withTargetGroupArn(targetGroupArn));
-      LOG.debug("Got target group attributes {}", result.getAttributes());
-      for (TargetGroupAttribute attribute : result.getAttributes()) {
-        if (attribute.getKey().equals(DEREGISTRATION_DELAY_ATTR)) {
-          LOG.info("Target group {} has connection drain time of {}s", targetGroupArn, attribute.getValue());
-          maybeDrainTime = Optional.of(TimeUnit.SECONDS.toMillis(Long.parseLong(attribute.getValue())));
+    if (withDrainTime) {
+      try {
+        DescribeTargetGroupAttributesResult result = elbClient.describeTargetGroupAttributes(new DescribeTargetGroupAttributesRequest().withTargetGroupArn(targetGroupArn));
+        LOG.debug("Got target group attributes {}", result.getAttributes());
+        for (TargetGroupAttribute attribute : result.getAttributes()) {
+          if (attribute.getKey().equals(DEREGISTRATION_DELAY_ATTR)) {
+            LOG.info("Target group {} has connection drain time of {}s", targetGroupArn, attribute.getValue());
+            maybeDrainTime = Optional.of(TimeUnit.SECONDS.toMillis(Long.parseLong(attribute.getValue())));
+          }
         }
+      } catch (Exception e) {
+        LOG.warn("Error fetching connection drain time, will use default", e);
+        maybeException = Optional.of(e.getMessage());
       }
-    } catch (Exception e) {
-      LOG.warn("Error fetching connection drain time, will use default", e);
-      maybeException = Optional.of(e.getMessage());
     }
 
     try {
@@ -185,7 +187,7 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
   public AgentCheckInResponse checkRemovedInstance(Instance instance, String trafficSourceName, String agentId) {
     Optional<TargetGroup> maybeTargetGroup = getTargetGroup(trafficSourceName);
     if (maybeTargetGroup.isPresent()) {
-      return getShutdownResponse(maybeTargetGroup.get().getTargetGroupArn(), new TargetDescription().withId(instance.getInstanceId()));
+      return getShutdownResponse(maybeTargetGroup.get().getTargetGroupArn(), new TargetDescription().withId(instance.getInstanceId()), false);
     } else {
       String message = String.format("Could not find target group %s", trafficSourceName);
       LOG.error(message);
