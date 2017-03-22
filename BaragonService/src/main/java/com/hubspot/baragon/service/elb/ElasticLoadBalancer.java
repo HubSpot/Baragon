@@ -9,7 +9,7 @@ import com.amazonaws.services.elasticloadbalancing.model.Instance;
 import com.google.common.base.Optional;
 import com.hubspot.baragon.data.BaragonKnownAgentsDatastore;
 import com.hubspot.baragon.data.BaragonLoadBalancerDatastore;
-import com.hubspot.baragon.models.AgentRemovedResponse;
+import com.hubspot.baragon.models.AgentCheckInResponse;
 import com.hubspot.baragon.models.BaragonAgentMetadata;
 import com.hubspot.baragon.models.BaragonGroup;
 import com.hubspot.baragon.models.BaragonKnownAgentMetadata;
@@ -33,8 +33,10 @@ public abstract class ElasticLoadBalancer {
   }
 
   public abstract boolean isInstanceHealthy(String instanceId, String name);
-  public abstract AgentRemovedResponse removeInstance(Instance instance, String elbName, String agentId);
-  public abstract RegisterInstanceResult registerInstance(Instance instance, String elbName, BaragonAgentMetadata agent);
+  public abstract AgentCheckInResponse removeInstance(Instance instance, String elbName, String agentId);
+  public abstract AgentCheckInResponse checkRemovedInstance(Instance instance, String elbName, String agentId);
+  public abstract AgentCheckInResponse registerInstance(Instance instance, String elbName, BaragonAgentMetadata agent);
+  public abstract AgentCheckInResponse checkRegisteredInstance(Instance instance, String elbName, BaragonAgentMetadata agent);
   public abstract void syncAll(Collection<BaragonGroup> groups);
 
   Optional<BaragonKnownAgentMetadata> knownAgent(BaragonGroup group, String instanceId) {

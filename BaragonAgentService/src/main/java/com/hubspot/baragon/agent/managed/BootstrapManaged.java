@@ -83,7 +83,7 @@ public class BootstrapManaged implements Managed {
 
     if (configuration.isRegisterOnStartup()) {
       LOG.info("Notifying BaragonService...");
-      lifecycleHelper.notifyStartup();
+      lifecycleHelper.notifyService("startup");
     }
 
     LOG.info("Updating BaragonGroup information...");

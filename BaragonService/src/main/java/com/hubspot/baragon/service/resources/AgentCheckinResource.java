@@ -8,8 +8,6 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.Status;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,9 +16,10 @@ import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import com.hubspot.baragon.auth.NoAuth;
 import com.hubspot.baragon.data.BaragonLoadBalancerDatastore;
-import com.hubspot.baragon.models.AgentRemovedResponse;
+import com.hubspot.baragon.models.AgentCheckInResponse;
 import com.hubspot.baragon.models.BaragonAgentMetadata;
 import com.hubspot.baragon.models.BaragonGroup;
+import com.hubspot.baragon.models.TrafficSourceState;
 import com.hubspot.baragon.service.managers.ElbManager;
 
 @Path("/checkin")
@@ -41,33 +40,40 @@ public class AgentCheckinResource {
 
   @POST
   @Path("/{clusterName}/startup")
-  public Response addAgent(@PathParam("clusterName") String clusterName, BaragonAgentMetadata agent) {
+  public AgentCheckInResponse addAgent(@PathParam("clusterName") String clusterName,
+                                       @QueryParam("status") boolean status,
+                                       BaragonAgentMetadata agent) {
     LOG.info(String.format("Notified of startup for agent %s", agent.getAgentId()));
+    AgentCheckInResponse response;
     try {
       if (elbManager.isElbConfigured()) {
-        elbManager.attemptAddAgent(agent, loadBalancerDatastore.getLoadBalancerGroup(clusterName), clusterName);
+        response = elbManager.attemptAddAgent(agent, loadBalancerDatastore.getLoadBalancerGroup(clusterName), clusterName, status);
+      } else {
+        response = new AgentCheckInResponse(TrafficSourceState.DONE, Optional.absent(), 0L);
       }
     } catch (Exception e) {
       LOG.error("Could not register agent startup", e);
-      return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
+      response = new AgentCheckInResponse(TrafficSourceState.ERROR, Optional.of(e.getMessage()), 0L);
     }
-    return Response.ok().build();
+    return response;
   }
 
   @POST
   @Path("/{clusterName}/shutdown")
-  public AgentRemovedResponse removeAgent(@PathParam("clusterName") String clusterName, BaragonAgentMetadata agent) {
+  public AgentCheckInResponse removeAgent(@PathParam("clusterName") String clusterName,
+                                          @QueryParam("status") boolean status,
+                                          BaragonAgentMetadata agent) {
     LOG.info(String.format("Notified of shutdown for agent %s", agent.getAgentId()));
-    AgentRemovedResponse response;
+    AgentCheckInResponse response;
     try {
       if (elbManager.isElbConfigured()) {
-        response = elbManager.attemptRemoveAgent(agent, loadBalancerDatastore.getLoadBalancerGroup(clusterName), clusterName);
+        response = elbManager.attemptRemoveAgent(agent, loadBalancerDatastore.getLoadBalancerGroup(clusterName), clusterName, status);
       } else {
-        response = new AgentRemovedResponse(Optional.absent(), true, Optional.absent());
+        response = new AgentCheckInResponse(TrafficSourceState.DONE, Optional.absent(), 0L);
       }
     } catch (Exception e) {
       LOG.error("Could not register agent shutdown", e);
-      response = new AgentRemovedResponse(Optional.absent(), false, Optional.of(e.getMessage()));
+      response = new AgentCheckInResponse(TrafficSourceState.ERROR, Optional.of(e.getMessage()), 0L);
     }
     return response;
   }

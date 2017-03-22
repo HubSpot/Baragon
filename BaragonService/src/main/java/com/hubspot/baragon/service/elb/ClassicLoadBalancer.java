@@ -27,10 +27,11 @@ import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import com.hubspot.baragon.data.BaragonKnownAgentsDatastore;
 import com.hubspot.baragon.data.BaragonLoadBalancerDatastore;
-import com.hubspot.baragon.models.AgentRemovedResponse;
+import com.hubspot.baragon.models.AgentCheckInResponse;
 import com.hubspot.baragon.models.BaragonAgentMetadata;
 import com.hubspot.baragon.models.BaragonGroup;
 import com.hubspot.baragon.models.TrafficSource;
+import com.hubspot.baragon.models.TrafficSourceState;
 import com.hubspot.baragon.models.TrafficSourceType;
 import com.hubspot.baragon.service.BaragonServiceModule;
 import com.hubspot.baragon.service.config.ElbConfiguration;
@@ -64,7 +65,7 @@ public class ClassicLoadBalancer extends ElasticLoadBalancer {
     return instanceIsHealthy;
   }
 
-  public AgentRemovedResponse removeInstance(Instance instance, String elbName, String agentId) {
+  public AgentCheckInResponse removeInstance(Instance instance, String elbName, String agentId) {
     Optional<LoadBalancerDescription> elb = getElb(elbName);
     if (elb.isPresent()) {
       if (elb.get().getInstances().contains(instance)) {
@@ -75,25 +76,35 @@ public class ClassicLoadBalancer extends ElasticLoadBalancer {
         LOG.debug("Agent {} already de-registered from ELB {}", agentId, elbName);
       }
     }
-    return new AgentRemovedResponse(Optional.absent(), true, Optional.absent());
+    return new AgentCheckInResponse(TrafficSourceState.DONE, Optional.absent(), 0L);
   }
 
-  public RegisterInstanceResult registerInstance(Instance instance, String elbName, BaragonAgentMetadata agent) {
-    RegisterInstanceResult result = RegisterInstanceResult.NOT_FOUND;
+  public AgentCheckInResponse registerInstance(Instance instance, String elbName, BaragonAgentMetadata agent) {
+    Optional<String> maybeException = Optional.absent();
     Optional<LoadBalancerDescription> elb = getElb(elbName);
     if (elb.isPresent()) {
-      result = RegisterInstanceResult.ELB_NO_VPC_FOUND;
-      if (isVpcOk(agent, elb.get()) && !elb.get().getInstances().contains(instance)) {
-        result = RegisterInstanceResult.ELB_AND_VPC_FOUND;
-        checkAZEnabled(agent, elbName, elb.get());
-        RegisterInstancesWithLoadBalancerRequest request = new RegisterInstancesWithLoadBalancerRequest(elbName, Arrays.asList(instance));
-        elbClient.registerInstancesWithLoadBalancer(request);
-        LOG.info("Registered instances {} with ELB {}", request.getInstances(), request.getLoadBalancerName());
+      if (isVpcOk(agent, elb.get())) {
+        if (!elb.get().getInstances().contains(instance)) {
+          checkAZEnabled(agent, elbName, elb.get());
+          RegisterInstancesWithLoadBalancerRequest request = new RegisterInstancesWithLoadBalancerRequest(elbName, Arrays.asList(instance));
+          elbClient.registerInstancesWithLoadBalancer(request);
+          LOG.info("Registered instances {} with ELB {}", request.getInstances(), request.getLoadBalancerName());
+        } else {
+          LOG.debug("Agent {} already registered with ELB {}", agent.getAgentId(), elbName);
+        }
       } else {
-        LOG.debug("Agent {} already registered with ELB {}", agent.getAgentId(), elbName);
+        maybeException = Optional.of(String.format("No ELB found for vpc %s", agent.getEc2().getVpcId()));
       }
     }
-    return result;
+    return new AgentCheckInResponse(TrafficSourceState.DONE, maybeException, 0L);
+  }
+
+  public AgentCheckInResponse checkRegisteredInstance(Instance instance, String trafficSourceName, BaragonAgentMetadata agent) {
+    return new AgentCheckInResponse(TrafficSourceState.DONE, Optional.absent(), 0L);
+  }
+
+  public AgentCheckInResponse checkRemovedInstance(Instance instance, String elbName, String agentId) {
+    return new AgentCheckInResponse(TrafficSourceState.DONE, Optional.absent(), 0L);
   }
 
   public void syncAll(Collection<BaragonGroup> groups) {
