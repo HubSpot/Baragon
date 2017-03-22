@@ -33,10 +33,9 @@ import com.amazonaws.services.elasticloadbalancingv2.model.TargetHealthDescripti
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import com.hubspot.baragon.auth.NoAuth;
-import com.hubspot.baragon.models.AgentRemovedResponse;
+import com.hubspot.baragon.models.AgentCheckInResponse;
 import com.hubspot.baragon.service.config.ElbConfiguration;
 import com.hubspot.baragon.service.elb.ApplicationLoadBalancer;
-import com.hubspot.baragon.service.elb.RegisterInstanceResult;
 import com.hubspot.baragon.service.exceptions.BaragonWebException;
 
 @Path("/albs")
@@ -316,12 +315,12 @@ public class AlbResource {
 
   @DELETE
   @Path("/target-groups/{targetGroup}/targets/{instanceId}")
-  public AgentRemovedResponse removeFromTargetGroup(@PathParam("targetGroup") String targetGroup,
-                                                       @PathParam("instanceId") String instanceId) {
+  public AgentCheckInResponse removeFromTargetGroup(@PathParam("targetGroup") String targetGroup,
+                                                    @PathParam("instanceId") String instanceId) {
     if (instanceId == null) {
       throw new BaragonWebException("Must provide instance ID to remove target from group");
     } else if (config.isPresent()) {
-      AgentRemovedResponse result = applicationLoadBalancer.removeInstance(instanceId, targetGroup);
+      AgentCheckInResponse result = applicationLoadBalancer.removeInstance(instanceId, targetGroup);
       if (result.getExceptionMessage().isPresent()) {
         throw new WebApplicationException(result.getExceptionMessage().get(), Status.INTERNAL_SERVER_ERROR);
       }
@@ -333,7 +332,7 @@ public class AlbResource {
 
   @POST
   @Path("/target-group/{targetGroup}/targets")
-  public RegisterInstanceResult addToTargetGroup(@PathParam("targetGroup") String targetGroup,
+  public AgentCheckInResponse addToTargetGroup(@PathParam("targetGroup") String targetGroup,
                                                  @QueryParam("instanceId") String instanceId) {
     if (instanceId == null) {
       throw new BaragonWebException("Must provide instance ID to add target to group");
