@@ -1,8 +1,6 @@
 package com.hubspot.baragon.service.managers;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,16 +11,16 @@ import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.hubspot.baragon.data.BaragonLoadBalancerDatastore;
-import com.hubspot.baragon.models.AgentRemovedResponse;
+import com.hubspot.baragon.models.AgentCheckInResponse;
 import com.hubspot.baragon.models.BaragonAgentMetadata;
 import com.hubspot.baragon.models.BaragonGroup;
 import com.hubspot.baragon.models.TrafficSource;
+import com.hubspot.baragon.models.TrafficSourceState;
 import com.hubspot.baragon.models.TrafficSourceType;
 import com.hubspot.baragon.service.config.ElbConfiguration;
 import com.hubspot.baragon.service.elb.ApplicationLoadBalancer;
 import com.hubspot.baragon.service.elb.ClassicLoadBalancer;
 import com.hubspot.baragon.service.elb.ElasticLoadBalancer;
-import com.hubspot.baragon.service.elb.RegisterInstanceResult;
 import com.hubspot.baragon.service.exceptions.NoMatchingElbForVpcException;
 
 @Singleton
@@ -60,38 +58,56 @@ public class ElbManager {
     return false;
   }
 
-  public AgentRemovedResponse attemptRemoveAgent(BaragonAgentMetadata agent, Optional<BaragonGroup> group, String groupName) throws AmazonClientException {
+  public AgentCheckInResponse attemptRemoveAgent(BaragonAgentMetadata agent, Optional<BaragonGroup> group, String groupName, boolean isStatusCheck) throws AmazonClientException {
+    TrafficSourceState state = TrafficSourceState.DONE;
+    long maxWaitTime = 0L;
+    Optional<String> maybeExceptions = Optional.absent();
     if (isElbEnabledAgent(agent, group, groupName)) {
-      Optional<String> maybeExceptions = Optional.absent();
-      Optional<Long> maybeMaxDrainTime = Optional.absent();
-      boolean allRemoved = true;
+
       for (TrafficSource source : group.get().getTrafficSources()) {
         Instance instance = new Instance(agent.getEc2().getInstanceId().get());
-        AgentRemovedResponse response = getLoadBalancer(source.getType()).removeInstance(instance, source.getName(), agent.getAgentId());
-        allRemoved = allRemoved && response.isRemoved();
+        AgentCheckInResponse response = isStatusCheck ?
+            getLoadBalancer(source.getType()).checkRemovedInstance(instance, source.getName(), agent.getAgentId()) :
+            getLoadBalancer(source.getType()).removeInstance(instance, source.getName(), agent.getAgentId());
+        if (response.getState().ordinal() > state.ordinal()) {
+          state = response.getState();
+        }
         if (response.getExceptionMessage().isPresent()) {
           maybeExceptions = Optional.of(maybeExceptions.or("") + response.getExceptionMessage().get() + "\n");
         }
-        if (response.getConnectionDrainTimeMs().isPresent() && response.getConnectionDrainTimeMs().get() > maybeMaxDrainTime.or(-1L)) {
-          maybeMaxDrainTime = response.getConnectionDrainTimeMs();
+        if (response.getWaitTime() > maxWaitTime) {
+          maxWaitTime = response.getWaitTime();
         }
       }
-      return new AgentRemovedResponse(maybeMaxDrainTime, allRemoved, maybeExceptions);
     }
-    return new AgentRemovedResponse(Optional.absent(), true, Optional.absent());
+    return new AgentCheckInResponse(state, maybeExceptions, maxWaitTime);
   }
 
-  public void attemptAddAgent(BaragonAgentMetadata agent, Optional<BaragonGroup> group, String groupName) throws AmazonClientException, NoMatchingElbForVpcException {
+  public AgentCheckInResponse attemptAddAgent(BaragonAgentMetadata agent, Optional<BaragonGroup> group, String groupName, boolean isStatusCheck) throws AmazonClientException, NoMatchingElbForVpcException {
+    TrafficSourceState state = TrafficSourceState.DONE;
+    Optional<String> maybeVpcException = Optional.absent();
+    long maxWaitTime = 0L;
     if (isElbEnabledAgent(agent, group, groupName)) {
-      List<RegisterInstanceResult> results = new ArrayList<>();
       for (TrafficSource source : group.get().getTrafficSources()) {
         Instance instance = new Instance(agent.getEc2().getInstanceId().get());
-        results.add(getLoadBalancer(source.getType()).registerInstance(instance, source.getName(), agent));
+        AgentCheckInResponse response = isStatusCheck ?
+            getLoadBalancer(source.getType()).checkRegisteredInstance(instance, source.getName(), agent) :
+            getLoadBalancer(source.getType()).registerInstance(instance, source.getName(), agent);
+        if (response.getExceptionMessage().isPresent()) {
+          maybeVpcException = Optional.of(maybeVpcException.or("") + response.getExceptionMessage().get() + "\n");
+        }
+        if (response.getState().ordinal() > state.ordinal()) {
+          state = response.getState();
+        }
+        if (response.getWaitTime() > maxWaitTime) {
+          maxWaitTime = response.getWaitTime();
+        }
       }
-      if (results.contains(RegisterInstanceResult.ELB_NO_VPC_FOUND) && configuration.get().isFailWhenNoElbForVpc()) {
-        throw new NoMatchingElbForVpcException(String.format("No ELB found for vpc %s", agent.getEc2().getVpcId().or("")));
+      if (maybeVpcException.isPresent() && configuration.get().isFailWhenNoElbForVpc()) {
+        throw new NoMatchingElbForVpcException(maybeVpcException.get());
       }
     }
+    return new AgentCheckInResponse(state, maybeVpcException, maxWaitTime);
   }
 
   public boolean isElbEnabledAgent(BaragonAgentMetadata agent, Optional<BaragonGroup> group, String groupName) {

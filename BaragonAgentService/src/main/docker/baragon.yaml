@@ -22,6 +22,8 @@ loadBalancerConfig:
   checkConfigCommand: /usr/sbin/nginx -t
   reloadConfigCommand: /usr/sbin/nginx -s reload
 
+deregisterOnGracefulShutdown: true
+
 templates:
   - filename: proxy/%s.conf
     template: |

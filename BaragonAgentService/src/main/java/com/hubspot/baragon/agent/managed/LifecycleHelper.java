@@ -47,13 +47,14 @@ import com.hubspot.baragon.data.BaragonStateDatastore;
 import com.hubspot.baragon.data.BaragonWorkerDatastore;
 import com.hubspot.baragon.exceptions.AgentServiceNotifyException;
 import com.hubspot.baragon.exceptions.LockTimeoutException;
-import com.hubspot.baragon.models.AgentRemovedResponse;
+import com.hubspot.baragon.models.AgentCheckInResponse;
 import com.hubspot.baragon.models.BaragonAgentMetadata;
 import com.hubspot.baragon.models.BaragonAgentState;
 import com.hubspot.baragon.models.BaragonAuthKey;
 import com.hubspot.baragon.models.BaragonConfigFile;
 import com.hubspot.baragon.models.BaragonServiceState;
 import com.hubspot.baragon.models.ServiceContext;
+import com.hubspot.baragon.models.TrafficSourceState;
 import com.hubspot.horizon.HttpClient;
 import com.hubspot.horizon.HttpRequest;
 import com.hubspot.horizon.HttpRequest.Method;
@@ -112,59 +113,60 @@ public class LifecycleHelper {
     this.agentLockTimeoutMs = agentLockTimeoutMs;
   }
 
-  public void notifyShutdown() throws Exception {
-    Callable<AgentRemovedResponse> callable = () -> {
-        HttpResponse response = httpClient.execute(buildNotifyServiceRequest("shutdown"));
-        LOG.info(String.format("Got %s response from BaragonService", response.getStatusCode()));
-        if (response.isError()) {
-          throw new AgentServiceNotifyException(String.format("Bad response received from BaragonService %s", response.getAsString()));
-        }
-        try {
-          return response.getAs(AgentRemovedResponse.class);
-        } catch (Exception e) {
-          if (response.isSuccess()) {
-            LOG.warn("Unable to parse response ({}) from successful shutdown call", response.getAsString());
-            return null;
-          } else {
-            throw e;
-          }
-        }
-      };
-
-    Retryer<AgentRemovedResponse> retryer = RetryerBuilder.<AgentRemovedResponse>newBuilder()
+  public void notifyService(String action) throws Exception {
+    long start = System.currentTimeMillis();
+    Retryer<AgentCheckInResponse> retryer = RetryerBuilder.<AgentCheckInResponse>newBuilder()
         .retryIfException()
-        .retryIfResult((response) -> response != null && !response.isRemoved())
         .withStopStrategy(StopStrategies.stopAfterAttempt(configuration.getMaxNotifyServiceAttempts()))
         .withWaitStrategy(WaitStrategies.exponentialWait(1, TimeUnit.SECONDS))
         .build();
 
-    try {
-      AgentRemovedResponse agentRemovedResponse = retryer.call(callable);
-      LOG.debug("Got shutdown response {}", agentRemovedResponse);
-      if (agentRemovedResponse != null && agentRemovedResponse.getConnectionDrainTimeMs().isPresent()) {
-        LOG.info("Waiting for ELB connection draining ({} ms)", agentRemovedResponse.getConnectionDrainTimeMs().get());
-        Thread.sleep(agentRemovedResponse.getConnectionDrainTimeMs().get());
+    AgentCheckInResponse agentCheckInResponse = retryer.call(checkInCallable(action, false));
+    while ((agentCheckInResponse.getState() != TrafficSourceState.DONE
+        && System.currentTimeMillis() - start < configuration.getAgentCheckInTimeoutMs())) {
+      try {
+        Thread.sleep(agentCheckInResponse.getWaitTime());
+      } catch (InterruptedException ie) {
+        LOG.error("Interrupted waiting for check in with service, shutting down early");
+        break;
       }
-    } catch (InterruptedException ie) {
-      LOG.error("Interrupted while waiting for connection drain, shutting down early");
+      agentCheckInResponse = retryer.call(checkInCallable(action, true));
     }
+    LOG.info("Finished agent check in");
   }
 
-  public void notifyStartup() throws AgentServiceNotifyException {
-    HttpResponse response = httpClient.execute(buildNotifyServiceRequest("startup"));
-    LOG.info(String.format("Got %s response from BaragonService", response.getStatusCode()));
-    if (response.isError()) {
-      throw new AgentServiceNotifyException(String.format("Bad response received from BaragonService %s", response.getAsString()));
-    }
+  private Callable<AgentCheckInResponse> checkInCallable(String action, boolean addStatusParam) {
+    return () -> {
+      HttpResponse response = httpClient.execute(buildNotifyServiceRequest(action, addStatusParam));
+      LOG.info(String.format("Got %s response from BaragonService", response.getStatusCode()));
+      if (response.isError()) {
+        throw new AgentServiceNotifyException(String.format("Bad response received from BaragonService %s", response.getAsString()));
+      }
+      try {
+        LOG.debug("Got shutdown response {}", response.getAsString());
+        return response.getAs(AgentCheckInResponse.class);
+      } catch (Exception e) {
+        if (response.isSuccess()) {
+          LOG.warn("Unable to parse response ({}) from successful shutdown call", response.getAsString());
+          return null;
+        } else {
+          throw e;
+        }
+      }
+    };
   }
 
-  private HttpRequest buildNotifyServiceRequest(String action) throws AgentServiceNotifyException {
+  private HttpRequest buildNotifyServiceRequest(String action, boolean addStatusParam) throws AgentServiceNotifyException {
     Collection<String> baseUris = workerDatastore.getBaseUris();
     if (!baseUris.isEmpty()) {
       HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
           .setUrl(String.format(SERVICE_CHECKIN_URL_FORMAT, baseUris.iterator().next(), configuration.getLoadBalancerConfiguration().getName(), action))
           .setMethod(HttpRequest.Method.POST)
           .setBody(baragonAgentMetadata);
+
+      if (addStatusParam) {
+        requestBuilder.setQueryParam("status").to(true);
+      }
 
       Map<String, BaragonAuthKey> authKeys = authDatastore.getAuthKeyMap();
       if (!authKeys.isEmpty()) {
@@ -290,9 +292,10 @@ public class LifecycleHelper {
     executorService.shutdown();
     if (configuration.isDeregisterOnGracefulShutdown()) {
       LOG.info("Notifying BaragonService of shutdown...");
-      notifyShutdown();
+      notifyService("shutdown");
     }
     if (configuration.getStateFile().isPresent()) {
+      LOG.info("Removing state file");
       removeStateFile();
     }
   }

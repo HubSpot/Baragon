@@ -8,6 +8,8 @@ import javax.validation.Valid;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 
+import org.hibernate.validator.constraints.NotEmpty;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Optional;
@@ -16,8 +18,8 @@ import com.hubspot.baragon.config.AuthConfiguration;
 import com.hubspot.baragon.config.GraphiteConfiguration;
 import com.hubspot.baragon.config.HttpClientConfiguration;
 import com.hubspot.baragon.config.ZooKeeperConfiguration;
+
 import io.dropwizard.Configuration;
-import org.hibernate.validator.constraints.NotEmpty;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class BaragonAgentConfiguration extends Configuration {
@@ -84,6 +86,9 @@ public class BaragonAgentConfiguration extends Configuration {
 
   @JsonProperty("maxNotifyServiceAttempts")
   private int maxNotifyServiceAttempts = 3;
+
+  @JsonProperty("agentCheckInTimeoutMs")
+  private long agentCheckInTimeoutMs = 60000;
 
   @JsonProperty("stateFile")
   private Optional<String> stateFile = Optional.absent();
@@ -314,5 +319,13 @@ public class BaragonAgentConfiguration extends Configuration {
 
   public void setWeightingFormat(String weightingFormat) {
     this.weightingFormat = weightingFormat;
+  }
+
+  public long getAgentCheckInTimeoutMs() {
+    return agentCheckInTimeoutMs;
+  }
+
+  public void setAgentCheckInTimeoutMs(long agentCheckInTimeoutMs) {
+    this.agentCheckInTimeoutMs = agentCheckInTimeoutMs;
   }
 }
