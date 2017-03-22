@@ -143,7 +143,7 @@ public class LifecycleHelper {
         throw new AgentServiceNotifyException(String.format("Bad response received from BaragonService %s", response.getAsString()));
       }
       try {
-        LOG.debug("Got shutdown response {}", response.getAsString());
+        LOG.debug("Got {} response {}", action, response.getAsString());
         return response.getAs(AgentCheckInResponse.class);
       } catch (Exception e) {
         if (response.isSuccess()) {
