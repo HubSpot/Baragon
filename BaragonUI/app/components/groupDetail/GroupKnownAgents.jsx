@@ -23,25 +23,25 @@ const removeColumn = (groupName, removeKnownAgent) => (
   />
 );
 
-const agentColumn = (
-  <Column
-    label="ID"
-    id="activeAgentId"
-    key="activeAgentId"
-    cellData={
-      (agent) => agent.agentId
-    }
-    sortable={true}
-  />
-);
-
 const uriColumn = (
   <Column
     label="Base URI"
     id="activeAgentBaseUri"
     key="activeAgentBaseUri"
     cellData={
-      (agent) => (<a href={`${agent.baseAgentUri}/status`}>{agent.baseAgentUri}</a>)
+      (agent) => (<a href={`${agent.baseAgentUri}/status`}>{agent.agentId}</a>)
+    }
+    sortable={true}
+  />
+);
+
+const instanceIdColumn = (
+  <Column
+    label="Instance ID"
+    id="instanceId"
+    key="instanceId"
+    cellData={
+      (agent) => Utils.maybe(agent, ['ec2', 'instanceId'], "")
     }
     sortable={true}
   />
@@ -70,8 +70,8 @@ const GroupKnownAgents = ({knownAgents, editable, group, afterRemoveKnownAgent})
           keyGetter={(agent) => agent.agentId}
           paginated={false}
           >
-          {agentColumn}
           {uriColumn}
+          {instanceIdColumn}
           {lastSeenColumn}
           {removeColumn(group, afterRemoveKnownAgent)}
         </UITable>

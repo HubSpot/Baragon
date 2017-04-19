@@ -22,6 +22,22 @@ export const FetchTargetGroupTargets = buildApiAction(
   (groupName) => groupName
 );
 
+export const RemoveFromTargetGroup = buildJsonApiAction(
+  'REMOVE_FROM_TARGET_GROUP',
+  'DELETE',
+  (groupName, instanceId) => ({
+    url: `/albs/target-groups/${groupName}/targets/${instanceId}`,
+  }),
+);
+
+export const AddToTargetGroup = buildJsonApiAction(
+  'ADD_TO_TARGET_GROUP',
+  'POST',
+  (groupName, instanceId) => ({
+    url: `/albs/target-group/${groupName}/targets?instanceId=${instanceId}`,
+  }),
+);
+
 export const ModifyTargetGroup = buildJsonApiAction(
   'MODIFY_TARGET_GROUP',
   'POST',

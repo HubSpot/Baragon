@@ -37,6 +37,8 @@ import {
   FetchElbs,
   FetchElb,
   FetchElbInstances,
+  AddToElb,
+  RemoveFromElb
 } from '../../actions/api/elbs';
 
 import {
@@ -47,6 +49,8 @@ import {
   FetchLoadBalancer,
   FetchLoadBalancerListeners,
   FetchListenerRules,
+  AddToTargetGroup,
+  RemoveFromTargetGroup
 } from '../../actions/api/albs';
 
 const status = buildApiActionReducer(FetchBaragonStatus);
@@ -75,6 +79,10 @@ const albs = buildApiActionReducer(FetchLoadBalancers, []);
 const alb = buildKeyedApiActionReducer(FetchLoadBalancer, {});
 const listeners = buildKeyedApiActionReducer(FetchLoadBalancerListeners, []);
 const rules = buildKeyedApiActionReducer(FetchListenerRules, []);
+const addToTargetGroup = buildKeyedApiActionReducer(AddToTargetGroup, []);
+const removeFromTargetGroup = buildKeyedApiActionReducer(RemoveFromTargetGroup, []);
+const addToElb = buildKeyedApiActionReducer(AddToElb, []);
+const removeFromElb = buildKeyedApiActionReducer(RemoveFromElb, []);
 
 export default combineReducers({
   status,
@@ -103,4 +111,8 @@ export default combineReducers({
   alb,
   listeners,
   rules,
+  addToTargetGroup,
+  removeFromTargetGroup,
+  addToElb,
+  RemoveFromElb
 });

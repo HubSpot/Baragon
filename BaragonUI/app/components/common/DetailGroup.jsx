@@ -13,7 +13,7 @@ const DetailGroup = ({name, width = 3, items = [], field = (it) => it, keyGetter
   }
 
   return (
-    <div className={`col-md-${width}`}>
+    <div>
       <h4>{ name }</h4>
       <ul className="list-group">
         { contents }
