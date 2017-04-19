@@ -1,4 +1,4 @@
-import { buildApiAction } from './base';
+import { buildApiAction, buildJsonApiAction } from './base';
 
 export const FetchElbs = buildApiAction(
   'FETCH_ELBS',
@@ -20,4 +20,20 @@ export const FetchElbInstances = buildApiAction(
     url: `/elbs/${elbName}/instances`
   }),
   (elbName) => elbName
+);
+
+export const AddToElb = buildJsonApiAction(
+  'ADD_TO_ELB',
+  'POST',
+  (elbName, instanceId) => ({
+    url: `/elbs/${elbName}/update?instanceId=${instanceId}`
+  })
+);
+
+export const RemoveFromElb = buildApiAction(
+  'REMOVE_FROM_ELB',
+  (elbName, instanceId) => ({
+    method: 'DELETE',
+    url: `/elbs/${elbName}/update?instanceId=${instanceId}`
+  })
 );
