@@ -1,12 +1,14 @@
 import React, { PropTypes } from 'react';
 import { connect } from 'react-redux';
 import { Link } from 'react-router';
+import { Glyphicon } from 'react-bootstrap';
 
 import { refresh } from '../../actions/ui/targetGroupDetail';
 import Utils from '../../utils';
 import rootComponent from '../../rootComponent';
 import DetailGroup from '../common/DetailGroup';
 import JSONButton from '../common/JSONButton';
+import UpdateInstanceButton from '../common/modalButtons/UpdateInstanceButton';
 
 import HealthCheckPanel from './HealthCheckPanel';
 import DetailItem from './DetailItem';
@@ -57,23 +59,52 @@ const TargetGroupDetail = ({targets, targetGroup, loadBalancerArnsToNames, edita
         </div>
       </div>
       <div className="row">
-        <DetailGroup name="Instances" items={targets} keyGetter={(instance) => instance.target.id} field={
-            (instance) => (
-              <ul className="list-unstyled">
-                <li><strong>ID:</strong> {instance.target.id}</li>
-                <li><strong>Port</strong>: {instance.target.port}</li>
-                <li><strong>Status</strong>: {instance.targetHealth.state}</li>
-                { instance.targetHealth.reason && <li><strong>Reason</strong>: {instance.targetHealth.reason}</li>}
-              </ul>
-            )
+        <div className="col-md-4">
+          <DetailGroup name="Instances" items={targets} keyGetter={(instance) => instance.target.id} field={
+              (instance) => (
+                <ul className="list-unstyled">
+                  <li><strong>ID:</strong> {instance.target.id}</li>
+                  <li><strong>Port</strong>: {instance.target.port}</li>
+                  <li><strong>Status</strong>: {instance.targetHealth.state}</li>
+                  { instance.targetHealth.reason && <li><strong>Reason</strong>: {instance.targetHealth.reason}</li>}
+                  { editable &&
+                    <UpdateInstanceButton
+                      type='alb'
+                      action='remove'
+                      loadBalancer={targetGroup.targetGroupName}
+                      instanceId={instance.target.id}
+                      then={refresh(targetGroup.targetGroupName)}
+                    >
+                      <a data-action="update">
+                        <Glyphicon glyph="remove" />
+                      </a>
+                    </UpdateInstanceButton>
+                  }
+                </ul>
+              )
+            }
+          />
+          { editable &&
+            <UpdateInstanceButton
+              type='alb'
+              action='add'
+              loadBalancer={targetGroup.targetGroupName}
+              then={refresh(targetGroup.targetGroupName)}
+            >
+              <a data-action="update">
+                <Glyphicon glyph="plus" />
+              </a>
+            </UpdateInstanceButton>
           }
-        />
-        <DetailGroup
-          name="Associated Load Balancers"
-          items={targetGroup.loadBalancerArns}
-          width={9}
-          field={renderLoadBalancer(loadBalancerArnsToNames)}
-        />
+        </div>
+        <div className="col-md-4">
+          <DetailGroup
+            name="Associated Load Balancers"
+            items={targetGroup.loadBalancerArns}
+            width={9}
+            field={renderLoadBalancer(loadBalancerArnsToNames)}
+          />
+        </div>
       </div>
     </div>
   );

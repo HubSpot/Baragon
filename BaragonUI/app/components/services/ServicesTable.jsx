@@ -151,12 +151,16 @@ const tableContent = (services, filter) => {
   if (filter === '') {
     return services;
   } else {
-    const fuzzyObjects = fuzzy.filter(filter, services, {
+    const fuzzyServiceIdObjects = fuzzy.filter(filter, services, {
       extract: (service) => service.service.serviceId,
       returnMatchInfo: true,
     });
+    const fuzzyBasePathObjects = fuzzy.filter(filter, services, {
+      extract: (service) => service.service.serviceBasePath,
+      returnMatchInfo: true,
+    });
 
-    return Utils.fuzzyFilter(filter, fuzzyObjects, (service) => service.service.serviceId);
+    return Utils.fuzzyFilter(filter, fuzzyServiceIdObjects.concat(fuzzyBasePathObjects), (service) => service.service.serviceId);
   }
 };
 

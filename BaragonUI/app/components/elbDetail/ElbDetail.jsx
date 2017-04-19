@@ -1,8 +1,10 @@
 import React, { PropTypes } from 'react';
 import { connect } from 'react-redux';
+import { Glyphicon } from 'react-bootstrap';
 
 import rootComponent from '../../rootComponent';
 import JSONButton from '../common/JSONButton';
+import UpdateInstanceButton from '../common/modalButtons/UpdateInstanceButton';
 import { refresh } from '../../actions/ui/elbDetail';
 import Utils from '../../utils';
 
@@ -27,7 +29,7 @@ DetailItem.propTypes = {
 };
 
 
-const ElbDetail = ({loadBalancerName, loadBalancer, instances}) => {
+const ElbDetail = ({loadBalancerName, loadBalancer, instances, editable}) => {
   return (
     <div>
       <div className="row detail-header">
@@ -53,21 +55,52 @@ const ElbDetail = ({loadBalancerName, loadBalancer, instances}) => {
         </div>
       </div>
       <div className="row">
-        <DetailGroup
-          name="Instances"
-          items={instances}
-          keyGetter={(instance) => instance.instanceId}
-          field={(instance) =>
-            <ul className="list-unstyled">
-              <li><strong>ID</strong>: {instance.instanceId}</li>
-              <li><strong>State</strong>: {instance.state}</li>
-              {instance.description !== 'N/A' && <li><strong>Reason</strong>: {instance.description}</li> }
-            </ul>
+        <div className="col-md-3">
+          <DetailGroup
+            name="Instances"
+            items={instances}
+            keyGetter={(instance) => instance.instanceId}
+            field={(instance) =>
+              <ul className="list-unstyled">
+                <li><strong>ID</strong>: {instance.instanceId}</li>
+                <li><strong>State</strong>: {instance.state}</li>
+                {instance.description !== 'N/A' && <li><strong>Reason</strong>: {instance.description}</li> }
+                {editable && <UpdateInstanceButton
+                    type='elb'
+                    action='remove'
+                    loadBalancer={loadBalancerName}
+                    instanceId={instance.instanceId}
+                    then={refresh(loadBalancerName)}
+                  >
+                    <a data-action="update">
+                      <Glyphicon glyph="remove" />
+                    </a>
+                  </UpdateInstanceButton>
+                }
+              </ul>
+            }
+          />
+          {editable && <UpdateInstanceButton
+              type='elb'
+              action='add'
+              loadBalancer={loadBalancerName}
+              then={refresh(loadBalancerName)}
+            >
+              <a data-action="update">
+                <Glyphicon glyph="plus" />
+              </a>
+            </UpdateInstanceButton>
           }
-        />
-        <DetailGroup name="Availibility Zones" items={loadBalancer.availabilityZones} />
-        <DetailGroup name="Security Groups" items={loadBalancer.securityGroups} />
-        <DetailGroup name="Subnets" items={loadBalancer.subnets} />
+        </div>
+        <div className="col-md-3">
+          <DetailGroup name="Availibility Zones" items={loadBalancer.availabilityZones} />
+        </div>
+        <div className="col-md-3">
+          <DetailGroup name="Security Groups" items={loadBalancer.securityGroups} />
+        </div>
+        <div className="col-md-3">
+          <DetailGroup name="Subnets" items={loadBalancer.subnets} />
+        </div>
       </div>
     </div>
   );
@@ -80,13 +113,15 @@ ElbDetail.propTypes = {
     instanceId: PropTypes.string,
     state: PropTypes.oneOf(['InService', 'OutOfService', 'Unknown']),
     reason: PropTypes.reason,
-  }))
+  })),
+  editable: PropTypes.bool.isRequired
 };
 
 const mapStateToProps = (state, ownProps) => ({
   loadBalancerName: ownProps.params.loadBalancerName,
   loadBalancer: Utils.maybe(state, ['api', 'elb', ownProps.params.loadBalancerName, 'data']),
   instances: Utils.maybe(state, ['api', 'elbInstances', ownProps.params.loadBalancerName, 'data']),
+  editable: config.allowEdit,
 });
 
 export default connect(mapStateToProps)(rootComponent(ElbDetail, (props) =>
