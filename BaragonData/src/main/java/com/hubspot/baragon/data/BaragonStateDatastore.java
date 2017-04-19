@@ -1,5 +1,22 @@
 package com.hubspot.baragon.data;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+
+import org.apache.curator.framework.CuratorFramework;
+import org.apache.curator.framework.api.transaction.CuratorTransaction;
+import org.apache.curator.framework.api.transaction.CuratorTransactionFinal;
+import org.apache.curator.utils.ZKPaths;
+import org.apache.zookeeper.data.Stat;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.codahale.metrics.annotation.Timed;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Function;
@@ -15,21 +32,6 @@ import com.hubspot.baragon.models.BaragonService;
 import com.hubspot.baragon.models.BaragonServiceState;
 import com.hubspot.baragon.models.UpstreamInfo;
 import com.hubspot.baragon.utils.ZkParallelFetcher;
-import org.apache.curator.framework.CuratorFramework;
-import org.apache.curator.framework.api.transaction.CuratorTransactionFinal;
-import org.apache.curator.utils.ZKPaths;
-import org.apache.zookeeper.data.Stat;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 
 @Singleton
 public class BaragonStateDatastore extends AbstractDataStore {
@@ -99,11 +101,23 @@ public class BaragonStateDatastore extends AbstractDataStore {
     String serviceId = request.getLoadBalancerService().getServiceId();
     Collection<UpstreamInfo> currentUpstreams = getUpstreams(serviceId);
     String servicePath = String.format(SERVICE_FORMAT, serviceId);
-    CuratorTransactionFinal transaction;
+
+    if (!request.isNoServiceUpdate() && !nodeExists(servicePath)) {
+      throw new RuntimeException("BaragonRequest " + request.getLoadBalancerRequestId() + " has noServiceUpdate=true, but no BaragonService exists!");  // TODO: better exception?
+    }
+
+    CuratorTransaction transaction = curatorFramework.inTransaction();
+
     if (nodeExists(servicePath)) {
-      transaction = curatorFramework.inTransaction().setData().forPath(servicePath, serialize(request.getLoadBalancerService())).and();
+      if (!request.isNoServiceUpdate()) {
+        transaction = transaction.setData().forPath(servicePath, serialize(request.getLoadBalancerService())).and();
+        LOG.info("Updating service '{}'", request.getLoadBalancerService().getServiceId());
+      } else {
+        LOG.info("Not updating service '{}' because noServiceUpdate=true", request.getLoadBalancerService().getServiceId());
+      }
     } else {
-      transaction = curatorFramework.inTransaction().create().forPath(servicePath, serialize(request.getLoadBalancerService())).and();
+      LOG.info("Creating ZK node for service '{}'", request.getLoadBalancerService().getServiceId());
+      transaction = transaction.create().forPath(servicePath, serialize(request.getLoadBalancerService())).and();
     }
 
     List<String> pathsToDelete = new ArrayList<>();
@@ -161,7 +175,7 @@ public class BaragonStateDatastore extends AbstractDataStore {
         }
       }
     }
-    transaction.commit();
+    ((CuratorTransactionFinal)transaction).commit();
   }
 
   private List<String> matchingUpstreamPaths(Collection<UpstreamInfo> currentUpstreams, UpstreamInfo toAdd) {

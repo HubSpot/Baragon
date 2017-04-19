@@ -58,7 +58,7 @@ public class ServiceManager {
     Optional<BaragonService> maybeService = stateDatastore.getService(serviceId);
     if (maybeService.isPresent()) {
       try {
-        return requestManager.enqueueRequest(buildRemoveRequest(maybeService.get(), requestId, noValidate, noReload));
+        return requestManager.enqueueRequest(buildRemoveRequest(maybeService.get(), requestId, noValidate, noReload, false));
       } catch (Exception e) {
         return BaragonResponse.failure(requestId, e.getMessage());
       }
@@ -67,15 +67,15 @@ public class ServiceManager {
     }
   }
 
-  private BaragonRequest buildRemoveRequest(BaragonService service, String requestId, boolean noValidate, boolean noReload) throws Exception {
+  private BaragonRequest buildRemoveRequest(BaragonService service, String requestId, boolean noValidate, boolean noReload, boolean noServiceUpdate) throws Exception {
     List<UpstreamInfo> empty = Collections.emptyList();
     List<UpstreamInfo> remove;
     remove =  new ArrayList<>(stateDatastore.getUpstreams(service.getServiceId()));
-    return new BaragonRequest(requestId, service, empty, remove, empty, Optional.<String>absent(), Optional.of(RequestAction.DELETE), noValidate, noReload);
+    return new BaragonRequest(requestId, service, empty, remove, empty, Optional.<String>absent(), Optional.of(RequestAction.DELETE), noValidate, noReload, noServiceUpdate);
   }
 
   private BaragonRequest buildReloadRequest(BaragonService service, String requestId, boolean noValidate) {
     List<UpstreamInfo> empty = Collections.emptyList();
-    return new BaragonRequest(requestId, service, empty, empty, empty, Optional.<String>absent(), Optional.of(RequestAction.RELOAD), noValidate, false);
+    return new BaragonRequest(requestId, service, empty, empty, empty, Optional.<String>absent(), Optional.of(RequestAction.RELOAD), noValidate, false, false);
   }
 }
