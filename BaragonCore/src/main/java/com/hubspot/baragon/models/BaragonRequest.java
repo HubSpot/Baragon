@@ -10,7 +10,7 @@ import javax.validation.constraints.Pattern;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
 
@@ -61,8 +61,8 @@ public class BaragonRequest {
     this.removeUpstreams = addRequestId(removeUpstreams, loadBalancerRequestId);
     this.replaceServiceId = replaceServiceId;
     this.action = action;
-    this.replaceUpstreams = Objects.firstNonNull(replaceUpstreams, Collections.<UpstreamInfo>emptyList());
-    this.noValidate = Objects.firstNonNull(noValidate, false);
+    this.replaceUpstreams = MoreObjects.firstNonNull(replaceUpstreams, Collections.<UpstreamInfo>emptyList());
+    this.noValidate = MoreObjects.firstNonNull(noValidate, false);
     this.noReload = noReload;
 
   }

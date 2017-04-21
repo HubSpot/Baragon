@@ -1,15 +1,15 @@
 package com.hubspot.baragon.models;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.common.base.Objects;
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.Multimap;
-
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.base.MoreObjects;
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ServiceContext {
@@ -27,7 +27,7 @@ public class ServiceContext {
                         @JsonProperty("present") boolean present) {
     this.service = service;
     this.timestamp = timestamp;
-    this.upstreams = Objects.firstNonNull(upstreams, Collections.<UpstreamInfo>emptyList());
+    this.upstreams = MoreObjects.firstNonNull(upstreams, Collections.<UpstreamInfo>emptyList());
     this.present = present;
     this.rootPath = service.getServiceBasePath().equals("/");
 

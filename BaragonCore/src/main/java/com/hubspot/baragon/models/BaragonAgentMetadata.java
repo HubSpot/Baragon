@@ -101,7 +101,7 @@ public class BaragonAgentMetadata {
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
+    return MoreObjects.toStringHelper(this)
       .add("baseAgentUri", baseAgentUri)
       .add("domain", domain)
       .add("agentId", agentId)
