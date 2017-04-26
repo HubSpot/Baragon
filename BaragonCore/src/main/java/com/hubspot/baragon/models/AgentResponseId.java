@@ -1,6 +1,6 @@
 package com.hubspot.baragon.models;
 
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 
 public class AgentResponseId {
   private final String id;
@@ -79,7 +79,7 @@ public class AgentResponseId {
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
+    return MoreObjects.toStringHelper(this)
         .add("statusCode", statusCode)
         .add("exception", exception)
         .add("attempt", attempt)

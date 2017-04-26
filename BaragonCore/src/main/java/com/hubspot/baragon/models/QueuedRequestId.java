@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 
 @JsonIgnoreProperties( ignoreUnknown = true )
 public class QueuedRequestId {
@@ -75,7 +75,7 @@ public class QueuedRequestId {
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
+    return MoreObjects.toStringHelper(this)
         .add("serviceId", serviceId)
         .add("requestId", requestId)
         .add("index", index)

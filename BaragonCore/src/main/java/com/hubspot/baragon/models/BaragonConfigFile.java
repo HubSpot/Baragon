@@ -2,7 +2,7 @@ package com.hubspot.baragon.models;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 
 @JsonIgnoreProperties( ignoreUnknown = true )
 public class BaragonConfigFile {
@@ -25,7 +25,7 @@ public class BaragonConfigFile {
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(BaragonConfigFile.class)
+    return MoreObjects.toStringHelper(BaragonConfigFile.class)
         .add("fullPath", fullPath)
         .add("content", content)
         .toString();
