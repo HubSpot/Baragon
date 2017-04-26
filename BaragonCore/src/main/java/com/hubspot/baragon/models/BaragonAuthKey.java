@@ -3,7 +3,7 @@ package com.hubspot.baragon.models;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Optional;
 
 @JsonIgnoreProperties( ignoreUnknown = true )
@@ -82,7 +82,7 @@ public class BaragonAuthKey {
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
+    return MoreObjects.toStringHelper(this)
         .add("value", value)
         .add("owner", owner)
         .add("createdAt", createdAt)

@@ -14,7 +14,7 @@ import javax.validation.constraints.Size;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Optional;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -52,11 +52,11 @@ public class BaragonService {
     this.serviceId = serviceId;
     this.owners = owners;
     this.serviceBasePath = serviceBasePath;
-    this.additionalPaths = Objects.firstNonNull(additionalPaths, Collections.<String> emptyList());
+    this.additionalPaths = MoreObjects.firstNonNull(additionalPaths, Collections.<String> emptyList());
     this.loadBalancerGroups = loadBalancerGroups;
     this.options = options;
     this.templateName = templateName;
-    this.domains = Objects.firstNonNull(domains, Collections.<String>emptySet());
+    this.domains = MoreObjects.firstNonNull(domains, Collections.<String>emptySet());
   }
 
   public BaragonService(String serviceId, Collection<String> owners, String serviceBasePath, List<String> additionalPaths, Set<String> loadBalancerGroups, Map<String, Object> options, Optional<String> templateName) {
