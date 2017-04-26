@@ -1,7 +1,7 @@
 package com.hubspot.baragon.models;
 
 import com.google.common.base.Charsets;
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 import com.google.common.io.BaseEncoding;
 
 public class AgentRequestId {
@@ -57,7 +57,7 @@ public class AgentRequestId {
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
+    return MoreObjects.toStringHelper(this)
         .add("type", type)
         .add("baseUrl", baseUrl)
         .toString();

@@ -2,6 +2,7 @@ package com.hubspot.baragon.models;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 import com.google.common.base.Optional;
 
@@ -60,7 +61,7 @@ public class AgentBatchResponseItem {
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
+    return MoreObjects.toStringHelper(this)
       .add("requestId", requestId)
       .add("statusCode", statusCode)
       .add("message", message)

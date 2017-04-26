@@ -5,7 +5,7 @@ import java.util.Map;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Optional;
 
 @JsonIgnoreProperties( ignoreUnknown = true )
@@ -66,7 +66,7 @@ public class BaragonKnownAgentMetadata extends BaragonAgentMetadata {
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
+    return MoreObjects.toStringHelper(this)
             .add("baseAgentUri", getBaseAgentUri())
             .add("domain", getDomain())
             .add("agentId", getAgentId())

@@ -2,6 +2,7 @@ package com.hubspot.baragon.models;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 
 public class QueuedRequestWithState {
@@ -51,7 +52,7 @@ public class QueuedRequestWithState {
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
+    return MoreObjects.toStringHelper(this)
       .add("queuedRequestId", queuedRequestId)
       .add("request", request)
       .add("currentState", currentState)

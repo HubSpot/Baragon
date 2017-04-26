@@ -1,6 +1,7 @@
 package com.hubspot.baragon.agent.models;
 
 import com.github.jknack.handlebars.Template;
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 
 public class LbConfigTemplate {
@@ -29,7 +30,7 @@ public class LbConfigTemplate {
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(LbConfigTemplate.class)
+    return MoreObjects.toStringHelper(LbConfigTemplate.class)
         .add("filename", filename)
         .add("template", template)
         .add("formatType", formatType)
