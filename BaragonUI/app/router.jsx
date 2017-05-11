@@ -1,7 +1,6 @@
 import React from 'react';
 import { Provider } from 'react-redux';
-import { Router, Route, IndexRoute, useRouterHistory } from 'react-router';
-import { createHistory } from 'history';
+import { Router, Route, IndexRoute } from 'react-router';
 import { syncHistoryWithStore } from 'react-router-redux';
 
 import Application from './components/common/Application';
@@ -12,13 +11,10 @@ import ServiceDetail from './components/serviceDetail/ServiceDetail';
 import Groups from './components/groups/Groups';
 import GroupDetail from './components/groupDetail/GroupDetail';
 import RequestDetail from './components/requestDetail/RequestDetail';
-import Elbs from './components/elbs/Elbs';
 import ElbDetail from './components/elbDetail/ElbDetail';
-import Albs from './components/albs/Albs';
 import TargetGroupDetail from './components/targetGroupDetail/TargetGroupDetail';
 import AlbDetail from './components/albDetail/AlbDetail';
-
-const getFilenameFromSplat = (splat) => _.last(splat.split('/'));
+import LoadBalancers from './components/loadBalancers/LoadBalancers';
 
 const routes = (
   <Route path="/" component={Application}>
@@ -30,9 +26,8 @@ const routes = (
     <Route path="requests/:requestId" component={RequestDetail} title={(params) => `${params.requestId}`} />
     <Route path="group/:groupId" component={GroupDetail} title={(params) => `${params.groupId}`} />
     <Route path="request/:requestId" component={RequestDetail} title={(params) => `${params.requestId}`} />
-    <Route path="elbs" component={Elbs} title="Elbs" />
+    <Route path="loadbalancers" component={LoadBalancers} title="Load Balancers" />
     <Route path="elbs/:loadBalancerName" component={ElbDetail} title={(params) => `${params.loadBalancerName}`} />
-    <Route path="albs" component={Albs} title="ALBs" />
     <Route path="albs/target-groups/:targetGroupName" component={TargetGroupDetail} title={(params) => `${params.targetGroupName}`} />
     <Route path="albs/load-balancers/:albName" component={AlbDetail} title={(params) => `${params.albName}`} />
     <Route path="*" component={NotFound} title="Not Found" />
