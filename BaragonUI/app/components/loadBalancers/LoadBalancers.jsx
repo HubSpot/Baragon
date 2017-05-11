@@ -46,61 +46,85 @@ class LoadBalancers extends React.Component {
       <div>
         <h3>Load Balancers</h3>
         <div className="row">
-          <div className="col-md-12">
-            <h4>Application Load Balancers</h4>
-            <div className="input-group">
-              <label>
-                Search:
-                <input
-                  type="search"
-                  className="form-control"
-                  onKeyUp={this.searchAlbs}
-                />
-              </label>
+          <div className="row">
+            <div className="col-md-5">
+              <h4>Application Load Balancers</h4>
             </div>
-            <LoadBalancersTable
-              loadBalancers={this.props.albs}
-              filter={this.state.albsFilter}
-            />
+            <div className="col-md-7">
+              <div className="input-group pull-right">
+                <label>
+                  Search:
+                  <input
+                    type="search"
+                    className="form-control"
+                    onKeyUp={this.searchAlbs}
+                  />
+                </label>
+              </div>
+            </div>
+          </div>
+          <div className="row">
+            <div className="col-md-12">
+              <LoadBalancersTable
+                loadBalancers={this.props.albs}
+                filter={this.state.albsFilter}
+              />
+            </div>
           </div>
         </div>
         <div className="row">
-          <div className="col-md-12">
-            <h4>Elastic Load Balancers</h4>
-            <div className="input-group">
-              <label>
-                Search:
-                <input
-                  type="search"
-                  className="form-control"
-                  onKeyUp={this.searchElbs}
-                />
-              </label>
+          <div className="row">
+            <div className="col-md-5">
+              <h4>Elastic Load Balancers</h4>
             </div>
-            <ElbsTable
-              elbs={this.props.elbs}
-              filter={this.state.elbsFilter}
-              rowCount={5}
-            />
+            <div className="col-md-7">
+              <div className="input-group pull-right">
+                <label>
+                  Search:
+                  <input
+                    type="search"
+                    className="form-control"
+                    onKeyUp={this.searchElbs}
+                  />
+                </label>
+              </div>
+            </div>
+          </div>
+          <div className="row">
+            <div className="col-md-12">
+              <ElbsTable
+                elbs={this.props.elbs}
+                filter={this.state.elbsFilter}
+                rowCount={5}
+              />
+            </div>
           </div>
         </div>
         <div className="row">
-          <div className="col-md-12">
-            <h4>Target Groups (in Application Load Balancers)</h4>
-            <div className="input-group">
-              <label>
-                Search:
-                <input
-                  type="search"
-                  className="form-control"
-                  onKeyUp={this.searchTargetGroups}
-                />
-              </label>
+          <div className="row">
+            <div className="col-md-5">
+              <h4>Target Groups (in Application Load Balancers)</h4>
             </div>
-            <TargetGroupsTable
-              targetGroups={this.props.targetGroups}
-              filter={this.state.targetGroupsFilter}
-            />
+            <div className="col-md-7">
+              <div className="input-group pull-right">
+                <label>
+                  Search:
+                  <input
+                    type="search"
+                    className="form-control"
+                    onKeyUp={this.searchTargetGroups}
+                  />
+                </label>
+              </div>
+            </div>
+            <div className="row">
+              <div className="col-md-12">
+                <TargetGroupsTable
+                  targetGroups={this.props.targetGroups}
+                  filter={this.state.targetGroupsFilter}
+                />
+              </div>
+            </div>
           </div>
         </div>
       </div>
