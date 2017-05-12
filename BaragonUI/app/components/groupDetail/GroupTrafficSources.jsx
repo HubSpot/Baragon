@@ -50,7 +50,7 @@ const trafficSourceBox = (trafficSource, path) => {
 const trafficSourceRenderer = (trafficSource, key, editable, group, afterRemoveTrafficSource) => {
   const link = trafficSource.type === 'ALB_TARGET_GROUP'
     ? `/albs/target-groups/${trafficSource.name}`
-    : `/elbs/${trafficSource.type}`;
+    : `/elbs/${trafficSource.name}`;
   return (
     <li className="list-group-item" key={key}>
       {removeButton(editable, group, trafficSource, afterRemoveTrafficSource)}
