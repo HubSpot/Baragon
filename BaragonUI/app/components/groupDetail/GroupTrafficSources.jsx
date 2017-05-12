@@ -1,4 +1,5 @@
 import React, { PropTypes } from 'react';
+import { Link } from 'react-router';
 
 import Utils from '../../utils';
 import AddTrafficSourceButton from '../common/modalButtons/AddTrafficSourceButton';
@@ -34,14 +35,27 @@ const removeButton = (editable, groupName, trafficSource, afterRemoveTrafficSour
   }
 };
 
+const trafficSourceBox = (trafficSource, path) => {
+  return (
+    <ul className="list-unstyled">
+      <li>Name: <Link to={path}>
+          { trafficSource.name }
+        </Link>
+      </li>
+      <li>Type: {trafficSource.type}</li>
+    </ul>
+  );
+};
+
 const trafficSourceRenderer = (trafficSource, key, editable, group, afterRemoveTrafficSource) => {
+  const link = trafficSource.type === 'ALB_TARGET_GROUP'
+    ? `/albs/target-groups/${trafficSource.name}`
+    : `/elbs/${trafficSource.type}`;
   return (
     <li className="list-group-item" key={key}>
       {removeButton(editable, group, trafficSource, afterRemoveTrafficSource)}
-      <ul className="list-unstyled">
-        <li>Name: {trafficSource.name}</li>
-        <li>Type: {trafficSource.type}</li>
-      </ul>
+
+      { trafficSourceBox(trafficSource, link) }
     </li>
   );
 };
