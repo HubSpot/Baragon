@@ -117,13 +117,13 @@ class LoadBalancers extends React.Component {
                 </label>
               </div>
             </div>
-            <div className="row">
-              <div className="col-md-12">
-                <TargetGroupsTable
-                  targetGroups={this.props.targetGroups}
-                  filter={this.state.targetGroupsFilter}
-                />
-              </div>
+          </div>
+          <div className="row">
+            <div className="col-md-12">
+              <TargetGroupsTable
+                targetGroups={this.props.targetGroups}
+                filter={this.state.targetGroupsFilter}
+              />
             </div>
           </div>
         </div>
