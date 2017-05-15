@@ -85,10 +85,10 @@ const GroupKnownAgents = ({knownAgents, editable, group, afterRemoveKnownAgent})
           data={knownAgents}
           keyGetter={(agent) => agent.agentId}
           paginated={false}
-          >
-          {agentColumn}
-          {uriColumn}
-          {lastSeenColumn}
+        >
+          { uriColumn }
+          { instanceIdColumn }
+          { lastSeenColumn }
         </UITable>
       </div>
     );

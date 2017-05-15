@@ -74,7 +74,7 @@ const groupsColumn = (
         });
       }
     }
-    sortable={false}
+    sortable={true}
   />
 );
 

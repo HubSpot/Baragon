@@ -57,6 +57,7 @@ const ElbDetail = ({loadBalancerName, loadBalancer, instances, editable}) => {
       <div className="row">
         <div className="col-md-3">
           <DetailGroup
+            width={12}
             name="Instances"
             items={instances}
             keyGetter={(instance) => instance.instanceId}
@@ -66,11 +67,11 @@ const ElbDetail = ({loadBalancerName, loadBalancer, instances, editable}) => {
                 <li><strong>State</strong>: {instance.state}</li>
                 {instance.description !== 'N/A' && <li><strong>Reason</strong>: {instance.description}</li> }
                 {editable && <UpdateInstanceButton
-                    type='elb'
-                    action='remove'
-                    loadBalancer={loadBalancerName}
-                    instanceId={instance.instanceId}
-                    then={refresh(loadBalancerName)}
+                  type="elb"
+                  action="remove"
+                  loadBalancer={loadBalancerName}
+                  instanceId={instance.instanceId}
+                  then={refresh(loadBalancerName)}
                   >
                     <a data-action="update">
                       <Glyphicon glyph="remove" />
@@ -81,10 +82,10 @@ const ElbDetail = ({loadBalancerName, loadBalancer, instances, editable}) => {
             }
           />
           {editable && <UpdateInstanceButton
-              type='elb'
-              action='add'
-              loadBalancer={loadBalancerName}
-              then={refresh(loadBalancerName)}
+            type="elb"
+            action="add"
+            loadBalancer={loadBalancerName}
+            then={refresh(loadBalancerName)}
             >
               <a data-action="update">
                 <Glyphicon glyph="plus" />
@@ -92,15 +93,9 @@ const ElbDetail = ({loadBalancerName, loadBalancer, instances, editable}) => {
             </UpdateInstanceButton>
           }
         </div>
-        <div className="col-md-3">
-          <DetailGroup name="Availibility Zones" items={loadBalancer.availabilityZones} />
-        </div>
-        <div className="col-md-3">
-          <DetailGroup name="Security Groups" items={loadBalancer.securityGroups} />
-        </div>
-        <div className="col-md-3">
-          <DetailGroup name="Subnets" items={loadBalancer.subnets} />
-        </div>
+        <DetailGroup name="Availibility Zones" items={loadBalancer.availabilityZones} />
+        <DetailGroup name="Security Groups" items={loadBalancer.securityGroups} />
+        <DetailGroup name="Subnets" items={loadBalancer.subnets} />
       </div>
     </div>
   );
