@@ -46,17 +46,9 @@ NavLink.propTypes = {
   fragment: PropTypes.string.isRequired,
 };
 
-const elbLink = (isEnabled, fragment) => {
+const lbLink = (isEnabled, fragment) => {
   if (isEnabled) {
-    return <NavLink path="/elbs" name="Elbs" fragment={fragment} />;
-  } else {
-    return null;
-  }
-};
-
-const albLink = (isEnabled, fragment) => {
-  if (isEnabled) {
-    return <NavLink path="/albs" name="Albs" fragment={fragment} />;
+    return <NavLink path="/loadbalancers" name="Load Balancers" fragment={fragment} />;
   } else {
     return null;
   }
@@ -81,8 +73,7 @@ const Navigation = (props) => {
           <ul className="nav navbar-nav">
             <NavLink path="/services" name="Services" fragment={fragment} />
             <NavLink path="/groups" name="Groups" fragment={fragment} />
-            { elbLink(props.elbEnabled, fragment) }
-            { albLink(props.elbEnabled, fragment) }
+            { lbLink(props.elbEnabled, fragment) }
           </ul>
           <EnableEditControls
             allowEdit={props.allowEdit}

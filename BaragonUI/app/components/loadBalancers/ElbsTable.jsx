@@ -62,7 +62,7 @@ const jsonButton = (elb) => {
   );
 };
 
-const ElbsTable = ({elbs, filter}) => {
+const ElbsTable = ({elbs, filter, rowCount = 15}) => {
   let tableContent = [];
   if (filter === '') {
     tableContent = elbs;
@@ -79,7 +79,7 @@ const ElbsTable = ({elbs, filter}) => {
       data={tableContent}
       keyGetter={(elb) => elb.dnsname}
       paginated={true}
-      rowChunkSize={15}
+      rowChunkSize={rowCount}
     >
       <Column
         label=""
@@ -125,6 +125,7 @@ ElbsTable.propTypes = {
     vpcid: PropTypes.string.isRequired,
   })),
   filter: PropTypes.string,
+  rowCount: PropTypes.number,
 };
 
 export default ElbsTable;

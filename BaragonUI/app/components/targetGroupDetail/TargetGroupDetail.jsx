@@ -60,7 +60,7 @@ const TargetGroupDetail = ({targets, targetGroup, loadBalancerArnsToNames, edita
       </div>
       <div className="row">
         <div className="col-md-4">
-          <DetailGroup name="Instances" items={targets} keyGetter={(instance) => instance.target.id} field={
+          <DetailGroup width={12} name="Instances" items={targets} keyGetter={(instance) => instance.target.id} field={
               (instance) => (
                 <ul className="list-unstyled">
                   <li><strong>ID:</strong> {instance.target.id}</li>
@@ -97,14 +97,12 @@ const TargetGroupDetail = ({targets, targetGroup, loadBalancerArnsToNames, edita
             </UpdateInstanceButton>
           }
         </div>
-        <div className="col-md-4">
-          <DetailGroup
-            name="Associated Load Balancers"
-            items={targetGroup.loadBalancerArns}
-            width={9}
-            field={renderLoadBalancer(loadBalancerArnsToNames)}
-          />
-        </div>
+        <DetailGroup
+          name="Associated Load Balancers"
+          items={targetGroup.loadBalancerArns}
+          width={4}
+          field={renderLoadBalancer(loadBalancerArnsToNames)}
+        />
       </div>
     </div>
   );

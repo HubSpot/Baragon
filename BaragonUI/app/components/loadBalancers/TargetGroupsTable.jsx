@@ -33,40 +33,38 @@ const TargetGroupsTable = ({targetGroups, filter}) => {
   }
 
   return (
-    <div>
-      <UITable
-        data={tableContent}
-        keyGetter={(group) => group.targetGroupArn}
-        paginated={true}
-        rowChunkSize={5}
-      >
-        <Column
-          label="Name"
-          id="targetGroupName"
-          cellData={targetGroupName}
-        />
-        <Column
-          label="VPC ID"
-          id="vpcId"
-          cellData={(group) => group.vpcId}
-        />
-        <Column
-          label="Protocol"
-          id="protocol"
-          cellData={(group) => group.protocol}
-        />
-        <Column
-          label="Port"
-          id="port"
-          cellData={(group) => group.port}
-        />
-        <Column
-          label=""
-          id="json"
-          cellData={targetGroupJson}
-        />
-      </UITable>
-    </div>
+    <UITable
+      data={tableContent}
+      keyGetter={(group) => group.targetGroupArn}
+      paginated={true}
+      rowChunkSize={5}
+    >
+      <Column
+        label="Name"
+        id="targetGroupName"
+        cellData={targetGroupName}
+      />
+      <Column
+        label="VPC ID"
+        id="vpcId"
+        cellData={(group) => group.vpcId}
+      />
+      <Column
+        label="Protocol"
+        id="protocol"
+        cellData={(group) => group.protocol}
+      />
+      <Column
+        label="Port"
+        id="port"
+        cellData={(group) => group.port}
+      />
+      <Column
+        label=""
+        id="json"
+        cellData={targetGroupJson}
+      />
+    </UITable>
   );
 };
 

@@ -29,7 +29,8 @@ const AlbDetail = ({loadBalancer, listeners, targetGroupsArnsToNames, rulesMap})
         </div>
       </div>
       <div className="row">
-        <div className="col-md-12">
+        <div className="col-md-4">
+          <h4>Status</h4>
           <ul className="list-group">
             <li className="list-group-item"><strong>Hosted Zone ID:</strong> {loadBalancer.canonicalHostedZoneId}</li>
             <li className="list-group-item"><strong>VPC ID:</strong> {loadBalancer.vpcId}</li>
@@ -37,16 +38,8 @@ const AlbDetail = ({loadBalancer, listeners, targetGroupsArnsToNames, rulesMap})
             <li className="list-group-item"><strong>Created:</strong> {Utils.timestampFromNow(loadBalancer.createdTime)}</li>
           </ul>
         </div>
-      </div>
-      <div className="row">
-        <ListenerPanel
-          listeners={listeners}
-          targetGroupsMap={targetGroupsArnsToNames}
-          rulesMap={rulesMap}
-        />
-      </div>
-      <div className="row">
         <DetailGroup
+          width={4}
           name="Availibility Zones"
           items={azs}
           keyGetter={(zone) => zone.zoneName}
@@ -57,7 +50,18 @@ const AlbDetail = ({loadBalancer, listeners, targetGroupsArnsToNames, rulesMap})
             </ul>
           )}
         />
-        <DetailGroup name="Security Groups" items={securityGroups} />
+        <DetailGroup
+          width={4}
+          name="Security Groups"
+          items={securityGroups}
+        />
+      </div>
+      <div className="row">
+        <ListenerPanel
+          listeners={listeners}
+          targetGroupsMap={targetGroupsArnsToNames}
+          rulesMap={rulesMap}
+        />
       </div>
     </div>
   );
