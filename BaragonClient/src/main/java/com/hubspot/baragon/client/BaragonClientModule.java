@@ -7,9 +7,12 @@ import com.fasterxml.jackson.datatype.guava.GuavaModule;
 import com.google.common.base.Optional;
 import com.google.inject.AbstractModule;
 import com.google.inject.Binder;
+import com.google.inject.Provides;
 import com.google.inject.Scopes;
+import com.google.inject.Singleton;
 import com.google.inject.TypeLiteral;
 import com.google.inject.binder.LinkedBindingBuilder;
+import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import com.hubspot.horizon.HttpClient;
 import com.hubspot.horizon.HttpConfig;
@@ -48,17 +51,22 @@ public class BaragonClientModule extends AbstractModule {
 
   @Override
   protected void configure() {
-    HttpClient httpClient = new NingHttpClient(HttpConfig.newBuilder()
-            .setObjectMapper(buildObjectMapper())
-            .build());
-
-    bind(HttpClient.class).annotatedWith(Names.named(HTTP_CLIENT_NAME)).toInstance(httpClient);
-
     bind(BaragonServiceClient.class).toProvider(BaragonClientProvider.class).in(Scopes.SINGLETON);
 
     if (hosts != null) {
       bindHosts(binder()).toInstance(hosts);
     }
+  }
+
+  @Provides
+  @Named(HTTP_CLIENT_NAME)
+  @Singleton
+  HttpClient providesHttpClient() {
+    return new NingHttpClient(
+        HttpConfig.newBuilder()
+            .setObjectMapper(buildObjectMapper())
+            .build()
+    );
   }
 
   public static LinkedBindingBuilder<List<String>> bindHosts(Binder binder) {
