@@ -321,7 +321,10 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
           .filter(trafficSource -> trafficSource.getType() == TrafficSourceType.ALB_TARGET_GROUP)
           .collect(Collectors.toSet());
 
+      LOG.debug("Syncing ALB Target Groups {}", albSources);
+
       Map<TrafficSource, TargetGroup> targetGroups = getTargetGroups(baragonGroup, albSources);
+      LOG.debug("Found target groups for traffic sources {}", targetGroups);
       for (Entry<TrafficSource, TargetGroup> targetGroupEntry : targetGroups.entrySet()) {
         try {
           TargetGroup targetGroup = targetGroupEntry.getValue();
