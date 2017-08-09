@@ -16,7 +16,7 @@ public class ResolveHostnameHelper implements Helper<String> {
   public CharSequence apply(String address, Options options) throws UnknownHostException {
     if (address.contains(":")) {
       HostAndPort hostAndPort = HostAndPort.fromString(address);
-      InetSocketAddress socketAddress = new InetSocketAddress(InetAddress.getByName(hostAndPort.getHostText()), hostAndPort.getPort());
+      InetSocketAddress socketAddress = new InetSocketAddress(InetAddress.getByName(hostAndPort.getHost()), hostAndPort.getPort());
       return String.format("%s:%d", socketAddress.getAddress().getHostAddress(), socketAddress.getPort());
     } else {
       return InetAddress.getByName(address).getHostAddress();
