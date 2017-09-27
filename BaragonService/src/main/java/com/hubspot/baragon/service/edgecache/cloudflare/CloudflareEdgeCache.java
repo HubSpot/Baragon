@@ -57,17 +57,18 @@ public class CloudflareEdgeCache implements EdgeCache {
         return false;
       }
 
-      if (matchingDnsRecord.get().isProxied()) {
-        return cf.purgeCache(
-            zoneId,
-            Collections.singletonList(                   // TODO this isn't the right way to get the env, is it vvv
-                String.format(CACHE_TAG_FORMAT, request.getLoadBalancerService().getServiceId(), environment.getName())
-            )
-        );
-      } else {
+      if (!matchingDnsRecord.get().isProxied()) {
         LOG.warn("`edgeCacheDNS` was defined on the request, but {} is not a proxied DNS record!", edgeCacheDNS);
         return false;
       }
+
+      return cf.purgeCache(
+          zoneId,
+          Collections.singletonList(                   // TODO this isn't the right way to get the env, is it vvv
+              String.format(CACHE_TAG_FORMAT, request.getLoadBalancerService().getServiceId(), environment.getName())
+          )
+      );
+
     } catch (CloudflareClientException e) {
       LOG.error("Unable to invalidate Cloudflare cache for request {}", request, e);
       return false;
