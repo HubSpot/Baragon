@@ -33,6 +33,9 @@ import com.hubspot.baragon.service.config.BaragonConfiguration;
 import com.hubspot.baragon.service.config.EdgeCacheConfiguration;
 import com.hubspot.baragon.service.config.ElbConfiguration;
 import com.hubspot.baragon.service.config.SentryConfiguration;
+import com.hubspot.baragon.service.edgecache.EdgeCache;
+import com.hubspot.baragon.service.edgecache.cloudflare.CloudflareEdgeCache;
+import com.hubspot.baragon.service.edgecache.cloudflare.client.CloudflareClient;
 import com.hubspot.baragon.service.elb.ApplicationLoadBalancer;
 import com.hubspot.baragon.service.elb.ClassicLoadBalancer;
 import com.hubspot.baragon.service.exceptions.BaragonExceptionNotifier;
@@ -108,7 +111,9 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
 
     binder.bind(ClassicLoadBalancer.class);
     binder.bind(ApplicationLoadBalancer.class);
+    binder.bind(CloudflareClient.class);
 
+    binder.bind(CloudflareEdgeCache.class);
 
     Multibinder<AbstractLatchListener> latchBinder = Multibinder.newSetBinder(binder, AbstractLatchListener.class);
     latchBinder.addBinding().to(RequestWorkerListener.class).in(Scopes.SINGLETON);
@@ -163,6 +168,11 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
   @Provides
   public Optional<EdgeCacheConfiguration> providesEdgeCacheConfiguration(BaragonConfiguration configuration) {
     return configuration.getEdgeCacheConfiguration();
+  }
+
+  @Provides
+  public EdgeCache providesEdgeCache(BaragonConfiguration configuration, Injector injector) {
+    return injector.getInstance(configuration.getEdgeCacheConfiguration().get().getEdgeCache().getEdgeCacheClass());
   }
 
   @Provides
