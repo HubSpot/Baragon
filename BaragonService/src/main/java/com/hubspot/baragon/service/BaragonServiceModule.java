@@ -17,6 +17,7 @@ import com.amazonaws.services.elasticloadbalancing.AmazonElasticLoadBalancingCli
 import com.google.common.base.Optional;
 import com.google.common.base.Strings;
 import com.google.inject.Binder;
+import com.google.inject.Injector;
 import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.Singleton;
@@ -29,6 +30,7 @@ import com.hubspot.baragon.config.ZooKeeperConfiguration;
 import com.hubspot.baragon.data.BaragonConnectionStateListener;
 import com.hubspot.baragon.data.BaragonWorkerDatastore;
 import com.hubspot.baragon.service.config.BaragonConfiguration;
+import com.hubspot.baragon.service.config.EdgeCacheConfiguration;
 import com.hubspot.baragon.service.config.ElbConfiguration;
 import com.hubspot.baragon.service.config.SentryConfiguration;
 import com.hubspot.baragon.service.elb.ApplicationLoadBalancer;
@@ -156,6 +158,11 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
   @Provides
   public Optional<ElbConfiguration> providesElbConfiguration(BaragonConfiguration configuration) {
     return configuration.getElbConfiguration();
+  }
+
+  @Provides
+  public Optional<EdgeCacheConfiguration> providesEdgeCacheConfiguration(BaragonConfiguration configuration) {
+    return configuration.getEdgeCacheConfiguration();
   }
 
   @Provides
