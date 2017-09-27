@@ -38,7 +38,7 @@ public class BaragonClientModule extends AbstractModule {
     this.hosts = hosts;
   }
 
-  private ObjectMapper buildObjectMapper() {
+  public static ObjectMapper buildObjectMapper() {
     final ObjectMapper objectMapper = new ObjectMapper();
 
     objectMapper.registerModule(new GuavaModule());
