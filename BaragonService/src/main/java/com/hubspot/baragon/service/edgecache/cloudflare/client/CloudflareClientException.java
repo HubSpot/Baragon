@@ -6,4 +6,8 @@ public class CloudflareClientException extends Exception {
     super(message, t);
   }
 
+  public CloudflareClientException(String message) {
+    super(message);
+  }
+
 }
