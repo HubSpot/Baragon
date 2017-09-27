@@ -62,7 +62,6 @@
     <dependency>
       <groupId>com.hubspot</groupId>
       <artifactId>BaragonUI</artifactId>
-      <type>pom</type>
       <scope>runtime</scope>
     </dependency>
     <dependency>
