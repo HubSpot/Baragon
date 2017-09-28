@@ -17,7 +17,6 @@ import com.amazonaws.services.elasticloadbalancing.AmazonElasticLoadBalancingCli
 import com.google.common.base.Optional;
 import com.google.common.base.Strings;
 import com.google.inject.Binder;
-import com.google.inject.Injector;
 import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.Singleton;
@@ -104,6 +103,11 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
     binder.bind(ServiceManager.class).in(Scopes.SINGLETON);
     binder.bind(StatusManager.class).in(Scopes.SINGLETON);
 
+    // Edge Cache
+    binder.bind(CloudflareEdgeCache.class);
+    binder.bind(CloudflareClient.class);
+    binder.bind(EdgeCache.class).to(getConfiguration().getEdgeCacheConfiguration().getEdgeCache().getEdgeCacheClass());
+
     // Workers
     binder.bind(BaragonElbSyncWorker.class).in(Scopes.SINGLETON);
     binder.bind(BaragonRequestWorker.class).in(Scopes.SINGLETON);
@@ -111,9 +115,6 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
 
     binder.bind(ClassicLoadBalancer.class);
     binder.bind(ApplicationLoadBalancer.class);
-    binder.bind(CloudflareClient.class);
-
-    binder.bind(CloudflareEdgeCache.class);
 
     Multibinder<AbstractLatchListener> latchBinder = Multibinder.newSetBinder(binder, AbstractLatchListener.class);
     latchBinder.addBinding().to(RequestWorkerListener.class).in(Scopes.SINGLETON);
@@ -166,13 +167,8 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
   }
 
   @Provides
-  public Optional<EdgeCacheConfiguration> providesEdgeCacheConfiguration(BaragonConfiguration configuration) {
+  public EdgeCacheConfiguration providesEdgeCacheConfiguration(BaragonConfiguration configuration) {
     return configuration.getEdgeCacheConfiguration();
-  }
-
-  @Provides
-  public EdgeCache providesEdgeCache(BaragonConfiguration configuration, Injector injector) {
-    return injector.getInstance(configuration.getEdgeCacheConfiguration().get().getEdgeCache().getEdgeCacheClass());
   }
 
   @Provides

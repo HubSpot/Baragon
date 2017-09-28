@@ -71,7 +71,7 @@ public class BaragonConfiguration extends Configuration {
   private Optional<ElbConfiguration> elb = Optional.absent();
 
   @JsonProperty("edgeCache")
-  private Optional<EdgeCacheConfiguration> edgeCache = Optional.absent();
+  private EdgeCacheConfiguration edgeCache = new EdgeCacheConfiguration();
 
   @JsonProperty("ui")
   @Valid
@@ -187,11 +187,11 @@ public class BaragonConfiguration extends Configuration {
     this.elb = elb;
   }
 
-  public Optional<EdgeCacheConfiguration> getEdgeCacheConfiguration() {
+  public EdgeCacheConfiguration getEdgeCacheConfiguration() {
     return edgeCache;
   }
 
-  public void setEdgeCacheConfiguration(Optional<EdgeCacheConfiguration> edgeCache) {
+  public void setEdgeCacheConfiguration(EdgeCacheConfiguration edgeCache) {
     this.edgeCache = edgeCache;
   }
 

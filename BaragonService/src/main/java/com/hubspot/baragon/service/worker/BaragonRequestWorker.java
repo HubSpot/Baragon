@@ -184,8 +184,7 @@ public class BaragonRequestWorker implements Runnable {
   }
 
   private void performPostApplySteps(BaragonRequest request) {
-    if (configuration.getEdgeCacheConfiguration().isPresent() &&
-        configuration.getEdgeCacheConfiguration().get().isEnabled() &&
+    if (configuration.getEdgeCacheConfiguration().isEnabled() &&
         edgeCache.invalidateIfNecessary(request)) {
       LOG.info("Invalidated edge cache for BaragonRequest {}", request);
     }

@@ -27,12 +27,12 @@ public class CloudflareClient {
   private final EdgeCacheConfiguration edgeCacheConfiguration;
 
   @Inject
-  public CloudflareClient(Optional<EdgeCacheConfiguration> edgeCacheConfiguration,
+  public CloudflareClient(EdgeCacheConfiguration edgeCacheConfiguration,
                           @Named(BaragonServiceModule.BARAGON_SERVICE_HTTP_CLIENT) AsyncHttpClient httpClient,
                           ObjectMapper objectMapper) {
     this.httpClient = httpClient;
     this.objectMapper = objectMapper;
-    this.edgeCacheConfiguration = edgeCacheConfiguration.get();
+    this.edgeCacheConfiguration = edgeCacheConfiguration;
   }
 
   public boolean purgeCache(String zoneId, List<String> cacheTags) throws CloudflareClientException {
