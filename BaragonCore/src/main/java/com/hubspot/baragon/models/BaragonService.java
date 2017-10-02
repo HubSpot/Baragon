@@ -87,6 +87,9 @@ public class BaragonService {
     return loadBalancerGroups;
   }
 
+  /**
+   * Data from this field is primarily used to populate data in rendered nginx config templates.
+   */
   public Map<String, Object> getOptions() {
     return options;
   }
