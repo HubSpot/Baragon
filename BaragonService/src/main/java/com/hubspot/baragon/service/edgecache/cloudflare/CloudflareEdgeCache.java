@@ -36,12 +36,12 @@ public class CloudflareEdgeCache implements EdgeCache {
    */
   @Override
   public boolean invalidateIfNecessary(BaragonRequest request) {
-    if (request.getLoadBalancerService().getOptions().get("edgeCacheDNS") == null) {
+    if (!request.getLoadBalancerService().getEdgeCacheDNS().isPresent()) {
       return false;
     }
 
     try {
-      String edgeCacheDNS = ((String) request.getLoadBalancerService().getOptions().get("edgeCacheDNS"));
+      String edgeCacheDNS = request.getLoadBalancerService().getEdgeCacheDNS().get();
       Optional<CloudflareZone> matchingZone = getCloudflareZone(edgeCacheDNS);
 
       if (!matchingZone.isPresent()) {

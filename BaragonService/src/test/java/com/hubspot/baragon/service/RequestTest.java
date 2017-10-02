@@ -1,10 +1,22 @@
 package com.hubspot.baragon.service;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+
+import org.jukito.JukitoModule;
+import org.jukito.JukitoRunner;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Optional;
 import com.google.common.base.Throwables;
@@ -22,16 +34,6 @@ import com.hubspot.baragon.models.BaragonService;
 import com.hubspot.baragon.models.UpstreamInfo;
 import com.hubspot.baragon.service.managers.RequestManager;
 import com.hubspot.baragon.service.worker.BaragonRequestWorker;
-import org.jukito.JukitoModule;
-import org.jukito.JukitoRunner;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 @RunWith(JukitoRunner.class)
 public class RequestTest {
@@ -163,7 +165,7 @@ public class RequestTest {
     Set<String> lbGroup = new HashSet<>();
     lbGroup.add(REAL_LB_GROUP);
 
-    final BaragonService service = new BaragonService("testservice4", Collections.<String>emptyList(), "/foo", Collections.singletonList("/some-other-path"), lbGroup, Collections.<String, Object>emptyMap(), Optional.<String>absent(), Collections.<String>emptySet());
+    final BaragonService service = new BaragonService("testservice4", Collections.<String>emptyList(), "/foo", Collections.singletonList("/some-other-path"), lbGroup, Collections.<String, Object>emptyMap(), Optional.<String>absent(), Collections.<String>emptySet(), Optional.absent());
 
     final UpstreamInfo upstream = new UpstreamInfo("testhost:8080", Optional.of(requestId), Optional.<String>absent());
 
