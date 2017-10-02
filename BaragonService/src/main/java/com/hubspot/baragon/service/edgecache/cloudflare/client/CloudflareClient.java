@@ -4,9 +4,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import com.google.common.base.Optional;
+import java.util.Map;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
@@ -24,7 +25,9 @@ public class CloudflareClient {
 
   private final AsyncHttpClient httpClient;
   private final ObjectMapper objectMapper;
-  private final EdgeCacheConfiguration edgeCacheConfiguration;
+  private final String apiBase;
+  private final String apiEmail;
+  private final String apiKey;
 
   @Inject
   public CloudflareClient(EdgeCacheConfiguration edgeCacheConfiguration,
@@ -32,7 +35,10 @@ public class CloudflareClient {
                           ObjectMapper objectMapper) {
     this.httpClient = httpClient;
     this.objectMapper = objectMapper;
-    this.edgeCacheConfiguration = edgeCacheConfiguration;
+    Map<String, String> integrationSettings = edgeCacheConfiguration.getIntegrationSettings();
+    this.apiBase = integrationSettings.get("apiBase");
+    this.apiEmail = integrationSettings.get("apiEmail");
+    this.apiKey = integrationSettings.get("apiKey");
   }
 
   public boolean purgeCache(String zoneId, List<String> cacheTags) throws CloudflareClientException {
@@ -50,16 +56,16 @@ public class CloudflareClient {
 
     switch (method) {
       case DELETE:
-        builder = httpClient.prepareDelete(edgeCacheConfiguration.getApiBase() + path);
+        builder = httpClient.prepareDelete(apiBase + path);
         break;
       case GET:
       default:
-        builder = httpClient.prepareGet(edgeCacheConfiguration.getApiBase() + path);
+        builder = httpClient.prepareGet(apiBase + path);
     }
 
     builder
-        .addHeader("X-Auth-Email", edgeCacheConfiguration.getApiEmail())
-        .addHeader("X-Auth-Key", edgeCacheConfiguration.getApiKey());
+        .addHeader("X-Auth-Email", apiEmail)
+        .addHeader("X-Auth-Key", apiKey);
 
     body.asSet().forEach(b -> builder.setBody(b.toString()));
 
