@@ -1,0 +1,2 @@
+env:
+  MAVEN_ARGS: "-Dbaragon.jar.name.format=\\${project.artifactId} -Dgpg.skip=true"
