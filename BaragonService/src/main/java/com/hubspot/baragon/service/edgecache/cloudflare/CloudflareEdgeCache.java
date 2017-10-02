@@ -9,26 +9,38 @@ import org.slf4j.LoggerFactory;
 
 import com.google.inject.Inject;
 import com.hubspot.baragon.models.BaragonRequest;
+import com.hubspot.baragon.service.config.EdgeCacheConfiguration;
 import com.hubspot.baragon.service.edgecache.EdgeCache;
 import com.hubspot.baragon.service.edgecache.cloudflare.client.CloudflareClient;
 import com.hubspot.baragon.service.edgecache.cloudflare.client.CloudflareClientException;
 import com.hubspot.baragon.service.edgecache.cloudflare.client.CloudflareDnsRecord;
 import com.hubspot.baragon.service.edgecache.cloudflare.client.CloudflareZone;
 
-import io.dropwizard.setup.Environment;
-
+/**
+ * An implementation of a proxying edge cache backed by Cloudflare.
+ *
+ * Config example:
+ * ...
+ * edgeCache:
+ *   enabled: true
+ *   edgeCacheClass: CLOUDFLARE
+ *   integrationSettings:
+ *     apiBase: https://api.cloudflare.com/client/v4/
+ *     apiEmail: email@host.net
+ *     apiKey: some-key
+ *     cacheTagFormat: cache-tag-for-%-service
+ * ...
+ */
 public class CloudflareEdgeCache implements EdgeCache {
   private static final Logger LOG = LoggerFactory.getLogger(CloudflareEdgeCache.class);
 
-  private static final String CACHE_TAG_FORMAT = "staticjsapp-%s-%s";
-
   private final CloudflareClient cf;
-  private final Environment environment;
+  private final EdgeCacheConfiguration edgeCacheConfiguration;
 
   @Inject
-  public CloudflareEdgeCache(CloudflareClient cf, Environment environment) {
+  public CloudflareEdgeCache(CloudflareClient cf, EdgeCacheConfiguration edgeCacheConfiguration) {
     this.cf = cf;
-    this.environment = environment;
+    this.edgeCacheConfiguration = edgeCacheConfiguration;
   }
 
   /**
@@ -64,8 +76,11 @@ public class CloudflareEdgeCache implements EdgeCache {
 
       return cf.purgeCache(
           zoneId,
-          Collections.singletonList(                   // TODO this isn't the right way to get the env, is it vvv
-              String.format(CACHE_TAG_FORMAT, request.getLoadBalancerService().getServiceId(), environment.getName())
+          Collections.singletonList(
+              String.format(
+                  edgeCacheConfiguration.getIntegrationSettings().get("cacheTagFormat"),
+                  request.getLoadBalancerService().getServiceId()
+              )
           )
       );
 
