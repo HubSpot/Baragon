@@ -74,15 +74,14 @@ public class CloudflareEdgeCache implements EdgeCache {
         return false;
       }
 
-      return cf.purgeCache(
-          zoneId,
-          Collections.singletonList(
-              String.format(
-                  edgeCacheConfiguration.getIntegrationSettings().get("cacheTagFormat"),
-                  request.getLoadBalancerService().getServiceId()
-              )
-          )
+      String cacheTag = String.format(
+          edgeCacheConfiguration.getIntegrationSettings().get("cacheTagFormat"),
+          request.getLoadBalancerService().getServiceId()
       );
+
+      LOG.debug("Sending cache purge request against {} for {} to Cloudflare...", matchingZone.get().getName(), cacheTag);
+
+      return cf.purgeCache(zoneId, Collections.singletonList(cacheTag));
 
     } catch (CloudflareClientException e) {
       LOG.error("Unable to invalidate Cloudflare cache for request {}", request, e);
