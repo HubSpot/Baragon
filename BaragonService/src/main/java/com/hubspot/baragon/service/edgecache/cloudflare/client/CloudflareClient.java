@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
@@ -67,7 +68,13 @@ public class CloudflareClient {
         .addHeader("X-Auth-Email", apiEmail)
         .addHeader("X-Auth-Key", apiKey);
 
-    body.asSet().forEach(b -> builder.setBody(b.toString()));
+    if (body.isPresent()) {
+      try {
+        builder.setBody(objectMapper.writeValueAsString(body.get()));
+      } catch (JsonProcessingException e) {
+        throw new CloudflareClientException("Unable to serialize body while preparing to send API request", e);
+      }
+    }
 
     page.asSet().forEach(p -> builder.addQueryParameter("page", page.get().toString()));
     perPage.asSet().forEach(p -> builder.addQueryParameter("per_page", perPage.get().toString()));
