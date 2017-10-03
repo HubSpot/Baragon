@@ -29,11 +29,9 @@ public class CloudflareZone {
     if (this == o) {
       return true;
     }
-
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-
     CloudflareZone that = (CloudflareZone) o;
     return Objects.equal(id, that.id) &&
         Objects.equal(name, that.name);

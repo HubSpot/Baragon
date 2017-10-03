@@ -4,6 +4,8 @@ import java.util.List;
 
 import javax.annotation.Nullable;
 
+import com.google.common.base.Objects;
+
 public abstract class CloudflareResponse<T> {
   private final Boolean success;
   private final List<CloudflareError> errors;
@@ -42,5 +44,26 @@ public abstract class CloudflareResponse<T> {
 
   public T getResult() {
     return result;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    CloudflareResponse<?> that = (CloudflareResponse<?>) o;
+    return Objects.equal(success, that.success) &&
+        Objects.equal(errors, that.errors) &&
+        Objects.equal(messages, that.messages) &&
+        Objects.equal(resultInfo, that.resultInfo) &&
+        Objects.equal(result, that.result);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(success, errors, messages, resultInfo, result);
   }
 }

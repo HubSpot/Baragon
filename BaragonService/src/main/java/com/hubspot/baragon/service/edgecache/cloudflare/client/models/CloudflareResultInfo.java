@@ -3,6 +3,7 @@ package com.hubspot.baragon.service.edgecache.cloudflare.client.models;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.base.Objects;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class CloudflareResultInfo {
@@ -43,5 +44,26 @@ public class CloudflareResultInfo {
 
   public Integer getTotalPages() {
     return totalPages;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    CloudflareResultInfo that = (CloudflareResultInfo) o;
+    return Objects.equal(page, that.page) &&
+        Objects.equal(perPage, that.perPage) &&
+        Objects.equal(count, that.count) &&
+        Objects.equal(totalCount, that.totalCount) &&
+        Objects.equal(totalPages, that.totalPages);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(page, perPage, count, totalCount, totalPages);
   }
 }
