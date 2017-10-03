@@ -1,15 +1,15 @@
-package com.hubspot.baragon.service.edgecache.cloudflare.client;
+package com.hubspot.baragon.service.edgecache.cloudflare.client.models;
 
 
 import java.util.List;
 
 import com.google.common.base.Objects;
 
-class CloudflarePurgeRequest {
+public class CloudflarePurgeRequest {
   private final List<String> files;
   private final List<String> tags;
 
-  CloudflarePurgeRequest(List<String> files, List<String> tags) {
+  public CloudflarePurgeRequest(List<String> files, List<String> tags) {
     this.files = files;
     this.tags = tags;
   }

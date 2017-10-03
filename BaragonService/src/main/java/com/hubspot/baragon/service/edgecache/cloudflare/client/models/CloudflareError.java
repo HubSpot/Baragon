@@ -1,4 +1,4 @@
-package com.hubspot.baragon.service.edgecache.cloudflare.client;
+package com.hubspot.baragon.service.edgecache.cloudflare.client.models;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;

@@ -13,8 +13,8 @@ import com.hubspot.baragon.service.config.EdgeCacheConfiguration;
 import com.hubspot.baragon.service.edgecache.EdgeCache;
 import com.hubspot.baragon.service.edgecache.cloudflare.client.CloudflareClient;
 import com.hubspot.baragon.service.edgecache.cloudflare.client.CloudflareClientException;
-import com.hubspot.baragon.service.edgecache.cloudflare.client.CloudflareDnsRecord;
-import com.hubspot.baragon.service.edgecache.cloudflare.client.CloudflareZone;
+import com.hubspot.baragon.service.edgecache.cloudflare.client.models.CloudflareDnsRecord;
+import com.hubspot.baragon.service.edgecache.cloudflare.client.models.CloudflareZone;
 
 /**
  * An implementation of a proxying edge cache backed by Cloudflare.
