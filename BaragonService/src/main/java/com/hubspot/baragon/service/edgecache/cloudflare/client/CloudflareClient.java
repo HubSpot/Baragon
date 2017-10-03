@@ -92,7 +92,7 @@ public class CloudflareClient {
     zones.addAll(cloudflareResponse.getResult());
 
     CloudflareResultInfo paginationInfo = cloudflareResponse.getResultInfo();
-    for (int i = 2; i <= paginationInfo.getTotalCount(); i++) {
+    for (int i = 2; i <= paginationInfo.getTotalPages(); i++) {
       CloudflareListZonesResponse cloudflarePageResponse = listZonesPaged(i);
       zones.addAll(cloudflarePageResponse.getResult());
     }
@@ -123,7 +123,7 @@ public class CloudflareClient {
     List<CloudflareDnsRecord> dnsRecords = cloudflareResponse.getResult();
 
     CloudflareResultInfo paginationInfo = cloudflareResponse.getResultInfo();
-    for (int i = 2; i <= paginationInfo.getTotalCount(); i++) {
+    for (int i = 2; i <= paginationInfo.getTotalPages(); i++) {
       CloudflareListDnsRecordsResponse cloudflarePageResponse = listDnsRecordsPaged(zoneId, i);
       dnsRecords.addAll(cloudflarePageResponse.getResult());
     }
