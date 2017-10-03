@@ -7,19 +7,19 @@ import com.google.common.base.Objects;
 @JsonIgnoreProperties( ignoreUnknown = true )
 public class CloudflareDnsRecord {
   private final Boolean proxied;
-  private final String zoneName;
+  private final String name;
 
-  public CloudflareDnsRecord(@JsonProperty("proxied") Boolean proxied, @JsonProperty("zone_name") String zoneName) {
+  public CloudflareDnsRecord(@JsonProperty("proxied") Boolean proxied, @JsonProperty("name") String name) {
     this.proxied = proxied;
-    this.zoneName = zoneName;
+    this.name = name;
   }
 
   public Boolean isProxied() {
     return proxied;
   }
 
-  public String getZoneName() {
-    return zoneName;
+  public String getName() {
+    return name;
   }
 
   @Override
@@ -32,11 +32,11 @@ public class CloudflareDnsRecord {
     }
     CloudflareDnsRecord that = (CloudflareDnsRecord) o;
     return Objects.equal(proxied, that.proxied) &&
-        Objects.equal(zoneName, that.zoneName);
+        Objects.equal(name, that.name);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(proxied, zoneName);
+    return Objects.hashCode(proxied, name);
   }
 }
