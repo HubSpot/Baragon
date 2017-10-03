@@ -1,7 +1,6 @@
 package com.hubspot.baragon.service.edgecache.cloudflare;
 
 import java.util.Collections;
-import java.util.List;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -79,7 +78,7 @@ public class CloudflareEdgeCache implements EdgeCache {
           request.getLoadBalancerService().getServiceId()
       );
 
-      LOG.debug("Sending cache purge request against {} for {} to Cloudflare...", matchingZone.get().getName(), cacheTag);
+      LOG.debug("Sending cache purge request against {} for {} to Cloudflare...", matchingDnsRecord.get().getName(), cacheTag);
 
       return cf.purgeEdgeCache(zoneId, Collections.singletonList(cacheTag));
 
@@ -90,21 +89,12 @@ public class CloudflareEdgeCache implements EdgeCache {
   }
 
   private Optional<CloudflareDnsRecord> getCloudflareDnsRecord(String edgeCacheDNS, String zoneId) throws CloudflareClientException {
-    List<CloudflareDnsRecord> dnsRecords = cf.listDnsRecords(zoneId);
-    String baseDomain = getBaseDomain(edgeCacheDNS);
-
-    return dnsRecords.stream()
-        .filter(r -> r.getZoneName().equals(baseDomain))
-        .findAny();
+    return Optional.ofNullable(cf.getDnsRecord(zoneId, edgeCacheDNS));
   }
 
   private Optional<CloudflareZone> getCloudflareZone(String edgeCacheDNS) throws CloudflareClientException {
-    List<CloudflareZone> zones = cf.getAllZones();
     String baseDomain = getBaseDomain(edgeCacheDNS);
-
-    return zones.stream()
-        .filter(z -> z.getName().equals(baseDomain))
-        .findAny();
+    return Optional.ofNullable(cf.getZone(baseDomain));
   }
 
   private String getBaseDomain(String dns) {

@@ -5,8 +5,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,8 +52,11 @@ public class CloudflareClient {
   private final String apiBase;
   private final String apiEmail;
   private final String apiKey;
-  private final Supplier<List<CloudflareZone>> zoneCache;
-  private final LoadingCache<String, List<CloudflareDnsRecord>> dnsRecordCache;
+
+  //                                  <ZoneId, CloudflareZone>
+  private final Supplier<ConcurrentMap<String, CloudflareZone>> zoneCache;
+  //                        <ZoneId,   <DnsName, CloudflareDnsRecord>>
+  private final LoadingCache<String, Map<String, CloudflareDnsRecord>> dnsRecordCache;
 
   @Inject
   public CloudflareClient(EdgeCacheConfiguration edgeCacheConfiguration,
@@ -64,20 +71,24 @@ public class CloudflareClient {
 
     this.zoneCache = Suppliers.memoizeWithExpiration(() -> {
       try {
-        return retrieveAllZones();
+        return retrieveAllZones().stream().collect(Collectors.toConcurrentMap(
+            CloudflareZone::getName, Function.identity()
+        ));
       } catch (CloudflareClientException e) {
         LOG.error("Unable to refresh Cloudflare zone cache", e);
-        return Collections.emptyList();
+        return new ConcurrentHashMap<>();
       }
     }, 10, TimeUnit.MINUTES);
 
     this.dnsRecordCache = CacheBuilder.newBuilder()
         .maximumSize(10_000)
         .expireAfterWrite(10, TimeUnit.MINUTES)
-        .build(new CacheLoader<String, List<CloudflareDnsRecord>>() {
+        .build(new CacheLoader<String, Map<String, CloudflareDnsRecord>>() {
           @Override
-          public List<CloudflareDnsRecord> load(String zoneId) throws Exception {
-            return retrieveDnsRecords(zoneId);
+          public Map<String, CloudflareDnsRecord> load(String zoneId) throws Exception {
+            return retrieveDnsRecords(zoneId).stream().collect(Collectors.toConcurrentMap(
+                CloudflareDnsRecord::getName, Function.identity()
+            ));
           }
         });
   }
@@ -132,8 +143,8 @@ public class CloudflareClient {
     return response.getStatusCode() >= 200 && response.getStatusCode() < 300;
   }
 
-  public List<CloudflareZone> getAllZones() throws CloudflareClientException {
-    return zoneCache.get();
+  public CloudflareZone getZone(String name) throws CloudflareClientException {
+    return zoneCache.get().get(name);
   }
 
   public List<CloudflareZone> retrieveAllZones() throws CloudflareClientException {
@@ -167,9 +178,9 @@ public class CloudflareClient {
       throw new CloudflareClientException("Unable to parse Cloudflare List Zones response", e);
     }
   }
-  public List<CloudflareDnsRecord> listDnsRecords(String zoneId) throws CloudflareClientException {
+  public CloudflareDnsRecord getDnsRecord(String zoneId, String name) throws CloudflareClientException {
     try {
-      return dnsRecordCache.get(zoneId);
+      return dnsRecordCache.get(zoneId).get(name);
     } catch (ExecutionException e) {
       throw new CloudflareClientException(e.getMessage(), e.getCause());
     }
