@@ -11,7 +11,11 @@ public abstract class CloudflareResponse<T> {
   private final CloudflareResultInfo resultInfo;
   private final T result;
 
-  public CloudflareResponse(Boolean success, List<CloudflareError> errors, List<String> messages, CloudflareResultInfo resultInfo, T result) {
+  public CloudflareResponse(Boolean success,
+                            List<CloudflareError> errors,
+                            List<String> messages,
+                            CloudflareResultInfo resultInfo,
+                            T result) {
     this.success = success;
     this.errors = errors;
     this.messages = messages;

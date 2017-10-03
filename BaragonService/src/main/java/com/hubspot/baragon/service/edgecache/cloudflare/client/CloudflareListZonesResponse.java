@@ -2,16 +2,19 @@ package com.hubspot.baragon.service.edgecache.cloudflare.client;
 
 import java.util.List;
 
-import com.fasterxml.jackson.databind.PropertyNamingStrategy.SnakeCaseStrategy;
-import com.fasterxml.jackson.databind.annotation.JsonNaming;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
-@JsonNaming(SnakeCaseStrategy.class)
+@JsonIgnoreProperties( ignoreUnknown = true )
 public class CloudflareListZonesResponse extends CloudflareResponse<List<CloudflareZone>> {
-  public CloudflareListZonesResponse(Boolean success,
-                                     List<CloudflareError> errors,
-                                     List<String> messages,
-                                     CloudflareResultInfo resultInfo,
-                                     List<CloudflareZone> result) {
+
+  @JsonCreator
+  public CloudflareListZonesResponse(@JsonProperty("success") Boolean success,
+                                     @JsonProperty("errors") List<CloudflareError> errors,
+                                     @JsonProperty("messages") List<String> messages,
+                                     @JsonProperty("result_info") CloudflareResultInfo resultInfo,
+                                     @JsonProperty("result") List<CloudflareZone> result) {
     super(success, errors, messages, resultInfo, result);
   }
 }

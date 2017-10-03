@@ -1,12 +1,17 @@
 package com.hubspot.baragon.service.edgecache.cloudflare.client;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Objects;
 
+@JsonIgnoreProperties( ignoreUnknown = true )
 public class CloudflareZone {
   private final String id;
   private final String name;
 
-  public CloudflareZone(String id, String name) {
+  @JsonCreator
+  public CloudflareZone(@JsonProperty("id") String id, @JsonProperty("name") String name) {
     this.id = id;
     this.name = name;
   }

@@ -1,10 +1,16 @@
 package com.hubspot.baragon.service.edgecache.cloudflare.client;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+@JsonIgnoreProperties( ignoreUnknown = true )
 public class CloudflareError {
   private final Integer code;
   private final String message;
 
-  public CloudflareError(Integer code, String message) {
+  @JsonCreator
+  public CloudflareError(@JsonProperty("code") Integer code, @JsonProperty("message") String message) {
     this.code = code;
     this.message = message;
   }
