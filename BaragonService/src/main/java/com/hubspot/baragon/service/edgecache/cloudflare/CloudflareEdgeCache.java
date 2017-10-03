@@ -91,20 +91,25 @@ public class CloudflareEdgeCache implements EdgeCache {
 
   private Optional<CloudflareDnsRecord> getCloudflareDnsRecord(String edgeCacheDNS, String zoneId) throws CloudflareClientException {
     List<CloudflareDnsRecord> dnsRecords = cf.listDnsRecords(zoneId);
+    String baseDomain = getBaseDomain(edgeCacheDNS);
 
     return dnsRecords.stream()
-        .filter(r -> r.getZoneName().equals(edgeCacheDNS))
+        .filter(r -> r.getZoneName().equals(baseDomain))
         .findAny();
   }
 
   private Optional<CloudflareZone> getCloudflareZone(String edgeCacheDNS) throws CloudflareClientException {
     List<CloudflareZone> zones = cf.getAllZones();
-    String[] domainTokens = edgeCacheDNS.split("\\.");
-    String baseDomain = String.format("%s.%s", domainTokens[domainTokens.length - 2], domainTokens[domainTokens.length - 1]);
+    String baseDomain = getBaseDomain(edgeCacheDNS);
 
     return zones.stream()
         .filter(z -> z.getName().equals(baseDomain))
         .findAny();
+  }
+
+  private String getBaseDomain(String dns) {
+    String[] domainTokens = dns.split("\\.");
+    return String.format("%s.%s", domainTokens[domainTokens.length - 2], domainTokens[domainTokens.length - 1]);
   }
 
 }
