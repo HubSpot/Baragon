@@ -5,10 +5,20 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Optional;
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
@@ -28,6 +38,8 @@ import com.ning.http.client.Response;
 
 @Singleton
 public class CloudflareClient {
+  private static final Logger LOG = LoggerFactory.getLogger(CloudflareClient.class);
+
   private static final int MAX_ZONES_PER_PAGE = 50;
   private static final int MAX_DNS_RECORDS_PER_PAGE = 100;
 
@@ -36,6 +48,8 @@ public class CloudflareClient {
   private final String apiBase;
   private final String apiEmail;
   private final String apiKey;
+  private final Supplier<List<CloudflareZone>> zoneCache;
+  private final LoadingCache<String, List<CloudflareDnsRecord>> dnsRecordCache;
 
   @Inject
   public CloudflareClient(EdgeCacheConfiguration edgeCacheConfiguration,
@@ -47,9 +61,28 @@ public class CloudflareClient {
     this.apiBase = integrationSettings.get("apiBase");
     this.apiEmail = integrationSettings.get("apiEmail");
     this.apiKey = integrationSettings.get("apiKey");
+
+    this.zoneCache = Suppliers.memoizeWithExpiration(() -> {
+      try {
+        return retrieveAllZones();
+      } catch (CloudflareClientException e) {
+        LOG.error("Unable to refresh Cloudflare zone cache", e);
+        return Collections.emptyList();
+      }
+    }, 10, TimeUnit.MINUTES);
+
+    this.dnsRecordCache = CacheBuilder.newBuilder()
+        .maximumSize(10_000)
+        .expireAfterWrite(10, TimeUnit.MINUTES)
+        .build(new CacheLoader<String, List<CloudflareDnsRecord>>() {
+          @Override
+          public List<CloudflareDnsRecord> load(String zoneId) throws Exception {
+            return retrieveDnsRecords(zoneId);
+          }
+        });
   }
 
-  public boolean purgeCache(String zoneId, List<String> cacheTags) throws CloudflareClientException {
+  public boolean purgeEdgeCache(String zoneId, List<String> cacheTags) throws CloudflareClientException {
     CloudflarePurgeRequest purgeRequest = new CloudflarePurgeRequest(Collections.emptyList(), cacheTags);
     Response response = requestWith(Method.DELETE, String.format("zones/%s/purge_cache", zoneId), purgeRequest);
     return isSuccess(response);
@@ -100,6 +133,10 @@ public class CloudflareClient {
   }
 
   public List<CloudflareZone> getAllZones() throws CloudflareClientException {
+    return zoneCache.get();
+  }
+
+  public List<CloudflareZone> retrieveAllZones() throws CloudflareClientException {
     CloudflareListZonesResponse cloudflareResponse = listZonesPaged(1);
 
     List<CloudflareZone> zones = new ArrayList<>();
@@ -130,8 +167,15 @@ public class CloudflareClient {
       throw new CloudflareClientException("Unable to parse Cloudflare List Zones response", e);
     }
   }
-
   public List<CloudflareDnsRecord> listDnsRecords(String zoneId) throws CloudflareClientException {
+    try {
+      return dnsRecordCache.get(zoneId);
+    } catch (ExecutionException e) {
+      throw new CloudflareClientException(e.getMessage(), e.getCause());
+    }
+  }
+
+  public List<CloudflareDnsRecord> retrieveDnsRecords(String zoneId) throws CloudflareClientException {
     CloudflareListDnsRecordsResponse cloudflareResponse = listDnsRecordsPaged(zoneId, 1);
 
     List<CloudflareDnsRecord> dnsRecords = cloudflareResponse.getResult();

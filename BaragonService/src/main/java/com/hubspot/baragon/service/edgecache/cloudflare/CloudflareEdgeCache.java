@@ -81,7 +81,7 @@ public class CloudflareEdgeCache implements EdgeCache {
 
       LOG.debug("Sending cache purge request against {} for {} to Cloudflare...", matchingZone.get().getName(), cacheTag);
 
-      return cf.purgeCache(zoneId, Collections.singletonList(cacheTag));
+      return cf.purgeEdgeCache(zoneId, Collections.singletonList(cacheTag));
 
     } catch (CloudflareClientException e) {
       LOG.error("Unable to invalidate Cloudflare cache for request {}", request, e);
