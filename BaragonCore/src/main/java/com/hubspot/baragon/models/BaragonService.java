@@ -63,6 +63,10 @@ public class BaragonService {
     this.edgeCacheDNS = edgeCacheDNS;
   }
 
+  public BaragonService(String serviceId, Collection<String> owners, String serviceBasePath, List<String> additionalPaths, Set<String> loadBalancerGroups, Map<String, Object> options, Optional<String> templateName, Set<String> domains) {
+    this(serviceId, owners, serviceBasePath, additionalPaths, loadBalancerGroups, options, templateName, domains, Optional.absent());
+  }
+
   public BaragonService(String serviceId, Collection<String> owners, String serviceBasePath, List<String> additionalPaths, Set<String> loadBalancerGroups, Map<String, Object> options, Optional<String> templateName) {
     this(serviceId, owners, serviceBasePath, additionalPaths, loadBalancerGroups, options, templateName, Collections.<String>emptySet(), Optional.absent());
   }
