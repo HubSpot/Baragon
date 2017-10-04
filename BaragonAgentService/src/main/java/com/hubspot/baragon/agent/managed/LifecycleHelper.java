@@ -309,10 +309,7 @@ public class LifecycleHelper {
           throw new LockTimeoutException("Could not acquire lock to reapply configs", agentLock);
         }
         try {
-          if (bootstrapStateNodeVersion.get() < maybeStateVersion.get()) {
-            applyCurrentConfigs();
-            bootstrapStateNodeVersion.set(maybeStateVersion.get());
-          }
+          applyCurrentConfigs();
         } catch (Exception e) {
           abort("Could not ensure configs are up to date, aborting", e);
         } finally {
