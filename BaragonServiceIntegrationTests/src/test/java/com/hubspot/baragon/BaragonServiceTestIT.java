@@ -1,5 +1,9 @@
 package com.hubspot.baragon;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -9,6 +13,17 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.Stopwatch;
+import org.junit.rules.TestRule;
+import org.junit.rules.TestWatcher;
+import org.junit.runner.Description;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Optional;
 import com.google.inject.Guice;
@@ -22,19 +37,6 @@ import com.hubspot.baragon.models.BaragonService;
 import com.hubspot.baragon.models.BaragonServiceState;
 import com.hubspot.baragon.models.BaragonServiceStatus;
 import com.hubspot.baragon.models.UpstreamInfo;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.Stopwatch;
-import org.junit.rules.TestRule;
-import org.junit.rules.TestWatcher;
-import org.junit.runner.Description;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertEquals;
 
 public class BaragonServiceTestIT {
   
@@ -64,7 +66,7 @@ public class BaragonServiceTestIT {
   private void setupTestService(String requestId, String serviceId, String basePath, List<String> additionalPaths, Optional<String> replaceServiceId, Optional<Map<String, Object>> options, Optional<String> template) {
     UpstreamInfo upstream = new UpstreamInfo(UPSTREAM, Optional.<String>absent(), Optional.<String>absent());
     BaragonService lbService = new BaragonService(serviceId, new ArrayList<String>(), basePath, additionalPaths,
-        new HashSet<String>(Arrays.asList(LOAD_BALANCER_GROUP)), options.isPresent() ? options.get() : new HashMap<String, Object>(), template, Collections.<String>emptySet());
+        new HashSet<String>(Arrays.asList(LOAD_BALANCER_GROUP)), options.isPresent() ? options.get() : new HashMap<String, Object>(), template, Collections.<String>emptySet(), Optional.absent());
     
     BaragonRequest request = new BaragonRequest(requestId, lbService, Arrays.asList(upstream), new ArrayList<UpstreamInfo>(), replaceServiceId);
     baragonServiceClient.enqueueRequest(request);
