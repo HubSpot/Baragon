@@ -41,6 +41,8 @@ public class BaragonService {
 
   private final Set<String> domains;
 
+  private final Optional<String> edgeCacheDNS;
+
   public BaragonService(@JsonProperty("serviceId") String serviceId,
                         @JsonProperty("owners") Collection<String> owners,
                         @JsonProperty("serviceBasePath") String serviceBasePath,
@@ -48,7 +50,8 @@ public class BaragonService {
                         @JsonProperty("loadBalancerGroups") Set<String> loadBalancerGroups,
                         @JsonProperty("options") Map<String, Object> options,
                         @JsonProperty("templateName") Optional<String> templateName,
-                        @JsonProperty("domains") Set<String> domains) {
+                        @JsonProperty("domains") Set<String> domains,
+                        @JsonProperty("edgeCacheDNS") Optional<String> edgeCacheDNS) {
     this.serviceId = serviceId;
     this.owners = owners;
     this.serviceBasePath = serviceBasePath;
@@ -57,14 +60,15 @@ public class BaragonService {
     this.options = options;
     this.templateName = templateName;
     this.domains = MoreObjects.firstNonNull(domains, Collections.<String>emptySet());
+    this.edgeCacheDNS = edgeCacheDNS;
   }
 
   public BaragonService(String serviceId, Collection<String> owners, String serviceBasePath, List<String> additionalPaths, Set<String> loadBalancerGroups, Map<String, Object> options, Optional<String> templateName) {
-    this(serviceId, owners, serviceBasePath, additionalPaths, loadBalancerGroups, options, templateName, Collections.<String>emptySet());
+    this(serviceId, owners, serviceBasePath, additionalPaths, loadBalancerGroups, options, templateName, Collections.<String>emptySet(), Optional.absent());
   }
 
   public BaragonService(String serviceId, Collection<String> owners, String serviceBasePath, Set<String> loadBalancerGroups, Map<String, Object> options) {
-    this(serviceId, owners, serviceBasePath, Collections.<String>emptyList(), loadBalancerGroups, options, Optional.<String>absent(), Collections.<String>emptySet());
+    this(serviceId, owners, serviceBasePath, Collections.<String>emptyList(), loadBalancerGroups, options, Optional.<String>absent(), Collections.<String>emptySet(), Optional.absent());
   }
 
   public String getServiceId() {
@@ -87,6 +91,9 @@ public class BaragonService {
     return loadBalancerGroups;
   }
 
+  /**
+   * Data from this field is primarily used to populate data in rendered nginx config templates.
+   */
   public Map<String, Object> getOptions() {
     return options;
   }
@@ -97,6 +104,10 @@ public class BaragonService {
 
   public Set<String> getDomains() {
     return domains;
+  }
+
+  public Optional<String> getEdgeCacheDNS() {
+    return edgeCacheDNS;
   }
 
   @JsonIgnore
@@ -131,6 +142,7 @@ public class BaragonService {
         ", options=" + options +
         ", templateName=" + templateName +
         ", domains=" + domains +
+        ", edgeCacheDNS=" + edgeCacheDNS +
         ']';
   }
 
@@ -169,6 +181,9 @@ public class BaragonService {
     if (domains != null ? !domains.equals(service.domains) : service.domains != null) {
       return false;
     }
+    if (edgeCacheDNS != null ? !edgeCacheDNS.equals(service.edgeCacheDNS) : service.edgeCacheDNS != null) {
+      return false;
+    }
 
     return true;
   }
@@ -183,6 +198,7 @@ public class BaragonService {
     result = 31 * result + (options != null ? options.hashCode() : 0);
     result = 31 * result + (templateName != null ? templateName.hashCode() : 0);
     result = 31 * result + (domains != null ? domains.hashCode() : 0);
+    result = 31 * result + (edgeCacheDNS != null ? edgeCacheDNS.hashCode() : 0);
     return result;
   }
 }

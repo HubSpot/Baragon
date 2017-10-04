@@ -29,8 +29,12 @@ import com.hubspot.baragon.config.ZooKeeperConfiguration;
 import com.hubspot.baragon.data.BaragonConnectionStateListener;
 import com.hubspot.baragon.data.BaragonWorkerDatastore;
 import com.hubspot.baragon.service.config.BaragonConfiguration;
+import com.hubspot.baragon.service.config.EdgeCacheConfiguration;
 import com.hubspot.baragon.service.config.ElbConfiguration;
 import com.hubspot.baragon.service.config.SentryConfiguration;
+import com.hubspot.baragon.service.edgecache.EdgeCache;
+import com.hubspot.baragon.service.edgecache.cloudflare.CloudflareEdgeCache;
+import com.hubspot.baragon.service.edgecache.cloudflare.client.CloudflareClient;
 import com.hubspot.baragon.service.elb.ApplicationLoadBalancer;
 import com.hubspot.baragon.service.elb.ClassicLoadBalancer;
 import com.hubspot.baragon.service.exceptions.BaragonExceptionNotifier;
@@ -99,6 +103,11 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
     binder.bind(ServiceManager.class).in(Scopes.SINGLETON);
     binder.bind(StatusManager.class).in(Scopes.SINGLETON);
 
+    // Edge Cache
+    binder.bind(CloudflareEdgeCache.class);
+    binder.bind(CloudflareClient.class);
+    binder.bind(EdgeCache.class).to(getConfiguration().getEdgeCacheConfiguration().getEdgeCache().getEdgeCacheClass());
+
     // Workers
     binder.bind(BaragonElbSyncWorker.class).in(Scopes.SINGLETON);
     binder.bind(BaragonRequestWorker.class).in(Scopes.SINGLETON);
@@ -106,7 +115,6 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
 
     binder.bind(ClassicLoadBalancer.class);
     binder.bind(ApplicationLoadBalancer.class);
-
 
     Multibinder<AbstractLatchListener> latchBinder = Multibinder.newSetBinder(binder, AbstractLatchListener.class);
     latchBinder.addBinding().to(RequestWorkerListener.class).in(Scopes.SINGLETON);
@@ -156,6 +164,11 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
   @Provides
   public Optional<ElbConfiguration> providesElbConfiguration(BaragonConfiguration configuration) {
     return configuration.getElbConfiguration();
+  }
+
+  @Provides
+  public EdgeCacheConfiguration providesEdgeCacheConfiguration(BaragonConfiguration configuration) {
+    return configuration.getEdgeCacheConfiguration();
   }
 
   @Provides
