@@ -10,6 +10,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.apache.zookeeper.KeeperException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
@@ -28,14 +32,11 @@ import com.hubspot.baragon.models.QueuedRequestId;
 import com.hubspot.baragon.models.QueuedRequestWithState;
 import com.hubspot.baragon.models.RequestAction;
 import com.hubspot.baragon.service.config.BaragonConfiguration;
+import com.hubspot.baragon.service.edgecache.EdgeCache;
 import com.hubspot.baragon.service.exceptions.BaragonExceptionNotifier;
 import com.hubspot.baragon.service.managers.AgentManager;
 import com.hubspot.baragon.service.managers.RequestManager;
 import com.hubspot.baragon.utils.JavaUtils;
-
-import org.apache.zookeeper.KeeperException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @Singleton
 public class BaragonRequestWorker implements Runnable {
@@ -46,15 +47,18 @@ public class BaragonRequestWorker implements Runnable {
   private final AtomicLong workerLastStartAt;
   private final BaragonExceptionNotifier exceptionNotifier;
   private final BaragonConfiguration configuration;
+  private final EdgeCache edgeCache;
 
   @Inject
   public BaragonRequestWorker(AgentManager agentManager,
                               RequestManager requestManager,
                               BaragonExceptionNotifier exceptionNotifier,
                               BaragonConfiguration configuration,
+                              EdgeCache edgeCache,
                               @Named(BaragonDataModule.BARAGON_SERVICE_WORKER_LAST_START) AtomicLong workerLastStartAt) {
     this.agentManager = agentManager;
     this.requestManager = requestManager;
+    this.edgeCache = edgeCache;
     this.workerLastStartAt = workerLastStartAt;
     this.exceptionNotifier = exceptionNotifier;
     this.configuration = configuration;
@@ -144,6 +148,7 @@ public class BaragonRequestWorker implements Runnable {
             try {
               requestManager.setRequestMessage(request.getLoadBalancerRequestId(), String.format("%s request succeeded! Added upstreams: %s, Removed upstreams: %s", request.getAction().or(RequestAction.UPDATE), request.getAddUpstreams(), request.getRemoveUpstreams()));
               requestManager.commitRequest(request);
+              performPostApplySteps(request);
               return InternalRequestStates.COMPLETED;
             } catch (KeeperException ke) {
               String message = String.format("Caught zookeeper error for path %s.", ke.getPath());
@@ -175,6 +180,13 @@ public class BaragonRequestWorker implements Runnable {
 
       default:
         return currentState;
+    }
+  }
+
+  private void performPostApplySteps(BaragonRequest request) {
+    if (configuration.getEdgeCacheConfiguration().isEnabled() &&
+        edgeCache.invalidateIfNecessary(request)) {
+      LOG.info("Invalidated edge cache for {}", request);
     }
   }
 
