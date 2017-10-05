@@ -66,4 +66,15 @@ public class CloudflareResultInfo {
   public int hashCode() {
     return Objects.hashCode(page, perPage, count, totalCount, totalPages);
   }
+
+  @Override
+  public String toString() {
+    return "CloudflareResultInfo{" +
+        "page=" + page +
+        ", perPage=" + perPage +
+        ", count=" + count +
+        ", totalCount=" + totalCount +
+        ", totalPages=" + totalPages +
+        '}';
+  }
 }
