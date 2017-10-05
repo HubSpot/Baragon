@@ -66,4 +66,15 @@ public abstract class CloudflareResponse<T> {
   public int hashCode() {
     return Objects.hashCode(success, errors, messages, resultInfo, result);
   }
+
+  @Override
+  public String toString() {
+    return "CloudflareResponse{" +
+        "success=" + success +
+        ", errors=" + errors +
+        ", messages=" + messages +
+        ", resultInfo=" + resultInfo +
+        ", result=" + result +
+        '}';
+  }
 }

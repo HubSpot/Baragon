@@ -41,4 +41,12 @@ public class CloudflareZone {
   public int hashCode() {
     return Objects.hashCode(id, name);
   }
+
+  @Override
+  public String toString() {
+    return "CloudflareZone{" +
+        "id='" + id + '\'' +
+        ", name='" + name + '\'' +
+        '}';
+  }
 }

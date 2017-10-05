@@ -39,4 +39,12 @@ public class CloudflareDnsRecord {
   public int hashCode() {
     return Objects.hashCode(proxied, name);
   }
+
+  @Override
+  public String toString() {
+    return "CloudflareDnsRecord{" +
+        "proxied=" + proxied +
+        ", name='" + name + '\'' +
+        '}';
+  }
 }
