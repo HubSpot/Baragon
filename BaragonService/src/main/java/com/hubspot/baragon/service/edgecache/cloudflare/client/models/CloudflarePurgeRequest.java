@@ -42,4 +42,11 @@ public class CloudflarePurgeRequest {
     return Objects.hashCode(files, tags);
   }
 
+  @Override
+  public String toString() {
+    return "CloudflarePurgeRequest{" +
+        "files=" + files +
+        ", tags=" + tags +
+        '}';
+  }
 }

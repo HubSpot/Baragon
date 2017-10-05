@@ -41,4 +41,12 @@ public class CloudflareError {
   public int hashCode() {
     return Objects.hashCode(code, message);
   }
+
+  @Override
+  public String toString() {
+    return "CloudflareError{" +
+        "code=" + code +
+        ", message='" + message + '\'' +
+        '}';
+  }
 }
