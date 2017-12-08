@@ -29,6 +29,7 @@ import com.hubspot.baragon.config.ZooKeeperConfiguration;
 import com.hubspot.baragon.data.BaragonConnectionStateListener;
 import com.hubspot.baragon.data.BaragonWorkerDatastore;
 import com.hubspot.baragon.service.config.BaragonConfiguration;
+import com.hubspot.baragon.service.config.BaragonServiceDWSettings;
 import com.hubspot.baragon.service.config.EdgeCacheConfiguration;
 import com.hubspot.baragon.service.config.ElbConfiguration;
 import com.hubspot.baragon.service.config.SentryConfiguration;
@@ -197,7 +198,7 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
   @Provides
   @Singleton
   @Named(BARAGON_SERVICE_DW_CONFIG)
-  public BaragonServiceDWConfig providesHttpPortProperty(BaragonConfiguration config) {
+  public BaragonServiceDWSettings providesHttpPortProperty(BaragonConfiguration config) {
     Integer port = null;
     String contextPath;
     // Currently we only look for an http connector, not an https connector
@@ -219,7 +220,7 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
     if (port == null) {
       throw new RuntimeException("Could not determine http port");
     }
-    return new BaragonServiceDWConfig(port, contextPath);
+    return new BaragonServiceDWSettings(port, contextPath);
   }
 
   @Provides
@@ -249,7 +250,7 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
   @Named(BaragonDataModule.BARAGON_SERVICE_LEADER_LATCH)
   public LeaderLatch providesServiceLeaderLatch(BaragonConfiguration config,
                                                 BaragonWorkerDatastore datastore,
-                                                @Named(BARAGON_SERVICE_DW_CONFIG) BaragonServiceDWConfig dwConfig,
+                                                @Named(BARAGON_SERVICE_DW_CONFIG) BaragonServiceDWSettings dwConfig,
                                                 @Named(BARAGON_SERVICE_HOSTNAME) String hostname) {
     final String baseUri = String.format("http://%s:%s%s", hostname, dwConfig.getPort(), dwConfig.getContextPath());
 
@@ -346,23 +347,5 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
   @Singleton
   public Optional<SentryConfiguration> sentryConfiguration(final BaragonConfiguration config) {
     return config.getSentryConfiguration();
-  }
-
-  public class BaragonServiceDWConfig {
-    private final int port;
-    private final String contextPath;
-
-    public BaragonServiceDWConfig(int port, String contextPath) {
-      this.port = port;
-      this.contextPath = contextPath;
-    }
-
-    public int getPort() {
-      return port;
-    }
-
-    public String getContextPath() {
-      return contextPath;
-    }
   }
 }
