@@ -265,8 +265,9 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
 
   @Provides
   @Named(BARAGON_URI_BASE)
-  String getBaragonUriBase(final BaragonConfiguration configuration) {
-    final String baragonUiPrefix = configuration.getUiConfiguration().getBaseUrl().or(((SimpleServerFactory) configuration.getServerFactory()).getApplicationContextPath());
+  String getBaragonUriBase(final BaragonConfiguration configuration,
+                           @Named(BARAGON_SERVICE_DW_CONFIG) BaragonServiceDWSettings dwSettings) {
+    final String baragonUiPrefix = configuration.getUiConfiguration().getBaseUrl().or(dwSettings.getContextPath());
     return (baragonUiPrefix.endsWith("/")) ?  baragonUiPrefix.substring(0, baragonUiPrefix.length() - 1) : baragonUiPrefix;
   }
 
