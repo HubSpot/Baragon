@@ -3,6 +3,7 @@ package com.hubspot.baragon.models;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -17,7 +18,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Optional;
-import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class BaragonService {
@@ -46,7 +47,7 @@ public class BaragonService {
   @Deprecated
   private final Optional<String> edgeCacheDNS;
 
-  private final List<String> edgeCacheDomains;
+  private final Set<String> edgeCacheDomains;
 
   public BaragonService(@JsonProperty("serviceId") String serviceId,
                         @JsonProperty("owners") Collection<String> owners,
@@ -57,7 +58,7 @@ public class BaragonService {
                         @JsonProperty("templateName") Optional<String> templateName,
                         @JsonProperty("domains") Set<String> domains,
                         @JsonProperty("edgeCacheDNS") Optional<String> edgeCacheDNS,
-                        @JsonProperty("edgeCacheDomains") List<String> edgeCacheDomains) {
+                        @JsonProperty("edgeCacheDomains") Set<String> edgeCacheDomains) {
     this.serviceId = serviceId;
     this.owners = owners;
     this.serviceBasePath = serviceBasePath;
@@ -67,7 +68,7 @@ public class BaragonService {
     this.templateName = templateName;
     this.domains = MoreObjects.firstNonNull(domains, Collections.<String>emptySet());
     this.edgeCacheDNS = edgeCacheDNS;
-    List<String> edgeDomains = edgeCacheDomains != null ? Lists.newArrayList(edgeCacheDomains) : new ArrayList<>();
+    Set<String> edgeDomains = edgeCacheDomains != null ? Sets.newHashSet(edgeCacheDomains) : new HashSet<>();
     if (edgeCacheDNS.isPresent()) {
       edgeDomains.add(edgeCacheDNS.get());
     }
@@ -76,24 +77,24 @@ public class BaragonService {
 
   public BaragonService(String serviceId, Collection<String> owners, String serviceBasePath, List<String> additionalPaths, Set<String> loadBalancerGroups, Map<String, Object> options,
                         Optional<String> templateName, Set<String> domains, Optional<String> edgeCacheDNS) {
-    this(serviceId, owners, serviceBasePath, additionalPaths, loadBalancerGroups, options, templateName, domains, edgeCacheDNS, Collections.emptyList());
+    this(serviceId, owners, serviceBasePath, additionalPaths, loadBalancerGroups, options, templateName, domains, edgeCacheDNS, Collections.emptySet());
   }
 
   public BaragonService(String serviceId, Collection<String> owners, String serviceBasePath, List<String> additionalPaths, Set<String> loadBalancerGroups, Map<String, Object> options,
-                        Optional<String> templateName, Set<String> domains, List<String> edgeCacheDomains) {
+                        Optional<String> templateName, Set<String> domains, Set<String> edgeCacheDomains) {
     this(serviceId, owners, serviceBasePath, additionalPaths, loadBalancerGroups, options, templateName, domains, Optional.absent(), edgeCacheDomains);
   }
 
   public BaragonService(String serviceId, Collection<String> owners, String serviceBasePath, List<String> additionalPaths, Set<String> loadBalancerGroups, Map<String, Object> options, Optional<String> templateName, Set<String> domains) {
-    this(serviceId, owners, serviceBasePath, additionalPaths, loadBalancerGroups, options, templateName, domains, Optional.absent(), Collections.emptyList());
+    this(serviceId, owners, serviceBasePath, additionalPaths, loadBalancerGroups, options, templateName, domains, Optional.absent(), Collections.emptySet());
   }
 
   public BaragonService(String serviceId, Collection<String> owners, String serviceBasePath, List<String> additionalPaths, Set<String> loadBalancerGroups, Map<String, Object> options, Optional<String> templateName) {
-    this(serviceId, owners, serviceBasePath, additionalPaths, loadBalancerGroups, options, templateName, Collections.<String>emptySet(), Optional.absent(), Collections.emptyList());
+    this(serviceId, owners, serviceBasePath, additionalPaths, loadBalancerGroups, options, templateName, Collections.<String>emptySet(), Optional.absent(), Collections.emptySet());
   }
 
   public BaragonService(String serviceId, Collection<String> owners, String serviceBasePath, Set<String> loadBalancerGroups, Map<String, Object> options) {
-    this(serviceId, owners, serviceBasePath, Collections.<String>emptyList(), loadBalancerGroups, options, Optional.<String>absent(), Collections.<String>emptySet(), Optional.absent(), Collections.emptyList());
+    this(serviceId, owners, serviceBasePath, Collections.<String>emptyList(), loadBalancerGroups, options, Optional.<String>absent(), Collections.<String>emptySet(), Optional.absent(), Collections.emptySet());
   }
 
   public String getServiceId() {
@@ -135,7 +136,7 @@ public class BaragonService {
     return edgeCacheDNS;
   }
 
-  public List<String> getEdgeCacheDomains() {
+  public Set<String> getEdgeCacheDomains() {
     return edgeCacheDomains;
   }
 
