@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import javax.validation.constraints.NotNull;
@@ -16,6 +17,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Optional;
+import com.google.common.collect.Lists;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class BaragonService {
@@ -41,7 +43,10 @@ public class BaragonService {
 
   private final Set<String> domains;
 
+  @Deprecated
   private final Optional<String> edgeCacheDNS;
+
+  private final List<String> edgeCacheDomains;
 
   public BaragonService(@JsonProperty("serviceId") String serviceId,
                         @JsonProperty("owners") Collection<String> owners,
@@ -51,7 +56,8 @@ public class BaragonService {
                         @JsonProperty("options") Map<String, Object> options,
                         @JsonProperty("templateName") Optional<String> templateName,
                         @JsonProperty("domains") Set<String> domains,
-                        @JsonProperty("edgeCacheDNS") Optional<String> edgeCacheDNS) {
+                        @JsonProperty("edgeCacheDNS") Optional<String> edgeCacheDNS,
+                        @JsonProperty("edgeCacheDomains") List<String> edgeCacheDomains) {
     this.serviceId = serviceId;
     this.owners = owners;
     this.serviceBasePath = serviceBasePath;
@@ -61,18 +67,33 @@ public class BaragonService {
     this.templateName = templateName;
     this.domains = MoreObjects.firstNonNull(domains, Collections.<String>emptySet());
     this.edgeCacheDNS = edgeCacheDNS;
+    List<String> edgeDomains = edgeCacheDomains != null ? Lists.newArrayList(edgeCacheDomains) : new ArrayList<>();
+    if (edgeCacheDNS.isPresent()) {
+      edgeDomains.add(edgeCacheDNS.get());
+    }
+    this.edgeCacheDomains = edgeDomains;
+  }
+
+  public BaragonService(String serviceId, Collection<String> owners, String serviceBasePath, List<String> additionalPaths, Set<String> loadBalancerGroups, Map<String, Object> options,
+                        Optional<String> templateName, Set<String> domains, Optional<String> edgeCacheDNS) {
+    this(serviceId, owners, serviceBasePath, additionalPaths, loadBalancerGroups, options, templateName, domains, edgeCacheDNS, Collections.emptyList());
+  }
+
+  public BaragonService(String serviceId, Collection<String> owners, String serviceBasePath, List<String> additionalPaths, Set<String> loadBalancerGroups, Map<String, Object> options,
+                        Optional<String> templateName, Set<String> domains, List<String> edgeCacheDomains) {
+    this(serviceId, owners, serviceBasePath, additionalPaths, loadBalancerGroups, options, templateName, domains, Optional.absent(), edgeCacheDomains);
   }
 
   public BaragonService(String serviceId, Collection<String> owners, String serviceBasePath, List<String> additionalPaths, Set<String> loadBalancerGroups, Map<String, Object> options, Optional<String> templateName, Set<String> domains) {
-    this(serviceId, owners, serviceBasePath, additionalPaths, loadBalancerGroups, options, templateName, domains, Optional.absent());
+    this(serviceId, owners, serviceBasePath, additionalPaths, loadBalancerGroups, options, templateName, domains, Optional.absent(), Collections.emptyList());
   }
 
   public BaragonService(String serviceId, Collection<String> owners, String serviceBasePath, List<String> additionalPaths, Set<String> loadBalancerGroups, Map<String, Object> options, Optional<String> templateName) {
-    this(serviceId, owners, serviceBasePath, additionalPaths, loadBalancerGroups, options, templateName, Collections.<String>emptySet(), Optional.absent());
+    this(serviceId, owners, serviceBasePath, additionalPaths, loadBalancerGroups, options, templateName, Collections.<String>emptySet(), Optional.absent(), Collections.emptyList());
   }
 
   public BaragonService(String serviceId, Collection<String> owners, String serviceBasePath, Set<String> loadBalancerGroups, Map<String, Object> options) {
-    this(serviceId, owners, serviceBasePath, Collections.<String>emptyList(), loadBalancerGroups, options, Optional.<String>absent(), Collections.<String>emptySet(), Optional.absent());
+    this(serviceId, owners, serviceBasePath, Collections.<String>emptyList(), loadBalancerGroups, options, Optional.<String>absent(), Collections.<String>emptySet(), Optional.absent(), Collections.emptyList());
   }
 
   public String getServiceId() {
@@ -114,6 +135,10 @@ public class BaragonService {
     return edgeCacheDNS;
   }
 
+  public List<String> getEdgeCacheDomains() {
+    return edgeCacheDomains;
+  }
+
   @JsonIgnore
   public List<String> getAllPaths() {
     List<String> allPaths = new ArrayList<>();
@@ -138,71 +163,43 @@ public class BaragonService {
 
   @Override
   public String toString() {
-    return "BaragonService [" +
+    return "BaragonService{" +
         "serviceId='" + serviceId + '\'' +
         ", owners=" + owners +
         ", serviceBasePath='" + serviceBasePath + '\'' +
+        ", additionalPaths=" + additionalPaths +
         ", loadBalancerGroups=" + loadBalancerGroups +
         ", options=" + options +
         ", templateName=" + templateName +
         ", domains=" + domains +
         ", edgeCacheDNS=" + edgeCacheDNS +
-        ']';
+        ", edgeCacheDomains=" + edgeCacheDomains +
+        '}';
   }
 
   @Override
-  public boolean equals(Object o) {
-    if (this == o) {
+  public boolean equals(Object obj) {
+    if (this == obj) {
       return true;
     }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
+    if (obj instanceof BaragonService) {
+      final BaragonService that = (BaragonService) obj;
+      return Objects.equals(this.serviceId, that.serviceId) &&
+          Objects.equals(this.owners, that.owners) &&
+          Objects.equals(this.serviceBasePath, that.serviceBasePath) &&
+          Objects.equals(this.additionalPaths, that.additionalPaths) &&
+          Objects.equals(this.loadBalancerGroups, that.loadBalancerGroups) &&
+          Objects.equals(this.options, that.options) &&
+          Objects.equals(this.templateName, that.templateName) &&
+          Objects.equals(this.domains, that.domains) &&
+          Objects.equals(this.edgeCacheDNS, that.edgeCacheDNS) &&
+          Objects.equals(this.edgeCacheDomains, that.edgeCacheDomains);
     }
-
-    BaragonService service = (BaragonService) o;
-
-    if (loadBalancerGroups != null ? !loadBalancerGroups.equals(service.loadBalancerGroups) : service.loadBalancerGroups != null) {
-      return false;
-    }
-    if (options != null ? !options.equals(service.options) : service.options != null) {
-      return false;
-    }
-    if (owners != null ? !owners.equals(service.owners) : service.owners != null) {
-      return false;
-    }
-    if (serviceBasePath != null ? !serviceBasePath.equals(service.serviceBasePath) : service.serviceBasePath != null) {
-      return false;
-    }
-    if (additionalPaths != null ? !additionalPaths.equals(service.additionalPaths) : service.additionalPaths != null) {
-      return false;
-    }
-    if (serviceId != null ? !serviceId.equals(service.serviceId) : service.serviceId != null) {
-      return false;
-    }
-    if (templateName != null ? !templateName.equals(service.templateName) : service.templateName != null) {
-      return false;
-    }
-    if (domains != null ? !domains.equals(service.domains) : service.domains != null) {
-      return false;
-    }
-    if (edgeCacheDNS != null ? !edgeCacheDNS.equals(service.edgeCacheDNS) : service.edgeCacheDNS != null) {
-      return false;
-    }
-
-    return true;
+    return false;
   }
 
   @Override
   public int hashCode() {
-    int result = serviceId != null ? serviceId.hashCode() : 0;
-    result = 31 * result + (owners != null ? owners.hashCode() : 0);
-    result = 31 * result + (serviceBasePath != null ? serviceBasePath.hashCode() : 0);
-    result = 31 * result + (additionalPaths != null ? additionalPaths.hashCode() : 0);
-    result = 31 * result + (loadBalancerGroups != null ? loadBalancerGroups.hashCode() : 0);
-    result = 31 * result + (options != null ? options.hashCode() : 0);
-    result = 31 * result + (templateName != null ? templateName.hashCode() : 0);
-    result = 31 * result + (domains != null ? domains.hashCode() : 0);
-    result = 31 * result + (edgeCacheDNS != null ? edgeCacheDNS.hashCode() : 0);
-    return result;
+    return Objects.hash(serviceId, owners, serviceBasePath, additionalPaths, loadBalancerGroups, options, templateName, domains, edgeCacheDNS, edgeCacheDomains);
   }
 }
