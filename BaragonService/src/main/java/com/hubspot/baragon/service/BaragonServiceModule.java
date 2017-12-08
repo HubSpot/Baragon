@@ -60,13 +60,15 @@ import com.hubspot.dropwizard.guicier.DropwizardAwareModule;
 import com.ning.http.client.AsyncHttpClient;
 import com.ning.http.client.AsyncHttpClientConfig;
 
+import io.dropwizard.jetty.ConnectorFactory;
 import io.dropwizard.jetty.HttpConnectorFactory;
+import io.dropwizard.server.DefaultServerFactory;
 import io.dropwizard.server.SimpleServerFactory;
 
 public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfiguration> {
   public static final String BARAGON_SERVICE_SCHEDULED_EXECUTOR = "baragon.service.scheduledExecutor";
 
-  public static final String BARAGON_SERVICE_HTTP_PORT = "baragon.service.http.port";
+  public static final String BARAGON_SERVICE_DW_CONFIG = "baragon.service.port";
   public static final String BARAGON_SERVICE_HOSTNAME = "baragon.service.hostname";
   public static final String BARAGON_SERVICE_LOCAL_HOSTNAME = "baragon.service.local.hostname";
   public static final String BARAGON_SERVICE_HTTP_CLIENT = "baragon.service.http.client";
@@ -194,12 +196,30 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
 
   @Provides
   @Singleton
-  @Named(BARAGON_SERVICE_HTTP_PORT)
-  public int providesHttpPortProperty(BaragonConfiguration config) {
-    SimpleServerFactory simpleServerFactory = (SimpleServerFactory) config.getServerFactory();
-    HttpConnectorFactory httpFactory = (HttpConnectorFactory) simpleServerFactory.getConnector();
-
-    return httpFactory.getPort();
+  @Named(BARAGON_SERVICE_DW_CONFIG)
+  public BaragonServiceDWConfig providesHttpPortProperty(BaragonConfiguration config) {
+    Integer port = null;
+    String contextPath;
+    // Currently we only look for an http connector, not an https connector
+    if (config.getServerFactory() instanceof SimpleServerFactory) {
+      SimpleServerFactory simpleServerFactory = (SimpleServerFactory) config.getServerFactory();
+      HttpConnectorFactory httpFactory = (HttpConnectorFactory) simpleServerFactory.getConnector();
+      port = httpFactory.getPort();
+      contextPath = simpleServerFactory.getApplicationContextPath();
+    } else {
+      DefaultServerFactory defaultServerFactory = (DefaultServerFactory) config.getServerFactory();
+      contextPath = defaultServerFactory.getApplicationContextPath();
+      for (ConnectorFactory connectorFactory : defaultServerFactory.getApplicationConnectors()) {
+        if (connectorFactory instanceof HttpConnectorFactory) {
+          HttpConnectorFactory httpFactory = (HttpConnectorFactory) connectorFactory;
+          port = httpFactory.getPort();
+        }
+      }
+    }
+    if (port == null) {
+      throw new RuntimeException("Could not determine http port");
+    }
+    return new BaragonServiceDWConfig(port, contextPath);
   }
 
   @Provides
@@ -229,10 +249,9 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
   @Named(BaragonDataModule.BARAGON_SERVICE_LEADER_LATCH)
   public LeaderLatch providesServiceLeaderLatch(BaragonConfiguration config,
                                                 BaragonWorkerDatastore datastore,
-                                                @Named(BARAGON_SERVICE_HTTP_PORT) int httpPort,
+                                                @Named(BARAGON_SERVICE_DW_CONFIG) BaragonServiceDWConfig dwConfig,
                                                 @Named(BARAGON_SERVICE_HOSTNAME) String hostname) {
-    final String appRoot = ((SimpleServerFactory)config.getServerFactory()).getApplicationContextPath();
-    final String baseUri = String.format("http://%s:%s%s", hostname, httpPort, appRoot);
+    final String baseUri = String.format("http://%s:%s%s", hostname, dwConfig.getPort(), dwConfig.getContextPath());
 
     return datastore.createLeaderLatch(baseUri);
   }
@@ -327,5 +346,23 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
   @Singleton
   public Optional<SentryConfiguration> sentryConfiguration(final BaragonConfiguration config) {
     return config.getSentryConfiguration();
+  }
+
+  public class BaragonServiceDWConfig {
+    private final int port;
+    private final String contextPath;
+
+    public BaragonServiceDWConfig(int port, String contextPath) {
+      this.port = port;
+      this.contextPath = contextPath;
+    }
+
+    public int getPort() {
+      return port;
+    }
+
+    public String getContextPath() {
+      return contextPath;
+    }
   }
 }
