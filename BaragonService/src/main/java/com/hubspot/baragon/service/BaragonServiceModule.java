@@ -29,6 +29,7 @@ import com.hubspot.baragon.config.ZooKeeperConfiguration;
 import com.hubspot.baragon.data.BaragonConnectionStateListener;
 import com.hubspot.baragon.data.BaragonWorkerDatastore;
 import com.hubspot.baragon.service.config.BaragonConfiguration;
+import com.hubspot.baragon.service.config.BaragonServiceDWSettings;
 import com.hubspot.baragon.service.config.EdgeCacheConfiguration;
 import com.hubspot.baragon.service.config.ElbConfiguration;
 import com.hubspot.baragon.service.config.SentryConfiguration;
@@ -60,13 +61,15 @@ import com.hubspot.dropwizard.guicier.DropwizardAwareModule;
 import com.ning.http.client.AsyncHttpClient;
 import com.ning.http.client.AsyncHttpClientConfig;
 
+import io.dropwizard.jetty.ConnectorFactory;
 import io.dropwizard.jetty.HttpConnectorFactory;
+import io.dropwizard.server.DefaultServerFactory;
 import io.dropwizard.server.SimpleServerFactory;
 
 public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfiguration> {
   public static final String BARAGON_SERVICE_SCHEDULED_EXECUTOR = "baragon.service.scheduledExecutor";
 
-  public static final String BARAGON_SERVICE_HTTP_PORT = "baragon.service.http.port";
+  public static final String BARAGON_SERVICE_DW_CONFIG = "baragon.service.port";
   public static final String BARAGON_SERVICE_HOSTNAME = "baragon.service.hostname";
   public static final String BARAGON_SERVICE_LOCAL_HOSTNAME = "baragon.service.local.hostname";
   public static final String BARAGON_SERVICE_HTTP_CLIENT = "baragon.service.http.client";
@@ -194,12 +197,30 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
 
   @Provides
   @Singleton
-  @Named(BARAGON_SERVICE_HTTP_PORT)
-  public int providesHttpPortProperty(BaragonConfiguration config) {
-    SimpleServerFactory simpleServerFactory = (SimpleServerFactory) config.getServerFactory();
-    HttpConnectorFactory httpFactory = (HttpConnectorFactory) simpleServerFactory.getConnector();
-
-    return httpFactory.getPort();
+  @Named(BARAGON_SERVICE_DW_CONFIG)
+  public BaragonServiceDWSettings providesHttpPortProperty(BaragonConfiguration config) {
+    Integer port = null;
+    String contextPath;
+    // Currently we only look for an http connector, not an https connector
+    if (config.getServerFactory() instanceof SimpleServerFactory) {
+      SimpleServerFactory simpleServerFactory = (SimpleServerFactory) config.getServerFactory();
+      HttpConnectorFactory httpFactory = (HttpConnectorFactory) simpleServerFactory.getConnector();
+      port = httpFactory.getPort();
+      contextPath = simpleServerFactory.getApplicationContextPath();
+    } else {
+      DefaultServerFactory defaultServerFactory = (DefaultServerFactory) config.getServerFactory();
+      contextPath = defaultServerFactory.getApplicationContextPath();
+      for (ConnectorFactory connectorFactory : defaultServerFactory.getApplicationConnectors()) {
+        if (connectorFactory instanceof HttpConnectorFactory) {
+          HttpConnectorFactory httpFactory = (HttpConnectorFactory) connectorFactory;
+          port = httpFactory.getPort();
+        }
+      }
+    }
+    if (port == null) {
+      throw new RuntimeException("Could not determine http port");
+    }
+    return new BaragonServiceDWSettings(port, contextPath);
   }
 
   @Provides
@@ -229,10 +250,9 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
   @Named(BaragonDataModule.BARAGON_SERVICE_LEADER_LATCH)
   public LeaderLatch providesServiceLeaderLatch(BaragonConfiguration config,
                                                 BaragonWorkerDatastore datastore,
-                                                @Named(BARAGON_SERVICE_HTTP_PORT) int httpPort,
+                                                @Named(BARAGON_SERVICE_DW_CONFIG) BaragonServiceDWSettings dwConfig,
                                                 @Named(BARAGON_SERVICE_HOSTNAME) String hostname) {
-    final String appRoot = ((SimpleServerFactory)config.getServerFactory()).getApplicationContextPath();
-    final String baseUri = String.format("http://%s:%s%s", hostname, httpPort, appRoot);
+    final String baseUri = String.format("http://%s:%s%s", hostname, dwConfig.getPort(), dwConfig.getContextPath());
 
     return datastore.createLeaderLatch(baseUri);
   }
@@ -245,8 +265,9 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
 
   @Provides
   @Named(BARAGON_URI_BASE)
-  String getBaragonUriBase(final BaragonConfiguration configuration) {
-    final String baragonUiPrefix = configuration.getUiConfiguration().getBaseUrl().or(((SimpleServerFactory) configuration.getServerFactory()).getApplicationContextPath());
+  String getBaragonUriBase(final BaragonConfiguration configuration,
+                           @Named(BARAGON_SERVICE_DW_CONFIG) BaragonServiceDWSettings dwSettings) {
+    final String baragonUiPrefix = configuration.getUiConfiguration().getBaseUrl().or(dwSettings.getContextPath());
     return (baragonUiPrefix.endsWith("/")) ?  baragonUiPrefix.substring(0, baragonUiPrefix.length() - 1) : baragonUiPrefix;
   }
 
