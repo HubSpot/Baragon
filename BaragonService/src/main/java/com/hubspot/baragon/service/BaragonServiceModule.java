@@ -63,6 +63,7 @@ import com.ning.http.client.AsyncHttpClientConfig;
 
 import io.dropwizard.jetty.ConnectorFactory;
 import io.dropwizard.jetty.HttpConnectorFactory;
+import io.dropwizard.jetty.HttpsConnectorFactory;
 import io.dropwizard.server.DefaultServerFactory;
 import io.dropwizard.server.SimpleServerFactory;
 
@@ -211,7 +212,8 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
       DefaultServerFactory defaultServerFactory = (DefaultServerFactory) config.getServerFactory();
       contextPath = defaultServerFactory.getApplicationContextPath();
       for (ConnectorFactory connectorFactory : defaultServerFactory.getApplicationConnectors()) {
-        if (connectorFactory instanceof HttpConnectorFactory) {
+        // Only looking for http connectors for now
+        if (connectorFactory instanceof HttpConnectorFactory && !(connectorFactory instanceof HttpsConnectorFactory)) {
           HttpConnectorFactory httpFactory = (HttpConnectorFactory) connectorFactory;
           port = httpFactory.getPort();
         }
