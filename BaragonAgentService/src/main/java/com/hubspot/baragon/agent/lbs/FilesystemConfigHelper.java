@@ -7,6 +7,9 @@ import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Optional;
@@ -24,8 +27,6 @@ import com.hubspot.baragon.exceptions.MissingTemplateException;
 import com.hubspot.baragon.models.BaragonConfigFile;
 import com.hubspot.baragon.models.BaragonService;
 import com.hubspot.baragon.models.ServiceContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @Singleton
 public class FilesystemConfigHelper {
@@ -66,18 +67,16 @@ public class FilesystemConfigHelper {
     }
   }
 
-  public void checkAndReload() throws InvalidConfigException, LbAdapterExecuteException, IOException, InterruptedException, LockTimeoutException {
+  public void checkAndReload() throws Exception {
     if (!agentLock.tryLock(agentLockTimeoutMs, TimeUnit.MILLISECONDS)) {
-      throw new LockTimeoutException(String.format("Timed out waiting to acquire lock for reload"), agentLock);
+      LOG.warn("Failed to acquire lock for reload");
+      throw new LockTimeoutException("Timed out waiting to acquire lock for reload", agentLock);
     }
-
+    LOG.debug("Acquired agent lock, reloading configs");
     try {
       adapter.checkConfigs();
       adapter.reloadConfigs();
-    } catch (Exception e) {
-      LOG.error("Caught exception while trying to reload configs", e);
-      throw Throwables.propagate(e);
-    } finally {
+    }  finally {
       agentLock.unlock();
     }
   }
@@ -130,8 +129,11 @@ public class FilesystemConfigHelper {
 
 
     if (!agentLock.tryLock(agentLockTimeoutMs, TimeUnit.MILLISECONDS)) {
+      LOG.warn("Failed to acquire lock for service config apply ({})", service.getServiceId());
       throw new LockTimeoutException("Timed out waiting to acquire lock", agentLock);
     }
+
+    LOG.debug("Acquired agent lock, applying configs");
 
     try {
       if (configsMatch(newConfigs, readConfigs(oldService))) {
@@ -201,8 +203,12 @@ public class FilesystemConfigHelper {
     final boolean previousConfigsExist = configsExist(service);
 
     if (!agentLock.tryLock(agentLockTimeoutMs, TimeUnit.MILLISECONDS)) {
+      LOG.warn("Failed to acquire lock for service config delete ({})", service.getServiceId());
       throw new LockTimeoutException("Timed out waiting to acquire lock for delete", agentLock);
     }
+
+    LOG.debug("Acquired agent lock, deleting configs");
+
     try {
       if (previousConfigsExist) {
         backupConfigs(service);

@@ -306,6 +306,7 @@ public class LifecycleHelper {
       Optional<Integer> maybeStateVersion = stateDatastore.getStateVersion();
       if (maybeStateVersion.isPresent()) {
         if (!agentLock.tryLock(agentLockTimeoutMs, TimeUnit.MILLISECONDS)) {
+          LOG.warn("Failed to acquire lock to apply current configs");
           throw new LockTimeoutException("Could not acquire lock to reapply configs", agentLock);
         }
         try {

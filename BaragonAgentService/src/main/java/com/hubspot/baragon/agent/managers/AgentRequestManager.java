@@ -1,5 +1,17 @@
 package com.hubspot.baragon.agent.managers;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Random;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
+
+import javax.ws.rs.core.Response;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.google.common.base.Optional;
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;
@@ -21,18 +33,6 @@ import com.hubspot.baragon.models.BaragonService;
 import com.hubspot.baragon.models.RequestAction;
 import com.hubspot.baragon.models.ServiceContext;
 import com.hubspot.baragon.models.UpstreamInfo;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicReference;
-import javax.ws.rs.core.Response;
 
 @Singleton
 public class AgentRequestManager {
@@ -108,9 +108,10 @@ public class AgentRequestManager {
     RequestAction action = maybeAction.or(request.getAction().or(RequestAction.UPDATE));
     Optional<BaragonService> maybeOldService = getOldService(request);
 
+    long start = System.currentTimeMillis();
     try {
       agentState.set(BaragonAgentState.APPLYING);
-      LOG.info(String.format("Received request to %s with id %s", action, requestId));
+      LOG.info("Received request to {} with id {}", action, requestId);
       switch (action) {
         case DELETE:
           return delete(request, maybeOldService, delayReload);
@@ -122,13 +123,13 @@ public class AgentRequestManager {
           return apply(request, maybeOldService, delayReload, batchItemNumber);
       }
     } catch (LockTimeoutException e) {
-      LOG.warn(String.format("Couldn't acquire agent lock for %s in %s ms", requestId, agentLockTimeoutMs), e);
+      LOG.error("Couldn't acquire agent lock for {} in {} ms", requestId, agentLockTimeoutMs, e);
       return Response.status(Response.Status.CONFLICT).entity(String.format("Couldn't acquire agent lock for %s in %s ms. Lock Info: %s", requestId, agentLockTimeoutMs, e.getLockInfo())).build();
     } catch (Exception e) {
-      LOG.error(String.format("Caught exception while %sING for request %s", action, requestId), e);
+      LOG.error("Caught exception while {}ING for request {}", action, requestId, e);
       return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(String.format("Caught exception while %sING for request %s: %s", action, requestId, e.getMessage())).build();
     } finally {
-      LOG.info(String.format("Done processing %s request: %s", action, requestId));
+      LOG.info("Done processing {} request {} after {}ms)", action, requestId, System.currentTimeMillis() - start);
       agentState.set(BaragonAgentState.ACCEPTING);
     }
   }
@@ -142,23 +143,15 @@ public class AgentRequestManager {
   }
 
   private Response delete(BaragonRequest request, Optional<BaragonService> maybeOldService, boolean delayReload) throws Exception {
-    try {
-      configHelper.delete(request.getLoadBalancerService(), maybeOldService, request.isNoReload(), request.isNoValidate(), delayReload);
-      mostRecentRequestId.set(request.getLoadBalancerRequestId());
-      return Response.ok().build();
-    } catch (Exception e) {
-      return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
-    }
+    configHelper.delete(request.getLoadBalancerService(), maybeOldService, request.isNoReload(), request.isNoValidate(), delayReload);
+    mostRecentRequestId.set(request.getLoadBalancerRequestId());
+    return Response.ok().build();
   }
 
   private Response apply(BaragonRequest request, Optional<BaragonService> maybeOldService, boolean delayReload, Optional<Integer> batchItemNumber) throws Exception {
     final ServiceContext update = getApplyContext(request);
     triggerTesting();
-    try {
-      configHelper.apply(update, maybeOldService, true, request.isNoReload(), request.isNoValidate(), delayReload, batchItemNumber);
-    } catch (Exception e) {
-      return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
-    }
+    configHelper.apply(update, maybeOldService, true, request.isNoReload(), request.isNoValidate(), delayReload, batchItemNumber);
     mostRecentRequestId.set(request.getLoadBalancerRequestId());
     return Response.ok().build();
   }
@@ -173,7 +166,7 @@ public class AgentRequestManager {
 
     triggerTesting();
 
-    LOG.info(String.format("Reverting to %s", update));
+    LOG.info("Reverting to {}", update);
     try {
       configHelper.apply(update, Optional.<BaragonService>absent(), false, request.isNoReload(), request.isNoValidate(), delayReload, batchItemNumber);
     } catch (MissingTemplateException e) {
@@ -182,8 +175,6 @@ public class AgentRequestManager {
       } else {
         throw e;
       }
-    } catch (Exception e) {
-      return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
     }
 
     return Response.ok().build();
