@@ -33,6 +33,7 @@ import com.hubspot.baragon.agent.config.TestingConfiguration;
 import com.hubspot.baragon.agent.handlebars.CurrentRackIsPresentHelper;
 import com.hubspot.baragon.agent.handlebars.FirstOfHelper;
 import com.hubspot.baragon.agent.handlebars.FormatTimestampHelper;
+import com.hubspot.baragon.agent.handlebars.IfContainedInHelperSource;
 import com.hubspot.baragon.agent.handlebars.IfEqualHelperSource;
 import com.hubspot.baragon.agent.handlebars.PreferSameRackWeightingHelper;
 import com.hubspot.baragon.agent.handlebars.ResolveHostnameHelper;
@@ -123,6 +124,7 @@ public class BaragonAgentServiceModule extends DropwizardAwareModule<BaragonAgen
     handlebars.registerHelper(ResolveHostnameHelper.NAME, new ResolveHostnameHelper());
     handlebars.registerHelpers(new PreferSameRackWeightingHelper(config, agentMetadata));
     handlebars.registerHelpers(IfEqualHelperSource.class);
+    handlebars.registerHelpers(IfContainedInHelperSource.class);
 
     return handlebars;
   }
