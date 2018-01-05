@@ -1,12 +1,18 @@
 package com.hubspot.baragon.agent.listeners;
 
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import ch.qos.logback.classic.LoggerContext;
+import org.apache.curator.framework.CuratorFramework;
+import org.apache.curator.framework.state.ConnectionState;
+import org.apache.curator.framework.state.ConnectionStateListener;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.github.rholder.retry.RetryException;
 import com.github.rholder.retry.Retryer;
 import com.github.rholder.retry.RetryerBuilder;
 import com.github.rholder.retry.StopStrategies;
@@ -15,22 +21,11 @@ import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import com.hubspot.baragon.agent.BaragonAgentServiceModule;
-import com.hubspot.baragon.agent.ServerProvider;
 import com.hubspot.baragon.agent.config.BaragonAgentConfiguration;
 import com.hubspot.baragon.agent.managed.LifecycleHelper;
 import com.hubspot.baragon.data.BaragonLoadBalancerDatastore;
 import com.hubspot.baragon.exceptions.LockTimeoutException;
-import com.hubspot.baragon.exceptions.ReapplyFailedException;
 import com.hubspot.baragon.models.BaragonAgentState;
-
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import org.apache.curator.framework.CuratorFramework;
-import org.apache.curator.framework.state.ConnectionState;
-import org.apache.curator.framework.state.ConnectionStateListener;
-import org.eclipse.jetty.server.Server;
-import org.slf4j.ILoggerFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class ResyncListener implements ConnectionStateListener {
   private static final Logger LOG = LoggerFactory.getLogger(ResyncListener.class);
@@ -89,15 +84,14 @@ public class ResyncListener implements ConnectionStateListener {
     Callable<Void> callable = new Callable<Void>() {
       public Void call() throws Exception {
         if (!agentLock.tryLock(agentLockTimeoutMs, TimeUnit.MILLISECONDS)) {
+          LOG.warn("Failed to acquire lock for config reapply");
           throw new LockTimeoutException(String.format("Failed to acquire lock to reapply most current configs in %s ms", agentLockTimeoutMs), agentLock);
         }
         try {
           lifecycleHelper.applyCurrentConfigs();
           return null;
         } finally {
-          if (agentLock.isHeldByCurrentThread()) {
-            agentLock.unlock();
-          }
+          agentLock.unlock();
         }
       }
     };
@@ -110,8 +104,12 @@ public class ResyncListener implements ConnectionStateListener {
 
     try {
       retryer.call(callable);
-    } catch (Exception e) {
-      lifecycleHelper.abort("Caught exception while trying to resync, aborting", e);
+    } catch (RetryException re) {
+      LOG.error("Exception applying current configs", re.getLastFailedAttempt().getExceptionCause());
+      lifecycleHelper.abort("Caught exception while trying to resync, aborting", re);
+    } catch (ExecutionException ee) {
+      LOG.error("Exception applying current configs", ee);
+      lifecycleHelper.abort("Caught exception while trying to resync, aborting", ee);
     }
   }
 }
