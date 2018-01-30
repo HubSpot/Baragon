@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
@@ -186,10 +187,10 @@ public class CloudflareClient {
     }
   }
 
-  public List<CloudflareDnsRecord> retrieveDnsRecords(String zoneId) throws CloudflareClientException {
+  public Set<CloudflareDnsRecord> retrieveDnsRecords(String zoneId) throws CloudflareClientException {
     CloudflareListDnsRecordsResponse cloudflareResponse = listDnsRecordsPaged(zoneId, 1);
 
-    List<CloudflareDnsRecord> dnsRecords = cloudflareResponse.getResult();
+    Set<CloudflareDnsRecord> dnsRecords = cloudflareResponse.getResult();
 
     CloudflareResultInfo paginationInfo = cloudflareResponse.getResultInfo();
     for (int i = 2; i <= paginationInfo.getTotalPages(); i++) {
