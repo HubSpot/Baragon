@@ -42,23 +42,23 @@ A request can be made to Baragon by posting a `BaragonRequest` object to `Barago
 
 Baragon keeps track of an internal state and produces an externally visible status. Mentions of state below reference the internal state, while status references the status visible in the `BaragonResponse`
 
-####Posting the request
+#### Posting the request
 When a request is first posted to Baragon's `/request` endpoint, BaragonService will attempt to enqueue the request. This can have three outcomes:
 - If the request is new (unique requestId), it is added to the pending request queue
 - If the request is already present (requestId already used), but the request content matches the original request, the response to the original request will be returned (ie. the same request won't be enqueued again)
 - If the request is already present, but the request content does not match, an error will be thrown
 
-####Initial processing of the request (`PENDING` internal state / `WAITING` status)
+#### Initial processing of the request (`PENDING` internal state / `WAITING` status)
 Once the request is in the pending request queue, it will be picked up by the request worker. The request will initially be in the `PENDING` state and the request worker will do the following:
 - Check that there are no base path conflicts, moving the request to `INVALID_REQUEST_NOOP` if any are found
 - Check that no non-existent load balancer groups have been requested, moving the request to `INVALID_REQUEST_NOOP` if any are found
 - set the lock for the base paths in the request if it has not already been set to prevent other operations on the base path while the request is being processed
 - If all checks have passed, move the request to the internal `SEND_APPLY_REQUESTS` status
 
-####Sending apply requests to agents (`SEND_APPLY_REQUESTS` internal status / `WAITING` status)
+#### Sending apply requests to agents (`SEND_APPLY_REQUESTS` internal status / `WAITING` status)
 The request worker will send async requests to each agent in any load balancer groups that need to be updated during this step, then internally move the state to `CHECK_APPLY_RESPONSES` while waiting for requests to complete. The responses code of the agent post requests sent will be used to determine the status
 
-####Check agent responses (`CHECK_APPLY_RESPONSES` internal state, `WAITING` status)
+#### Check agent responses (`CHECK_APPLY_RESPONSES` internal state, `WAITING` status)
 The request worker will gather the responses from all agents it sent requests to and translate those to one of the following statuses:
 - `WAITING`: Some requests are still being processed, none have failed yet, stay in the `CHECK_APPLY_RESPONSES` state
 - `RETRY`: Some requests have failed, but the limit for number of retries was not yet reached. Send the requests again (`SEND_APPLY_REQUESTS`) and move back to `CHECK_APPLY_RESPONSES`
@@ -69,7 +69,7 @@ The request worker will gather the responses from all agents it sent requests to
   - `FAILED_CHECK_REVERT_RESPONSES`: Similar to `CHECK_APPLY_RESPONSES`, but a failure will cause `FAILED_REVERT_FAILED` state and an overall status of `FAILED`, while a success will cause the `FAILED_REVERTED` state (still overall status of `FAILED` for the request)
 - `INVALID_REQUEST_NOOP`: A failure has occurred but no action was taken on any load balancer. A revert is not needed, so undo any base path lock changes and return the `INVALID_REQUEST_NOOP` status
 
-####Commit the request if successful (`SUCCESS` state/status)
+#### Commit the request if successful (`SUCCESS` state/status)
 Once the request has been determined to be successful, the worker will commit the applied changes. This includes:
 - Clearing invalid base path locks if:
   - base path has changed
