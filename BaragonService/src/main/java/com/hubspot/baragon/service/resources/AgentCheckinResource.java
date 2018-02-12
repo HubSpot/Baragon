@@ -74,6 +74,8 @@ public class AgentCheckinResource {
     try {
       if (elbManager.isElbConfigured()) {
         response = elbManager.attemptRemoveAgent(agent, loadBalancerDatastore.getLoadBalancerGroup(clusterName), clusterName, status);
+      } else if (googleCloudManager.isConfigured()) {
+        response = googleCloudManager.checkHealthOfAgentOnShutdown(agent);
       } else {
         response = new AgentCheckInResponse(TrafficSourceState.DONE, Optional.absent(), 0L);
       }
