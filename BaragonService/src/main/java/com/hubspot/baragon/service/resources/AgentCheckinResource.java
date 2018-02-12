@@ -20,6 +20,7 @@ import com.hubspot.baragon.models.AgentCheckInResponse;
 import com.hubspot.baragon.models.BaragonAgentMetadata;
 import com.hubspot.baragon.models.BaragonGroup;
 import com.hubspot.baragon.models.TrafficSourceState;
+import com.hubspot.baragon.service.gcloud.GoogleCloudManager;
 import com.hubspot.baragon.service.managers.ElbManager;
 
 @Path("/checkin")
@@ -29,12 +30,15 @@ public class AgentCheckinResource {
   private static final Logger LOG = LoggerFactory.getLogger(AgentCheckinResource.class);
 
   private final ElbManager elbManager;
+  private final GoogleCloudManager googleCloudManager;
   private final BaragonLoadBalancerDatastore loadBalancerDatastore;
 
   @Inject
   public AgentCheckinResource(ElbManager elbManager,
+                              GoogleCloudManager googleCloudManager,
                               BaragonLoadBalancerDatastore loadBalancerDatastore) {
     this.elbManager = elbManager;
+    this.googleCloudManager = googleCloudManager;
     this.loadBalancerDatastore = loadBalancerDatastore;
   }
 
@@ -48,6 +52,8 @@ public class AgentCheckinResource {
     try {
       if (elbManager.isElbConfigured()) {
         response = elbManager.attemptAddAgent(agent, loadBalancerDatastore.getLoadBalancerGroup(clusterName), clusterName, status);
+      } else if (googleCloudManager.isConfigured()) {
+        response = googleCloudManager.checkHealthOfAgentOnStartup(agent);
       } else {
         response = new AgentCheckInResponse(TrafficSourceState.DONE, Optional.absent(), 0L);
       }

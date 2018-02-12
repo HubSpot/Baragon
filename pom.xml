@@ -37,6 +37,8 @@
     <aws.sdk.version>1.11.69</aws.sdk.version>
     <project.build.targetJdk>1.8</project.build.targetJdk>
     <jukito.version>1.5</jukito.version>
+    <dep.google.apis.version>beta-rev76-1.23.0</dep.google.apis.version>
+    <dep.google.api-client.version>1.23.0</dep.google.api-client.version>
   </properties>
 
   <modules>
@@ -169,6 +171,28 @@
         <groupId>com.amazonaws</groupId>
         <artifactId>aws-java-sdk-elasticloadbalancingv2</artifactId>
         <version>${aws.sdk.version}</version>
+      </dependency>
+
+      <!-- google cloud -->
+      <dependency>
+        <groupId>com.google.apis</groupId>
+        <artifactId>google-api-services-compute</artifactId>
+        <version>${dep.google.apis.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.google.apis</groupId>
+        <artifactId>google-http-client-jackson2</artifactId>
+        <version>${dep.google.apis.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.google.api-client</groupId>
+        <artifactId>google-api-client</artifactId>
+        <version>${dep.google.api-client.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.google.http-client</groupId>
+        <artifactId>google-http-client</artifactId>
+        <version>${dep.google.api-client.version}</version>
       </dependency>
 
     </dependencies>
