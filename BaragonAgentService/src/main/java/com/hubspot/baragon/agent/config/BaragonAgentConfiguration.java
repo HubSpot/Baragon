@@ -121,6 +121,9 @@ public class BaragonAgentConfiguration extends Configuration {
   @JsonProperty("gcloud")
   private Optional<BaragonAgentGcloudMetadata> gcloudMetadata = Optional.absent();
 
+  @JsonProperty("removeFileOnShutdown")
+  private Optional<String> removeFileOnShutdown = Optional.absent();
+
   public HttpClientConfiguration getHttpClientConfiguration() {
     return httpClientConfiguration;
   }
@@ -339,5 +342,13 @@ public class BaragonAgentConfiguration extends Configuration {
 
   public void setGcloudMetadata(Optional<BaragonAgentGcloudMetadata> gcloudMetadata) {
     this.gcloudMetadata = gcloudMetadata;
+  }
+
+  public Optional<String> getRemoveFileOnShutdown() {
+    return removeFileOnShutdown;
+  }
+
+  public void setRemoveFileOnShutdown(Optional<String> removeFileOnShutdown) {
+    this.removeFileOnShutdown = removeFileOnShutdown;
   }
 }

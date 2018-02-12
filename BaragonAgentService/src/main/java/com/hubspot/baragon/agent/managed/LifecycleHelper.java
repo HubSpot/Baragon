@@ -290,6 +290,12 @@ public class LifecycleHelper {
   public void shutdown() throws Exception {
     leaderLatch.close();
     executorService.shutdown();
+    if (configuration.getRemoveFileOnShutdown().isPresent()) {
+      File toRemove = new File(configuration.getRemoveFileOnShutdown().get());
+      if (toRemove.exists()) {
+        toRemove.delete();
+      }
+    }
     if (configuration.isDeregisterOnGracefulShutdown()) {
       LOG.info("Notifying BaragonService of shutdown...");
       notifyService("shutdown");
