@@ -1,7 +1,11 @@
 package com.hubspot.baragon.service;
 
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.Collections;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicLong;
@@ -14,6 +18,12 @@ import org.apache.curator.retry.ExponentialBackoffRetry;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.elasticloadbalancing.AmazonElasticLoadBalancingClient;
+import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
+import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
+import com.google.api.client.http.HttpTransport;
+import com.google.api.client.json.JsonFactory;
+import com.google.api.client.json.jackson2.JacksonFactory;
+import com.google.api.services.compute.Compute;
 import com.google.common.base.Optional;
 import com.google.common.base.Strings;
 import com.google.inject.Binder;
@@ -81,6 +91,8 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
 
   public static final String BARAGON_AWS_ELB_CLIENT_V1 = "baragon.aws.elb.client.v1";
   public static final String BARAGON_AWS_ELB_CLIENT_V2 = "baragon.aws.elb.client.v2";
+
+  public static final String GOOGLE_CLOUD_COMPUTE_SERVICE = "baragon.google.cloud.compute.service";
 
   @Override
   public void configure(Binder binder) {
@@ -306,6 +318,41 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
     }
 
     return elbClient;
+  }
+
+  @Provides
+  @Singleton
+  @Named(GOOGLE_CLOUD_COMPUTE_SERVICE)
+  public Compute provideComputeService(BaragonConfiguration config) throws Exception {
+    if (!config.getGoogleCloudConfiguration().isEnabled()) {
+      return null;
+    }
+    HttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
+    JsonFactory jsonFactory = JacksonFactory.getDefaultInstance();
+
+    GoogleCredential credential = null;
+
+    if (config.getGoogleCloudConfiguration().getGoogleCredentialsFile() != null) {
+      File credentialsFile = new File(config.getGoogleCloudConfiguration().getGoogleCredentialsFile());
+      credential = GoogleCredential.fromStream(
+          new FileInputStream(credentialsFile)
+      );
+    } else if (config.getGoogleCloudConfiguration().getGoogleCredentials() != null) {
+      credential = GoogleCredential.fromStream(
+          new ByteArrayInputStream(config.getGoogleCloudConfiguration().getGoogleCredentials().getBytes("UTF-8"))
+      );
+    } else {
+      throw new RuntimeException("Must specify googleCloudCredentials or googleCloudCredentialsFile when using google cloud api");
+    }
+
+    if (credential.createScopedRequired()) {
+      credential =
+          credential.createScoped(Collections.singletonList("https://www.googleapis.com/auth/cloud-platform"));
+    }
+
+    return new Compute.Builder(httpTransport, jsonFactory, credential)
+        .setApplicationName("BaragonService")
+        .build();
   }
 
   @Provides

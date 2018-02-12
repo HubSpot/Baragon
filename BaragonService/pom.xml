@@ -197,6 +197,22 @@
       <artifactId>logback-classic</artifactId>
     </dependency>
     <dependency>
+      <groupId>com.google.api-client</groupId>
+      <artifactId>google-api-client</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.google.http-client</groupId>
+      <artifactId>google-http-client</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.google.http-client</groupId>
+      <artifactId>google-http-client-jackson2</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.google.apis</groupId>
+      <artifactId>google-api-services-compute</artifactId>
+    </dependency>
+    <dependency>
       <groupId>org.jukito</groupId>
       <artifactId>jukito</artifactId>
       <scope>test</scope>
