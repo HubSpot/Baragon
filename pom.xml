@@ -180,14 +180,20 @@
         <version>${dep.google.apis.version}</version>
       </dependency>
       <dependency>
-        <groupId>com.google.apis</groupId>
+        <groupId>com.google.http-client</groupId>
         <artifactId>google-http-client-jackson2</artifactId>
-        <version>${dep.google.apis.version}</version>
+        <version>${dep.google.api-client.version}</version>
       </dependency>
       <dependency>
         <groupId>com.google.api-client</groupId>
         <artifactId>google-api-client</artifactId>
         <version>${dep.google.api-client.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava-jdk5</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>com.google.http-client</groupId>
