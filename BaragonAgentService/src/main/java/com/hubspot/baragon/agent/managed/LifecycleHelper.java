@@ -191,8 +191,8 @@ public class LifecycleHelper {
     }
   }
 
-  public boolean removeStateFile() {
-    File stateFile = new File(configuration.getStateFile().get());
+  public boolean removeFile(String fileName) {
+    File stateFile = new File(fileName);
     return (!stateFile.exists() || stateFile.delete());
   }
 
@@ -291,10 +291,7 @@ public class LifecycleHelper {
     leaderLatch.close();
     executorService.shutdown();
     if (configuration.getRemoveFileOnShutdown().isPresent()) {
-      File toRemove = new File(configuration.getRemoveFileOnShutdown().get());
-      if (toRemove.exists()) {
-        toRemove.delete();
-      }
+      removeFile(configuration.getRemoveFileOnShutdown().get());
     }
     if (configuration.isDeregisterOnGracefulShutdown()) {
       LOG.info("Notifying BaragonService of shutdown...");
@@ -302,7 +299,7 @@ public class LifecycleHelper {
     }
     if (configuration.getStateFile().isPresent()) {
       LOG.info("Removing state file");
-      removeStateFile();
+      removeFile(configuration.getStateFile().get());
     }
   }
 
