@@ -49,6 +49,7 @@ import com.hubspot.baragon.service.edgecache.cloudflare.client.CloudflareClient;
 import com.hubspot.baragon.service.elb.ApplicationLoadBalancer;
 import com.hubspot.baragon.service.elb.ClassicLoadBalancer;
 import com.hubspot.baragon.service.exceptions.BaragonExceptionNotifier;
+import com.hubspot.baragon.service.gcloud.GoogleCloudManager;
 import com.hubspot.baragon.service.healthcheck.ZooKeeperHealthcheck;
 import com.hubspot.baragon.service.listeners.AbstractLatchListener;
 import com.hubspot.baragon.service.listeners.ElbSyncWorkerListener;
@@ -118,6 +119,7 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
     binder.bind(RequestManager.class).in(Scopes.SINGLETON);
     binder.bind(ServiceManager.class).in(Scopes.SINGLETON);
     binder.bind(StatusManager.class).in(Scopes.SINGLETON);
+    binder.bind(GoogleCloudManager.class).in(Scopes.SINGLETON);
 
     // Edge Cache
     binder.bind(CloudflareEdgeCache.class);
