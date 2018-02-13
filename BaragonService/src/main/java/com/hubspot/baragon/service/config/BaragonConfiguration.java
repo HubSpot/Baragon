@@ -95,6 +95,9 @@ public class BaragonConfiguration extends Configuration {
   @JsonProperty("sentry")
   private Optional<SentryConfiguration> sentryConfiguration = Optional.absent();
 
+  @JsonProperty("gcloud")
+  private GoogleCloudConfiguration googleCloudConfiguration = new GoogleCloudConfiguration();
+
   public ZooKeeperConfiguration getZooKeeperConfiguration() {
     return zooKeeperConfiguration;
   }
@@ -245,5 +248,13 @@ public class BaragonConfiguration extends Configuration {
 
   public void setSentryConfiguration(Optional<SentryConfiguration> sentryConfiguration) {
     this.sentryConfiguration = sentryConfiguration;
+  }
+
+  public GoogleCloudConfiguration getGoogleCloudConfiguration() {
+    return googleCloudConfiguration;
+  }
+
+  public void setGoogleCloudConfiguration(GoogleCloudConfiguration googleCloudConfiguration) {
+    this.googleCloudConfiguration = googleCloudConfiguration;
   }
 }
