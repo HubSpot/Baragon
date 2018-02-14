@@ -1,5 +1,7 @@
 package com.hubspot.baragon.client;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -7,6 +9,9 @@ import java.util.Map;
 import java.util.Random;
 
 import javax.inject.Provider;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.base.Optional;
@@ -24,17 +29,14 @@ import com.hubspot.horizon.HttpClient;
 import com.hubspot.horizon.HttpRequest;
 import com.hubspot.horizon.HttpRequest.Method;
 import com.hubspot.horizon.HttpResponse;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import static com.google.common.base.Preconditions.checkNotNull;
 
 public class BaragonServiceClient {
 
   private static final Logger LOG = LoggerFactory.getLogger(BaragonServiceClient.class);
 
-  private static final String WORKERS_FORMAT = "http://%s/%s/workers";
+  private static final String WORKERS_FORMAT = "%s/%s/workers";
 
-  private static final String LOAD_BALANCER_FORMAT = "http://%s/%s/load-balancer";
+  private static final String LOAD_BALANCER_FORMAT = "%s/%s/load-balancer";
   private static final String LOAD_BALANCER_BASE_PATH_FORMAT = LOAD_BALANCER_FORMAT + "/%s/base-path";
   private static final String LOAD_BALANCER_ALL_BASE_PATHS_FORMAT = LOAD_BALANCER_BASE_PATH_FORMAT + "/all";
   private static final String LOAD_BALANCER_AGENTS_FORMAT = LOAD_BALANCER_FORMAT + "/%s/agents";
@@ -44,14 +46,14 @@ public class BaragonServiceClient {
   private static final String ALL_LOAD_BALANCER_GROUPS_FORMAT = LOAD_BALANCER_FORMAT + "/all";
   private static final String LOAD_BALANCER_TRAFFIC_SOURCE_FORMAT = LOAD_BALANCER_GROUP_FORMAT + "/sources";
 
-  private static final String REQUEST_FORMAT = "http://%s/%s/request";
+  private static final String REQUEST_FORMAT = "%s/%s/request";
   private static final String REQUEST_ID_FORMAT = REQUEST_FORMAT + "/%s";
 
-  private static final String STATE_FORMAT = "http://%s/%s/state";
+  private static final String STATE_FORMAT = "%s/%s/state";
   private static final String STATE_SERVICE_ID_FORMAT = STATE_FORMAT + "/%s";
   private static final String STATE_RELOAD_FORMAT = STATE_SERVICE_ID_FORMAT + "/reload";
 
-  private static final String STATUS_FORMAT = "http://%s/%s/status";
+  private static final String STATUS_FORMAT = "%s/%s/status";
 
   private static final TypeReference<Collection<String>> STRING_COLLECTION = new TypeReference<Collection<String>>() {};
   private static final TypeReference<Collection<BaragonGroup>> BARAGON_GROUP_COLLECTION = new TypeReference<Collection<BaragonGroup>>() {};
@@ -67,7 +69,7 @@ public class BaragonServiceClient {
   private final HttpClient httpClient;
 
   public BaragonServiceClient(String contextPath, HttpClient httpClient, List<String> hosts, Optional<String> authkey) {
-    this(contextPath, httpClient, ProviderUtils.<List<String>>of(ImmutableList.copyOf(hosts)), ProviderUtils.of(authkey));
+    this(contextPath, httpClient, ProviderUtils.of(ImmutableList.copyOf(hosts)), ProviderUtils.of(authkey));
   }
 
   public BaragonServiceClient(String contextPath, HttpClient httpClient, Provider<List<String>> hostsProvider, Provider<Optional<String>> authkeyProvider) {
@@ -156,7 +158,7 @@ public class BaragonServiceClient {
     HttpResponse response = httpClient.execute(buildRequest(uri).build());
 
     if (response.getStatusCode() == 404) {
-      return ImmutableList.of();
+      throw new BaragonClientException(String.format("%s not found", type), 404);
     }
 
     checkResponse(type, response);

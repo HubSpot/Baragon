@@ -3,6 +3,7 @@ package com.hubspot.baragon.client;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import javax.inject.Named;
 import javax.inject.Provider;
@@ -22,7 +23,9 @@ public class BaragonClientProvider implements Provider<BaragonServiceClient> {
 
   private String contextPath = DEFAULT_CONTEXT_PATH;
   private List<String> hosts = Collections.emptyList();
+  private Provider<List<String>> hostsProvider = null;
   private Optional<String> authkey = Optional.absent();
+  private Provider<Optional<String>> authkeyProvider = null;
 
   @Inject
   public BaragonClientProvider(@Named(BaragonClientModule.HTTP_CLIENT_NAME) HttpClient httpClient) {
@@ -42,7 +45,7 @@ public class BaragonClientProvider implements Provider<BaragonServiceClient> {
 
   @Inject(optional=true)
   public BaragonClientProvider setHosts(@Named(BaragonClientModule.HOSTS_PROPERTY_NAME) List<String> hosts) {
-    this.hosts = ImmutableList.copyOf(hosts);
+    mapAndSetHosts(hosts);
     return this;
   }
 
@@ -53,15 +56,39 @@ public class BaragonClientProvider implements Provider<BaragonServiceClient> {
   }
 
   public BaragonClientProvider setHosts(String... hosts) {
-    this.hosts = Arrays.asList(hosts);
+    mapAndSetHosts(Arrays.asList(hosts));
+    return this;
+  }
+
+  private void mapAndSetHosts(List<String> hosts) {
+    this.hosts = ImmutableList.copyOf(hosts.stream().map((h) -> h.startsWith("http") ? h : String.format("http://%s", h)).collect(Collectors.toList()));
+  }
+
+  @Inject(optional = true)
+  public BaragonClientProvider setHostsProvider(Provider<List<String>> hostsProvider) {
+    this.hostsProvider = hostsProvider;
+    return this;
+  }
+
+  @Inject(optional = true)
+  public BaragonClientProvider setAuthkeyProvider(Provider<Optional<String>> authkeyProvider) {
+    this.authkeyProvider = authkeyProvider;
     return this;
   }
 
   @Override
   public BaragonServiceClient get() {
     Preconditions.checkState(contextPath != null, "contextPath null");
-    Preconditions.checkState(!hosts.isEmpty(), "no hosts provided");
+    Preconditions.checkState(!hosts.isEmpty() || hostsProvider != null, "no hosts provided");
     Preconditions.checkState(authkey != null, "authkey null");
-    return new BaragonServiceClient(contextPath, httpClient, hosts, authkey);
+
+    if (authkeyProvider == null) {
+      authkeyProvider = ProviderUtils.of(authkey);
+    }
+    if (hostsProvider == null) {
+      hostsProvider = ProviderUtils.of(hosts);
+    }
+
+    return new BaragonServiceClient(contextPath, httpClient, hostsProvider, authkeyProvider);
   }
 }
