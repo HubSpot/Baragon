@@ -1,12 +1,18 @@
 package com.hubspot.baragon.client;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.stream.Collectors;
 
 import javax.inject.Provider;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.base.Optional;
@@ -24,17 +30,14 @@ import com.hubspot.horizon.HttpClient;
 import com.hubspot.horizon.HttpRequest;
 import com.hubspot.horizon.HttpRequest.Method;
 import com.hubspot.horizon.HttpResponse;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import static com.google.common.base.Preconditions.checkNotNull;
 
 public class BaragonServiceClient {
 
   private static final Logger LOG = LoggerFactory.getLogger(BaragonServiceClient.class);
 
-  private static final String WORKERS_FORMAT = "http://%s/%s/workers";
+  private static final String WORKERS_FORMAT = "%s/workers";
 
-  private static final String LOAD_BALANCER_FORMAT = "http://%s/%s/load-balancer";
+  private static final String LOAD_BALANCER_FORMAT = "%s/load-balancer";
   private static final String LOAD_BALANCER_BASE_PATH_FORMAT = LOAD_BALANCER_FORMAT + "/%s/base-path";
   private static final String LOAD_BALANCER_ALL_BASE_PATHS_FORMAT = LOAD_BALANCER_BASE_PATH_FORMAT + "/all";
   private static final String LOAD_BALANCER_AGENTS_FORMAT = LOAD_BALANCER_FORMAT + "/%s/agents";
@@ -44,14 +47,14 @@ public class BaragonServiceClient {
   private static final String ALL_LOAD_BALANCER_GROUPS_FORMAT = LOAD_BALANCER_FORMAT + "/all";
   private static final String LOAD_BALANCER_TRAFFIC_SOURCE_FORMAT = LOAD_BALANCER_GROUP_FORMAT + "/sources";
 
-  private static final String REQUEST_FORMAT = "http://%s/%s/request";
+  private static final String REQUEST_FORMAT = "%s/request";
   private static final String REQUEST_ID_FORMAT = REQUEST_FORMAT + "/%s";
 
-  private static final String STATE_FORMAT = "http://%s/%s/state";
+  private static final String STATE_FORMAT = "%s/state";
   private static final String STATE_SERVICE_ID_FORMAT = STATE_FORMAT + "/%s";
   private static final String STATE_RELOAD_FORMAT = STATE_SERVICE_ID_FORMAT + "/reload";
 
-  private static final String STATUS_FORMAT = "http://%s/%s/status";
+  private static final String STATUS_FORMAT = "%s/status";
 
   private static final TypeReference<Collection<String>> STRING_COLLECTION = new TypeReference<Collection<String>>() {};
   private static final TypeReference<Collection<BaragonGroup>> BARAGON_GROUP_COLLECTION = new TypeReference<Collection<BaragonGroup>>() {};
@@ -60,27 +63,34 @@ public class BaragonServiceClient {
   private static final TypeReference<Collection<BaragonServiceState>> BARAGON_SERVICE_STATE_COLLECTION = new TypeReference<Collection<BaragonServiceState>>() {};
 
   private final Random random;
-  private final Provider<List<String>> hostsProvider;
-  private final String contextPath;
+  private final Provider<List<String>> baseUrlProvider;
   private final Provider<Optional<String>> authkeyProvider;
 
   private final HttpClient httpClient;
 
   public BaragonServiceClient(String contextPath, HttpClient httpClient, List<String> hosts, Optional<String> authkey) {
-    this(contextPath, httpClient, ProviderUtils.<List<String>>of(ImmutableList.copyOf(hosts)), ProviderUtils.of(authkey));
+    this(
+        httpClient,
+        ProviderUtils.of(ImmutableList.copyOf(hosts.stream().map((h) -> String.format("%s/%s", h, contextPath)).collect(Collectors.toList()))),
+        ProviderUtils.of(authkey)
+    );
   }
 
-  public BaragonServiceClient(String contextPath, HttpClient httpClient, Provider<List<String>> hostsProvider, Provider<Optional<String>> authkeyProvider) {
+  public BaragonServiceClient(HttpClient httpClient, Provider<List<String>> baseUrlProvider, Provider<Optional<String>> authkeyProvider) {
     this.httpClient = httpClient;
-    this.contextPath = contextPath;
-    this.hostsProvider = hostsProvider;
+    this.baseUrlProvider = baseUrlProvider;
     this.authkeyProvider = authkeyProvider;
     this.random = new Random();
   }
 
-  private String getHost() {
-    final List<String> hosts = hostsProvider.get();
-    return hosts.get(random.nextInt(hosts.size()));
+  private String getBaseUrl() {
+    final List<String> baseUrls = baseUrlProvider.get();
+    String chosenBaseUrl = baseUrls.get(random.nextInt(baseUrls.size()));
+    if (chosenBaseUrl.endsWith("/")) {
+      return chosenBaseUrl.substring(0, chosenBaseUrl.length() - 1);
+    } else {
+      return chosenBaseUrl;
+    }
   }
 
   private HttpRequest.Builder buildRequest(String uri) {
@@ -156,7 +166,7 @@ public class BaragonServiceClient {
     HttpResponse response = httpClient.execute(buildRequest(uri).build());
 
     if (response.getStatusCode() == 404) {
-      return ImmutableList.of();
+      throw new BaragonClientException(String.format("%s not found", type), 404);
     }
 
     checkResponse(type, response);
@@ -224,35 +234,35 @@ public class BaragonServiceClient {
 
   // BaragonService overall status
 
-  public Optional<BaragonServiceStatus> getBaragonServiceStatus(String hostname) {
-    final String uri = String.format(STATUS_FORMAT, hostname, contextPath);
+  public Optional<BaragonServiceStatus> getBaragonServiceStatus(String baseUrl) {
+    final String uri = String.format(STATUS_FORMAT, baseUrl);
     return getSingle(uri, "status", "", BaragonServiceStatus.class);
   }
 
   public Optional<BaragonServiceStatus> getAnyBaragonServiceStatus() {
-    return getBaragonServiceStatus(getHost());
+    return getBaragonServiceStatus(getBaseUrl());
   }
 
 
   // BaragonService service states
 
   public Collection<BaragonServiceState> getGlobalState() {
-    final String uri = String.format(STATE_FORMAT, getHost(), contextPath);
+    final String uri = String.format(STATE_FORMAT, getBaseUrl());
     return getCollection(uri, "global state", BARAGON_SERVICE_STATE_COLLECTION);
   }
 
   public Optional<BaragonServiceState> getServiceState(String serviceId) {
-    final String uri = String.format(STATE_SERVICE_ID_FORMAT, getHost(), contextPath, serviceId);
+    final String uri = String.format(STATE_SERVICE_ID_FORMAT, getBaseUrl(), serviceId);
     return getSingle(uri, "service state", serviceId, BaragonServiceState.class);
   }
 
   public Optional<BaragonResponse> deleteService(String serviceId) {
-    final String uri = String.format(STATE_SERVICE_ID_FORMAT, getHost(), contextPath, serviceId);
-    return delete(uri, "service state", serviceId, Collections.<String, String>emptyMap(), Optional.of(BaragonResponse.class));
+    final String uri = String.format(STATE_SERVICE_ID_FORMAT, getBaseUrl(), serviceId);
+    return delete(uri, "service state", serviceId, Collections.emptyMap(), Optional.of(BaragonResponse.class));
   }
 
   public Optional<BaragonResponse> reloadServiceConfigs(String serviceId){
-    final String uri = String.format(STATE_RELOAD_FORMAT, getHost(), contextPath, serviceId);
+    final String uri = String.format(STATE_RELOAD_FORMAT, getBaseUrl(), serviceId);
     return post(uri, "service reload",Optional.absent(), Optional.of(BaragonResponse.class));
   }
 
@@ -260,7 +270,7 @@ public class BaragonServiceClient {
   // BaragonService Workers
 
   public Collection<String> getBaragonServiceWorkers() {
-    final String requestUri = String.format(WORKERS_FORMAT, getHost(), contextPath);
+    final String requestUri = String.format(WORKERS_FORMAT, getBaseUrl());
     return getCollection(requestUri, "baragon service workers", STRING_COLLECTION);
   }
 
@@ -268,59 +278,59 @@ public class BaragonServiceClient {
   // BaragonService load balancer group actions
 
   public Collection<String> getLoadBalancerGroups() {
-    final String requestUri = String.format(LOAD_BALANCER_FORMAT, getHost(), contextPath);
+    final String requestUri = String.format(LOAD_BALANCER_FORMAT, getBaseUrl());
     return getCollection(requestUri, "load balancer groups", STRING_COLLECTION);
   }
 
   public Collection<BaragonGroup> getAllLoadBalancerGroups() {
-    final String requestUri = String.format(ALL_LOAD_BALANCER_GROUPS_FORMAT, getHost(), contextPath);
+    final String requestUri = String.format(ALL_LOAD_BALANCER_GROUPS_FORMAT, getBaseUrl());
     return getCollection(requestUri, "load balancer groups", BARAGON_GROUP_COLLECTION);
   }
 
   public Collection<BaragonAgentMetadata> getLoadBalancerGroupAgentMetadata(String loadBalancerGroupName) {
-    final String requestUri = String.format(LOAD_BALANCER_AGENTS_FORMAT, getHost(), contextPath, loadBalancerGroupName);
+    final String requestUri = String.format(LOAD_BALANCER_AGENTS_FORMAT, getBaseUrl(), loadBalancerGroupName);
     return getCollection(requestUri, "load balancer agent metadata", BARAGON_AGENTS_COLLECTION);
   }
 
   public Collection<BaragonAgentMetadata> getLoadBalancerGroupKnownAgentMetadata(String loadBalancerGroupName) {
-    final String requestUri = String.format(LOAD_BALANCER_KNOWN_AGENTS_FORMAT, getHost(), contextPath, loadBalancerGroupName);
+    final String requestUri = String.format(LOAD_BALANCER_KNOWN_AGENTS_FORMAT, getBaseUrl(), loadBalancerGroupName);
     return getCollection(requestUri, "load balancer known agent metadata", BARAGON_AGENTS_COLLECTION);
   }
 
   public void deleteLoadBalancerGroupKnownAgent(String loadBalancerGroupName, String agentId) {
-    final String requestUri = String.format(LOAD_BALANCER_DELETE_KNOWN_AGENT_FORMAT, getHost(), contextPath, loadBalancerGroupName, agentId);
+    final String requestUri = String.format(LOAD_BALANCER_DELETE_KNOWN_AGENT_FORMAT, getBaseUrl(), loadBalancerGroupName, agentId);
     delete(requestUri, "known agent", agentId, Collections.<String, String>emptyMap());
   }
 
   public BaragonGroup addTrafficSource(String loadBalancerGroupName, String source) {
-    final String requestUri = String.format(LOAD_BALANCER_TRAFFIC_SOURCE_FORMAT, getHost(), contextPath, loadBalancerGroupName);
+    final String requestUri = String.format(LOAD_BALANCER_TRAFFIC_SOURCE_FORMAT, getBaseUrl(), loadBalancerGroupName);
     return post(requestUri, "add source", Optional.absent(), Optional.of(BaragonGroup.class), ImmutableMap.of("source", source)).get();
   }
 
   public Optional<BaragonGroup> removeTrafficSource(String loadBalancerGroupName, String source) {
-    final String requestUri = String.format(LOAD_BALANCER_TRAFFIC_SOURCE_FORMAT, getHost(), contextPath, loadBalancerGroupName);
+    final String requestUri = String.format(LOAD_BALANCER_TRAFFIC_SOURCE_FORMAT, getBaseUrl(), loadBalancerGroupName);
     return delete(requestUri, "remove source", source, ImmutableMap.of("source", source), Optional.of(BaragonGroup.class));
   }
 
   public Optional<BaragonGroup> getGroupDetail(String loadBalancerGroupName) {
-    final String requestUri = String.format(LOAD_BALANCER_GROUP_FORMAT, getHost(), contextPath, loadBalancerGroupName);
+    final String requestUri = String.format(LOAD_BALANCER_GROUP_FORMAT, getBaseUrl(), loadBalancerGroupName);
     return getSingle(requestUri, "group detail", loadBalancerGroupName, BaragonGroup.class);
   }
 
   // BaragonService base path actions
 
   public Collection<String> getOccupiedBasePaths(String loadBalancerGroupName) {
-    final String requestUri = String.format(LOAD_BALANCER_ALL_BASE_PATHS_FORMAT, getHost(), contextPath, loadBalancerGroupName);
+    final String requestUri = String.format(LOAD_BALANCER_ALL_BASE_PATHS_FORMAT, getBaseUrl(), loadBalancerGroupName);
     return getCollection(requestUri, "occupied base paths", STRING_COLLECTION);
   }
 
   public Optional<BaragonService> getServiceForBasePath(String loadBalancerGroupName, String basePath) {
-    final String requestUri = String.format(LOAD_BALANCER_BASE_PATH_FORMAT, getHost(), contextPath, loadBalancerGroupName);
+    final String requestUri = String.format(LOAD_BALANCER_BASE_PATH_FORMAT, getBaseUrl(), loadBalancerGroupName);
     return getSingle(requestUri, "service for base path", "", BaragonService.class, ImmutableMap.of("basePath", basePath));
   }
 
   public void clearBasePath(String loadBalancerGroupName, String basePath) {
-    final String requestUri = String.format(LOAD_BALANCER_BASE_PATH_FORMAT, getHost(), contextPath, loadBalancerGroupName);
+    final String requestUri = String.format(LOAD_BALANCER_BASE_PATH_FORMAT, getBaseUrl(), loadBalancerGroupName);
     delete(requestUri, "base path", "", ImmutableMap.of("basePath", basePath));
   }
 
@@ -328,17 +338,17 @@ public class BaragonServiceClient {
   // BaragonService request actions
 
   public Optional<BaragonResponse> getRequest(String requestId) {
-    final String uri = String.format(REQUEST_ID_FORMAT, getHost(), contextPath, requestId);
+    final String uri = String.format(REQUEST_ID_FORMAT, getBaseUrl(), requestId);
     return getSingle(uri, "request", requestId, BaragonResponse.class);
   }
 
   public Optional<BaragonResponse> enqueueRequest(BaragonRequest request) {
-    final String uri = String.format(REQUEST_FORMAT, getHost(), contextPath);
+    final String uri = String.format(REQUEST_FORMAT, getBaseUrl());
     return post(uri, "request", Optional.of(request), Optional.of(BaragonResponse.class));
   }
 
   public Optional<BaragonResponse> cancelRequest(String requestId) {
-    final String uri = String.format(REQUEST_ID_FORMAT, getHost(), contextPath, requestId);
+    final String uri = String.format(REQUEST_ID_FORMAT, getBaseUrl(), requestId);
     return delete(uri, "request", requestId, Collections.<String, String>emptyMap(), Optional.of(BaragonResponse.class));
   }
 
@@ -346,7 +356,7 @@ public class BaragonServiceClient {
   // BaragonService queued request actions
 
   public Collection<QueuedRequestId> getQueuedRequests() {
-    final String uri = String.format(REQUEST_FORMAT, getHost(), contextPath);
+    final String uri = String.format(REQUEST_FORMAT, getBaseUrl());
     return getCollection(uri, "queued requests", QUEUED_REQUEST_COLLECTION);
   }
 }
