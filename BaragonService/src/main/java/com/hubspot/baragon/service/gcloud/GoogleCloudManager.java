@@ -27,8 +27,8 @@ public class GoogleCloudManager {
 
   @Inject
   public GoogleCloudManager(BaragonConfiguration configuration,
-                            @Named(BaragonServiceModule.GOOGLE_CLOUD_COMPUTE_SERVICE) Compute compute)  {
-    this.compute = compute;
+                            @Named(BaragonServiceModule.GOOGLE_CLOUD_COMPUTE_SERVICE) Optional<Compute> compute)  {
+    this.compute = compute.orNull();
     this.googleCloudConfiguration = configuration.getGoogleCloudConfiguration();
   }
 

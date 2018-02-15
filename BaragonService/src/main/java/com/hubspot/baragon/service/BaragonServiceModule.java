@@ -119,6 +119,7 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
     binder.bind(RequestManager.class).in(Scopes.SINGLETON);
     binder.bind(ServiceManager.class).in(Scopes.SINGLETON);
     binder.bind(StatusManager.class).in(Scopes.SINGLETON);
+
     binder.bind(GoogleCloudManager.class).in(Scopes.SINGLETON);
 
     // Edge Cache
@@ -325,9 +326,9 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
   @Provides
   @Singleton
   @Named(GOOGLE_CLOUD_COMPUTE_SERVICE)
-  public Compute provideComputeService(BaragonConfiguration config) throws Exception {
+  public Optional<Compute> provideComputeService(BaragonConfiguration config) throws Exception {
     if (!config.getGoogleCloudConfiguration().isEnabled()) {
-      return null;
+      return Optional.absent();
     }
     HttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
     JsonFactory jsonFactory = JacksonFactory.getDefaultInstance();
@@ -352,9 +353,9 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
           credential.createScoped(Collections.singletonList("https://www.googleapis.com/auth/cloud-platform"));
     }
 
-    return new Compute.Builder(httpTransport, jsonFactory, credential)
+    return Optional.of(new Compute.Builder(httpTransport, jsonFactory, credential)
         .setApplicationName("BaragonService")
-        .build();
+        .build());
   }
 
   @Provides
