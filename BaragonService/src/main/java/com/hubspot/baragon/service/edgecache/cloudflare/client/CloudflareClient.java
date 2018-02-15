@@ -73,7 +73,12 @@ public class CloudflareClient {
     this.zoneCache = Suppliers.memoizeWithExpiration(() -> {
       try {
         return retrieveAllZones().stream().collect(Collectors.toConcurrentMap(
-            CloudflareZone::getName, Function.identity()
+            CloudflareZone::getName,
+            Function.identity(),
+            (name1, name2) -> {
+              LOG.debug("Duplicate name found", name1);
+              return name1;
+            }
         ));
       } catch (CloudflareClientException e) {
         LOG.error("Unable to refresh Cloudflare zone cache", e);
@@ -88,7 +93,12 @@ public class CloudflareClient {
           @Override
           public Map<String, CloudflareDnsRecord> load(String zoneId) throws Exception {
             return retrieveDnsRecords(zoneId).stream().collect(Collectors.toConcurrentMap(
-                CloudflareDnsRecord::getName, Function.identity()
+                CloudflareDnsRecord::getName,
+                Function.identity(),
+                (name1, name2) -> {
+                  LOG.debug("Duplicate name found", name1);
+                  return name1;
+                }
             ));
           }
         });
