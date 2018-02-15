@@ -23,7 +23,7 @@ public class BaragonClientProvider implements Provider<BaragonServiceClient> {
 
   private String contextPath = DEFAULT_CONTEXT_PATH;
   private List<String> hosts = Collections.emptyList();
-  private Provider<List<String>> hostsProvider = null;
+  private Provider<List<String>> baseUrlProvider = null;
   private Optional<String> authkey = Optional.absent();
   private Provider<Optional<String>> authkeyProvider = null;
 
@@ -65,30 +65,30 @@ public class BaragonClientProvider implements Provider<BaragonServiceClient> {
   }
 
   @Inject(optional = true)
-  public BaragonClientProvider setHostsProvider(Provider<List<String>> hostsProvider) {
-    this.hostsProvider = hostsProvider;
+  public BaragonClientProvider setBaseUrlProvider(@Named(BaragonClientModule.BASE_URL_PROVIDER_NAME) Provider<List<String>> baseUrlProvider) {
+    this.baseUrlProvider = baseUrlProvider;
     return this;
   }
 
   @Inject(optional = true)
-  public BaragonClientProvider setAuthkeyProvider(Provider<Optional<String>> authkeyProvider) {
+  public BaragonClientProvider setAuthkeyProvider(@Named(BaragonClientModule.AUTHKEY_PROVIDER_PROPERTY_NAME) Provider<Optional<String>> authkeyProvider) {
     this.authkeyProvider = authkeyProvider;
     return this;
   }
 
   @Override
   public BaragonServiceClient get() {
-    Preconditions.checkState(contextPath != null, "contextPath null");
-    Preconditions.checkState(!hosts.isEmpty() || hostsProvider != null, "no hosts provided");
-    Preconditions.checkState(authkey != null, "authkey null");
+    if (baseUrlProvider == null) {
+      Preconditions.checkState(contextPath != null, "contextPath null");
+      Preconditions.checkState(!hosts.isEmpty(), "no hosts provided");
+      baseUrlProvider = ProviderUtils.of(hosts.stream().map((h) -> String.format("%s/%s", h, contextPath)).collect(Collectors.toList()));
+    }
 
     if (authkeyProvider == null) {
+      Preconditions.checkState(authkey != null, "authkey null");
       authkeyProvider = ProviderUtils.of(authkey);
     }
-    if (hostsProvider == null) {
-      hostsProvider = ProviderUtils.of(hosts);
-    }
 
-    return new BaragonServiceClient(contextPath, httpClient, hostsProvider, authkeyProvider);
+    return new BaragonServiceClient(httpClient, baseUrlProvider, authkeyProvider);
   }
 }

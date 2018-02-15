@@ -7,6 +7,7 @@ import com.fasterxml.jackson.datatype.guava.GuavaModule;
 import com.google.common.base.Optional;
 import com.google.inject.AbstractModule;
 import com.google.inject.Binder;
+import com.google.inject.Provider;
 import com.google.inject.Scopes;
 import com.google.inject.TypeLiteral;
 import com.google.inject.binder.LinkedBindingBuilder;
@@ -27,6 +28,12 @@ public class BaragonClientModule extends AbstractModule {
 
   // bind this to provide the authkey for baragon
   public static final String AUTHKEY_PROPERTY_NAME = "baragon.authkey";
+
+  // bind this to a provider for the authkey for baragon
+  public static final String AUTHKEY_PROVIDER_PROPERTY_NAME = "baragon.authkey.provider";
+
+  // bind this to a provider for the full host:port and context path for baragon
+  public static final String BASE_URL_PROVIDER_NAME = "baragon.base.url.provider";
 
   private final List<String> hosts;
 
@@ -71,5 +78,13 @@ public class BaragonClientModule extends AbstractModule {
 
   public static LinkedBindingBuilder<Optional<String>> bindAuthkey(Binder binder) {
     return binder.bind(new TypeLiteral<Optional<String>>() {}).annotatedWith(Names.named(AUTHKEY_PROPERTY_NAME));
+  }
+
+  public static LinkedBindingBuilder<Provider<List<String>>> bindBaseUrlProvider(Binder binder) {
+    return binder.bind(new TypeLiteral<Provider<List<String>>>() {}).annotatedWith(Names.named(BASE_URL_PROVIDER_NAME));
+  }
+
+  public static LinkedBindingBuilder<Provider<Optional<String>>> bindAuthkeyProvider(Binder binder) {
+    return binder.bind(new TypeLiteral<Provider<Optional<String>>>() {}).annotatedWith(Names.named(AUTHKEY_PROVIDER_PROPERTY_NAME));
   }
 }
