@@ -119,7 +119,10 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
     binder.bind(RequestManager.class).in(Scopes.SINGLETON);
     binder.bind(ServiceManager.class).in(Scopes.SINGLETON);
     binder.bind(StatusManager.class).in(Scopes.SINGLETON);
-    binder.bind(GoogleCloudManager.class).in(Scopes.SINGLETON);
+
+    if (getConfiguration().getGoogleCloudConfiguration().isEnabled()) {
+      binder.bind(GoogleCloudManager.class).in(Scopes.SINGLETON);
+    }
 
     // Edge Cache
     binder.bind(CloudflareEdgeCache.class);
