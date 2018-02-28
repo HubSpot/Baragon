@@ -4,11 +4,11 @@ set -e
 RELEASE_VERSION=$1
 NEW_VERSION=$2
 
-#git checkout "Baragon-$RELEASE_VERSION"
-#mvn clean package docker:build -DskipTests
+git checkout "Baragon-$RELEASE_VERSION"
+mvn clean package docker:build -DskipTests
 
-#git checkout master
-#mvn clean package docker:build -DskipTests
+git checkout master
+mvn clean package docker:build -DskipTests
 
 docker tag hubspot/baragonagent-aurora:$NEW_VERSION hubspot/baragonagent-aurora:latest
 docker tag hubspot/baragonagent:$NEW_VERSION hubspot/baragonagent:latest
