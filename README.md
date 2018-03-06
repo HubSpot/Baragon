@@ -59,8 +59,8 @@ For more details on configuring and using Baragon, check out the [detailed setup
 1. Build JARs via `mvn clean package`.
 
 2. Create a configuration file for Baragon Service and Baragon Agent. These are an extended version of a Dropwizard configuration file. Details on configurable fields can be found in the example configs below and in the [detailed setup and management guide](Docs/managing_baragon.md) 
-  - [Example Baragon Service Configuration](Docs/config/baragon_service_config.yaml). This will be referenced as `$SERVICE_CONFIG_YAML`.
-  - [Example Baragon Agent Configuration](Docs/config/baragon_agent_config.yaml). This will be referenced as `$AGENT_CONFIG_YAML`.
+  - [Example Baragon Service Configuration](Docs/config/baragon_service_config.md). This will be referenced as `$SERVICE_CONFIG_YAML`.
+  - [Example Baragon Agent Configuration](Docs/config/baragon_agent_config.md). This will be referenced as `$AGENT_CONFIG_YAML`.
 
 3. Copy `BaragonService-*-SNAPSHOT.jar` and `$SERVICE_CONFIG_YAML` onto one or more hosts, and start the service via `java -jar BaragonService-*-SNAPSHOT.jar server $SERVICE_CONFIG_YAML`.
 
@@ -85,7 +85,7 @@ Nginx's config directories that BaragonAgent writes to will also be mounted as v
 <a id="ui"></a>
 ## BaragonUI
  
-Baragon comes with a UI for visualization and easier management of load balancer paths and upstreams. By default it will be available in a read-only mode at `/[contextPath]/ui` see the [Example Baragon Service Configuration](docs/baragon_service_config.yaml) or [detailed setup and management guide](docs/managing_baragon.md) for more details on configuring BaragonUI behavior.
+Baragon comes with a UI for visualization and easier management of load balancer paths and upstreams. By default it will be available in a read-only mode at `/[contextPath]/ui` see the [Example Baragon Service Configuration](Docs/config/baragon_service_config.md) or [detailed setup and management guide](Docs/managing_baragon.md) for more details on configuring BaragonUI behavior.
 
 ## Baragon API Docs
 
