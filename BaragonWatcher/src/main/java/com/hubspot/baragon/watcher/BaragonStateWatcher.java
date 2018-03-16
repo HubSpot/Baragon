@@ -1,5 +1,7 @@
 package com.hubspot.baragon.watcher;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.Deque;
@@ -10,6 +12,10 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedTransferQueue;
 import java.util.concurrent.ThreadFactory;
 
+import org.apache.curator.framework.listen.ListenerContainer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.google.common.base.Function;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -17,12 +23,9 @@ import com.hubspot.baragon.models.BaragonServiceState;
 import com.hubspot.ringleader.watcher.Event;
 import com.hubspot.ringleader.watcher.EventListener;
 import com.hubspot.ringleader.watcher.PersistentWatcher;
-import org.apache.curator.framework.listen.ListenerContainer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @Singleton
-public class BaragonStateWatcher {
+public class BaragonStateWatcher implements Closeable {
   private static final Logger LOG = LoggerFactory.getLogger(BaragonStateWatcher.class);
 
   private final BaragonStateFetcher stateFetcher;
@@ -69,6 +72,11 @@ public class BaragonStateWatcher {
     }, executor);
 
     watcher.start();
+  }
+
+  @Override
+  public void close() throws IOException {
+    executor.shutdown();
   }
 
   private void updateToLatestVersion() {
