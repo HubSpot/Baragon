@@ -74,7 +74,9 @@ public class FilesystemConfigHelper {
     }
     LOG.debug("Acquired agent lock, reloading configs");
     try {
+      LOG.debug("Checking configs for reload");
       adapter.checkConfigs();
+      LOG.debug("Reloading configs");
       adapter.reloadConfigs();
     }  finally {
       agentLock.unlock();
@@ -99,7 +101,7 @@ public class FilesystemConfigHelper {
   public void bootstrapApply(ServiceContext context, Collection<BaragonConfigFile> newConfigs) throws InvalidConfigException, LbAdapterExecuteException, IOException, MissingTemplateException {
     final BaragonService service = context.getService();
     final boolean previousConfigsExist = configsExist(service);
-    LOG.info(String.format("Going to apply %s: %s", service.getServiceId(), Joiner.on(", ").join(context.getUpstreams())));
+    LOG.info("Going to apply {}: {}", service.getServiceId(), Joiner.on(", ").join(context.getUpstreams()));
     backupConfigs(service);
     try {
       writeConfigs(newConfigs);
@@ -121,7 +123,7 @@ public class FilesystemConfigHelper {
     final BaragonService service = context.getService();
     final BaragonService oldService = maybeOldService.or(service);
 
-    LOG.info(String.format("Going to apply %s: %s", service.getServiceId(), Joiner.on(", ").join(context.getUpstreams())));
+    LOG.info("Going to apply {}: {}", service.getServiceId(), Joiner.on(", ").join(context.getUpstreams()));
     final boolean oldServiceExists = configsExist(oldService);
     final boolean previousConfigsExist = configsExist(service);
 
@@ -129,23 +131,25 @@ public class FilesystemConfigHelper {
 
 
     if (!agentLock.tryLock(agentLockTimeoutMs, TimeUnit.MILLISECONDS)) {
-      LOG.warn("Failed to acquire lock for service config apply ({})", service.getServiceId());
-      throw new LockTimeoutException("Timed out waiting to acquire lock", agentLock);
+      LockTimeoutException lte = new LockTimeoutException("Timed out waiting to acquire lock", agentLock);
+      LOG.warn("Failed to acquire lock for service config apply ({})", service.getServiceId(), lte);
+      throw lte;
     }
 
-    LOG.debug("Acquired agent lock, applying configs");
+    LOG.debug("({}) Acquired agent lock, applying configs");
 
     try {
       if (configsMatch(newConfigs, readConfigs(oldService))) {
-        LOG.info("Configs are unchanged, skipping apply");
+        LOG.info("({}) Configs are unchanged, skipping apply", service.getServiceId());
         if (!noReload && !delayReload && batchItemNumber.isPresent() && batchItemNumber.get() > 1) {
-          LOG.debug("Item is the last in a batch, reloading configs");
+          LOG.debug("({}) Item is the last in a batch, reloading configs", service.getServiceId());
           adapter.reloadConfigs();
         }
         return;
       }
 
       // Backup configs
+      LOG.debug("({}) Backing up configs", service.getServiceId());
       if (revertOnFailure) {
         backupConfigs(service);
         if (oldServiceExists) {
@@ -155,27 +159,32 @@ public class FilesystemConfigHelper {
 
       // Write & check the configs
       if (context.isPresent()) {
+        LOG.debug("({}) Writing new configs", service.getServiceId());
         writeConfigs(newConfigs);
         //If the new service id for this base path is different, remove the configs for the old service id
         if (oldServiceExists && !oldService.getServiceId().equals(service.getServiceId())) {
+          LOG.debug("({}) Removing old configs from renamed service", service.getServiceId());
           remove(oldService);
         }
       } else {
+        LOG.debug("({}) Removing configs from deleted service", service.getServiceId());
         remove(service);
       }
 
       if (!noValidate) {
+        LOG.debug("({}) Checking configs", service.getServiceId());
         adapter.checkConfigs();
       } else {
-        LOG.debug("Not validating configs due to 'noValidate' specified in request");
+        LOG.debug("({}) Not validating configs due to 'noValidate' specified in request", service.getServiceId());
       }
       if (!noReload && !delayReload) {
+        LOG.debug("({}) Reloading configs", service.getServiceId());
         adapter.reloadConfigs();
       } else {
-        LOG.debug("Not reloading configs: {}", noReload ? "'noReload' specified in request" : "Will reload at end of request batch");
+        LOG.debug("({}) Not reloading configs: {}", service.getServiceId(), noReload ? "'noReload' specified in request" : "Will reload at end of request batch");
       }
     } catch (Exception e) {
-      LOG.error(String.format("Caught exception while writing configs for %s, reverting to backups!", service.getServiceId()), e);
+      LOG.error("Caught exception while writing configs for {}, reverting to backups!", service.getServiceId(), e);
       saveAsFailed(service);
       // Restore configs
       if (revertOnFailure) {
@@ -189,7 +198,7 @@ public class FilesystemConfigHelper {
         }
       }
 
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     } finally {
       agentLock.unlock();
     }
