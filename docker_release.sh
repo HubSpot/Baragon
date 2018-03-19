@@ -10,7 +10,7 @@ mvn clean package docker:build -DskipTests
 git checkout master
 mvn clean package docker:build -DskipTests
 
-docker tag -f hubspot/baragonagent-aurora:$NEW_VERSION hubspot/baragonagent-aurora:latest
-docker tag -f hubspot/baragonagent:$NEW_VERSION hubspot/baragonagent:latest
-docker tag -f hubspot/baragonservice:$NEW_VERSION hubspot/baragonservice:latest
-docker push hubspot/baragonagent-aurora:$RELEASE_VERSION && docker push hubspot/baragonagent-aurora:$NEW_VERSION && docker push hubspot/baragonagent-aurora:latest && docker push hubspot/baragonagent:$RELEASE_VERSION && docker push hubspot/baragonagent:$NEW_VERSIONT && docker push hubspot/baragonagent:latest && docker push hubspot/baragonservice:$RELEASE_VERSION && docker push hubspot/baragonservice:$NEW_VERSION && docker push hubspot/baragonservice:latest
+docker tag hubspot/baragonagent-aurora:$NEW_VERSION hubspot/baragonagent-aurora:latest
+docker tag hubspot/baragonagent:$NEW_VERSION hubspot/baragonagent:latest
+docker tag hubspot/baragonservice:$NEW_VERSION hubspot/baragonservice:latest
+docker push hubspot/baragonagent-aurora:$RELEASE_VERSION && docker push hubspot/baragonagent-aurora:$NEW_VERSION && docker push hubspot/baragonagent-aurora:latest && docker push hubspot/baragonagent:$RELEASE_VERSION && docker push hubspot/baragonagent:$NEW_VERSION && docker push hubspot/baragonagent:latest && docker push hubspot/baragonservice:$RELEASE_VERSION && docker push hubspot/baragonservice:$NEW_VERSION && docker push hubspot/baragonservice:latest
