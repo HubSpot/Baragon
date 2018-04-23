@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
@@ -15,41 +16,72 @@
 
   <dependencies>
     <dependency>
-      <groupId>com.hubspot.dropwizard</groupId>
-      <artifactId>dropwizard-guicier</artifactId>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
     </dependency>
     <dependency>
-      <groupId>io.dropwizard</groupId>
-      <artifactId>dropwizard-views</artifactId>
+      <groupId>com.amazonaws</groupId>
+      <artifactId>aws-java-sdk-core</artifactId>
     </dependency>
     <dependency>
-      <groupId>io.dropwizard</groupId>
-      <artifactId>dropwizard-views-mustache</artifactId>
-      <scope>runtime</scope>
+      <groupId>com.amazonaws</groupId>
+      <artifactId>aws-java-sdk-elasticloadbalancing</artifactId>
     </dependency>
     <dependency>
-      <groupId>io.dropwizard</groupId>
-      <artifactId>dropwizard-assets</artifactId>
+      <groupId>com.amazonaws</groupId>
+      <artifactId>aws-java-sdk-elasticloadbalancingv2</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.palominolabs.metrics</groupId>
-      <artifactId>metrics-guice</artifactId>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-annotations</artifactId>
     </dependency>
     <dependency>
-      <groupId>io.dropwizard.metrics</groupId>
-      <artifactId>metrics-core</artifactId>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-core</artifactId>
     </dependency>
     <dependency>
-      <groupId>io.dropwizard.metrics</groupId>
-      <artifactId>metrics-graphite</artifactId>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
     </dependency>
     <dependency>
-      <groupId>io.dropwizard.metrics</groupId>
-      <artifactId>metrics-annotation</artifactId>
+      <groupId>com.fasterxml.jackson.dataformat</groupId>
+      <artifactId>jackson-dataformat-yaml</artifactId>
     </dependency>
     <dependency>
-      <groupId>io.dropwizard.metrics</groupId>
-      <artifactId>metrics-healthchecks</artifactId>
+      <groupId>com.fasterxml.jackson.datatype</groupId>
+      <artifactId>jackson-datatype-guava</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.google.api-client</groupId>
+      <artifactId>google-api-client</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.google.apis</groupId>
+      <artifactId>google-api-services-compute</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.google.code.findbugs</groupId>
+      <artifactId>annotations</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.google.http-client</groupId>
+      <artifactId>google-http-client</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.google.http-client</groupId>
+      <artifactId>google-http-client-jackson2</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.google.inject</groupId>
+      <artifactId>guice</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.google.inject.extensions</groupId>
+      <artifactId>guice-multibindings</artifactId>
     </dependency>
     <dependency>
       <groupId>com.hubspot</groupId>
@@ -61,72 +93,27 @@
     </dependency>
     <dependency>
       <groupId>com.hubspot</groupId>
-      <artifactId>BaragonUI</artifactId>
-      <scope>runtime</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.google.inject</groupId>
-      <artifactId>guice</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.google.inject.extensions</groupId>
-      <artifactId>guice-multibindings</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>javax.validation</groupId>
-      <artifactId>validation-api</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.google.guava</groupId>
-      <artifactId>guava</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.fasterxml.jackson.core</groupId>
-      <artifactId>jackson-databind</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.fasterxml.jackson.dataformat</groupId>
-      <artifactId>jackson-dataformat-yaml</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-api</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>javax.inject</groupId>
-      <artifactId>javax.inject</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.dropwizard</groupId>
-      <artifactId>dropwizard-lifecycle</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.hibernate</groupId>
-      <artifactId>hibernate-validator</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.dropwizard</groupId>
-      <artifactId>dropwizard-jetty</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.eclipse.jetty</groupId>
-      <artifactId>jetty-servlets</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.fasterxml.jackson.core</groupId>
-      <artifactId>jackson-annotations</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.fasterxml.jackson.core</groupId>
-      <artifactId>jackson-core</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.fasterxml.jackson.datatype</groupId>
-      <artifactId>jackson-datatype-guava</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.hubspot</groupId>
       <artifactId>HorizonCore</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.hubspot.dropwizard</groupId>
+      <artifactId>dropwizard-guicier</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.ning</groupId>
+      <artifactId>async-http-client</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.palominolabs.metrics</groupId>
+      <artifactId>metrics-guice</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.dropwizard</groupId>
+      <artifactId>dropwizard-assets</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.dropwizard</groupId>
+      <artifactId>dropwizard-configuration</artifactId>
     </dependency>
     <dependency>
       <groupId>io.dropwizard</groupId>
@@ -142,15 +129,55 @@
     </dependency>
     <dependency>
       <groupId>io.dropwizard</groupId>
-      <artifactId>dropwizard-configuration</artifactId>
+      <artifactId>dropwizard-jetty</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.dropwizard</groupId>
+      <artifactId>dropwizard-lifecycle</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.dropwizard</groupId>
+      <artifactId>dropwizard-views</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.dropwizard.metrics</groupId>
+      <artifactId>metrics-annotation</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.dropwizard.metrics</groupId>
+      <artifactId>metrics-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.dropwizard.metrics</groupId>
+      <artifactId>metrics-graphite</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.dropwizard.metrics</groupId>
+      <artifactId>metrics-healthchecks</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>javax.inject</groupId>
+      <artifactId>javax.inject</artifactId>
     </dependency>
     <dependency>
       <groupId>javax.servlet</groupId>
       <artifactId>javax.servlet-api</artifactId>
     </dependency>
     <dependency>
+      <groupId>javax.validation</groupId>
+      <artifactId>validation-api</artifactId>
+    </dependency>
+    <dependency>
       <groupId>javax.ws.rs</groupId>
       <artifactId>javax.ws.rs-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>net.kencochrane.raven</groupId>
+      <artifactId>raven</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.curator</groupId>
+      <artifactId>curator-client</artifactId>
     </dependency>
     <dependency>
       <groupId>org.apache.curator</groupId>
@@ -161,60 +188,34 @@
       <artifactId>curator-recipes</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.apache.curator</groupId>
-      <artifactId>curator-client</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.amazonaws</groupId>
-      <artifactId>aws-java-sdk-core</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.amazonaws</groupId>
-      <artifactId>aws-java-sdk-elasticloadbalancing</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.amazonaws</groupId>
-      <artifactId>aws-java-sdk-elasticloadbalancingv2</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.ning</groupId>
-      <artifactId>async-http-client</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.google.code.findbugs</groupId>
-      <artifactId>annotations</artifactId>
-    </dependency>
-    <dependency>
       <groupId>org.apache.zookeeper</groupId>
       <artifactId>zookeeper</artifactId>
     </dependency>
     <dependency>
-      <groupId>net.kencochrane.raven</groupId>
-      <artifactId>raven</artifactId>
+      <groupId>org.eclipse.jetty</groupId>
+      <artifactId>jetty-servlets</artifactId>
     </dependency>
     <dependency>
-      <groupId>ch.qos.logback</groupId>
-      <artifactId>logback-classic</artifactId>
+      <groupId>org.hibernate</groupId>
+      <artifactId>hibernate-validator</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.google.api-client</groupId>
-      <artifactId>google-api-client</artifactId>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.google.http-client</groupId>
-      <artifactId>google-http-client</artifactId>
+      <groupId>com.hubspot</groupId>
+      <artifactId>BaragonUI</artifactId>
+      <scope>runtime</scope>
     </dependency>
     <dependency>
-      <groupId>com.google.http-client</groupId>
-      <artifactId>google-http-client-jackson2</artifactId>
+      <groupId>io.dropwizard</groupId>
+      <artifactId>dropwizard-views-mustache</artifactId>
+      <scope>runtime</scope>
     </dependency>
     <dependency>
-      <groupId>com.google.apis</groupId>
-      <artifactId>google-api-services-compute</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.jukito</groupId>
-      <artifactId>jukito</artifactId>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -223,8 +224,8 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
+      <groupId>org.jukito</groupId>
+      <artifactId>jukito</artifactId>
       <scope>test</scope>
     </dependency>
   </dependencies>
