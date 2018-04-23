@@ -57,7 +57,7 @@
     </dependency>
     <dependency>
       <groupId>com.hubspot</groupId>
-      <artifactId>HorizonApache</artifactId>
+      <artifactId>HorizonNing</artifactId>
     </dependency>
     <dependency>
       <groupId>com.hubspot</groupId>
