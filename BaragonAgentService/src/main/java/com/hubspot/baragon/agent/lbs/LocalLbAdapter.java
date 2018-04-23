@@ -7,6 +7,9 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.apache.commons.exec.CommandLine;
 import org.apache.commons.exec.DefaultExecuteResultHandler;
@@ -19,6 +22,7 @@ import org.slf4j.LoggerFactory;
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.base.Charsets;
 import com.google.common.base.Optional;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.hubspot.baragon.agent.config.LoadBalancerConfiguration;
@@ -31,10 +35,12 @@ public class LocalLbAdapter {
   private static final Logger LOG = LoggerFactory.getLogger(LocalLbAdapter.class);
 
   private final LoadBalancerConfiguration loadBalancerConfiguration;
+  private final ExecutorService destroyProcessExecutor;
 
   @Inject
   public LocalLbAdapter(LoadBalancerConfiguration loadBalancerConfiguration) {
     this.loadBalancerConfiguration = loadBalancerConfiguration;
+    this.destroyProcessExecutor = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("lb-shell-process-kill-%d").build());
   }
 
   private int executeWithTimeout(CommandLine command, int timeout) throws LbAdapterExecuteException, IOException {
@@ -56,6 +62,7 @@ public class LocalLbAdapter {
         }
         return resultHandler.getExitValue();
       } else {
+        CompletableFuture.runAsync(() -> executor.getWatchdog().destroyProcess(), destroyProcessExecutor);
         throw new LbAdapterExecuteException(baos.toString(Charsets.UTF_8.name()), command.toString());
       }
     } catch (ExecuteException|InterruptedException e) {
