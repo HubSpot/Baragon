@@ -12,6 +12,13 @@ public class LbAdapterExecuteException extends Exception {
     this.command = command;
   }
 
+  public LbAdapterExecuteException(String output, String command) {
+    super(command);
+    this.output = output;
+    this.executeException = null;
+    this.command = command;
+  }
+
   public String getOutput() {
     return output;
   }

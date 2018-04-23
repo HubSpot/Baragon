@@ -9,9 +9,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.exec.CommandLine;
+import org.apache.commons.exec.DefaultExecuteResultHandler;
 import org.apache.commons.exec.DefaultExecutor;
 import org.apache.commons.exec.ExecuteException;
-import org.apache.commons.exec.ExecuteWatchdog;
 import org.apache.commons.exec.PumpStreamHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,13 +40,22 @@ public class LocalLbAdapter {
   private int executeWithTimeout(CommandLine command, int timeout) throws LbAdapterExecuteException, IOException {
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     DefaultExecutor executor = new DefaultExecutor();
-
     executor.setStreamHandler(new PumpStreamHandler(baos));
-    executor.setWatchdog(new ExecuteWatchdog(timeout));
+    DefaultExecuteResultHandler resultHandler = new DefaultExecuteResultHandler();
 
+    // Start async and do our own time limiting instead of using a watchdog to avoid https://issues.apache.org/jira/browse/EXEC-62
     try {
-      return executor.execute(command);
-    } catch (ExecuteException e) {
+      long start = System.currentTimeMillis();
+      executor.execute(command, resultHandler);
+      while (System.currentTimeMillis() - start < timeout && !resultHandler.hasResult()) {
+        Thread.sleep(50);
+      }
+      if (resultHandler.hasResult()) {
+        return resultHandler.getExitValue();
+      } else {
+        throw new LbAdapterExecuteException(baos.toString(Charsets.UTF_8.name()), command.toString());
+      }
+    } catch (ExecuteException|InterruptedException e) {
       throw new LbAdapterExecuteException(baos.toString(Charsets.UTF_8.name()), e, command.toString());
     }
   }
