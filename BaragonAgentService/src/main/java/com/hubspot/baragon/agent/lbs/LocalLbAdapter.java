@@ -51,6 +51,9 @@ public class LocalLbAdapter {
         Thread.sleep(50);
       }
       if (resultHandler.hasResult()) {
+        if (resultHandler.getException() != null) {
+          throw resultHandler.getException();
+        }
         return resultHandler.getExitValue();
       } else {
         throw new LbAdapterExecuteException(baos.toString(Charsets.UTF_8.name()), command.toString());
