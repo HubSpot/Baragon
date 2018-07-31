@@ -23,6 +23,10 @@ public class TrafficSource {
     return new TrafficSource(input, TrafficSourceType.CLASSIC, RegisterBy.INSTANCE_ID);
   }
 
+  public TrafficSource(String name, TrafficSourceType type) {
+    this(name, type, RegisterBy.INSTANCE_ID);
+  }
+
   @JsonCreator
   public TrafficSource(@JsonProperty("name") String name, @JsonProperty("type") TrafficSourceType type, @JsonProperty("registerBy") RegisterBy registerBy) {
     this.name = name;
