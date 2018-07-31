@@ -72,7 +72,7 @@ public class ElbManager {
         Instance instance = new Instance(agent.getEc2().getInstanceId().get());
         AgentCheckInResponse response = isStatusCheck ?
             getLoadBalancer(source.getType()).checkRemovedInstance(instance, source.getName(), agent.getAgentId()) :
-            getLoadBalancer(source.getType()).removeInstance(instance, source.getRegisterBy() == RegisterBy.INSTANCE_ID ? instance.getInstanceId() : agent.getEc2().getPrivateIp().get(), source.getName(), agent.getAgentId());
+            getLoadBalancer(source.getType()).removeInstance(instance, source.getRegisterBy() == RegisterBy.PRIVATE_IP ? agent.getEc2().getPrivateIp().get() : instance.getInstanceId(), source.getName(), agent.getAgentId());
         if (response.getState().ordinal() > state.ordinal()) {
           state = response.getState();
         }
@@ -99,7 +99,7 @@ public class ElbManager {
         Instance instance = new Instance(agent.getEc2().getInstanceId().get());
         AgentCheckInResponse response = isStatusCheck ?
             getLoadBalancer(source.getType()).checkRegisteredInstance(instance, source.getName(), agent) :
-            getLoadBalancer(source.getType()).registerInstance(instance, source.getRegisterBy() == RegisterBy.INSTANCE_ID ? instance.getInstanceId() : agent.getEc2().getPrivateIp().get(), source.getName(), agent);
+            getLoadBalancer(source.getType()).registerInstance(instance, source.getRegisterBy() == RegisterBy.PRIVATE_IP ? agent.getEc2().getPrivateIp().get() : instance.getInstanceId(), source.getName(), agent);
         if (response.getExceptionMessage().isPresent()) {
           maybeVpcException = Optional.of(maybeVpcException.or("") + response.getExceptionMessage().get() + "\n");
         }
