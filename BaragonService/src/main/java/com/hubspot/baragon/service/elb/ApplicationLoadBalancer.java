@@ -115,30 +115,30 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
   }
 
   @Override
-  public AgentCheckInResponse removeInstance(Instance instance, String trafficSourceName, String agentId) {
-    return removeInstance(instance.getInstanceId(), trafficSourceName);
+  public AgentCheckInResponse removeInstance(Instance instance, String id, String trafficSourceName, String agentId) {
+    return removeInstance(id, trafficSourceName);
   }
 
-  public AgentCheckInResponse removeInstance(String instanceId, String trafficSourceName) {
+  public AgentCheckInResponse removeInstance(String id, String trafficSourceName) {
 
     Optional<TargetGroup> maybeTargetGroup = getTargetGroup(trafficSourceName);
     if (maybeTargetGroup.isPresent()) {
       TargetGroup targetGroup = maybeTargetGroup.get();
       TargetDescription targetDescription = new TargetDescription()
-          .withId(instanceId);
+          .withId(id);
       if (targetsOn(targetGroup).contains(targetDescription.getId())) {
         DeregisterTargetsRequest deregisterTargetsRequest = new DeregisterTargetsRequest()
             .withTargets(targetDescription)
             .withTargetGroupArn(targetGroup.getTargetGroupArn());
         try {
           elbClient.deregisterTargets(deregisterTargetsRequest);
-          LOG.info("De-registered instance {} from target group {}", instanceId, targetGroup);
+          LOG.info("De-registered instance {} from target group {}", id, targetGroup);
           return getShutdownResponse(targetGroup.getTargetGroupArn(), targetDescription, true);
         } catch (AmazonServiceException exn) {
-          LOG.warn("Failed to de-register instance {} from target group {}", instanceId, targetGroup);
+          LOG.warn("Failed to de-register instance {} from target group {}", id, targetGroup);
         }
       } else {
-        LOG.debug("Instance {} not found at target group {}", instanceId, targetGroup);
+        LOG.debug("Instance {} not found at target group {}", id, targetGroup);
       }
     } else {
       LOG.debug("No target group found with name {}", trafficSourceName);
@@ -213,7 +213,7 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
   }
 
   @Override
-  public AgentCheckInResponse registerInstance(Instance instance, String trafficSourceName, BaragonAgentMetadata agent) {
+  public AgentCheckInResponse registerInstance(Instance instance, String id, String trafficSourceName, BaragonAgentMetadata agent) {
     Optional<TargetGroup> maybeTargetGroup = getTargetGroup(trafficSourceName);
 
     if (!maybeTargetGroup.isPresent()) {
@@ -228,23 +228,23 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
         LOG.debug(message);
         return new AgentCheckInResponse(TrafficSourceState.ERROR, Optional.of(message), 0L);
       } else {
-        return registerInstance(instance.getInstanceId(), targetGroup);
+        return registerInstance(id, targetGroup);
       }
     }
   }
 
-  public AgentCheckInResponse registerInstance(String instanceId, String targetGroup) {
+  public AgentCheckInResponse registerInstance(String id, String targetGroup) {
     Optional<TargetGroup> maybeTargetGroup = getTargetGroup(targetGroup);
     if (maybeTargetGroup.isPresent()) {
-      return registerInstance(instanceId, maybeTargetGroup.get());
+      return registerInstance(id, maybeTargetGroup.get());
     } else {
       return new AgentCheckInResponse(TrafficSourceState.ERROR, Optional.of("Target group not found"), 0L);
     }
   }
 
-  private AgentCheckInResponse registerInstance(String instanceId, TargetGroup targetGroup) {
+  private AgentCheckInResponse registerInstance(String id, TargetGroup targetGroup) {
     TargetDescription newTarget = new TargetDescription()
-        .withId(instanceId);
+        .withId(id);
 
     if (!targetsOn(targetGroup).contains(newTarget.getId())) {
       try {
@@ -254,13 +254,13 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
         elbClient.registerTargets(registerTargetsRequest);
         LOG.info("Registered instance {} with target group {}", newTarget.getId(), targetGroup);
       } catch (AmazonServiceException exn) {
-        LOG.warn("Failed to register instance {} with target group {}", instanceId, targetGroup);
+        LOG.warn("Failed to register instance {} with target group {}", id, targetGroup);
         throw Throwables.propagate(exn);
       }
 
-      return instanceHealthResponse(newTarget, targetGroup, instanceId);
+      return instanceHealthResponse(newTarget, targetGroup, id);
     } else {
-      LOG.debug("Instance {} already registered with target group {}", instanceId, targetGroup);
+      LOG.debug("Instance {} already registered with target group {}", id, targetGroup);
       return new AgentCheckInResponse(TrafficSourceState.DONE, Optional.absent(), 0L);
     }
   }

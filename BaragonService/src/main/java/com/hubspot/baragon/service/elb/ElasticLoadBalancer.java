@@ -33,9 +33,9 @@ public abstract class ElasticLoadBalancer {
   }
 
   public abstract boolean isInstanceHealthy(String instanceId, String name);
-  public abstract AgentCheckInResponse removeInstance(Instance instance, String elbName, String agentId);
+  public abstract AgentCheckInResponse removeInstance(Instance instance, String id, String elbName, String agentId);
   public abstract AgentCheckInResponse checkRemovedInstance(Instance instance, String elbName, String agentId);
-  public abstract AgentCheckInResponse registerInstance(Instance instance, String elbName, BaragonAgentMetadata agent);
+  public abstract AgentCheckInResponse registerInstance(Instance instance, String id, String elbName, BaragonAgentMetadata agent);
   public abstract AgentCheckInResponse checkRegisteredInstance(Instance instance, String elbName, BaragonAgentMetadata agent);
   public abstract void syncAll(Collection<BaragonGroup> groups);
 
