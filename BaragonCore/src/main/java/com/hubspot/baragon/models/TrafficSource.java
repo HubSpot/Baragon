@@ -15,7 +15,6 @@ public class TrafficSource {
   @NotNull
   private final TrafficSourceType type;
 
-  @NotNull
   private final RegisterBy registerBy;
 
   @JsonCreator
@@ -31,7 +30,7 @@ public class TrafficSource {
   public TrafficSource(@JsonProperty("name") String name, @JsonProperty("type") TrafficSourceType type, @JsonProperty("registerBy") RegisterBy registerBy) {
     this.name = name;
     this.type = type;
-    this.registerBy = registerBy;
+    this.registerBy = registerBy == null ? RegisterBy.INSTANCE_ID : registerBy;
   }
 
   public String getName() {
