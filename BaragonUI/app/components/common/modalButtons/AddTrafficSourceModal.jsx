@@ -34,6 +34,15 @@ class AddTrafficSourceModal extends Component {
             isRequired: true
           },
           {
+            name: 'registerBy',
+            type: FormModal.INPUT_TYPES.RADIO,
+            label: 'Register By: ',
+            values: [
+              {value: 'INSTANCE_ID', label: 'Instance Id'},
+              {value: 'PRIVATE_IP', label: 'Private Ip'}],
+            isRequired: true
+          },
+          {
             name: 'name',
             type: FormModal.INPUT_TYPES.STRING,
             label: 'Name: '
