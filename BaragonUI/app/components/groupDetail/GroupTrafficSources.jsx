@@ -43,6 +43,7 @@ const trafficSourceBox = (trafficSource, path) => {
         </Link>
       </li>
       <li>Type: {trafficSource.type}</li>
+      <li>Register By: {trafficSource.registerBy}</li>
     </ul>
   );
 };
@@ -84,6 +85,7 @@ GroupTrafficSources.propTypes = {
   trafficSources: PropTypes.arrayOf(PropTypes.shape({
     name: PropTypes.string,
     type: PropTypes.string,
+    registerBy: PropTypes.string
   })),
   group: PropTypes.string,
   editable: PropTypes.bool,

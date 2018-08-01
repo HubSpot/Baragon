@@ -25,6 +25,7 @@ import com.hubspot.baragon.models.BaragonAgentMetadata;
 import com.hubspot.baragon.models.BaragonGroup;
 import com.hubspot.baragon.models.BaragonKnownAgentMetadata;
 import com.hubspot.baragon.models.BaragonService;
+import com.hubspot.baragon.models.RegisterBy;
 import com.hubspot.baragon.models.TrafficSource;
 import com.hubspot.baragon.models.TrafficSourceType;
 import com.hubspot.baragon.service.config.BaragonConfiguration;
@@ -73,7 +74,7 @@ public class LoadBalancerResource {
   @Path("/{clusterName}/sources")
   @Deprecated
   public BaragonGroup addSource(@PathParam("clusterName") String clusterName, @QueryParam("source") String source) {
-    TrafficSource trafficSource = new TrafficSource(source, TrafficSourceType.CLASSIC);
+    TrafficSource trafficSource = new TrafficSource(source, TrafficSourceType.CLASSIC, RegisterBy.INSTANCE_ID);
     return loadBalancerDatastore.addSourceToGroup(clusterName, trafficSource);
   }
 
@@ -81,7 +82,7 @@ public class LoadBalancerResource {
   @Path("/{clusterName}/sources")
   @Deprecated
   public Optional<BaragonGroup> removeSource(@PathParam("clusterName") String clusterName, @QueryParam("source") String source) {
-    return loadBalancerDatastore.removeSourceFromGroup(clusterName, new TrafficSource(source, TrafficSourceType.CLASSIC));
+    return loadBalancerDatastore.removeSourceFromGroup(clusterName, new TrafficSource(source, TrafficSourceType.CLASSIC, RegisterBy.INSTANCE_ID));
   }
 
   @POST
