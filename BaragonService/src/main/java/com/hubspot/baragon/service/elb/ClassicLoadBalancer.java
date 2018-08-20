@@ -100,7 +100,7 @@ public class ClassicLoadBalancer extends ElasticLoadBalancer {
     return new AgentCheckInResponse(TrafficSourceState.DONE, maybeException, 0L);
   }
 
-  public AgentCheckInResponse checkRegisteredInstance(Instance instance, String trafficSourceName, BaragonAgentMetadata agent) {
+  public AgentCheckInResponse checkRegisteredInstance(Instance instance, TrafficSource trafficSource, BaragonAgentMetadata agent) {
     return new AgentCheckInResponse(TrafficSourceState.DONE, Optional.absent(), 0L);
   }
 

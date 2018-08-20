@@ -66,6 +66,7 @@ import com.hubspot.baragon.data.BaragonLoadBalancerDatastore;
 import com.hubspot.baragon.models.AgentCheckInResponse;
 import com.hubspot.baragon.models.BaragonAgentMetadata;
 import com.hubspot.baragon.models.BaragonGroup;
+import com.hubspot.baragon.models.RegisterBy;
 import com.hubspot.baragon.models.TrafficSource;
 import com.hubspot.baragon.models.TrafficSourceState;
 import com.hubspot.baragon.models.TrafficSourceType;
@@ -302,12 +303,15 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
   }
 
   @Override
-  public AgentCheckInResponse checkRegisteredInstance(Instance instance, String trafficSourceName, BaragonAgentMetadata agent) {
-    Optional<TargetGroup> maybeTargetGroup = getTargetGroup(trafficSourceName);
+  public AgentCheckInResponse checkRegisteredInstance(Instance instance, TrafficSource trafficSource, BaragonAgentMetadata agent) {
+    Optional<TargetGroup> maybeTargetGroup = getTargetGroup(trafficSource.getName());
     if (maybeTargetGroup.isPresent()) {
-      return instanceHealthResponse(new TargetDescription().withId(instance.getInstanceId()), maybeTargetGroup.get(), instance.getInstanceId());
+      return instanceHealthResponse(
+          new TargetDescription().withId(trafficSource.getRegisterBy() == RegisterBy.INSTANCE_ID ? instance.getInstanceId() : agent.getEc2().getPrivateIp().get()),
+          maybeTargetGroup.get(),
+          instance.getInstanceId());
     } else {
-      String message = String.format("Could not find target group %s", trafficSourceName);
+      String message = String.format("Could not find target group %s", trafficSource.getName());
       LOG.error(message);
       return new AgentCheckInResponse(TrafficSourceState.ERROR, Optional.of(message), 0L);
     }
@@ -330,7 +334,7 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
           Collection<TargetDescription> targets = targetsInTargetGroup(targetGroup);
 
           LOG.debug("Registering new instances for target group {}", trafficSource.getName());
-          guaranteeRegistered(targetGroup, targets, baragonAgents, elbsForBaragonGroup);
+          guaranteeRegistered(trafficSource, targetGroup, targets, baragonAgents, elbsForBaragonGroup);
 
           if (configuration.isPresent() && configuration.get().isDeregisterEnabled()) {
             LOG.debug("De-registering old instances for target group {}", trafficSource.getName());
@@ -597,7 +601,8 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
    * @param baragonAgents BaragonAgent to register with given load balancer
    * @param loadBalancers Load balancer to register with
    */
-  private void guaranteeRegistered(TargetGroup targetGroup,
+  private void guaranteeRegistered(TrafficSource trafficSource,
+                                   TargetGroup targetGroup,
                                    Collection<TargetDescription> targets,
                                    Collection<BaragonAgentMetadata> baragonAgents,
                                    Collection<LoadBalancer> loadBalancers) {
@@ -613,7 +618,7 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
     }
 
     guaranteeAzEnabled(baragonAgents, loadBalancers);
-    guaranteeHasAllTargets(targetGroup, targets, baragonAgents);
+    guaranteeHasAllTargets(trafficSource, targetGroup, targets, baragonAgents);
     //guaranteeListenersPresent(targetGroup, loadBalancers);
   }
 
@@ -766,16 +771,18 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
    * @param targetGroup group to register in
    * @param baragonAgents agents to be registered
    */
-  private void guaranteeHasAllTargets(TargetGroup targetGroup,
+  private void guaranteeHasAllTargets(TrafficSource trafficSource,
+                                      TargetGroup targetGroup,
                                       Collection<TargetDescription> targets,
                                       Collection<BaragonAgentMetadata> baragonAgents) {
     Collection<TargetDescription> targetDescriptions = new HashSet<>();
     for (BaragonAgentMetadata agent : baragonAgents) {
       try {
-        if (agent.getEc2().getInstanceId().isPresent()) {
+        if ((trafficSource.getRegisterBy() == RegisterBy.INSTANCE_ID && agent.getEc2().getInstanceId().isPresent())
+            || (trafficSource.getRegisterBy() == RegisterBy.PRIVATE_IP && agent.getEc2().getPrivateIp().isPresent())) {
           if (agentShouldRegisterInTargetGroup(agent.getEc2().getInstanceId().get(), targetGroup, targets)) {
-            String instanceId = agent.getEc2().getInstanceId().get();
-            targetDescriptions.add(new TargetDescription().withId(instanceId));
+            targetDescriptions.add(new TargetDescription()
+                .withId(trafficSource.getRegisterBy() == RegisterBy.INSTANCE_ID ? agent.getEc2().getInstanceId().get() : agent.getEc2().getPrivateIp().get()));
             LOG.info("Will register agent {} to target in group {}", agent, targetGroup);
           } else {
             LOG.debug("Agent {} is already registered", agent);
