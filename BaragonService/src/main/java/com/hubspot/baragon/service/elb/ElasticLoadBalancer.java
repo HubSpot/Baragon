@@ -13,6 +13,7 @@ import com.hubspot.baragon.models.AgentCheckInResponse;
 import com.hubspot.baragon.models.BaragonAgentMetadata;
 import com.hubspot.baragon.models.BaragonGroup;
 import com.hubspot.baragon.models.BaragonKnownAgentMetadata;
+import com.hubspot.baragon.models.TrafficSource;
 import com.hubspot.baragon.service.config.ElbConfiguration;
 import com.hubspot.baragon.service.exceptions.BaragonExceptionNotifier;
 
@@ -36,7 +37,7 @@ public abstract class ElasticLoadBalancer {
   public abstract AgentCheckInResponse removeInstance(Instance instance, String id, String elbName, String agentId);
   public abstract AgentCheckInResponse checkRemovedInstance(Instance instance, String elbName, String agentId);
   public abstract AgentCheckInResponse registerInstance(Instance instance, String id, String elbName, BaragonAgentMetadata agent);
-  public abstract AgentCheckInResponse checkRegisteredInstance(Instance instance, String elbName, BaragonAgentMetadata agent);
+  public abstract AgentCheckInResponse checkRegisteredInstance(Instance instance, TrafficSource trafficSource, BaragonAgentMetadata agent);
   public abstract void syncAll(Collection<BaragonGroup> groups);
 
   Optional<BaragonKnownAgentMetadata> knownAgent(BaragonGroup group, String instanceId) {
