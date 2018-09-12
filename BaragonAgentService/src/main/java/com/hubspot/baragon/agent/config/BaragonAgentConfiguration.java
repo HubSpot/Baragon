@@ -124,6 +124,12 @@ public class BaragonAgentConfiguration extends Configuration {
   @JsonProperty("removeFileOnShutdown")
   private Optional<String> removeFileOnShutdown = Optional.absent();
 
+  @JsonProperty("trafficPort")
+  private Optional<Integer> trafficPort = Optional.absent();
+
+  @JsonProperty("sslTrafficPort")
+  private Optional<Integer> sslTrafficPort = Optional.absent();
+
   public HttpClientConfiguration getHttpClientConfiguration() {
     return httpClientConfiguration;
   }
@@ -350,5 +356,21 @@ public class BaragonAgentConfiguration extends Configuration {
 
   public void setRemoveFileOnShutdown(Optional<String> removeFileOnShutdown) {
     this.removeFileOnShutdown = removeFileOnShutdown;
+  }
+
+  public Optional<Integer> getTrafficPort() {
+    return trafficPort;
+  }
+
+  public void setTrafficPort(Optional<Integer> trafficPort) {
+    this.trafficPort = trafficPort;
+  }
+
+  public Optional<Integer> getSslTrafficPort() {
+    return sslTrafficPort;
+  }
+
+  public void setSslTrafficPort(Optional<Integer> sslTrafficPort) {
+    this.sslTrafficPort = sslTrafficPort;
   }
 }

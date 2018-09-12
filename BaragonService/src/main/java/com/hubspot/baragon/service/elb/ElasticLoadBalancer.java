@@ -14,6 +14,7 @@ import com.hubspot.baragon.models.BaragonAgentMetadata;
 import com.hubspot.baragon.models.BaragonGroup;
 import com.hubspot.baragon.models.BaragonKnownAgentMetadata;
 import com.hubspot.baragon.models.TrafficSource;
+import com.hubspot.baragon.models.TrafficSourceType;
 import com.hubspot.baragon.service.config.ElbConfiguration;
 import com.hubspot.baragon.service.exceptions.BaragonExceptionNotifier;
 
@@ -36,7 +37,7 @@ public abstract class ElasticLoadBalancer {
   public abstract boolean isInstanceHealthy(String instanceId, String name);
   public abstract AgentCheckInResponse removeInstance(Instance instance, String id, String elbName, String agentId);
   public abstract AgentCheckInResponse checkRemovedInstance(Instance instance, String elbName, String agentId);
-  public abstract AgentCheckInResponse registerInstance(Instance instance, String id, String elbName, BaragonAgentMetadata agent);
+  public abstract AgentCheckInResponse registerInstance(Instance instance, String id, String elbName, Optional<Integer> customPort, BaragonAgentMetadata agent);
   public abstract AgentCheckInResponse checkRegisteredInstance(Instance instance, TrafficSource trafficSource, BaragonAgentMetadata agent);
   public abstract void syncAll(Collection<BaragonGroup> groups);
 
@@ -75,5 +76,19 @@ public abstract class ElasticLoadBalancer {
         return false;
       }
     }
+  }
+
+  public Optional<Integer> getCustomPort(TrafficSource source, BaragonAgentMetadata agentMetadata) {
+    if (source.getType() == TrafficSourceType.ALB_TARGET_GROUP) {
+      switch (source.getCustomPortType()) {
+        case NON_SSL:
+          return agentMetadata.getTrafficPort();
+        case SSL:
+          return agentMetadata.getSslTrafficPort();
+        case NONE:
+          return Optional.absent();
+      }
+    }
+    return Optional.absent();
   }
 }

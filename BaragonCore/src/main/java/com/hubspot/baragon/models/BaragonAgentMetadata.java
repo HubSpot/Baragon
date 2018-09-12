@@ -25,6 +25,8 @@ public class BaragonAgentMetadata {
   private final Optional<BaragonAgentGcloudMetadata> gcloud;
   private final Map<String, String> extraAgentData;
   private final boolean batchEnabled;
+  private final Optional<Integer> trafficPort;
+  private final Optional<Integer> sslTrafficPort;
 
   @JsonCreator
   public static BaragonAgentMetadata fromString(String value) {
@@ -34,7 +36,7 @@ public class BaragonAgentMetadata {
       throw new InvalidAgentMetadataStringException(value);
     }
 
-    return new BaragonAgentMetadata(value, matcher.group(1), Optional.absent(), new BaragonAgentEc2Metadata(Optional.absent(), Optional.absent(), Optional.absent(), Optional.absent(), Optional.absent()), Optional.absent(), Collections.emptyMap(), false);
+    return new BaragonAgentMetadata(value, matcher.group(1), Optional.absent(), new BaragonAgentEc2Metadata(Optional.absent(), Optional.absent(), Optional.absent(), Optional.absent(), Optional.absent()), Optional.absent(), Collections.emptyMap(), false, Optional.absent(), Optional.absent());
   }
 
   @JsonCreator
@@ -44,7 +46,9 @@ public class BaragonAgentMetadata {
                               @JsonProperty("ec2") BaragonAgentEc2Metadata ec2,
                               @JsonProperty("gcloud") Optional<BaragonAgentGcloudMetadata> gcloud,
                               @JsonProperty("extraAgentData") Map<String, String> extraAgentData,
-                              @JsonProperty("batchEnabled") boolean batchEnabled) {
+                              @JsonProperty("batchEnabled") boolean batchEnabled,
+                              @JsonProperty("trafficPort") Optional<Integer> trafficPort,
+                              @JsonProperty("sslTrafficPort") Optional<Integer> sslTrafficPort) {
     this.baseAgentUri = baseAgentUri;
     this.domain = domain;
     this.agentId = agentId;
@@ -52,6 +56,8 @@ public class BaragonAgentMetadata {
     this.gcloud = gcloud;
     this.extraAgentData = MoreObjects.firstNonNull(extraAgentData, Collections.<String, String>emptyMap());
     this.batchEnabled = MoreObjects.firstNonNull(batchEnabled, false);
+    this.trafficPort = trafficPort;
+    this.sslTrafficPort = sslTrafficPort;
   }
 
   public String getBaseAgentUri() {
@@ -83,6 +89,14 @@ public class BaragonAgentMetadata {
     return batchEnabled;
   }
 
+  public Optional<Integer> getTrafficPort() {
+    return trafficPort;
+  }
+
+  public Optional<Integer> getSslTrafficPort() {
+    return sslTrafficPort;
+  }
+
   @Override
   public boolean equals(Object obj) {
     if (this == obj) {
@@ -96,14 +110,16 @@ public class BaragonAgentMetadata {
           Objects.equals(this.agentId, that.agentId) &&
           Objects.equals(this.ec2, that.ec2) &&
           Objects.equals(this.gcloud, that.gcloud) &&
-          Objects.equals(this.extraAgentData, that.extraAgentData);
+          Objects.equals(this.extraAgentData, that.extraAgentData) &&
+          Objects.equals(this.trafficPort, that.trafficPort) &&
+          Objects.equals(this.sslTrafficPort, that.sslTrafficPort);
     }
     return false;
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(baseAgentUri, domain, agentId, ec2, gcloud, extraAgentData, batchEnabled);
+    return Objects.hash(baseAgentUri, domain, agentId, ec2, gcloud, extraAgentData, batchEnabled, trafficPort, sslTrafficPort);
   }
 
   @Override
@@ -116,6 +132,8 @@ public class BaragonAgentMetadata {
         ", gcloud=" + gcloud +
         ", extraAgentData=" + extraAgentData +
         ", batchEnabled=" + batchEnabled +
+        ", trafficPort=" + trafficPort +
+        ", sslTrafficPort=" + sslTrafficPort +
         '}';
   }
 }

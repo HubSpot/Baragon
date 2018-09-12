@@ -37,7 +37,7 @@ public class BaragonGroup {
 
     if (trafficSources == null && sources != null) {
       this.trafficSources = sources.stream()
-          .map(source -> new TrafficSource(source, TrafficSourceType.CLASSIC, RegisterBy.INSTANCE_ID))
+          .map(source -> new TrafficSource(source, TrafficSourceType.CLASSIC, RegisterBy.INSTANCE_ID, CustomPortType.NONE))
           .collect(Collectors.<TrafficSource>toSet());
     } else {
       this.trafficSources = MoreObjects.<Set<TrafficSource>>firstNonNull(trafficSources, Collections.<TrafficSource>emptySet());

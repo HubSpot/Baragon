@@ -214,7 +214,7 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
   }
 
   @Override
-  public AgentCheckInResponse registerInstance(Instance instance, String id, String trafficSourceName, BaragonAgentMetadata agent) {
+  public AgentCheckInResponse registerInstance(Instance instance, String id, String trafficSourceName, Optional<Integer> customPort, BaragonAgentMetadata agent) {
     Optional<TargetGroup> maybeTargetGroup = getTargetGroup(trafficSourceName);
 
     if (!maybeTargetGroup.isPresent()) {
@@ -229,23 +229,27 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
         LOG.debug(message);
         return new AgentCheckInResponse(TrafficSourceState.ERROR, Optional.of(message), 0L);
       } else {
-        return registerInstance(id, targetGroup);
+        return registerInstance(id, targetGroup, customPort);
       }
     }
   }
 
-  public AgentCheckInResponse registerInstance(String id, String targetGroup) {
+  public AgentCheckInResponse registerInstance(String id, String targetGroup, Optional<Integer> port) {
     Optional<TargetGroup> maybeTargetGroup = getTargetGroup(targetGroup);
     if (maybeTargetGroup.isPresent()) {
-      return registerInstance(id, maybeTargetGroup.get());
+      return registerInstance(id, maybeTargetGroup.get(), port);
     } else {
       return new AgentCheckInResponse(TrafficSourceState.ERROR, Optional.of("Target group not found"), 0L);
     }
   }
 
-  private AgentCheckInResponse registerInstance(String id, TargetGroup targetGroup) {
+  private AgentCheckInResponse registerInstance(String id, TargetGroup targetGroup, Optional<Integer> port) {
     TargetDescription newTarget = new TargetDescription()
         .withId(id);
+
+    if (port.isPresent()) {
+      newTarget = newTarget.withPort(port.get());
+    }
 
     if (!targetsOn(targetGroup).contains(newTarget.getId())) {
       try {
@@ -783,8 +787,13 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
         if ((trafficSource.getRegisterBy() == RegisterBy.INSTANCE_ID && agent.getEc2().getInstanceId().isPresent())
             || (trafficSource.getRegisterBy() == RegisterBy.PRIVATE_IP && agent.getEc2().getPrivateIp().isPresent())) {
           if (agentShouldRegisterInTargetGroup(agent.getEc2().getInstanceId().get(), targetGroup, targets)) {
-            targetDescriptions.add(new TargetDescription()
-                .withId(trafficSource.getRegisterBy() == RegisterBy.INSTANCE_ID ? agent.getEc2().getInstanceId().get() : agent.getEc2().getPrivateIp().get()));
+            TargetDescription description = new TargetDescription()
+                .withId(trafficSource.getRegisterBy() == RegisterBy.INSTANCE_ID ? agent.getEc2().getInstanceId().get() : agent.getEc2().getPrivateIp().get());
+            Optional<Integer> customPort = getCustomPort(trafficSource, agent);
+            if (customPort.isPresent()) {
+              description = description.withPort(customPort.get());
+            }
+            targetDescriptions.add(description);
             LOG.info("Will register agent {} to target in group {}", agent, targetGroup);
           } else {
             LOG.debug("Agent {} is already registered", agent);

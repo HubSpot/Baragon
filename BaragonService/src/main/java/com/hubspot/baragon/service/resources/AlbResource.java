@@ -333,12 +333,13 @@ public class AlbResource {
   @POST
   @Path("/target-group/{targetGroup}/targets")
   public AgentCheckInResponse addToTargetGroup(@PathParam("targetGroup") String targetGroup,
-                                                 @QueryParam("instanceId") String instanceId) {
+                                               @QueryParam("instanceId") String instanceId,
+                                               @QueryParam("port") Optional<Integer> port) {
     if (instanceId == null) {
       throw new BaragonWebException("Must provide instance ID to add target to group");
     } else if (config.isPresent()) {
       try {
-        return applicationLoadBalancer.registerInstance(instanceId, targetGroup);
+        return applicationLoadBalancer.registerInstance(instanceId, targetGroup, port);
       } catch (TargetGroupNotFoundException notFound) {
         throw new WebApplicationException(String.format("Target group %s not found", targetGroup), Status.NOT_FOUND);
       } catch (AmazonClientException exn) {

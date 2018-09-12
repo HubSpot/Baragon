@@ -30,6 +30,7 @@ import com.hubspot.baragon.data.BaragonLoadBalancerDatastore;
 import com.hubspot.baragon.models.AgentCheckInResponse;
 import com.hubspot.baragon.models.BaragonAgentMetadata;
 import com.hubspot.baragon.models.BaragonGroup;
+import com.hubspot.baragon.models.CustomPortType;
 import com.hubspot.baragon.models.RegisterBy;
 import com.hubspot.baragon.models.TrafficSource;
 import com.hubspot.baragon.models.TrafficSourceState;
@@ -80,7 +81,7 @@ public class ClassicLoadBalancer extends ElasticLoadBalancer {
     return new AgentCheckInResponse(TrafficSourceState.DONE, Optional.absent(), 0L);
   }
 
-  public AgentCheckInResponse registerInstance(Instance instance, String id, String elbName, BaragonAgentMetadata agent) {
+  public AgentCheckInResponse registerInstance(Instance instance, String id, String elbName, Optional<Integer> customPort, BaragonAgentMetadata agent) {
     Optional<String> maybeException = Optional.absent();
     Optional<LoadBalancerDescription> elb = getElb(elbName);
     if (elb.isPresent()) {
@@ -299,7 +300,7 @@ public class ClassicLoadBalancer extends ElasticLoadBalancer {
     List<String> agentInstanceIds = agentInstanceIds(agents);
     List<DeregisterInstancesFromLoadBalancerRequest> requests = new ArrayList<>();
     for (LoadBalancerDescription elb : elbs) {
-      if (group.getTrafficSources().contains(new TrafficSource(elb.getLoadBalancerName(), TrafficSourceType.CLASSIC, RegisterBy.INSTANCE_ID))) {
+      if (group.getTrafficSources().contains(new TrafficSource(elb.getLoadBalancerName(), TrafficSourceType.CLASSIC, RegisterBy.INSTANCE_ID, CustomPortType.NONE))) {
         for (Instance instance : elb.getInstances()) {
           if (!agentInstanceIds.contains(instance.getInstanceId()) && canDeregisterAgent(group, instance.getInstanceId())) {
             List<Instance> instanceList = new ArrayList<>(1);

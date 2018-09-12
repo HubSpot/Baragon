@@ -13,7 +13,7 @@ public class BaragonKnownAgentMetadata extends BaragonAgentMetadata {
   private long lastSeenAt;
 
   public static BaragonKnownAgentMetadata fromAgentMetadata(BaragonAgentMetadata agentMetadata, long lastSeenAt) {
-    return new BaragonKnownAgentMetadata(agentMetadata.getBaseAgentUri(), agentMetadata.getAgentId(), agentMetadata.getDomain(), agentMetadata.getEc2(), agentMetadata.getGcloud(), agentMetadata.getExtraAgentData(), agentMetadata.isBatchEnabled(), lastSeenAt);
+    return new BaragonKnownAgentMetadata(agentMetadata.getBaseAgentUri(), agentMetadata.getAgentId(), agentMetadata.getDomain(), agentMetadata.getEc2(), agentMetadata.getGcloud(), agentMetadata.getExtraAgentData(), agentMetadata.isBatchEnabled(), agentMetadata.getTrafficPort(), agentMetadata.getSslTrafficPort(), lastSeenAt);
   }
 
   @JsonCreator
@@ -24,8 +24,10 @@ public class BaragonKnownAgentMetadata extends BaragonAgentMetadata {
                                    @JsonProperty("gcloud") Optional<BaragonAgentGcloudMetadata> gcloud,
                                    @JsonProperty("extraAgentData")Map<String, String> extraAgentData,
                                    @JsonProperty("batchEnabled") boolean batchEnabled,
+                                   @JsonProperty("trafficPort") Optional<Integer> trafficPort,
+                                   @JsonProperty("sslTrafficPort") Optional<Integer> sslTrafficPort,
                                    @JsonProperty("lastSeenAt") long lastSeenAt) {
-    super(baseAgentUri, agentId, domain, ec2, gcloud, extraAgentData, batchEnabled);
+    super(baseAgentUri, agentId, domain, ec2, gcloud, extraAgentData, batchEnabled, trafficPort, sslTrafficPort);
     this.lastSeenAt = lastSeenAt;
   }
 

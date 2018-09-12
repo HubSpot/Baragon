@@ -34,6 +34,16 @@ class AddTrafficSourceModal extends Component {
             isRequired: true
           },
           {
+            name: 'customPortType',
+            type: FormModal.INPUT_TYPES.RADIO,
+            label: 'Custom Port Type: ',
+            values: [
+              {value: 'NONE', label: 'No port added to target registration'},
+              {value: 'NON_SSL', label: 'Use Agent configured traffic port if set'},
+              {value: 'SSL', label: 'Use Agent configured ssl traffic port if set'}],
+            isRequired: true
+          },
+          {
             name: 'registerBy',
             type: FormModal.INPUT_TYPES.RADIO,
             label: 'Register By: ',

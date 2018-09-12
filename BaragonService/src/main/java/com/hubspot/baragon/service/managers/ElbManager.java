@@ -99,7 +99,7 @@ public class ElbManager {
         Instance instance = new Instance(agent.getEc2().getInstanceId().get());
         AgentCheckInResponse response = isStatusCheck ?
             getLoadBalancer(source.getType()).checkRegisteredInstance(instance, source, agent) :
-            getLoadBalancer(source.getType()).registerInstance(instance, source.getRegisterBy() == RegisterBy.PRIVATE_IP ? agent.getEc2().getPrivateIp().get() : instance.getInstanceId(), source.getName(), agent);
+            getLoadBalancer(source.getType()).registerInstance(instance, source.getRegisterBy() == RegisterBy.PRIVATE_IP ? agent.getEc2().getPrivateIp().get() : instance.getInstanceId(), source.getName(), getLoadBalancer(source.getType()).getCustomPort(source, agent), agent);
         if (response.getExceptionMessage().isPresent()) {
           maybeVpcException = Optional.of(maybeVpcException.or("") + response.getExceptionMessage().get() + "\n");
         }
