@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
@@ -55,7 +54,7 @@ public class CloudflareClient {
   private final String apiKey;
 
   //                                  <ZoneId, CloudflareZone>
-  private final Supplier<ConcurrentMap<String, CloudflareZone>> zoneCache;
+  private final Supplier<Map<String, List<CloudflareZone>>> zoneCache;
   //                        <ZoneId,   <DnsName, CloudflareDnsRecord>>
   private final LoadingCache<String, Map<String, CloudflareDnsRecord>> dnsRecordCache;
 
@@ -72,14 +71,7 @@ public class CloudflareClient {
 
     this.zoneCache = Suppliers.memoizeWithExpiration(() -> {
       try {
-        return retrieveAllZones().stream().collect(Collectors.toConcurrentMap(
-            CloudflareZone::getName,
-            Function.identity(),
-            (name1, name2) -> {
-              LOG.debug("Duplicate name found", name1);
-              return name1;
-            }
-        ));
+        return retrieveAllZones().stream().collect(Collectors.groupingBy(CloudflareZone::getName));
       } catch (CloudflareClientException e) {
         LOG.error("Unable to refresh Cloudflare zone cache", e);
         return new ConcurrentHashMap<>();
@@ -154,7 +146,7 @@ public class CloudflareClient {
     return response.getStatusCode() >= 200 && response.getStatusCode() < 300;
   }
 
-  public CloudflareZone getZone(String name) throws CloudflareClientException {
+  public List<CloudflareZone> getZone(String name) throws CloudflareClientException {
     return zoneCache.get().get(name);
   }
 
