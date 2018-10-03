@@ -31,6 +31,7 @@ import com.hubspot.baragon.service.config.EdgeCacheConfiguration;
 import com.hubspot.baragon.service.edgecache.cloudflare.client.models.CloudflareDnsRecord;
 import com.hubspot.baragon.service.edgecache.cloudflare.client.models.CloudflareListDnsRecordsResponse;
 import com.hubspot.baragon.service.edgecache.cloudflare.client.models.CloudflareListZonesResponse;
+import com.hubspot.baragon.service.edgecache.cloudflare.client.models.CloudflarePurgeCacheResponse;
 import com.hubspot.baragon.service.edgecache.cloudflare.client.models.CloudflarePurgeRequest;
 import com.hubspot.baragon.service.edgecache.cloudflare.client.models.CloudflareResponse;
 import com.hubspot.baragon.service.edgecache.cloudflare.client.models.CloudflareResultInfo;
@@ -99,7 +100,20 @@ public class CloudflareClient {
   public boolean purgeEdgeCache(String zoneId, List<String> cacheTags) throws CloudflareClientException {
     CloudflarePurgeRequest purgeRequest = new CloudflarePurgeRequest(Collections.emptyList(), cacheTags);
     Response response = requestWith(Method.DELETE, String.format("zones/%s/purge_cache", zoneId), purgeRequest);
-    return isSuccess(response);
+
+    boolean success = isSuccess(response);
+
+    try {
+      if (!success && response.getResponseBody() != null) {
+        CloudflarePurgeCacheResponse parsedResponse = objectMapper.readValue(response.getResponseBody(), CloudflarePurgeCacheResponse.class);
+
+        LOG.error("Failed to purge Cloudflare edge cache for cache tag(s) {}. Errors were: {}", cacheTags, parsedResponse.getErrors());
+      }
+    } catch (IOException e) {
+      LOG.warn("Failed to read response from Cloudflare while trying to inspect unsuccessful cache purge response.");
+    }
+
+    return success;
   }
 
   private Response requestWith(Method method, String path, Object body) throws CloudflareClientException {

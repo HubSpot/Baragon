@@ -187,6 +187,8 @@ public class BaragonRequestWorker implements Runnable {
     if (configuration.getEdgeCacheConfiguration().isEnabled() &&
         edgeCache.invalidateIfNecessary(request)) {
       LOG.info("Invalidated edge cache for {}", request);
+    } else {
+      LOG.error("Unable to fully invalidate edge cache for {}", request);
     }
   }
 
