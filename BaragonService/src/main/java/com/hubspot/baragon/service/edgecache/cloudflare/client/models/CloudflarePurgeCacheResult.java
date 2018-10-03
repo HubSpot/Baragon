@@ -9,7 +9,7 @@ public class CloudflarePurgeCacheResult {
   private final String id;
 
   @JsonCreator
-  public CloudflarePurgeCacheResult(@JsonProperty("id") String id, @JsonProperty("name") String name) {
+  public CloudflarePurgeCacheResult(@JsonProperty("id") String id) {
     this.id = id;
   }
 
