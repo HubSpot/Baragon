@@ -101,6 +101,12 @@ public class CloudflareClient {
     CloudflarePurgeRequest purgeRequest = new CloudflarePurgeRequest(Collections.emptyList(), cacheTags);
     Response response = requestWith(Method.DELETE, String.format("zones/%s/purge_cache", zoneId), purgeRequest);
 
+    try {
+      LOG.trace("Sending purge request to Cloudflare: {}", objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(purgeRequest));
+    } catch (JsonProcessingException e) {
+      // no-op
+    }
+
     boolean success = isSuccess(response);
 
     try {
