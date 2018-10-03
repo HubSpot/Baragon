@@ -3,8 +3,11 @@ package com.hubspot.baragon.service.edgecache.cloudflare.client.models;
 
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.google.common.base.Objects;
 
+@JsonInclude(Include.NON_EMPTY)
 public class CloudflarePurgeRequest {
   private final List<String> files;
   private final List<String> tags;
