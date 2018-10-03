@@ -2,6 +2,7 @@ package com.hubspot.baragon.service.edgecache.cloudflare.client;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -97,7 +98,7 @@ public class CloudflareClient {
   }
 
   public boolean purgeEdgeCache(String zoneId, List<String> cacheTags) throws CloudflareClientException {
-    CloudflarePurgeRequest purgeRequest = new CloudflarePurgeRequest(null, cacheTags);
+    CloudflarePurgeRequest purgeRequest = new CloudflarePurgeRequest(Collections.emptyList(), cacheTags);
     Response response = requestWith(Method.DELETE, String.format("zones/%s/purge_cache", zoneId), purgeRequest);
 
     try {
