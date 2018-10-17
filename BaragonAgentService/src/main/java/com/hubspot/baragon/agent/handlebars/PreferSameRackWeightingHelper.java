@@ -21,6 +21,8 @@ public class PreferSameRackWeightingHelper {
   public CharSequence preferSameRackWeighting(Collection<UpstreamInfo> upstreams, UpstreamInfo currentUpstream, Options options) {
     if (agentMetadata.getEc2().getAvailabilityZone().isPresent() && currentUpstream.getRackId().isPresent()) {
       String currentRack = agentMetadata.getEc2().getAvailabilityZone().get();
+      System.out.println("Current rack: " + currentRack);
+      System.out.println("Current upstream: "+ currentUpstream.getRackId().get());
       int maxCount = 0;
       Multiset<String> racks = HashMultiset.create();
       for (UpstreamInfo upstreamInfo : upstreams) {
@@ -31,18 +33,22 @@ public class PreferSameRackWeightingHelper {
           }
         }
       }
-
+      System.out.println("max count: " + maxCount);
+      System.out.println("all racks: " + racks);
       if (racks.count(currentRack) == 0) {
+        System.out.println("racks.count(currentRack) == 0");
         return "";
       }
 
       if (racks.count(currentRack) == maxCount) {
+        System.out.println("racks.count(currentRack) == maxCount");
         if (currentUpstream.getRackId().get().equals(currentRack)) {
           return "";
         } else {
           return configuration.getZeroWeightString();
         }
       } else {
+        System.out.println("racks.count(currentRack) != maxCount");
         if (currentUpstream.getRackId().get().equals(currentRack)) {
           return String.format(configuration.getWeightingFormat(), configuration.getSameRackMultiplier());
         }
