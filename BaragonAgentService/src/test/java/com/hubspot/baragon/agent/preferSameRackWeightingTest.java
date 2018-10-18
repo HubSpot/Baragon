@@ -21,9 +21,9 @@ import com.hubspot.baragon.models.UpstreamInfo;
 
 
 @RunWith(JukitoRunner.class)
-public class preferSameRackWeightingTest {
+public class PreferSameRackWeightingTest {
 
-  final List<String> availabilityZones = Arrays.asList("us-east-1", "us-east-1", "us-east-2", "us-east-3", "us-east-5");
+  final List<String> availabilityZones = Arrays.asList("us-east-1a", "us-east-1a", "us-east-1b", "us-east-1c", "us-east-1e");
   private Multiset<UpstreamInfo> generateUpstreams (List<String> availabilityZones) {
     Multiset<UpstreamInfo> upstreams = HashMultiset.create();
     for (String availabilityZone: availabilityZones) {
@@ -46,9 +46,9 @@ public class preferSameRackWeightingTest {
   }
 
   @Test
-  public void TestEast1() {
+  public void test1a() {
     List<String> results = new ArrayList<String>();
-    final BaragonAgentMetadata agentMetadata = generateBaragonAgentMetadata("us-east-1");
+    final BaragonAgentMetadata agentMetadata = generateBaragonAgentMetadata("us-east-1a");
     for (String AZ: availabilityZones) {
       final UpstreamInfo currentUpstream = new UpstreamInfo("testhost:8080", Optional.absent(), Optional.of(AZ));
       final PreferSameRackWeightingHelper helper = new PreferSameRackWeightingHelper(configuration, agentMetadata);
@@ -56,28 +56,14 @@ public class preferSameRackWeightingTest {
       results.add(result.toString());
       System.out.println("result: " + result.toString());
     }
-    Assert.assertEquals(results, Arrays.asList("", "", "backup", "backup", "backup"));
-    System.out.println();
-  }
-  @Test
-  public void TestEast2() {
-    List<String> results = new ArrayList<String>();
-    final BaragonAgentMetadata agentMetadata = generateBaragonAgentMetadata("us-east-2");
-    for (String AZ: availabilityZones) {
-      final UpstreamInfo currentUpstream = new UpstreamInfo("testhost:8080", Optional.absent(), Optional.of(AZ));
-      final PreferSameRackWeightingHelper helper = new PreferSameRackWeightingHelper(configuration, agentMetadata);
-      CharSequence result = helper.preferSameRackWeighting(upstreams, currentUpstream, null);
-      results.add(result.toString());
-      System.out.println("result: " + result.toString());
-    }
-    Assert.assertEquals(results, Arrays.asList("", "", "weight=2", "", ""));
+    Assert.assertEquals(Arrays.asList("", "", "backup", "backup", "backup"), results);
     System.out.println();
   }
 
   @Test
-  public void TestEast3() {
+  public void test1b() {
     List<String> results = new ArrayList<String>();
-    final BaragonAgentMetadata agentMetadata = generateBaragonAgentMetadata("us-east-3");
+    final BaragonAgentMetadata agentMetadata = generateBaragonAgentMetadata("us-east-1b");
     for (String AZ: availabilityZones) {
       final UpstreamInfo currentUpstream = new UpstreamInfo("testhost:8080", Optional.absent(), Optional.of(AZ));
       final PreferSameRackWeightingHelper helper = new PreferSameRackWeightingHelper(configuration, agentMetadata);
@@ -85,14 +71,29 @@ public class preferSameRackWeightingTest {
       results.add(result.toString());
       System.out.println("result: " + result.toString());
     }
-    Assert.assertEquals(results, Arrays.asList("", "", "", "weight=2", ""));
+    Assert.assertEquals(Arrays.asList("", "", "weight=2", "", ""), results);
     System.out.println();
   }
 
   @Test
-  public void TestEast5() {
+  public void test1c() {
     List<String> results = new ArrayList<String>();
-    final BaragonAgentMetadata agentMetadata = generateBaragonAgentMetadata("us-east-5");
+    final BaragonAgentMetadata agentMetadata = generateBaragonAgentMetadata("us-east-1c");
+    for (String AZ: availabilityZones) {
+      final UpstreamInfo currentUpstream = new UpstreamInfo("testhost:8080", Optional.absent(), Optional.of(AZ));
+      final PreferSameRackWeightingHelper helper = new PreferSameRackWeightingHelper(configuration, agentMetadata);
+      CharSequence result = helper.preferSameRackWeighting(upstreams, currentUpstream, null);
+      results.add(result.toString());
+      System.out.println("result: " + result.toString());
+    }
+    Assert.assertEquals(Arrays.asList("", "", "", "weight=2", ""), results);
+    System.out.println();
+  }
+
+  @Test
+  public void test1e() {
+    List<String> results = new ArrayList<String>();
+    final BaragonAgentMetadata agentMetadata = generateBaragonAgentMetadata("us-east-1e");
     for (String AZ: availabilityZones) {
       final UpstreamInfo currentUpstream = new UpstreamInfo("testhost:8080", Optional.of("test-126"), Optional.of(AZ));
       final PreferSameRackWeightingHelper helper = new PreferSameRackWeightingHelper(configuration, agentMetadata);
@@ -100,7 +101,7 @@ public class preferSameRackWeightingTest {
       results.add(result.toString());
       System.out.println("result: " + result.toString());
     }
-    Assert.assertEquals(results, Arrays.asList("", "", "", "", "weight=2"));
+    Assert.assertEquals(Arrays.asList("", "", "", "", "weight=2"), results);
     System.out.println();
   }
 }
