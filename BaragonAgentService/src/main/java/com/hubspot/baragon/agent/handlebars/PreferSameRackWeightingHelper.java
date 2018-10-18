@@ -87,7 +87,7 @@ public class PreferSameRackWeightingHelper {
       double capacity = calculateCapacity(allRacks);
       double load = 1.0 / allRacks.count(currentRack);
 
-      if (currentRack == testingRack) {
+      if (currentRack.equals(testingRack)) {
         if (load < capacity) { return ""; }
         return "weight=" + (int) Math.ceil(capacity * allRacks.size());
       }
