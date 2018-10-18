@@ -78,7 +78,7 @@ public class PreferSameRackWeightingHelper {
   private double getTotalPendingLoad(Multiset<String> allRacks, double capacity) {
     double pendingLoad = 0;
     for (String rack: allRacks) {
-      double myLoad = 1.0 / allRacks.count(rack);
+      final double myLoad = 1.0 / allRacks.count(rack);
       double myPendingLoad = capacity - myLoad;
       if (myPendingLoad > 0) {
         pendingLoad += myPendingLoad;
@@ -90,27 +90,27 @@ public class PreferSameRackWeightingHelper {
   public CharSequence preferSameRackWeightingBalanced(Collection<UpstreamInfo> upstreams, UpstreamInfo currentUpstream, Options options) {
     if (agentMetadata.getEc2().getAvailabilityZone().isPresent() && currentUpstream.getRackId().isPresent()) {
 
-      String currentRack = agentMetadata.getEc2().getAvailabilityZone().get();
-      String testingRack = currentUpstream.getRackId().get();
-      Multiset<String> allRacks = generateAllRacks(upstreams);
+      final String currentRack = agentMetadata.getEc2().getAvailabilityZone().get();
+      final String testingRack = currentUpstream.getRackId().get();
+      final Multiset<String> allRacks = generateAllRacks(upstreams);
 
-      double capacity = calculateCapacity(allRacks);
-      double load = 1.0 / allRacks.count(currentRack);
+      final double capacity = calculateCapacity(allRacks);
+      final double load = 1.0 / allRacks.count(currentRack);
 
       if (currentRack.equals(testingRack)) {
         if (load < capacity) { return ""; }
         return "weight=" + (int) Math.ceil(capacity * allRacks.size());
       }
 
-      double pendingLoadInCurrentRack = load - capacity;
+      final double pendingLoadInCurrentRack = load - capacity;
       if (pendingLoadInCurrentRack <= 0) { return "backup"; }
 
-      double extraCapacityInTestingRack = capacity - (1.0 / (allRacks.count(testingRack)));
+      final double extraCapacityInTestingRack = capacity - (1.0 / (allRacks.count(testingRack)));
       if (extraCapacityInTestingRack <= 0) { return "backup"; }
 
-      double totalPendingLoad = getTotalPendingLoad(allRacks, capacity);
-      double pendingLoadFromCurrentRack = (extraCapacityInTestingRack / totalPendingLoad) * pendingLoadInCurrentRack;
-      int weight = (int) Math.ceil(pendingLoadFromCurrentRack);
+      final double totalPendingLoad = getTotalPendingLoad(allRacks, capacity);
+      final double pendingLoadFromCurrentRack = (extraCapacityInTestingRack / totalPendingLoad) * pendingLoadInCurrentRack;
+      final int weight = (int) Math.ceil(pendingLoadFromCurrentRack);
       if (weight == 1) { return ""; }
       return "weight=" + weight;
     }

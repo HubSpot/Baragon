@@ -54,10 +54,8 @@ public class PreferSameRackWeightingTest {
       final PreferSameRackWeightingHelper helper = new PreferSameRackWeightingHelper(configuration, agentMetadata);
       CharSequence result = helper.preferSameRackWeighting(upstreams, currentUpstream, null);
       results.add(result.toString());
-      System.out.println("result: " + result.toString());
     }
     Assert.assertEquals(Arrays.asList("", "", "backup", "backup", "backup"), results);
-    System.out.println();
   }
 
   @Test
@@ -69,10 +67,8 @@ public class PreferSameRackWeightingTest {
       final PreferSameRackWeightingHelper helper = new PreferSameRackWeightingHelper(configuration, agentMetadata);
       CharSequence result = helper.preferSameRackWeighting(upstreams, currentUpstream, null);
       results.add(result.toString());
-      System.out.println("result: " + result.toString());
     }
     Assert.assertEquals(Arrays.asList("", "", "weight=2", "", ""), results);
-    System.out.println();
   }
 
   @Test
@@ -84,10 +80,8 @@ public class PreferSameRackWeightingTest {
       final PreferSameRackWeightingHelper helper = new PreferSameRackWeightingHelper(configuration, agentMetadata);
       CharSequence result = helper.preferSameRackWeighting(upstreams, currentUpstream, null);
       results.add(result.toString());
-      System.out.println("result: " + result.toString());
     }
     Assert.assertEquals(Arrays.asList("", "", "", "weight=2", ""), results);
-    System.out.println();
   }
 
   @Test
@@ -99,9 +93,7 @@ public class PreferSameRackWeightingTest {
       final PreferSameRackWeightingHelper helper = new PreferSameRackWeightingHelper(configuration, agentMetadata);
       CharSequence result = helper.preferSameRackWeighting(upstreams, currentUpstream, null);
       results.add(result.toString());
-      System.out.println("result: " + result.toString());
     }
     Assert.assertEquals(Arrays.asList("", "", "", "", "weight=2"), results);
-    System.out.println();
   }
 }
