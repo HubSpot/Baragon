@@ -50,7 +50,6 @@
     <module>BaragonWatcher</module>
     <module>BaragonServiceIntegrationTests</module>
     <module>BaragonUI</module>
-    <module>com.hubspot.baragon.agent</module>
   </modules>
 
   <dependencyManagement>
