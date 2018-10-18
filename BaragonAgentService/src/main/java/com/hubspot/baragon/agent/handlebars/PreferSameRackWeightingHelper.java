@@ -61,74 +61,60 @@ public class PreferSameRackWeightingHelper {
     return "";
   }
 
-  /**
-   *
-   * @param weight
-   * @return a string representing the weight, based on the big decimal weight input
-   */
-  public String getWeight(BigDecimal weight) {
-    if (weight.intValue() == 1) {
-      return "";
+  private Multiset<String> generateAllRacks (Collection<UpstreamInfo> upstreams) {
+    Multiset<String> allUpstreams = HashMultiset.create();
+    for (UpstreamInfo upstreamInfo : upstreams) {
+      if (upstreamInfo.getRackId().isPresent()) {
+        allUpstreams.add(upstreamInfo.getRackId().get());
+      }
     }
-    if (weight.intValue() == 0) {
-      return configuration.getZeroWeightString();
-    }
-    return String.format(configuration.getWeightingFormat(), weight.intValue());
+    return allUpstreams;
   }
 
-  /**
-   *
-   * @param upstreams
-   * @param currentUpstream
-   * @param options
-   * @return the weight of the current upstream relative to the current rack such that each upstream carries an equal load.
-   *
-   * Addressing github issue: https://github.com/HubSpot/Baragon/pull/270
-   * Calculating weights for services such that, even if AZ distribution is uneven among upstreams, they still get an even distribution of traffic
-   */
-  public CharSequence preferSameRackWeighting(Collection<UpstreamInfo> upstreams,
-                                                      UpstreamInfo currentUpstream,
-                                                      List<String> allRacks,
-                                                      BigDecimal capacity,
-                                                      BigDecimal totalPendingLoad,
-                                                      Options options) {
+  private double calculateCapacity(Multiset<String> allRacks) {
+    return allRacks.elementSet().size() / (double) allRacks.size();
+  }
 
+  private double getTotalPendingLoad(Multiset<String> allRacks, double capacity) {
+    double pendingLoad = 0;
+    for (String rack: allRacks) {
+      double myLoad = 1.0 / allRacks.count(rack);
+      double myPendingLoad = capacity - myLoad;
+      if (myPendingLoad > 0) {
+        pendingLoad += myPendingLoad;
+      }
+    }
+    return pendingLoad;
+  }
+
+  public CharSequence preferSameRackWeightingBalanced(Collection<UpstreamInfo> upstreams, UpstreamInfo currentUpstream, Options options) {
     if (agentMetadata.getEc2().getAvailabilityZone().isPresent() && currentUpstream.getRackId().isPresent()) {
 
-      final RackMethodsHelper rackHelper = new RackMethodsHelper(upstreams);
+      String currentRack = agentMetadata.getEc2().getAvailabilityZone().get();
+      String testingRack = currentUpstream.getRackId().get();
+      Multiset<String> allRacks = generateAllRacks(upstreams);
 
-      final String currentRack = agentMetadata.getEc2().getAvailabilityZone().get();
-      final String testingRack = currentUpstream.getRackId().get();
+      double capacity = calculateCapacity(allRacks);
+      double load = 1.0 / allRacks.count(currentRack);
 
-      final BigDecimal countOfAllRacks = new BigDecimal(allRacks.size());
-      final BigDecimal countOfCurrentRack = new BigDecimal(Collections.frequency(allRacks, currentRack));
-      final BigDecimal countOfTestingRack = new BigDecimal((Collections.frequency(allRacks, testingRack)));
-
-      final BigDecimal load = rackHelper.getReciprocal(countOfCurrentRack);
-
-      if (currentRack.equals(testingRack)) {
-        if (load.compareTo(capacity) == -1) { // load is less than capacity
-          return "";
-        }
-        final BigDecimal weight = capacity.multiply(countOfAllRacks).multiply(countOfTestingRack);
-        return getWeight(weight);
+      if (currentRack == testingRack) {
+        if (load < capacity) { return ""; }
+        return "weight=" + (int) Math.ceil(capacity * allRacks.size());
       }
 
-      final BigDecimal pendingLoadInCurrentRack = load.subtract(capacity);
-      if (pendingLoadInCurrentRack.compareTo(BigDecimal.ZERO) < 1) {  // pendingLoadInCurrentRack <= 0
-        return configuration.getZeroWeightString();
-      }
+      double pendingLoadInCurrentRack = load - capacity;
+      if (pendingLoadInCurrentRack <= 0) { return "backup"; }
 
-      final BigDecimal loadInTestingRackFromItself = rackHelper.getReciprocal(countOfTestingRack);
-      final BigDecimal extraCapacityInTestingRack = capacity.subtract(loadInTestingRackFromItself);
-      if (extraCapacityInTestingRack.compareTo(BigDecimal.ZERO) < 1) { //extraCapacityInTestingRack <= 0
-        return configuration.getZeroWeightString();
-      }
+      double extraCapacityInTestingRack = capacity - (1.0 / (allRacks.count(testingRack)));
+      if (extraCapacityInTestingRack <= 0) { return "backup"; }
 
-      final BigDecimal pendingLoadFromCurrentRackToTestingRack = (extraCapacityInTestingRack.divide(totalPendingLoad, 10, BigDecimal.ROUND_HALF_UP)).multiply(pendingLoadInCurrentRack);
-      final BigDecimal weight = pendingLoadFromCurrentRackToTestingRack.multiply(countOfAllRacks).multiply(countOfTestingRack);
-      return getWeight(weight);
+      double totalPendingLoad = getTotalPendingLoad(allRacks, capacity);
+      double pendingLoadFromCurrentRack = (extraCapacityInTestingRack / totalPendingLoad) * pendingLoadInCurrentRack;
+      int weight = (int) Math.ceil(pendingLoadFromCurrentRack);
+      if (weight == 1) { return ""; }
+      return "weight=" + weight;
     }
-    return ""; // If the required data isn't present for some reason, send even traffic everywhere (i.e. everything has a weight of 1)
+    return null;
+
   }
 }
