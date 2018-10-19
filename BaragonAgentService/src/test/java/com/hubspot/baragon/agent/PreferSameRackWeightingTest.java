@@ -40,9 +40,9 @@ public class PreferSameRackWeightingTest {
   public void test1a() {
     List<String> results = new ArrayList<String>();
     final BaragonAgentMetadata agentMetadata = generateBaragonAgentMetadata("us-east-1a");
+    final PreferSameRackWeightingHelper helper = new PreferSameRackWeightingHelper(CONFIGURATION, agentMetadata);
     for (String availabilityZone: AVAILABILITY_ZONES) {
       final UpstreamInfo currentUpstream = new UpstreamInfo("testhost:8080", Optional.absent(), Optional.of(availabilityZone));
-      final PreferSameRackWeightingHelper helper = new PreferSameRackWeightingHelper(CONFIGURATION, agentMetadata);
       CharSequence result = helper.preferSameRackWeighting(UPSTREAMS, currentUpstream, null);
       results.add(result.toString());
     }
@@ -53,9 +53,9 @@ public class PreferSameRackWeightingTest {
   public void test1b() {
     List<String> results = new ArrayList<String>();
     final BaragonAgentMetadata agentMetadata = generateBaragonAgentMetadata("us-east-1b");
+    final PreferSameRackWeightingHelper helper = new PreferSameRackWeightingHelper(CONFIGURATION, agentMetadata);
     for (String availabilityZone: AVAILABILITY_ZONES) {
       final UpstreamInfo currentUpstream = new UpstreamInfo("testhost:8080", Optional.absent(), Optional.of(availabilityZone));
-      final PreferSameRackWeightingHelper helper = new PreferSameRackWeightingHelper(CONFIGURATION, agentMetadata);
       CharSequence result = helper.preferSameRackWeighting(UPSTREAMS, currentUpstream, null);
       results.add(result.toString());
     }
@@ -66,9 +66,9 @@ public class PreferSameRackWeightingTest {
   public void test1c() {
     List<String> results = new ArrayList<String>();
     final BaragonAgentMetadata agentMetadata = generateBaragonAgentMetadata("us-east-1c");
+    final PreferSameRackWeightingHelper helper = new PreferSameRackWeightingHelper(CONFIGURATION, agentMetadata);
     for (String availabilityZone: AVAILABILITY_ZONES) {
       final UpstreamInfo currentUpstream = new UpstreamInfo("testhost:8080", Optional.absent(), Optional.of(availabilityZone));
-      final PreferSameRackWeightingHelper helper = new PreferSameRackWeightingHelper(CONFIGURATION, agentMetadata);
       CharSequence result = helper.preferSameRackWeighting(UPSTREAMS, currentUpstream, null);
       results.add(result.toString());
     }
@@ -79,9 +79,9 @@ public class PreferSameRackWeightingTest {
   public void test1e() {
     List<String> results = new ArrayList<String>();
     final BaragonAgentMetadata agentMetadata = generateBaragonAgentMetadata("us-east-1e");
+    final PreferSameRackWeightingHelper helper = new PreferSameRackWeightingHelper(CONFIGURATION, agentMetadata);
     for (String availabilityZone: AVAILABILITY_ZONES) {
       final UpstreamInfo currentUpstream = new UpstreamInfo("testhost:8080", Optional.of("test-126"), Optional.of(availabilityZone));
-      final PreferSameRackWeightingHelper helper = new PreferSameRackWeightingHelper(CONFIGURATION, agentMetadata);
       CharSequence result = helper.preferSameRackWeighting(UPSTREAMS, currentUpstream, null);
       results.add(result.toString());
     }
