@@ -78,28 +78,30 @@ public class BootstrapManaged implements Managed {
     LOG.info("Applying current configs...");
     lifecycleHelper.applyCurrentConfigs();
 
-    LOG.info("Starting leader latch...");
-    leaderLatch.start();
+    if (configuration.isVisibleToBaragonService()) {
+      LOG.info("Starting leader latch...");
+      leaderLatch.start();
 
-    if (configuration.isRegisterOnStartup()) {
-      LOG.info("Notifying BaragonService...");
-      lifecycleHelper.notifyService("startup");
+      if (configuration.isRegisterOnStartup()) {
+        LOG.info("Notifying BaragonService...");
+        lifecycleHelper.notifyService("startup");
+      }
+
+      LOG.info("Updating BaragonGroup information...");
+      loadBalancerDatastore.updateGroupInfo(configuration.getLoadBalancerConfiguration().getName(), configuration.getLoadBalancerConfiguration().getDefaultDomain(), configuration.getLoadBalancerConfiguration().getDomains());
+
+      LOG.info("Adding to known-agents...");
+      knownAgentsDatastore.addKnownAgent(configuration.getLoadBalancerConfiguration().getName(), BaragonKnownAgentMetadata.fromAgentMetadata(baragonAgentMetadata, System.currentTimeMillis()));
+
+      LOG.info("Starting agent heartbeat...");
+      requestWorkerFuture = executorService.scheduleAtFixedRate(agentHeartbeatWorker, 0, configuration.getHeartbeatIntervalSeconds(), TimeUnit.SECONDS);
+
+      LOG.info("Adding resync listener");
+      curatorFramework.getConnectionStateListenable().addListener(resyncListener);
     }
-
-    LOG.info("Updating BaragonGroup information...");
-    loadBalancerDatastore.updateGroupInfo(configuration.getLoadBalancerConfiguration().getName(), configuration.getLoadBalancerConfiguration().getDefaultDomain(), configuration.getLoadBalancerConfiguration().getDomains());
-
-    LOG.info("Adding to known-agents...");
-    knownAgentsDatastore.addKnownAgent(configuration.getLoadBalancerConfiguration().getName(), BaragonKnownAgentMetadata.fromAgentMetadata(baragonAgentMetadata, System.currentTimeMillis()));
-
-    LOG.info("Starting agent heartbeat...");
-    requestWorkerFuture = executorService.scheduleAtFixedRate(agentHeartbeatWorker, 0, configuration.getHeartbeatIntervalSeconds(), TimeUnit.SECONDS);
 
     LOG.info("Starting config checker");
     configCheckerFuture = executorService.scheduleAtFixedRate(configChecker, 0, configuration.getConfigCheckIntervalSecs(), TimeUnit.SECONDS);
-
-    LOG.info("Adding resync listener");
-    curatorFramework.getConnectionStateListenable().addListener(resyncListener);
 
     lifecycleHelper.writeStateFileIfConfigured();
 
