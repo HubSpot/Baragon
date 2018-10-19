@@ -24,6 +24,7 @@ import com.hubspot.baragon.models.UpstreamInfo;
 public class PreferSameRackWeightingBalancedTest {
 
   final List<String> availabilityZones = Arrays.asList("us-east-1a", "us-east-1a", "us-east-1b", "us-east-1c", "us-east-1e");
+
   private Multiset<UpstreamInfo> generateUpstreams (List<String> availabilityZones) {
     Multiset<UpstreamInfo> upstreams = HashMultiset.create();
     for (String availabilityZone: availabilityZones) {
@@ -32,23 +33,20 @@ public class PreferSameRackWeightingBalancedTest {
     }
     return upstreams;
   }
-  final Multiset<UpstreamInfo> upstreams = generateUpstreams(availabilityZones);
 
-  private final BaragonAgentConfiguration configuration = new BaragonAgentConfiguration();
+  private final Multiset<UpstreamInfo> upstreams = generateUpstreams(availabilityZones);
+
+  private static final BaragonAgentConfiguration configuration = new BaragonAgentConfiguration();
   private static final String AGENT_ID = "123.123.123.123:8080";
   private static final String BASE_URI = "http://123.123.123.123:8080/baragon-agent/v2";
   private static final String DOMAIN = "test.com";
 
-  private BaragonAgentMetadata generateBaragonAgentMetadata (String testRack) {
-    return new BaragonAgentMetadata(BASE_URI, AGENT_ID, Optional.of(DOMAIN),
-        new BaragonAgentEc2Metadata(Optional.absent(), Optional.of(testRack), Optional.absent(), Optional.absent(), Optional.absent()), Optional.absent(), Collections
-        .emptyMap(), true);
-  }
-
   @Test
   public void test1a() {
     List<String> results = new ArrayList<String>();
-    final BaragonAgentMetadata agentMetadata = generateBaragonAgentMetadata("us-east-1a");
+    final BaragonAgentMetadata agentMetadata = new BaragonAgentMetadata(BASE_URI, AGENT_ID, Optional.of(DOMAIN),
+        new BaragonAgentEc2Metadata(Optional.absent(), Optional.of("us-east-1a"), Optional.absent(), Optional.absent(), Optional.absent()), Optional.absent(), Collections
+        .emptyMap(), true);
     for (String AZ: availabilityZones) {
       final UpstreamInfo currentUpstream = new UpstreamInfo("testhost:8080", Optional.absent(), Optional.of(AZ));
       final PreferSameRackWeightingHelper helper = new PreferSameRackWeightingHelper(configuration, agentMetadata);
@@ -61,7 +59,9 @@ public class PreferSameRackWeightingBalancedTest {
   @Test
   public void test1b() {
     List<String> results = new ArrayList<String>();
-    final BaragonAgentMetadata agentMetadata = generateBaragonAgentMetadata("us-east-1b");
+    final BaragonAgentMetadata agentMetadata = new BaragonAgentMetadata(BASE_URI, AGENT_ID, Optional.of(DOMAIN),
+        new BaragonAgentEc2Metadata(Optional.absent(), Optional.of("us-east-1b"), Optional.absent(), Optional.absent(), Optional.absent()), Optional.absent(), Collections
+        .emptyMap(), true);
     for (String AZ: availabilityZones) {
       final UpstreamInfo currentUpstream = new UpstreamInfo("testhost:8080", Optional.absent(), Optional.of(AZ));
       final PreferSameRackWeightingHelper helper = new PreferSameRackWeightingHelper(configuration, agentMetadata);
@@ -74,7 +74,9 @@ public class PreferSameRackWeightingBalancedTest {
   @Test
   public void test1c() {
     List<String> results = new ArrayList<String>();
-    final BaragonAgentMetadata agentMetadata = generateBaragonAgentMetadata("us-east-1c");
+    final BaragonAgentMetadata agentMetadata = new BaragonAgentMetadata(BASE_URI, AGENT_ID, Optional.of(DOMAIN),
+        new BaragonAgentEc2Metadata(Optional.absent(), Optional.of("us-east-1c"), Optional.absent(), Optional.absent(), Optional.absent()), Optional.absent(), Collections
+        .emptyMap(), true);
     for (String AZ: availabilityZones) {
       final UpstreamInfo currentUpstream = new UpstreamInfo("testhost:8080", Optional.absent(), Optional.of(AZ));
       final PreferSameRackWeightingHelper helper = new PreferSameRackWeightingHelper(configuration, agentMetadata);
@@ -87,7 +89,9 @@ public class PreferSameRackWeightingBalancedTest {
   @Test
   public void test1d() {
     List<String> results = new ArrayList<String>();
-    final BaragonAgentMetadata agentMetadata = generateBaragonAgentMetadata("us-east-1e");
+    final BaragonAgentMetadata agentMetadata = new BaragonAgentMetadata(BASE_URI, AGENT_ID, Optional.of(DOMAIN),
+        new BaragonAgentEc2Metadata(Optional.absent(), Optional.of("us-east-1e"), Optional.absent(), Optional.absent(), Optional.absent()), Optional.absent(), Collections
+        .emptyMap(), true);
     for (String AZ: availabilityZones) {
       final UpstreamInfo currentUpstream = new UpstreamInfo("testhost:8080", Optional.of("test-126"), Optional.of(AZ));
       final PreferSameRackWeightingHelper helper = new PreferSameRackWeightingHelper(configuration, agentMetadata);

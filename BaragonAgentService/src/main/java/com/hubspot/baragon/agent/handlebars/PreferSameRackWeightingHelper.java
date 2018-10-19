@@ -82,19 +82,17 @@ public class PreferSameRackWeightingHelper {
    * @return the capacity that each upstream should handle
    */
   private double calculateCapacity(Multiset<String> allRacks) {
-    /*
-    the capacity is the proportion of unique upstreams to all the upstreams
-     */
+    /* capacity is the proportion of unique upstreams to all the upstreams - this gives the amount of load that each upstreams should carry*/
     return allRacks.elementSet().size() / (double) allRacks.size();
   }
 
   /**
    *
    * @param allRacks
-   * @param capacity
    * @return the total pending load that have to be distributed to other upstreams
    */
-  private double getTotalPendingLoad(Multiset<String> allRacks, double capacity) {
+  private double getTotalPendingLoad(Multiset<String> allRacks) {
+    final double capacity = calculateCapacity(allRacks);
     double pendingLoad = 0;
     for (String rack: allRacks) {
       final double myLoad = 1.0 / allRacks.count(rack);
@@ -128,22 +126,21 @@ public class PreferSameRackWeightingHelper {
 
       if (currentRack.equals(testingRack)) {
         if (load < capacity) { return ""; }
-        return "weight=" + (int) Math.ceil(capacity * allRacks.size());
+        return String.format(configuration.getWeightingFormat(), (int) Math.ceil(capacity * allRacks.size()));
       }
 
       final double pendingLoadInCurrentRack = load - capacity;
-      if (pendingLoadInCurrentRack <= 0) { return "backup"; }
+      if (pendingLoadInCurrentRack <= 0) { return configuration.getZeroWeightString(); }
 
       final double extraCapacityInTestingRack = capacity - (1.0 / (allRacks.count(testingRack)));
-      if (extraCapacityInTestingRack <= 0) { return "backup"; }
+      if (extraCapacityInTestingRack <= 0) { return configuration.getZeroWeightString(); }
 
-      final double totalPendingLoad = getTotalPendingLoad(allRacks, capacity);
+      final double totalPendingLoad = getTotalPendingLoad(allRacks);
       final double pendingLoadFromCurrentRack = (extraCapacityInTestingRack / totalPendingLoad) * pendingLoadInCurrentRack;
       final int weight = (int) Math.ceil(pendingLoadFromCurrentRack);
       if (weight == 1) { return ""; }
-      return "weight=" + weight;
+      return String.format(configuration.getWeightingFormat(), weight);
     }
-    /* TODO: what should I return if it reaches this point? */
-    return null;
+    return ""; /* TODO: confirm this */
   }
 }
