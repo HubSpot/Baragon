@@ -51,20 +51,39 @@ public class PreferSameRackWeightingHelper {
     return "";
   }
 
+  /**
+   *
+   * @param upstreams
+   * @return the rack ids of all the upstreams
+   */
   private Multiset<String> generateAllRacks (Collection<UpstreamInfo> upstreams) {
-    Multiset<String> allUpstreams = HashMultiset.create();
+    Multiset<String> allRacks = HashMultiset.create();
     for (UpstreamInfo upstreamInfo : upstreams) {
       if (upstreamInfo.getRackId().isPresent()) {
-        allUpstreams.add(upstreamInfo.getRackId().get());
+        allRacks.add(upstreamInfo.getRackId().get());
       }
     }
-    return allUpstreams;
+    return allRacks;
   }
 
+  /**
+   *
+   * @param allRacks
+   * @return the capacity that each upstream should handle
+   */
   private double calculateCapacity(Multiset<String> allRacks) {
+    /*
+    the capacity is the proportion of unique upstreams to all the upstreams
+     */
     return allRacks.elementSet().size() / (double) allRacks.size();
   }
 
+  /**
+   *
+   * @param allRacks
+   * @param capacity
+   * @return the total pending load that have to be distributed to other upstreams
+   */
   private double getTotalPendingLoad(Multiset<String> allRacks, double capacity) {
     double pendingLoad = 0;
     for (String rack: allRacks) {
@@ -77,6 +96,13 @@ public class PreferSameRackWeightingHelper {
     return pendingLoad;
   }
 
+  /**
+   *
+   * @param upstreams
+   * @param currentUpstream
+   * @param options
+   * @return the weight of the current upstream relative to the current rack such that each upstream carries an equal load
+   */
   public CharSequence preferSameRackWeightingBalanced(Collection<UpstreamInfo> upstreams, UpstreamInfo currentUpstream, Options options) {
     if (agentMetadata.getEc2().getAvailabilityZone().isPresent() && currentUpstream.getRackId().isPresent()) {
 
@@ -104,8 +130,8 @@ public class PreferSameRackWeightingHelper {
       if (weight == 1) { return ""; }
       return "weight=" + weight;
     }
+    /* TODO: what should I return if it reaches this point? */
     return null;
-
   }
 
 }
