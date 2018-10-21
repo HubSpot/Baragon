@@ -38,7 +38,7 @@ public class PreferSameRackWeightingTest {
   }
   @Test
   public void test1a() {
-    List<String> results = new ArrayList<String>();
+    List<String> results = new ArrayList<>();
     final BaragonAgentMetadata agentMetadata = generateBaragonAgentMetadata("us-east-1a");
     final PreferSameRackWeightingHelper helper = new PreferSameRackWeightingHelper(CONFIGURATION, agentMetadata);
     for (String availabilityZone: AVAILABILITY_ZONES) {
@@ -51,7 +51,7 @@ public class PreferSameRackWeightingTest {
 
   @Test
   public void test1b() {
-    List<String> results = new ArrayList<String>();
+    List<String> results = new ArrayList<>();
     final BaragonAgentMetadata agentMetadata = generateBaragonAgentMetadata("us-east-1b");
     final PreferSameRackWeightingHelper helper = new PreferSameRackWeightingHelper(CONFIGURATION, agentMetadata);
     for (String availabilityZone: AVAILABILITY_ZONES) {
@@ -64,7 +64,7 @@ public class PreferSameRackWeightingTest {
 
   @Test
   public void test1c() {
-    List<String> results = new ArrayList<String>();
+    List<String> results = new ArrayList<>();
     final BaragonAgentMetadata agentMetadata = generateBaragonAgentMetadata("us-east-1c");
     final PreferSameRackWeightingHelper helper = new PreferSameRackWeightingHelper(CONFIGURATION, agentMetadata);
     for (String availabilityZone: AVAILABILITY_ZONES) {
@@ -77,7 +77,7 @@ public class PreferSameRackWeightingTest {
 
   @Test
   public void test1e() {
-    List<String> results = new ArrayList<String>();
+    List<String> results = new ArrayList<>();
     final BaragonAgentMetadata agentMetadata = generateBaragonAgentMetadata("us-east-1e");
     final PreferSameRackWeightingHelper helper = new PreferSameRackWeightingHelper(CONFIGURATION, agentMetadata);
     for (String availabilityZone: AVAILABILITY_ZONES) {
@@ -87,4 +87,5 @@ public class PreferSameRackWeightingTest {
     }
     Assert.assertEquals(Arrays.asList("", "", "", "", "weight=2"), results);
   }
+
 }
