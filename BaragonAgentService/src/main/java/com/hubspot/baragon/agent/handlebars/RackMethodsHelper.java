@@ -39,7 +39,7 @@ public class RackMethodsHelper {
    */
   public BigDecimal calculateCapacity(List<String> allRacks) {
     /* capacity is the proportion of unique upstreams to all the upstreams - this gives the amount of load that each upstreams should carry*/
-    return new BigDecimal((new HashSet<>(allRacks)).size()).divide(new BigDecimal(allRacks.size()));
+    return new BigDecimal((new HashSet<>(allRacks)).size()).divide(new BigDecimal(allRacks.size()), 10, BigDecimal.ROUND_HALF_UP);
   }
 
   /**
@@ -61,6 +61,6 @@ public class RackMethodsHelper {
   }
 
   public BigDecimal getReciprocal(BigDecimal number) {
-    return (new BigDecimal(1)).divide(number);
+    return (new BigDecimal(1)).divide(number, 10, BigDecimal.ROUND_HALF_UP);
   }
 }

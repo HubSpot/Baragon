@@ -54,6 +54,20 @@ public class PreferSameRackWeightingHelper {
     return "";
   }
 
+  /**
+   *
+   * @param weight
+   * @return a string representing the weight, based on the big decimal weight input
+   */
+  public String getWeight(BigDecimal weight) {
+    if (weight.intValue() == 1) {
+      return "";
+    }
+    if (weight.intValue() == 0) {
+      return configuration.getZeroWeightString();
+    }
+    return String.format(configuration.getWeightingFormat(), weight.intValue());
+  }
 
   /**
    *
@@ -90,7 +104,7 @@ public class PreferSameRackWeightingHelper {
           return "";
         }
         BigDecimal weight = capacity.multiply(countOfAllRacks).multiply(countOfTestingRack);
-        return String.format(configuration.getWeightingFormat(), weight.intValueExact());
+        return getWeight(weight);
       }
 
       final BigDecimal pendingLoadInCurrentRack = load.subtract(capacity);
@@ -104,12 +118,9 @@ public class PreferSameRackWeightingHelper {
         return configuration.getZeroWeightString();
       }
 
-      final BigDecimal pendingLoadFromCurrentRackToTestingRack = (extraCapacityInTestingRack.divide(totalPendingLoad)).multiply(pendingLoadInCurrentRack);
+      final BigDecimal pendingLoadFromCurrentRackToTestingRack = (extraCapacityInTestingRack.divide(totalPendingLoad, 10, BigDecimal.ROUND_HALF_UP)).multiply(pendingLoadInCurrentRack);
       final BigDecimal weight = pendingLoadFromCurrentRackToTestingRack.multiply(countOfAllRacks).multiply(countOfTestingRack);
-      if (weight.compareTo(BigDecimal.ONE) == 0) { // weight == 1
-        return "";
-      }
-      return String.format(configuration.getWeightingFormat(), weight.intValueExact());
+      return getWeight(weight);
     }
     return ""; // If the required data isn't present for some reason, send even traffic everywhere (i.e. everything has a weight of 1)
   }
