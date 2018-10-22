@@ -53,7 +53,7 @@ public class PreferSameRackWeightingBalancedTest {
     final PreferSameRackWeightingHelper helper = new PreferSameRackWeightingHelper(CONFIGURATION, agentMetadata);
     for (String availabilityZone: AVAILABILITY_ZONES) {
       final UpstreamInfo currentUpstream = new UpstreamInfo("testhost:8080", Optional.absent(), Optional.of(availabilityZone));
-      CharSequence result = helper.preferSameRackWeightingBalanced(UPSTREAMS, currentUpstream, allRacks, capacity, totalPendingLoad, null);
+      CharSequence result = helper.preferSameRackWeighting(UPSTREAMS, currentUpstream, allRacks, capacity, totalPendingLoad, null);
       results.add(result.toString());
     }
     Assert.assertEquals(Arrays.asList("", "", "backup", "backup", "backup"), results);
@@ -66,7 +66,7 @@ public class PreferSameRackWeightingBalancedTest {
     for (String availabilityZone: AVAILABILITY_ZONES) {
       final UpstreamInfo currentUpstream = new UpstreamInfo("testhost:8080", Optional.absent(), Optional.of(availabilityZone));
       final PreferSameRackWeightingHelper helper = new PreferSameRackWeightingHelper(CONFIGURATION, agentMetadata);
-      CharSequence result = helper.preferSameRackWeightingBalanced(UPSTREAMS, currentUpstream, allRacks, capacity, totalPendingLoad, null);
+      CharSequence result = helper.preferSameRackWeighting(UPSTREAMS, currentUpstream, allRacks, capacity, totalPendingLoad, null);
       results.add(result.toString());
     }
     Assert.assertEquals(Arrays.asList("", "", "weight=4", "backup", "backup"), results);
@@ -79,7 +79,7 @@ public class PreferSameRackWeightingBalancedTest {
     for (String availabilityZone: AVAILABILITY_ZONES) {
       final UpstreamInfo currentUpstream = new UpstreamInfo("testhost:8080", Optional.absent(), Optional.of(availabilityZone));
       final PreferSameRackWeightingHelper helper = new PreferSameRackWeightingHelper(CONFIGURATION, agentMetadata);
-      CharSequence result = helper.preferSameRackWeightingBalanced(UPSTREAMS, currentUpstream, allRacks, capacity, totalPendingLoad, null);
+      CharSequence result = helper.preferSameRackWeighting(UPSTREAMS, currentUpstream, allRacks, capacity, totalPendingLoad, null);
       results.add(result.toString());
     }
     Assert.assertEquals(Arrays.asList("", "", "backup", "weight=4", "backup"), results);
@@ -92,7 +92,7 @@ public class PreferSameRackWeightingBalancedTest {
     for (String availabilityZone: AVAILABILITY_ZONES) {
       final UpstreamInfo currentUpstream = new UpstreamInfo("testhost:8080", Optional.of("test-126"), Optional.of(availabilityZone));
       final PreferSameRackWeightingHelper helper = new PreferSameRackWeightingHelper(CONFIGURATION, agentMetadata);
-      CharSequence result = helper.preferSameRackWeightingBalanced(UPSTREAMS, currentUpstream, allRacks, capacity, totalPendingLoad, null);
+      CharSequence result = helper.preferSameRackWeighting(UPSTREAMS, currentUpstream, allRacks, capacity, totalPendingLoad, null);
       results.add(result.toString());
     }
     Assert.assertEquals(Arrays.asList("", "", "backup", "backup", "weight=4"), results);
@@ -114,7 +114,7 @@ public class PreferSameRackWeightingBalancedTest {
     final PreferSameRackWeightingHelper helper = new PreferSameRackWeightingHelper(CONFIGURATION, agentMetadata);
     for (String availabilityZone: LARGER_AVAILABILITY_ZONES) {
       final UpstreamInfo currentUpstream = new UpstreamInfo("testhost:8080", Optional.absent(), Optional.of(availabilityZone));
-      CharSequence result = helper.preferSameRackWeightingBalanced(MANY_UPSTREAMS, currentUpstream, largerAllRacks, largerCapacity, largerTotalPendingLoad, null);
+      CharSequence result = helper.preferSameRackWeighting(MANY_UPSTREAMS, currentUpstream, largerAllRacks, largerCapacity, largerTotalPendingLoad, null);
       results.add(result.toString());
     }
     Assert.assertEquals(Arrays.asList("weight=7", "weight=7", "", "", "", "", "backup", "backup", "backup", "backup", "backup"), results);
@@ -127,7 +127,7 @@ public class PreferSameRackWeightingBalancedTest {
     final PreferSameRackWeightingHelper helper = new PreferSameRackWeightingHelper(CONFIGURATION, agentMetadata);
     for (String availabilityZone: LARGER_AVAILABILITY_ZONES) {
       final UpstreamInfo currentUpstream = new UpstreamInfo("testhost:8080", Optional.absent(), Optional.of(availabilityZone));
-      CharSequence result = helper.preferSameRackWeightingBalanced(MANY_UPSTREAMS, currentUpstream, largerAllRacks, largerCapacity, largerTotalPendingLoad, null);
+      CharSequence result = helper.preferSameRackWeighting(MANY_UPSTREAMS, currentUpstream, largerAllRacks, largerCapacity, largerTotalPendingLoad, null);
       results.add(result.toString());
     }
     Assert.assertEquals(Arrays.asList("backup", "backup", "", "", "", "", "backup", "backup", "backup", "backup", "backup"), results);
@@ -140,7 +140,7 @@ public class PreferSameRackWeightingBalancedTest {
     final PreferSameRackWeightingHelper helper = new PreferSameRackWeightingHelper(CONFIGURATION, agentMetadata);
     for (String availabilityZone: LARGER_AVAILABILITY_ZONES) {
       final UpstreamInfo currentUpstream = new UpstreamInfo("testhost:8080", Optional.absent(), Optional.of(availabilityZone));
-      CharSequence result = helper.preferSameRackWeightingBalanced(MANY_UPSTREAMS, currentUpstream, largerAllRacks, largerCapacity, largerTotalPendingLoad, null);
+      CharSequence result = helper.preferSameRackWeighting(MANY_UPSTREAMS, currentUpstream, largerAllRacks, largerCapacity, largerTotalPendingLoad, null);
       results.add(result.toString());
     }
     Assert.assertEquals(Arrays.asList("backup", "backup", "backup", "backup", "backup", "backup", "", "", "", "backup", "backup"), results);
@@ -153,7 +153,7 @@ public class PreferSameRackWeightingBalancedTest {
     final PreferSameRackWeightingHelper helper = new PreferSameRackWeightingHelper(CONFIGURATION, agentMetadata);
     for (String availabilityZone: LARGER_AVAILABILITY_ZONES) {
       final UpstreamInfo currentUpstream = new UpstreamInfo("testhost:8080", Optional.of("test-126"), Optional.of(availabilityZone));
-      CharSequence result = helper.preferSameRackWeightingBalanced(MANY_UPSTREAMS, currentUpstream, largerAllRacks, largerCapacity, largerTotalPendingLoad, null);
+      CharSequence result = helper.preferSameRackWeighting(MANY_UPSTREAMS, currentUpstream, largerAllRacks, largerCapacity, largerTotalPendingLoad, null);
       results.add(result.toString());
     }
     Assert.assertEquals(Arrays.asList("backup", "backup", "", "", "", "", "backup", "backup", "backup", "weight=7", "weight=7"), results);
