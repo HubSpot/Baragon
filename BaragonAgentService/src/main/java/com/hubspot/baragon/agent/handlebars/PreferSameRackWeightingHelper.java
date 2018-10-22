@@ -6,10 +6,7 @@ import java.util.Collections;
 import java.util.List;
 
 import com.github.jknack.handlebars.Options;
-import com.google.common.collect.HashMultiset;
-import com.google.common.collect.Multiset;
 import com.hubspot.baragon.agent.config.BaragonAgentConfiguration;
-import com.hubspot.baragon.agent.handlebars.RackMethodsHelper.RackMethods;
 import com.hubspot.baragon.models.BaragonAgentMetadata;
 import com.hubspot.baragon.models.UpstreamInfo;
 
@@ -20,39 +17,6 @@ public class PreferSameRackWeightingHelper {
   public PreferSameRackWeightingHelper(BaragonAgentConfiguration configuration, BaragonAgentMetadata agentMetadata) {
     this.configuration = configuration;
     this.agentMetadata = agentMetadata;
-  }
-
-  public CharSequence preferSameRackWeightingOriginal(Collection<UpstreamInfo> upstreams, UpstreamInfo currentUpstream, Options options) {
-    if (agentMetadata.getEc2().getAvailabilityZone().isPresent() && currentUpstream.getRackId().isPresent()) {
-      String currentRack = agentMetadata.getEc2().getAvailabilityZone().get();
-      int maxCount = 0;
-      Multiset<String> racks = HashMultiset.create();
-      for (UpstreamInfo upstreamInfo : upstreams) {
-        if (upstreamInfo.getRackId().isPresent()) {
-          racks.add(upstreamInfo.getRackId().get());
-          if (racks.count(upstreamInfo.getRackId().get()) > maxCount) {
-            maxCount = racks.count(upstreamInfo.getRackId().get());
-          }
-        }
-      }
-      if (racks.count(currentRack) == 0) {
-        return "";
-      }
-
-      if (racks.count(currentRack) == maxCount) {
-        if (currentUpstream.getRackId().get().equals(currentRack)) {
-          return "";
-        } else {
-          return configuration.getZeroWeightString();
-        }
-      } else {
-        if (currentUpstream.getRackId().get().equals(currentRack)) {
-          return String.format(configuration.getWeightingFormat(), configuration.getSameRackMultiplier());
-        }
-      }
-    }
-
-    return "";
   }
 
   /**
@@ -71,9 +35,16 @@ public class PreferSameRackWeightingHelper {
   }
 
 
+  /**
+   *
+   * @param upstreams
+   * @param currentUpstream
+   * @param options
+   * @return wrapper for calling the operation method that computes the balanced weighting
+   */
   public CharSequence preferSameRackWeighting(Collection<UpstreamInfo> upstreams, UpstreamInfo currentUpstream, Options options) {
-    final RackMethods rackHelper = new RackMethodsHelper.RackMethods(upstreams);
-    final List<String> allRacks = rackHelper.generateAllRacks();
+    final RackMethodsHelper rackHelper = new RackMethodsHelper();
+    final List<String> allRacks = rackHelper.generateAllRacks(upstreams);
     final BigDecimal totalPendingLoad = rackHelper.getTotalPendingLoad(allRacks);
     final BigDecimal capacity = rackHelper.calculateCapacity(allRacks);
     return preferSameRackWeightingOperation(upstreams, currentUpstream, allRacks, capacity, totalPendingLoad, null);
@@ -83,11 +54,11 @@ public class PreferSameRackWeightingHelper {
    *
    * @param upstreams
    * @param currentUpstream
+   * @param allRacks
+   * @param capacity
+   * @param totalPendingLoad
    * @param options
    * @return the weight of the current upstream relative to the current rack such that each upstream carries an equal load.
-   *
-   * Addressing github issue: https://github.com/HubSpot/Baragon/pull/270
-   * Calculating weights for services such that, even if AZ distribution is uneven among upstreams, they still get an even distribution of traffic
    */
   public CharSequence preferSameRackWeightingOperation(Collection<UpstreamInfo> upstreams,
                                                       UpstreamInfo currentUpstream,
@@ -98,7 +69,7 @@ public class PreferSameRackWeightingHelper {
 
     if (agentMetadata.getEc2().getAvailabilityZone().isPresent() && currentUpstream.getRackId().isPresent()) {
 
-      final RackMethods rackHelper = new RackMethodsHelper.RackMethods(upstreams);
+      final RackMethodsHelper rackHelper = new RackMethodsHelper();
 
       final String currentRack = agentMetadata.getEc2().getAvailabilityZone().get();
       final String testingRack = currentUpstream.getRackId().get();
