@@ -9,6 +9,7 @@ import com.github.jknack.handlebars.Options;
 import com.google.common.collect.HashMultiset;
 import com.google.common.collect.Multiset;
 import com.hubspot.baragon.agent.config.BaragonAgentConfiguration;
+import com.hubspot.baragon.agent.handlebars.RackMethodsHelper.RackMethods;
 import com.hubspot.baragon.models.BaragonAgentMetadata;
 import com.hubspot.baragon.models.UpstreamInfo;
 
@@ -69,6 +70,15 @@ public class PreferSameRackWeightingHelper {
     return String.format(configuration.getWeightingFormat(), weight.intValue());
   }
 
+
+  public CharSequence preferSameRackWeighting(Collection<UpstreamInfo> upstreams, UpstreamInfo currentUpstream, Options options) {
+    final RackMethods rackHelper = new RackMethodsHelper.RackMethods(upstreams);
+    final List<String> allRacks = rackHelper.generateAllRacks();
+    final BigDecimal totalPendingLoad = rackHelper.getTotalPendingLoad(allRacks);
+    final BigDecimal capacity = rackHelper.calculateCapacity(allRacks);
+    return preferSameRackWeightingOperation(upstreams, currentUpstream, allRacks, capacity, totalPendingLoad, null);
+  }
+
   /**
    *
    * @param upstreams
@@ -79,7 +89,7 @@ public class PreferSameRackWeightingHelper {
    * Addressing github issue: https://github.com/HubSpot/Baragon/pull/270
    * Calculating weights for services such that, even if AZ distribution is uneven among upstreams, they still get an even distribution of traffic
    */
-  public CharSequence preferSameRackWeighting(Collection<UpstreamInfo> upstreams,
+  public CharSequence preferSameRackWeightingOperation(Collection<UpstreamInfo> upstreams,
                                                       UpstreamInfo currentUpstream,
                                                       List<String> allRacks,
                                                       BigDecimal capacity,
@@ -88,7 +98,7 @@ public class PreferSameRackWeightingHelper {
 
     if (agentMetadata.getEc2().getAvailabilityZone().isPresent() && currentUpstream.getRackId().isPresent()) {
 
-      final RackMethodsHelper rackHelper = new RackMethodsHelper(upstreams);
+      final RackMethods rackHelper = new RackMethodsHelper.RackMethods(upstreams);
 
       final String currentRack = agentMetadata.getEc2().getAvailabilityZone().get();
       final String testingRack = currentUpstream.getRackId().get();
@@ -124,4 +134,5 @@ public class PreferSameRackWeightingHelper {
     }
     return ""; // If the required data isn't present for some reason, send even traffic everywhere (i.e. everything has a weight of 1)
   }
+
 }
