@@ -108,6 +108,10 @@ public class AgentRequestManager {
     RequestAction action = maybeAction.or(request.getAction().or(RequestAction.UPDATE));
     Optional<BaragonService> maybeOldService = getOldService(request);
 
+    return processRequest(requestId, action, request, maybeOldService, delayReload, batchItemNumber);
+  }
+
+  public Response processRequest(String requestId, RequestAction action, BaragonRequest request, Optional<BaragonService> maybeOldService, boolean delayReload, Optional<Integer> batchItemNumber) {
     long start = System.currentTimeMillis();
     try {
       agentState.set(BaragonAgentState.APPLYING);

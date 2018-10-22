@@ -12,6 +12,7 @@ import javax.ws.rs.core.Response;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import com.hubspot.baragon.agent.managers.AgentRequestManager;
+import com.hubspot.baragon.models.BaragonRequest;
 import com.hubspot.baragon.models.RequestAction;
 
 
@@ -24,6 +25,12 @@ public class RequestResource {
   @Inject
   public RequestResource(AgentRequestManager agentRequestManager) {
     this.agentRequestManager = agentRequestManager;
+  }
+
+  @POST
+  @Path("/literal")
+  public Response applyLiteral(@PathParam("requestId") String requestId, BaragonRequest baragonRequest) throws InterruptedException {
+    return agentRequestManager.processRequest(requestId, RequestAction.UPDATE, baragonRequest, Optional.absent(), false, Optional.absent());
   }
 
   @POST
