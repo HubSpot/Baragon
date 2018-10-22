@@ -103,7 +103,7 @@ public class PreferSameRackWeightingHelper {
         if (load.compareTo(capacity) == -1) { // load is less than capacity
           return "";
         }
-        BigDecimal weight = capacity.multiply(countOfAllRacks).multiply(countOfTestingRack);
+        final BigDecimal weight = capacity.multiply(countOfAllRacks).multiply(countOfTestingRack);
         return getWeight(weight);
       }
 
