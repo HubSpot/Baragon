@@ -78,7 +78,7 @@ public class PreferSameRackWeightingBalancedTest {
   }
 
   @Test
-  public void test1d() {
+  public void test1e() {
     List<String> results = new ArrayList<>();
     final BaragonAgentMetadata agentMetadata = generateBaragonAgentMetadata("us-east-1e");
     for (String availabilityZone: AVAILABILITY_ZONES) {
@@ -88,6 +88,19 @@ public class PreferSameRackWeightingBalancedTest {
       results.add(result.toString());
     }
     Assert.assertEquals(Arrays.asList("", "", "backup", "backup", "weight=4"), results);
+  }
+
+  @Test
+  public void test1d() {
+    List<String> results = new ArrayList<>();
+    final BaragonAgentMetadata agentMetadata = generateBaragonAgentMetadata("us-east-1d");
+    for (String availabilityZone: AVAILABILITY_ZONES) {
+      final UpstreamInfo currentUpstream = new UpstreamInfo("testhost:8080", Optional.of("test-126"), Optional.of(availabilityZone));
+      final PreferSameRackWeightingHelper helper = new PreferSameRackWeightingHelper(CONFIGURATION, agentMetadata);
+      CharSequence result = helper.preferSameRackWeighting(UPSTREAMS, currentUpstream, null);
+      results.add(result.toString());
+    }
+    Assert.assertEquals(Arrays.asList("", "", "", "", ""), results);
   }
 
 
@@ -147,4 +160,16 @@ public class PreferSameRackWeightingBalancedTest {
     Assert.assertEquals(Arrays.asList("backup", "backup", "", "", "", "", "backup", "backup", "backup", "weight=7", "weight=7"), results);
   }
 
+  @Test
+  public void test1d_larger() {
+    List<String> results = new ArrayList<>();
+    final BaragonAgentMetadata agentMetadata = generateBaragonAgentMetadata("us-east-1d");
+    final PreferSameRackWeightingHelper helper = new PreferSameRackWeightingHelper(CONFIGURATION, agentMetadata);
+    for (String availabilityZone: LARGER_AVAILABILITY_ZONES) {
+      final UpstreamInfo currentUpstream = new UpstreamInfo("testhost:8080", Optional.of("test-126"), Optional.of(availabilityZone));
+      CharSequence result = helper.preferSameRackWeighting(MANY_UPSTREAMS, currentUpstream, null);
+      results.add(result.toString());
+    }
+    Assert.assertEquals(Arrays.asList("", "", "", "", "", "", "", "", "", "", ""), results);
+  }
 }

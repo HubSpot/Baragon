@@ -105,7 +105,11 @@ public class PreferSameRackWeightingHelper {
 
       final BigDecimal countOfAllRacks = new BigDecimal(allRacks.size());
       final BigDecimal countOfCurrentRack = new BigDecimal(Collections.frequency(allRacks, currentRack));
-      final BigDecimal countOfTestingRack = new BigDecimal((Collections.frequency(allRacks, testingRack)));
+      final BigDecimal countOfTestingRack = new BigDecimal((Collections.frequency(allRacks, testingRack))); // assume this is always in upstream
+
+      if (countOfCurrentRack.intValue() == 0) { // distribute equally to all testing racks if currentRack is not in upstreams
+        return "";
+      }
 
       final BigDecimal load = rackHelper.getReciprocal(countOfCurrentRack);
 
