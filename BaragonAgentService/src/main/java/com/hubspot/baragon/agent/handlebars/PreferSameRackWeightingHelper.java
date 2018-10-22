@@ -21,7 +21,7 @@ public class PreferSameRackWeightingHelper {
     this.agentMetadata = agentMetadata;
   }
 
-  public CharSequence preferSameRackWeighting(Collection<UpstreamInfo> upstreams, UpstreamInfo currentUpstream, Options options) {
+  public CharSequence preferSameRackWeightingOriginal(Collection<UpstreamInfo> upstreams, UpstreamInfo currentUpstream, Options options) {
     if (agentMetadata.getEc2().getAvailabilityZone().isPresent() && currentUpstream.getRackId().isPresent()) {
       String currentRack = agentMetadata.getEc2().getAvailabilityZone().get();
       int maxCount = 0;
@@ -79,7 +79,7 @@ public class PreferSameRackWeightingHelper {
    * Addressing github issue: https://github.com/HubSpot/Baragon/pull/270
    * Calculating weights for services such that, even if AZ distribution is uneven among upstreams, they still get an even distribution of traffic
    */
-  public CharSequence preferSameRackWeightingBalanced(Collection<UpstreamInfo> upstreams,
+  public CharSequence preferSameRackWeighting(Collection<UpstreamInfo> upstreams,
                                                       UpstreamInfo currentUpstream,
                                                       List<String> allRacks,
                                                       BigDecimal capacity,
