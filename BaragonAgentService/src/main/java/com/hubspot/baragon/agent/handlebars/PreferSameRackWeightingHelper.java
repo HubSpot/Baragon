@@ -45,6 +45,9 @@ public class PreferSameRackWeightingHelper {
   public CharSequence preferSameRackWeighting(Collection<UpstreamInfo> upstreams, UpstreamInfo currentUpstream, Options options) {
     final RackMethodsHelper rackHelper = new RackMethodsHelper();
     final List<String> allRacks = rackHelper.generateAllRacks(upstreams);
+    if (allRacks.size() == 0) {
+      return "";
+    }
     final BigDecimal totalPendingLoad = rackHelper.getTotalPendingLoad(allRacks);
     final BigDecimal capacity = rackHelper.calculateCapacity(allRacks);
     return preferSameRackWeightingOperation(upstreams, currentUpstream, allRacks, capacity, totalPendingLoad, null);
