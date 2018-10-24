@@ -1,6 +1,7 @@
 package com.hubspot.baragon.agent.handlebars;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -25,12 +26,14 @@ public class PreferSameRackWeightingHelper {
    * @return a string representing the weight, based on the big decimal weight input
    */
   public String getWeight(BigDecimal weight) {
+    if (weight.compareTo(BigDecimal.ZERO) == 0) {
+      return configuration.getZeroWeightString();
+    }
+    weight = weight.setScale(0, RoundingMode.UP);
     if (weight.intValue() == 1) {
       return "";
     }
-    if (weight.intValue() == 0) {
-      return configuration.getZeroWeightString();
-    }
+
     return String.format(configuration.getWeightingFormat(), weight.intValue());
   }
 
