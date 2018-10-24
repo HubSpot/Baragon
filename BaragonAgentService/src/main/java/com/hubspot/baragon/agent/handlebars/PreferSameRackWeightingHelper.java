@@ -7,8 +7,6 @@ import java.util.Collections;
 import java.util.List;
 
 import com.github.jknack.handlebars.Options;
-import com.google.common.collect.HashMultiset;
-import com.google.common.collect.Multiset;
 import com.hubspot.baragon.agent.config.BaragonAgentConfiguration;
 import com.hubspot.baragon.models.BaragonAgentMetadata;
 import com.hubspot.baragon.models.UpstreamInfo;
@@ -20,39 +18,6 @@ public class PreferSameRackWeightingHelper {
   public PreferSameRackWeightingHelper(BaragonAgentConfiguration configuration, BaragonAgentMetadata agentMetadata) {
     this.configuration = configuration;
     this.agentMetadata = agentMetadata;
-  }
-
-  public CharSequence preferSameRackWeightingOriginal(Collection<UpstreamInfo> upstreams, UpstreamInfo currentUpstream, Options options) {
-    if (agentMetadata.getEc2().getAvailabilityZone().isPresent() && currentUpstream.getRackId().isPresent()) {
-      String currentRack = agentMetadata.getEc2().getAvailabilityZone().get();
-      int maxCount = 0;
-      Multiset<String> racks = HashMultiset.create();
-      for (UpstreamInfo upstreamInfo : upstreams) {
-        if (upstreamInfo.getRackId().isPresent()) {
-          racks.add(upstreamInfo.getRackId().get());
-          if (racks.count(upstreamInfo.getRackId().get()) > maxCount) {
-            maxCount = racks.count(upstreamInfo.getRackId().get());
-          }
-        }
-      }
-      if (racks.count(currentRack) == 0) {
-        return "";
-      }
-
-      if (racks.count(currentRack) == maxCount) {
-        if (currentUpstream.getRackId().get().equals(currentRack)) {
-          return "";
-        } else {
-          return configuration.getZeroWeightString();
-        }
-      } else {
-        if (currentUpstream.getRackId().get().equals(currentRack)) {
-          return String.format(configuration.getWeightingFormat(), configuration.getSameRackMultiplier());
-        }
-      }
-    }
-
-    return "";
   }
 
   /**
@@ -72,17 +37,36 @@ public class PreferSameRackWeightingHelper {
     return String.format(configuration.getWeightingFormat(), weight.intValue());
   }
 
+
   /**
    *
    * @param upstreams
    * @param currentUpstream
    * @param options
-   * @return the weight of the current upstream relative to the current rack such that each upstream carries an equal load.
-   *
-   * Addressing github issue: https://github.com/HubSpot/Baragon/pull/270
-   * Calculating weights for services such that, even if AZ distribution is uneven among upstreams, they still get an even distribution of traffic
+   * @return wrapper for calling the operation method that computes the balanced weighting
    */
-  public CharSequence preferSameRackWeighting(Collection<UpstreamInfo> upstreams,
+  public CharSequence preferSameRackWeighting(Collection<UpstreamInfo> upstreams, UpstreamInfo currentUpstream, Options options) {
+    final RackMethodsHelper rackHelper = new RackMethodsHelper();
+    final List<String> allRacks = rackHelper.generateAllRacks(upstreams);
+    if (allRacks.size() == 0) {
+      return "";
+    }
+    final BigDecimal totalPendingLoad = rackHelper.getTotalPendingLoad(allRacks);
+    final BigDecimal capacity = rackHelper.calculateCapacity(allRacks);
+    return preferSameRackWeightingOperation(upstreams, currentUpstream, allRacks, capacity, totalPendingLoad, null);
+  }
+
+  /**
+   *
+   * @param upstreams
+   * @param currentUpstream
+   * @param allRacks
+   * @param capacity
+   * @param totalPendingLoad
+   * @param options
+   * @return the weight of the current upstream relative to the current rack such that each upstream carries an equal load.
+   */
+  public CharSequence preferSameRackWeightingOperation(Collection<UpstreamInfo> upstreams,
                                                       UpstreamInfo currentUpstream,
                                                       List<String> allRacks,
                                                       BigDecimal capacity,
@@ -91,14 +75,18 @@ public class PreferSameRackWeightingHelper {
 
     if (agentMetadata.getEc2().getAvailabilityZone().isPresent() && currentUpstream.getRackId().isPresent()) {
 
-      final RackMethodsHelper rackHelper = new RackMethodsHelper(upstreams);
+      final RackMethodsHelper rackHelper = new RackMethodsHelper();
 
       final String currentRack = agentMetadata.getEc2().getAvailabilityZone().get();
       final String testingRack = currentUpstream.getRackId().get();
 
       final BigDecimal countOfAllRacks = new BigDecimal(allRacks.size());
       final BigDecimal countOfCurrentRack = new BigDecimal(Collections.frequency(allRacks, currentRack));
-      final BigDecimal countOfTestingRack = new BigDecimal((Collections.frequency(allRacks, testingRack)));
+      final BigDecimal countOfTestingRack = new BigDecimal((Collections.frequency(allRacks, testingRack))); // assume this is always in upstream
+
+      if (countOfCurrentRack.intValue() == 0) { // distribute equally to all testing racks if currentRack is not in upstreams
+        return "";
+      }
 
       final BigDecimal load = rackHelper.getReciprocal(countOfCurrentRack);
 
@@ -127,4 +115,5 @@ public class PreferSameRackWeightingHelper {
     }
     return ""; // If the required data isn't present for some reason, send even traffic everywhere (i.e. everything has a weight of 1)
   }
+
 }

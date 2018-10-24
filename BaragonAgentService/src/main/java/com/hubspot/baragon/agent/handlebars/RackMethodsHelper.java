@@ -11,18 +11,10 @@ import com.hubspot.baragon.models.UpstreamInfo;
 
 public class RackMethodsHelper {
 
-  private final Collection<UpstreamInfo> upstreams;
-
-  public RackMethodsHelper (Collection<UpstreamInfo> upstreams){
-    this.upstreams = upstreams;
-
-  }
-
   /**
-   *
    * @return the rack ids of all the upstreams
    */
-  public List<String> generateAllRacks () {
+  public List<String> generateAllRacks(Collection<UpstreamInfo> upstreams) {
     List<String> allRacks = new ArrayList<>();
     for (UpstreamInfo upstreamInfo : upstreams) {
       if (upstreamInfo.getRackId().isPresent()) {
@@ -33,7 +25,6 @@ public class RackMethodsHelper {
   }
 
   /**
-   *
    * @param allRacks
    * @return the capacity that each upstream should handle
    */
@@ -43,15 +34,14 @@ public class RackMethodsHelper {
   }
 
   /**
-   *
    * @param allRacks
    * @return the total pending load that have to be distributed to other upstreams
    */
   public BigDecimal getTotalPendingLoad(List<String> allRacks) {
     final BigDecimal capacity = calculateCapacity(allRacks);
     BigDecimal pendingLoad = BigDecimal.ZERO;
-    for (String rack: allRacks) {
-      final BigDecimal myLoad =  getReciprocal(new BigDecimal(Collections.frequency(allRacks, rack)));
+    for (String rack : allRacks) {
+      final BigDecimal myLoad = getReciprocal(new BigDecimal(Collections.frequency(allRacks, rack)));
       final BigDecimal myPendingLoad = capacity.subtract(myLoad);
       if (myPendingLoad.compareTo(BigDecimal.ZERO) == 1) { // pending load is greater than 0
         pendingLoad = pendingLoad.add(myPendingLoad);
