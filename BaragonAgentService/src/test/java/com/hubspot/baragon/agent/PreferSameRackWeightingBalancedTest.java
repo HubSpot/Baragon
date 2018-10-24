@@ -118,7 +118,7 @@ public class PreferSameRackWeightingBalancedTest {
       CharSequence result = helper.preferSameRackWeighting(MANY_UPSTREAMS, currentUpstream, null);
       results.add(result.toString());
     }
-    Assert.assertEquals(Arrays.asList("weight=7", "weight=7", "", "", "", "", "backup", "backup", "backup", "backup", "backup"), results);
+    Assert.assertEquals(Arrays.asList("weight=8", "weight=8", "weight=2", "weight=2", "weight=2", "weight=2", "", "", "", "backup", "backup"), results);
   }
 
   @Test
@@ -157,7 +157,7 @@ public class PreferSameRackWeightingBalancedTest {
       CharSequence result = helper.preferSameRackWeighting(MANY_UPSTREAMS, currentUpstream, null);
       results.add(result.toString());
     }
-    Assert.assertEquals(Arrays.asList("backup", "backup", "", "", "", "", "backup", "backup", "backup", "weight=7", "weight=7"), results);
+    Assert.assertEquals(Arrays.asList("backup", "backup", "weight=2", "weight=2", "weight=2", "weight=2", "", "", "", "weight=8", "weight=8"), results);
   }
 
   @Test
@@ -187,5 +187,48 @@ public class PreferSameRackWeightingBalancedTest {
       results.add(result.toString());
     }
     Assert.assertEquals(Arrays.asList("", "", "", ""), results);
+  }
+
+
+  private static final Collection<String> NEW_AVAILABILITY_ZONES = Arrays.asList("us-east-1b", "us-east-1b", "us-east-1e", "us-east-1e", "us-east-1e", "us-east-1a", "us-east-1a", "us-east-1a");
+  private static final Collection<UpstreamInfo> NEW_UPSTREAMS = NEW_AVAILABILITY_ZONES.stream().map((availabilityZone) -> new UpstreamInfo("testhost:8080", Optional.absent(), Optional.of(availabilityZone))).collect(Collectors.toList());
+
+  @Test
+  public void test1b_new() {
+    List<String> results = new ArrayList<>();
+    final BaragonAgentMetadata agentMetadata = generateBaragonAgentMetadata("us-east-1b");
+    for (String availabilityZone: NEW_AVAILABILITY_ZONES) {
+      final UpstreamInfo currentUpstream = new UpstreamInfo("testhost:8080", Optional.absent(), Optional.of(availabilityZone));
+      final PreferSameRackWeightingHelper helper = new PreferSameRackWeightingHelper(CONFIGURATION, agentMetadata);
+      CharSequence result = helper.preferSameRackWeighting(NEW_UPSTREAMS, currentUpstream, null);
+      results.add(result.toString());
+    }
+    Assert.assertEquals(Arrays.asList("weight=6", "weight=6", "", "", "", "", "", ""), results);
+  }
+
+  @Test
+  public void test1e_new() {
+    List<String> results = new ArrayList<>();
+    final BaragonAgentMetadata agentMetadata = generateBaragonAgentMetadata("us-east-1e");
+    for (String availabilityZone: NEW_AVAILABILITY_ZONES) {
+      final UpstreamInfo currentUpstream = new UpstreamInfo("testhost:8080", Optional.absent(), Optional.of(availabilityZone));
+      final PreferSameRackWeightingHelper helper = new PreferSameRackWeightingHelper(CONFIGURATION, agentMetadata);
+      CharSequence result = helper.preferSameRackWeighting(NEW_UPSTREAMS, currentUpstream, null);
+      results.add(result.toString());
+    }
+    Assert.assertEquals(Arrays.asList("backup", "backup", "", "", "", "backup", "backup", "backup"), results);
+  }
+
+  @Test
+  public void test1a_new() {
+    List<String> results = new ArrayList<>();
+    final BaragonAgentMetadata agentMetadata = generateBaragonAgentMetadata("us-east-1a");
+    for (String availabilityZone: NEW_AVAILABILITY_ZONES) {
+      final UpstreamInfo currentUpstream = new UpstreamInfo("testhost:8080", Optional.absent(), Optional.of(availabilityZone));
+      final PreferSameRackWeightingHelper helper = new PreferSameRackWeightingHelper(CONFIGURATION, agentMetadata);
+      CharSequence result = helper.preferSameRackWeighting(NEW_UPSTREAMS, currentUpstream, null);
+      results.add(result.toString());
+    }
+    Assert.assertEquals(Arrays.asList("backup", "backup", "backup", "backup", "backup", "", "", ""), results);
   }
 }
