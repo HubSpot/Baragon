@@ -172,4 +172,20 @@ public class PreferSameRackWeightingBalancedTest {
     }
     Assert.assertEquals(Arrays.asList("", "", "", "", "", "", "", "", "", "", ""), results);
   }
+
+  private static final Collection<String> NULL_AVAILABILITY_ZONES = Arrays.asList(null, null, null, null);
+  private static final Collection<UpstreamInfo> NULL_UPSTREAMS = NULL_AVAILABILITY_ZONES.stream().map((availabilityZone) -> new UpstreamInfo("testhost:8080", Optional.absent(), Optional.absent())).collect(Collectors.toList());
+
+  @Test
+  public void test1d_null() {
+    List<String> results = new ArrayList<>();
+    final BaragonAgentMetadata agentMetadata = generateBaragonAgentMetadata("us-east-1d");
+    final PreferSameRackWeightingHelper helper = new PreferSameRackWeightingHelper(CONFIGURATION, agentMetadata);
+    for (String availabilityZone: NULL_AVAILABILITY_ZONES) {
+      final UpstreamInfo currentUpstream = new UpstreamInfo("testhost:8080", Optional.of("test-126"), Optional.absent());
+      CharSequence result = helper.preferSameRackWeighting(NULL_UPSTREAMS, currentUpstream, null);
+      results.add(result.toString());
+    }
+    Assert.assertEquals(Arrays.asList("", "", "", ""), results);
+  }
 }
