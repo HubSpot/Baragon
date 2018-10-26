@@ -196,7 +196,7 @@ public class LifecycleHelper {
     return (!stateFile.exists() || stateFile.delete());
   }
 
-  public void applyCurrentConfigs() throws AgentServiceNotifyException {
+  public void applyCurrentConfigsOld() throws AgentServiceNotifyException {
     LOG.info("Getting current state of the world from Baragon Service...");
 
     final Stopwatch stopwatch = Stopwatch.createStarted();
@@ -232,6 +232,64 @@ public class LifecycleHelper {
             }
           }
         }
+        configHelper.checkAndReload();
+      } catch (Exception e) {
+        LOG.error("Caught exception while applying and parsing configs", e);
+        if (configuration.isExitOnStartupError()) {
+          Throwables.propagate(e);
+        }
+      }
+
+      LOG.info("Applied {} services in {}ms", todo.size(), stopwatch.elapsed(TimeUnit.MILLISECONDS));
+    } else {
+      LOG.info("No services were found to apply");
+    }
+  }
+
+  public void applyAll(List<Optional<Pair<ServiceContext, Collection<BaragonConfigFile>>>> toApply) {
+    toApply.forEach(item -> {
+      try {
+        configHelper.bootstrapApply(item.get().getKey(), item.get().getValue());
+      } catch (Exception e) {
+        LOG.error(String.format("Caught exception while applying %s during bootstrap", item.get().getKey().getService().getServiceId()), e);
+      }
+    });
+  }
+
+  public void applyCurrentConfigs() throws AgentServiceNotifyException {
+    LOG.info("Getting current state of the world from Baragon Service...");
+
+    final Stopwatch stopwatch = Stopwatch.createStarted();
+    final long now = System.currentTimeMillis();
+
+    final Collection<String> services = stateDatastore.getServices();
+    if (services.size() > 0) {
+      ExecutorService executorService = Executors.newFixedThreadPool(services.size());
+      List<Callable<Optional<Pair<ServiceContext, Collection<BaragonConfigFile>>>>> todo = new ArrayList<>(services.size());
+
+      Optional<Integer> maybeVersion = stateDatastore.getStateVersion();
+      if (maybeVersion.isPresent()) {
+        bootstrapStateNodeVersion.set(maybeVersion.get());
+      }
+
+      for (BaragonServiceState serviceState : getGlobalStateWithRetry()) {
+        if (!(serviceState.getService().getLoadBalancerGroups() == null) && serviceState.getService().getLoadBalancerGroups().contains(configuration.getLoadBalancerConfiguration().getName())) {
+          todo.add(new BootstrapFileChecker(configHelper, serviceState, now));
+        }
+      }
+
+      LOG.info("Going to apply {} services...", todo.size());
+
+      try {
+        List<Optional<Pair<ServiceContext, Collection<BaragonConfigFile>>>> toApply = new ArrayList<>();
+        List<Future<Optional<Pair<ServiceContext, Collection<BaragonConfigFile>>>>> applied = executorService.invokeAll(todo);
+        for (Future<Optional<Pair<ServiceContext, Collection<BaragonConfigFile>>>> serviceFuture : applied) {
+          Optional<Pair<ServiceContext, Collection<BaragonConfigFile>>> maybeToApply = serviceFuture.get();
+          if (maybeToApply.isPresent()) {
+            toApply.add(maybeToApply);
+          }
+        }
+        applyAll(toApply);
         configHelper.checkAndReload();
       } catch (Exception e) {
         LOG.error("Caught exception while applying and parsing configs", e);
