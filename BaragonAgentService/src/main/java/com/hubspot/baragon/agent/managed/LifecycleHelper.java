@@ -247,7 +247,7 @@ public class LifecycleHelper {
   }
 
   public void applyAll(List<Optional<Pair<ServiceContext, Collection<BaragonConfigFile>>>> toApply) {
-    toApply.parallelStream().forEach(item -> {
+    toApply.forEach(item -> {
       try {
         configHelper.bootstrapApply(item.get().getKey(), item.get().getValue());
       } catch (Exception e) {
