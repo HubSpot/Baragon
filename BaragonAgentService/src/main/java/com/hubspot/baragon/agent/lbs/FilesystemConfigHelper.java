@@ -119,6 +119,36 @@ public class FilesystemConfigHelper {
     LOG.info(String.format("Apply finished for %s", service.getServiceId()));
   }
 
+  public void bootstrapApplyWrite(ServiceContext context, Collection<BaragonConfigFile> newConfigs) throws InvalidConfigException, LbAdapterExecuteException, IOException, MissingTemplateException {
+    final BaragonService service = context.getService();
+    final boolean previousConfigsExist = configsExist(service);
+    LOG.info("Going to apply writing {}: {}", service.getServiceId(), Joiner.on(", ").join(context.getUpstreams()));
+    backupConfigs(service);
+    try {
+      writeConfigs(newConfigs);
+    } catch (Exception e) {
+      LOG.error(String.format("Caught exception while writing configs for %s, reverting to backups!", service.getServiceId()), e);
+      saveAsFailed(service);
+      if (previousConfigsExist) {
+        restoreConfigs(service);
+      } else {
+        remove(service);
+      }
+      throw Throwables.propagate(e);
+    }
+    LOG.info(String.format("Apply finished for %s", service.getServiceId()));
+  }
+
+  public void bootstrapApplyCheck() throws InvalidConfigException {
+    try {
+      adapter.checkConfigs();
+    } catch (Exception e) {
+      LOG.error(String.format("Caught exception while checking configs"), e);
+    }
+    LOG.info(String.format("Completed checking the configs"));
+  }
+
+
   public void apply(ServiceContext context, Optional<BaragonService> maybeOldService, boolean revertOnFailure, boolean noReload, boolean noValidate, boolean delayReload, Optional<Integer> batchItemNumber) throws InvalidConfigException, LbAdapterExecuteException, IOException, MissingTemplateException, InterruptedException, LockTimeoutException {
     final BaragonService service = context.getService();
     final BaragonService oldService = maybeOldService.or(service);
