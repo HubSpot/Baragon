@@ -61,7 +61,6 @@ import com.hubspot.horizon.HttpClient;
 import com.hubspot.horizon.HttpRequest;
 import com.hubspot.horizon.HttpRequest.Method;
 import com.hubspot.horizon.HttpResponse;
-import com.oracle.tools.packager.Log;
 
 import ch.qos.logback.classic.LoggerContext;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
