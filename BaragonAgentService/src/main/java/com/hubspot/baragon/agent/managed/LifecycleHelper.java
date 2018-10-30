@@ -209,6 +209,12 @@ public class LifecycleHelper {
       }
     });
 
+    try {
+      configHelper.bootstrapApplyCheck();
+    } catch (Exception e) {
+      LOG.error("error when checking config");
+    }
+
   }
 
   public void applyCurrentConfigs() throws AgentServiceNotifyException {
