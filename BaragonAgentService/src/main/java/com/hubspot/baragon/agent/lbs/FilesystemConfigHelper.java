@@ -4,9 +4,11 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -122,7 +124,7 @@ public class FilesystemConfigHelper {
   public void bootstrapApplyWrite(ServiceContext context, Collection<BaragonConfigFile> newConfigs) throws InvalidConfigException, LbAdapterExecuteException, IOException, MissingTemplateException {
     final BaragonService service = context.getService();
     final boolean previousConfigsExist = configsExist(service);
-    LOG.info("Going to apply writing {}: {}", service.getServiceId(), Joiner.on(", ").join(context.getUpstreams()));
+    LOG.info("Going to write {}: {}", service.getServiceId(), Joiner.on(", ").join(context.getUpstreams()));
     backupConfigs(service);
     try {
       writeConfigs(newConfigs);
@@ -136,14 +138,20 @@ public class FilesystemConfigHelper {
       }
       throw Throwables.propagate(e);
     }
-    LOG.info(String.format("Apply finished for %s", service.getServiceId()));
+    LOG.info(String.format("Writing finished for %s", service.getServiceId()));
   }
 
-  public void bootstrapApplyCheck() throws InvalidConfigException {
+  public void bootstrapApplyCheck(List<Optional<Pair<ServiceContext, Collection<BaragonConfigFile>>>> applied) {
     try {
       adapter.checkConfigs();
     } catch (Exception e) {
       LOG.error(String.format("Caught exception while checking configs"), e);
+      applied.parallelStream().forEach(item -> {
+        final ServiceContext context = item.get().getKey();
+        final BaragonService service = context.getService();
+        saveAsFailed(service);
+        throw Throwables.propagate(e);
+      });
     }
     LOG.info(String.format("Completed checking the configs"));
   }
