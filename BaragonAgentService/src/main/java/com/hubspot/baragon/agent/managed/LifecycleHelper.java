@@ -221,30 +221,18 @@ public class LifecycleHelper {
       LOG.info("Going to apply {} services...", todo.size());
 
       try {
-        List<Optional<Pair<ServiceContext, Collection<BaragonConfigFile>>>> toApply = new ArrayList<>();
         List<Future<Optional<Pair<ServiceContext, Collection<BaragonConfigFile>>>>> applied = executorService.invokeAll(todo);
         for (Future<Optional<Pair<ServiceContext, Collection<BaragonConfigFile>>>> serviceFuture : applied) {
           Optional<Pair<ServiceContext, Collection<BaragonConfigFile>>> maybeToApply = serviceFuture.get();
           if (maybeToApply.isPresent()) {
-            toApply.add(maybeToApply);
+            try {
+              configHelper.bootstrapApplyWrite(maybeToApply.get().getKey(), maybeToApply.get().getValue());
+            } catch (Exception e) {
+              LOG.error(String.format("Caught exception while applying write %s during bootstrap", maybeToApply.get().getKey().getService().getServiceId()), e);
+            }
           }
         }
-
-        toApply.forEach(item -> {
-          try {
-            LOG.info("applying write to {} ", item.get().getKey().getService().getServiceId());
-            configHelper.bootstrapApplyWrite(item.get().getKey(), item.get().getValue());
-          } catch (Exception e) {
-            LOG.error("Caught exception while applying write {} during bootstrap", item.get().getKey().getService().getServiceId(), e);
-          }
-        });
-
-        try {
-          configHelper.bootstrapApplyCheck();
-        } catch (Exception e) {
-          LOG.error("error when checking config");
-        }
-
+        configHelper.bootstrapApplyCheck();
         configHelper.checkAndReload();
       } catch (Exception e) {
         LOG.error("Caught exception while applying and parsing configs", e);
