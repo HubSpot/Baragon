@@ -8,8 +8,6 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -198,25 +196,6 @@ public class LifecycleHelper {
     return (!stateFile.exists() || stateFile.delete());
   }
 
-  public void applyWriteToAll(List<Optional<Pair<ServiceContext, Collection<BaragonConfigFile>>>> toApply) {
-
-    toApply.forEach(item -> {
-      try {
-        LOG.info("applying write to {} ", item.get().getKey().getService().getServiceId());
-        configHelper.bootstrapApplyWrite(item.get().getKey(), item.get().getValue());
-      } catch (Exception e) {
-        LOG.error("Caught exception while applying write {} during bootstrap", item.get().getKey().getService().getServiceId(), e);
-      }
-    });
-
-    try {
-      configHelper.bootstrapApplyCheck();
-    } catch (Exception e) {
-      LOG.error("error when checking config");
-    }
-
-  }
-
   public void applyCurrentConfigs() throws AgentServiceNotifyException {
     LOG.info("Getting current state of the world from Baragon Service...");
 
@@ -250,8 +229,22 @@ public class LifecycleHelper {
             toApply.add(maybeToApply);
           }
         }
-        Collections.sort(toApply, Comparator.comparing(p -> p.get()));
-        applyWriteToAll(toApply);
+
+        toApply.forEach(item -> {
+          try {
+            LOG.info("applying write to {} ", item.get().getKey().getService().getServiceId());
+            configHelper.bootstrapApplyWrite(item.get().getKey(), item.get().getValue());
+          } catch (Exception e) {
+            LOG.error("Caught exception while applying write {} during bootstrap", item.get().getKey().getService().getServiceId(), e);
+          }
+        });
+
+        try {
+          configHelper.bootstrapApplyCheck();
+        } catch (Exception e) {
+          LOG.error("error when checking config");
+        }
+
         configHelper.checkAndReload();
       } catch (Exception e) {
         LOG.error("Caught exception while applying and parsing configs", e);
