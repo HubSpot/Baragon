@@ -241,13 +241,9 @@ public class LifecycleHelper {
         try {
           configHelper.bootstrapApplyCheck(toApply);
         } catch (Exception e) {
-          toApply.forEach(item -> {
-            try {
-              configHelper.bootstrapApply(item.get().getKey(), item.get().getValue());
-            } catch (Exception e) {
-              LOG.error(String.format("Caught exception while applying slowly %s during bootstrap", item.get().getKey().getService().getServiceId()), e);
-            }
-          });
+          for (Optional<Pair<ServiceContext, Collection<BaragonConfigFile>>> item : toApply) {
+            configHelper.bootstrapApply(item.get().getKey(), item.get().getValue());
+          }
         }
 
         configHelper.checkAndReload();
