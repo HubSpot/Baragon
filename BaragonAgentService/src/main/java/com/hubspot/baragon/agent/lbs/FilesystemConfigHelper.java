@@ -142,6 +142,7 @@ public class FilesystemConfigHelper {
   }
 
   public void bootstrapApplyCheck(List<Optional<Pair<ServiceContext, Collection<BaragonConfigFile>>>> applied) {
+    LOG.info("Going to check the configs");
     try {
       adapter.checkConfigs();
     } catch (Exception e) {
@@ -153,7 +154,7 @@ public class FilesystemConfigHelper {
         throw Throwables.propagate(e);
       });
     }
-    LOG.info(String.format("Completed checking the configs"));
+    LOG.info("Completed checking the configs");
   }
 
 
