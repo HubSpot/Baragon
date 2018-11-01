@@ -1,5 +1,6 @@
 package com.hubspot.baragon.models;
 
+import java.util.Collections;
 import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -17,9 +18,9 @@ public class BaragonGroupAlias {
   public BaragonGroupAlias(@JsonProperty("groups") Set<String> groups,
                            @JsonProperty("domains") Set<String> domains,
                            @JsonProperty("edgeCacheDomains") Set<String> edgeCacheDomains) {
-    this.groups = groups;
-    this.domains = domains;
-    this.edgeCacheDomains = edgeCacheDomains;
+    this.groups = groups == null ? Collections.emptySet() : groups;
+    this.domains = domains == null ? Collections.emptySet() : domains;
+    this.edgeCacheDomains = edgeCacheDomains == null ? Collections.emptySet() : edgeCacheDomains;
   }
 
   public Set<String> getGroups() {
