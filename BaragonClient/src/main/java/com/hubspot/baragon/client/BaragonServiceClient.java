@@ -57,7 +57,7 @@ public class BaragonServiceClient {
 
   private static final String STATUS_FORMAT = "%s/status";
 
-  private static final String ALIASES_FORMAT = "%s/aliases/%s"
+  private static final String ALIASES_FORMAT = "%s/aliases/%s";
 
   private static final TypeReference<Collection<String>> STRING_COLLECTION = new TypeReference<Collection<String>>() {};
   private static final TypeReference<Collection<BaragonGroup>> BARAGON_GROUP_COLLECTION = new TypeReference<Collection<BaragonGroup>>() {};
