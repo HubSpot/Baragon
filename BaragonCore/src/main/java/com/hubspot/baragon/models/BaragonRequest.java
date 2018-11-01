@@ -79,6 +79,10 @@ public class BaragonRequest {
     this(loadBalancerRequestId, loadBalancerService, addUpstreams, removeUpstreams, Collections.<UpstreamInfo>emptyList(), replaceServiceId, Optional.of(RequestAction.UPDATE), false, false);
   }
 
+  public BaragonRequest withUpdatedGroups(BaragonGroupAlias updatedFromAlias) {
+    return new BaragonRequest(loadBalancerRequestId, loadBalancerService.withUpdatedGroups(updatedFromAlias), addUpstreams, removeUpstreams, replaceUpstreams, replaceServiceId, action, noValidate, noReload);
+  }
+
   public String getLoadBalancerRequestId() {
     return loadBalancerRequestId;
   }

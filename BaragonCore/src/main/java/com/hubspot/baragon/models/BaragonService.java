@@ -97,6 +97,10 @@ public class BaragonService {
     this(serviceId, owners, serviceBasePath, Collections.<String>emptyList(), loadBalancerGroups, options, Optional.<String>absent(), Collections.<String>emptySet(), Optional.absent(), Collections.emptySet());
   }
 
+  public BaragonService withUpdatedGroups(BaragonGroupAlias updatedFromAlias) {
+    return new BaragonService(serviceId, owners, serviceBasePath, additionalPaths, updatedFromAlias.getGroups(), options, templateName, updatedFromAlias.getDomains(), updatedFromAlias.getEdgeCacheDomains());
+  }
+
   public String getServiceId() {
     return serviceId;
   }
