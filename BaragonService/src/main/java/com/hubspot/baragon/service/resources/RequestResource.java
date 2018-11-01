@@ -12,17 +12,19 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import com.hubspot.baragon.auth.NoAuth;
+import com.hubspot.baragon.data.BaragonAliasDatastore;
 import com.hubspot.baragon.models.BaragonRequest;
 import com.hubspot.baragon.models.BaragonResponse;
 import com.hubspot.baragon.models.QueuedRequestId;
 import com.hubspot.baragon.service.managers.RequestManager;
 import com.hubspot.baragon.service.worker.BaragonRequestWorker;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @Path("/request")
 @Consumes({MediaType.APPLICATION_JSON})
@@ -32,11 +34,13 @@ public class RequestResource {
 
   private final RequestManager manager;
   private final ObjectMapper objectMapper;
+  private final BaragonAliasDatastore aliasDatastore;
 
   @Inject
-  public RequestResource(RequestManager manager, ObjectMapper objectMapper) {
+  public RequestResource(RequestManager manager, ObjectMapper objectMapper, BaragonAliasDatastore aliasDatastore) {
     this.manager = manager;
     this.objectMapper = objectMapper;
+    this.aliasDatastore = aliasDatastore;
   }
 
   @GET
@@ -49,8 +53,9 @@ public class RequestResource {
   @POST
   public BaragonResponse enqueueRequest(@Valid BaragonRequest request) {
     try {
+      BaragonRequest updatedForAliases = aliasDatastore.updateForAliases(request);
       LOG.info(String.format("Received request: %s", objectMapper.writeValueAsString(request)));
-      return manager.enqueueRequest(request);
+      return manager.enqueueRequest(updatedForAliases);
     } catch (Exception e) {
       LOG.error(String.format("Caught exception for %s", request.getLoadBalancerRequestId()), e);
       return BaragonResponse.failure(request.getLoadBalancerRequestId(), e.getMessage());
