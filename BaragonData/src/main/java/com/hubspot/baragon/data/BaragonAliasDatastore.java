@@ -62,6 +62,8 @@ public class BaragonAliasDatastore extends AbstractDataStore {
         allGroups.addAll(maybeAlias.get().getGroups());
         allDomains.addAll(maybeAlias.get().getDomains());
         allEdgeCacheDomains.addAll(maybeAlias.get().getEdgeCacheDomains());
+      } else {
+        allGroups.add(group);
       }
     }
     return new BaragonGroupAlias(allGroups, allDomains, allEdgeCacheDomains);
