@@ -18,14 +18,8 @@
   <dependencies>
 
     <dependency>
-      <groupId>com.hubspot</groupId>
-      <artifactId>BaragonClient</artifactId>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>com.hubspot</groupId>
-      <artifactId>BaragonCore</artifactId>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
       <scope>test</scope>
     </dependency>
 
@@ -42,6 +36,18 @@
     </dependency>
 
     <dependency>
+      <groupId>com.hubspot</groupId>
+      <artifactId>BaragonClient</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>com.hubspot</groupId>
+      <artifactId>BaragonCore</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <scope>test</scope>
@@ -54,14 +60,8 @@
     </dependency>
 
     <dependency>
-        <groupId>org.slf4j</groupId>
-        <artifactId>slf4j-api</artifactId>
-        <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>ch.qos.logback</groupId>
-      <artifactId>logback-classic</artifactId>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
       <scope>test</scope>
     </dependency>
 
@@ -79,6 +79,17 @@
         <plugins>
           <plugin>
             <artifactId>maven-failsafe-plugin</artifactId>
+            <configuration>
+              <systemPropertyVariables>
+                <!-- Needs to be repeated here (the following two lines strangely doesn't work when the next line is omitted although)
+                     Maven, you little sneaky beast ... -->
+                <zk.port>${zk.port}</zk.port>
+                <baragon.service.port>${baragon.service.port}</baragon.service.port>
+                <baragon.service.auth.key>${baragon.service.auth.key}</baragon.service.auth.key>
+                <baragon.agent.nginx.port>${baragon.agent.nginx.port}</baragon.agent.nginx.port>
+                <baragon.agent.port>${baragon.agent.nginx.port}</baragon.agent.port>
+              </systemPropertyVariables>
+            </configuration>
             <executions>
               <execution>
                 <id>integration-test</id>
@@ -93,17 +104,6 @@
                 </goals>
               </execution>
             </executions>
-            <configuration>
-              <systemPropertyVariables>
-                <!-- Needs to be repeated here (the following two lines strangely doesn't work when the next line is omitted although)
-                     Maven, you little sneaky beast ... -->
-                <zk.port>${zk.port}</zk.port>
-                <baragon.service.port>${baragon.service.port}</baragon.service.port>
-                <baragon.service.auth.key>${baragon.service.auth.key}</baragon.service.auth.key>
-                <baragon.agent.nginx.port>${baragon.agent.nginx.port}</baragon.agent.nginx.port>
-                <baragon.agent.port>${baragon.agent.nginx.port}</baragon.agent.port>
-              </systemPropertyVariables>
-            </configuration>
           </plugin>
 
           <plugin>
@@ -180,17 +180,17 @@
 
               <execution>
                 <id>start-docker-images</id>
-                <phase>pre-integration-test</phase>
                 <goals>
                   <goal>start</goal>
                 </goals>
+                <phase>pre-integration-test</phase>
               </execution>
               <execution>
                 <id>stop-docker-images</id>
-                <phase>post-integration-test</phase>
                 <goals>
                   <goal>stop</goal>
                 </goals>
+                <phase>post-integration-test</phase>
               </execution>
 
             </executions>
@@ -201,7 +201,6 @@
     </profile>
   </profiles>
 </project>
-
 <!-- Local Variables: -->
 <!-- mode: nxml -->
 <!-- nxml-child-indent: 2 -->
