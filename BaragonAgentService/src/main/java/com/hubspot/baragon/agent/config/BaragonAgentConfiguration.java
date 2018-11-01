@@ -112,9 +112,6 @@ public class BaragonAgentConfiguration extends Configuration {
   @JsonProperty("zeroWeightString")
   private String zeroWeightString = "backup";
 
-  @JsonProperty("sameRackMultiplier")
-  private int sameRackMultiplier = 2;
-
   @JsonProperty("weightingFormat")
   private String weightingFormat = "weight=%s";
 
@@ -310,14 +307,6 @@ public class BaragonAgentConfiguration extends Configuration {
 
   public void setZeroWeightString(String zeroWeightString) {
     this.zeroWeightString = zeroWeightString;
-  }
-
-  public int getSameRackMultiplier() {
-    return sameRackMultiplier;
-  }
-
-  public void setSameRackMultiplier(int sameRackMultiplier) {
-    this.sameRackMultiplier = sameRackMultiplier;
   }
 
   public String getWeightingFormat() {

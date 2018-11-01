@@ -37,6 +37,7 @@ import com.hubspot.baragon.agent.handlebars.IfContainedInHelperSource;
 import com.hubspot.baragon.agent.handlebars.IfEqualHelperSource;
 import com.hubspot.baragon.agent.handlebars.PreferSameRackWeightingHelper;
 import com.hubspot.baragon.agent.handlebars.ResolveHostnameHelper;
+import com.hubspot.baragon.agent.handlebars.ToNginxVarHelper;
 import com.hubspot.baragon.agent.healthcheck.ConfigChecker;
 import com.hubspot.baragon.agent.healthcheck.LoadBalancerHealthcheck;
 import com.hubspot.baragon.agent.healthcheck.ZooKeeperHealthcheck;
@@ -124,6 +125,7 @@ public class BaragonAgentServiceModule extends DropwizardAwareModule<BaragonAgen
     handlebars.registerHelpers(new PreferSameRackWeightingHelper(config, agentMetadata));
     handlebars.registerHelpers(IfEqualHelperSource.class);
     handlebars.registerHelpers(IfContainedInHelperSource.class);
+    handlebars.registerHelper(ToNginxVarHelper.NAME, new ToNginxVarHelper());
 
     return handlebars;
   }

@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
@@ -32,6 +31,7 @@ import com.hubspot.baragon.service.config.EdgeCacheConfiguration;
 import com.hubspot.baragon.service.edgecache.cloudflare.client.models.CloudflareDnsRecord;
 import com.hubspot.baragon.service.edgecache.cloudflare.client.models.CloudflareListDnsRecordsResponse;
 import com.hubspot.baragon.service.edgecache.cloudflare.client.models.CloudflareListZonesResponse;
+import com.hubspot.baragon.service.edgecache.cloudflare.client.models.CloudflarePurgeCacheResponse;
 import com.hubspot.baragon.service.edgecache.cloudflare.client.models.CloudflarePurgeRequest;
 import com.hubspot.baragon.service.edgecache.cloudflare.client.models.CloudflareResponse;
 import com.hubspot.baragon.service.edgecache.cloudflare.client.models.CloudflareResultInfo;
@@ -55,7 +55,7 @@ public class CloudflareClient {
   private final String apiKey;
 
   //                                  <ZoneId, CloudflareZone>
-  private final Supplier<ConcurrentMap<String, CloudflareZone>> zoneCache;
+  private final Supplier<Map<String, List<CloudflareZone>>> zoneCache;
   //                        <ZoneId,   <DnsName, CloudflareDnsRecord>>
   private final LoadingCache<String, Map<String, CloudflareDnsRecord>> dnsRecordCache;
 
@@ -72,14 +72,7 @@ public class CloudflareClient {
 
     this.zoneCache = Suppliers.memoizeWithExpiration(() -> {
       try {
-        return retrieveAllZones().stream().collect(Collectors.toConcurrentMap(
-            CloudflareZone::getName,
-            Function.identity(),
-            (name1, name2) -> {
-              LOG.debug("Duplicate name found", name1);
-              return name1;
-            }
-        ));
+        return retrieveAllZones().stream().collect(Collectors.groupingBy(CloudflareZone::getName));
       } catch (CloudflareClientException e) {
         LOG.error("Unable to refresh Cloudflare zone cache", e);
         return new ConcurrentHashMap<>();
@@ -107,7 +100,26 @@ public class CloudflareClient {
   public boolean purgeEdgeCache(String zoneId, List<String> cacheTags) throws CloudflareClientException {
     CloudflarePurgeRequest purgeRequest = new CloudflarePurgeRequest(Collections.emptyList(), cacheTags);
     Response response = requestWith(Method.DELETE, String.format("zones/%s/purge_cache", zoneId), purgeRequest);
-    return isSuccess(response);
+
+    try {
+      LOG.trace("Sending purge request to Cloudflare: {}", objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(purgeRequest));
+    } catch (JsonProcessingException e) {
+      // no-op
+    }
+
+    boolean success = isSuccess(response);
+
+    try {
+      if (!success && response.getResponseBody() != null) {
+        CloudflarePurgeCacheResponse parsedResponse = objectMapper.readValue(response.getResponseBody(), CloudflarePurgeCacheResponse.class);
+
+        LOG.error("Failed to purge Cloudflare edge cache for cache tag(s) {}. Errors were: {}", cacheTags, parsedResponse.getErrors());
+      }
+    } catch (IOException e) {
+      LOG.warn("Failed to read response from Cloudflare while trying to inspect unsuccessful cache purge response.");
+    }
+
+    return success;
   }
 
   private Response requestWith(Method method, String path, Object body) throws CloudflareClientException {
@@ -154,7 +166,7 @@ public class CloudflareClient {
     return response.getStatusCode() >= 200 && response.getStatusCode() < 300;
   }
 
-  public CloudflareZone getZone(String name) throws CloudflareClientException {
+  public List<CloudflareZone> getZone(String name) throws CloudflareClientException {
     return zoneCache.get().get(name);
   }
 

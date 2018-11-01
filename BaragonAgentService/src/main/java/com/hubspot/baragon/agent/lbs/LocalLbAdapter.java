@@ -7,11 +7,14 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.apache.commons.exec.CommandLine;
+import org.apache.commons.exec.DefaultExecuteResultHandler;
 import org.apache.commons.exec.DefaultExecutor;
 import org.apache.commons.exec.ExecuteException;
-import org.apache.commons.exec.ExecuteWatchdog;
 import org.apache.commons.exec.PumpStreamHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,6 +22,7 @@ import org.slf4j.LoggerFactory;
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.base.Charsets;
 import com.google.common.base.Optional;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.hubspot.baragon.agent.config.LoadBalancerConfiguration;
@@ -31,22 +35,37 @@ public class LocalLbAdapter {
   private static final Logger LOG = LoggerFactory.getLogger(LocalLbAdapter.class);
 
   private final LoadBalancerConfiguration loadBalancerConfiguration;
+  private final ExecutorService destroyProcessExecutor;
 
   @Inject
   public LocalLbAdapter(LoadBalancerConfiguration loadBalancerConfiguration) {
     this.loadBalancerConfiguration = loadBalancerConfiguration;
+    this.destroyProcessExecutor = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("lb-shell-process-kill-%d").build());
   }
 
   private int executeWithTimeout(CommandLine command, int timeout) throws LbAdapterExecuteException, IOException {
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     DefaultExecutor executor = new DefaultExecutor();
-
     executor.setStreamHandler(new PumpStreamHandler(baos));
-    executor.setWatchdog(new ExecuteWatchdog(timeout));
+    DefaultExecuteResultHandler resultHandler = new DefaultExecuteResultHandler();
 
+    // Start async and do our own time limiting instead of using a watchdog to avoid https://issues.apache.org/jira/browse/EXEC-62
     try {
-      return executor.execute(command);
-    } catch (ExecuteException e) {
+      long start = System.currentTimeMillis();
+      executor.execute(command, resultHandler);
+      while (System.currentTimeMillis() - start < timeout && !resultHandler.hasResult()) {
+        Thread.sleep(50);
+      }
+      if (resultHandler.hasResult()) {
+        if (resultHandler.getException() != null) {
+          throw resultHandler.getException();
+        }
+        return resultHandler.getExitValue();
+      } else {
+        CompletableFuture.runAsync(() -> executor.getWatchdog().destroyProcess(), destroyProcessExecutor);
+        throw new LbAdapterExecuteException(baos.toString(Charsets.UTF_8.name()), command.toString());
+      }
+    } catch (ExecuteException|InterruptedException e) {
       throw new LbAdapterExecuteException(baos.toString(Charsets.UTF_8.name()), e, command.toString());
     }
   }
