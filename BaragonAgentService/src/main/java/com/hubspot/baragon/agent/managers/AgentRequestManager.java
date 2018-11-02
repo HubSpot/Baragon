@@ -136,7 +136,7 @@ public class AgentRequestManager {
 
   private Response reload(BaragonRequest request, boolean delayReload) throws Exception {
     if (!delayReload) {
-      configHelper.reloadConfigs();
+      configHelper.checkAndReload();
     }
     mostRecentRequestId.set(request.getLoadBalancerRequestId());
     return Response.ok().build();
