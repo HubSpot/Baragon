@@ -147,7 +147,7 @@ public class FilesystemConfigHelper {
       adapter.checkConfigs();
     } catch (Exception e) {
       LOG.error("Caught exception while checking configs", e);
-      applied.parallelStream().forEach(item -> {
+      applied.stream().forEach(item -> {
         final ServiceContext context = item.get().getKey();
         final BaragonService service = context.getService();
         saveAsFailed(service);
