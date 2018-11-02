@@ -234,7 +234,7 @@ public class LifecycleHelper {
           try {
             configHelper.bootstrapApplyWrite(item.get().getKey(), item.get().getValue());
           } catch (Exception e) {
-            LOG.error(String.format("Caught exception while applying write %s during bootstrap", item.get().getKey().getService().getServiceId()), e);
+            LOG.error("Caught exception while applying write {} during bootstrap", item.get().getKey().getService().getServiceId(), e);
           }
         });
 
