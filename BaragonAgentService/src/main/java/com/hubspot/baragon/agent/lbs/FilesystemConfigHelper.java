@@ -83,6 +83,22 @@ public class FilesystemConfigHelper {
     }
   }
 
+  public void checkAndReload() throws Exception {
+    if (!agentLock.tryLock(agentLockTimeoutMs, TimeUnit.MILLISECONDS)) {
+      LOG.warn("Failed to acquire lock for reload");
+      throw new LockTimeoutException("Timed out waiting to acquire lock for reload", agentLock);
+    }
+    LOG.debug("Acquired agent lock, reloading configs");
+    try {
+      LOG.debug("Checking configs for reload");
+      adapter.checkConfigs();
+      LOG.debug("Reloading configs");
+      adapter.reloadConfigs();
+    }  finally {
+      agentLock.unlock();
+    }
+  }
+
   public Optional<Collection<BaragonConfigFile>> configsToApply(ServiceContext context) throws MissingTemplateException {
     final BaragonService service = context.getService();
     final boolean previousConfigsExist = configsExist(service);
@@ -329,22 +345,6 @@ public class FilesystemConfigHelper {
     return configs;
   }
 
-  public void checkAndReload() throws Exception {
-    if (!agentLock.tryLock(agentLockTimeoutMs, TimeUnit.MILLISECONDS)) {
-      LOG.warn("Failed to acquire lock for reload");
-      throw new LockTimeoutException("Timed out waiting to acquire lock for reload", agentLock);
-    }
-    LOG.debug("Acquired agent lock, reloading configs");
-    try {
-      LOG.debug("Checking configs for reload");
-      adapter.checkConfigs();
-      LOG.debug("Reloading configs");
-      adapter.reloadConfigs();
-    }  finally {
-      agentLock.unlock();
-    }
-  }
-  
   private void backupConfigs(BaragonService service) {
     for (String filename : configGenerator.getConfigPathsForProject(service)) {
       try {
