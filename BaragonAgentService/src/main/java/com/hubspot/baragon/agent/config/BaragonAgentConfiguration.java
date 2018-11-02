@@ -124,6 +124,9 @@ public class BaragonAgentConfiguration extends Configuration {
   @JsonProperty("removeFileOnShutdown")
   private Optional<String> removeFileOnShutdown = Optional.absent();
 
+  @JsonProperty("privateIp")
+  private Optional<String> privateIp = Optional.absent();
+
   public HttpClientConfiguration getHttpClientConfiguration() {
     return httpClientConfiguration;
   }
@@ -350,5 +353,13 @@ public class BaragonAgentConfiguration extends Configuration {
 
   public void setRemoveFileOnShutdown(Optional<String> removeFileOnShutdown) {
     this.removeFileOnShutdown = removeFileOnShutdown;
+  }
+
+  public Optional<String> getPrivateIp() {
+    return privateIp;
+  }
+
+  public void setPrivateIp(Optional<String> privateIp) {
+    this.privateIp = privateIp;
   }
 }
