@@ -101,7 +101,7 @@ public class BaragonStateDatastore extends AbstractDataStore {
     Collection<UpstreamInfo> currentUpstreams = getUpstreams(serviceId);
     String servicePath = String.format(SERVICE_FORMAT, serviceId);
     CuratorTransactionFinal transaction;
-    if (nodeExists(servicePath)) {
+    if (nodeExists(servicePath) && !request.isUpstreamUpdateOnly()) {
       transaction = curatorFramework.inTransaction().setData().forPath(servicePath, serialize(request.getLoadBalancerService())).and();
     } else {
       transaction = curatorFramework.inTransaction().create().forPath(servicePath, serialize(request.getLoadBalancerService())).and();
