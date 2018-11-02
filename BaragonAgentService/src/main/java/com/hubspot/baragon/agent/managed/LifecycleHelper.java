@@ -230,7 +230,7 @@ public class LifecycleHelper {
           }
         }
 
-        toApply.parallelStream().forEach(item -> {
+        toApply.stream().forEach(item -> {
           try {
             configHelper.bootstrapApplyWrite(item.get().getKey(), item.get().getValue());
           } catch (Exception e) {
