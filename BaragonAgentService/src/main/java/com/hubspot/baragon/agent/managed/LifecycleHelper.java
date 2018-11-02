@@ -246,7 +246,7 @@ public class LifecycleHelper {
           }
         }
 
-        configHelper.checkAndReload();
+        configHelper.reloadConfigs();
       } catch (Exception e) {
         LOG.error("Caught exception while applying and parsing configs", e);
         if (configuration.isExitOnStartupError()) {
