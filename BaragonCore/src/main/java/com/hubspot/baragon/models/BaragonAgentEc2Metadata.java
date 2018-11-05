@@ -30,13 +30,13 @@ public class BaragonAgentEc2Metadata {
     this.privateIp = privateIp;
   }
 
-  public static BaragonAgentEc2Metadata fromEnvironment() {
+  public static BaragonAgentEc2Metadata fromEnvironment(Optional<String> privateipOverride) {
     return new BaragonAgentEc2Metadata(
       findInstanceId(),
       findAvailabilityZone(),
       findSubnet(),
       findVpc(),
-      findPrivateIp());
+      privateipOverride.or(findPrivateIp()));
   }
 
   public static Optional<String> findInstanceId() {
