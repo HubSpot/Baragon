@@ -27,6 +27,7 @@ import com.hubspot.baragon.models.BaragonService;
 import com.hubspot.baragon.models.BaragonServiceState;
 import com.hubspot.baragon.models.BaragonServiceStatus;
 import com.hubspot.baragon.models.QueuedRequestId;
+import com.hubspot.baragon.models.UpstreamInfo;
 import com.hubspot.horizon.HttpClient;
 import com.hubspot.horizon.HttpRequest;
 import com.hubspot.horizon.HttpRequest.Method;
@@ -50,6 +51,8 @@ public class BaragonServiceClient {
 
   private static final String REQUEST_FORMAT = "%s/request";
   private static final String REQUEST_ID_FORMAT = REQUEST_FORMAT + "/%s";
+
+  private static final String UPSTREAM_REQUEST_FORMAT = REQUEST_FORMAT + "/upstreams/%s";
 
   private static final String STATE_FORMAT = "%s/state";
   private static final String STATE_SERVICE_ID_FORMAT = STATE_FORMAT + "/%s";
@@ -235,6 +238,30 @@ public class BaragonServiceClient {
     return response;
   }
 
+  private <T> Optional<T> put(String uri, String type, Optional<Class<T>> clazz, Map<String, String> queryParams) {
+    try {
+      HttpResponse response = put(uri, type, queryParams);
+
+      if (clazz.isPresent()) {
+        return Optional.of(response.getAs(clazz.get()));
+      }
+    } catch (Exception e) {
+      LOG.warn("Http post failed", e);
+    }
+
+    return Optional.absent();
+  }
+
+  private HttpResponse put(String uri, String type, Map<String, String> params) {
+    LOG.debug("Posting {} to {}", type, uri);
+    final long start = System.currentTimeMillis();
+    HttpRequest.Builder request = buildRequest(uri, params).setMethod(Method.PUT);
+    HttpResponse response = httpClient.execute(request.build());
+    checkResponse(type, response);
+    LOG.debug("Successfully posted {} in {}ms", type, System.currentTimeMillis() - start);
+    return response;
+  }
+
   // BaragonService overall status
 
   public Optional<BaragonServiceStatus> getBaragonServiceStatus(String baseUrl) {
@@ -355,6 +382,20 @@ public class BaragonServiceClient {
     return delete(uri, "request", requestId, Collections.<String, String>emptyMap(), Optional.of(BaragonResponse.class));
   }
 
+  public Optional<BaragonResponse> addUpstream(String serviceId, UpstreamInfo upstreamInfo) {
+    final String uri = String.format(UPSTREAM_REQUEST_FORMAT, getBaseUrl(), serviceId);
+    return put(uri, "upstream-add", Optional.of(BaragonResponse.class), ImmutableMap.of("upstream", upstreamInfo.toPath()));
+  }
+
+  public Optional<BaragonResponse> setUpstreams(String serviceId, List<UpstreamInfo> upstreamInfo) {
+    final String uri = String.format(UPSTREAM_REQUEST_FORMAT, getBaseUrl(), serviceId);
+    return post(uri, "upstream-add", Optional.of(upstreamInfo), Optional.of(BaragonResponse.class));
+  }
+
+  public Optional<BaragonResponse> removeUpstream(String serviceId, UpstreamInfo upstreamInfo) {
+    final String uri = String.format(UPSTREAM_REQUEST_FORMAT, getBaseUrl(), serviceId);
+    return delete(uri, "upstream-remove", serviceId, ImmutableMap.of("upstream", upstreamInfo.toPath()), Optional.of(BaragonResponse.class));
+  }
 
   // BaragonService queued request actions
 

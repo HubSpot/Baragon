@@ -45,6 +45,9 @@ public class BaragonRequest {
   @NotNull
   private final boolean noReload;
 
+  @NotNull
+  private final boolean upstreamUpdateOnly;
+
   @JsonCreator
   public BaragonRequest(@JsonProperty("loadBalancerRequestId") String loadBalancerRequestId,
                         @JsonProperty("loadBalancerService") BaragonService loadBalancerService,
@@ -53,8 +56,9 @@ public class BaragonRequest {
                         @JsonProperty("replaceUpstreams") List<UpstreamInfo> replaceUpstreams,
                         @JsonProperty("replaceServiceId") Optional<String> replaceServiceId,
                         @JsonProperty("action") Optional<RequestAction> action,
-                        @JsonProperty("noValidate") boolean noValidate,
-                        @JsonProperty("noReload") boolean noReload) {
+                        @JsonProperty("noValidate") Boolean noValidate,
+                        @JsonProperty("noReload") Boolean noReload,
+                        @JsonProperty("upstreamUpdateOnly") Boolean upstreamUpdateOnly) {
     this.loadBalancerRequestId = loadBalancerRequestId;
     this.loadBalancerService = loadBalancerService;
     this.addUpstreams = addRequestId(addUpstreams, loadBalancerRequestId);
@@ -63,20 +67,26 @@ public class BaragonRequest {
     this.action = action;
     this.replaceUpstreams = MoreObjects.firstNonNull(replaceUpstreams, Collections.<UpstreamInfo>emptyList());
     this.noValidate = MoreObjects.firstNonNull(noValidate, false);
-    this.noReload = noReload;
+    this.noReload = MoreObjects.firstNonNull(noReload, false);
+    this.upstreamUpdateOnly = MoreObjects.firstNonNull(upstreamUpdateOnly, false);
 
+  }
+
+  public BaragonRequest(String loadBalancerRequestId, BaragonService loadBalancerService, List<UpstreamInfo> addUpstreams, List<UpstreamInfo> removeUpstreams, List<UpstreamInfo> replaceUpstreams,
+                         Optional<String> replaceServiceId, Optional<RequestAction> action, boolean noValidate, boolean noReload) {
+    this(loadBalancerRequestId, loadBalancerService, addUpstreams, removeUpstreams, replaceUpstreams, replaceServiceId, action, noValidate, noReload, false);
   }
 
   public BaragonRequest(String loadBalancerRequestId, BaragonService loadBalancerService, List<UpstreamInfo> addUpstreams, List<UpstreamInfo> removeUpstreams, List<UpstreamInfo> replaceUpstreams, Optional<String> replaceServiceId, Optional<RequestAction> action) {
-    this(loadBalancerRequestId, loadBalancerService, addUpstreams, removeUpstreams, replaceUpstreams, replaceServiceId, action, false, false);
+    this(loadBalancerRequestId, loadBalancerService, addUpstreams, removeUpstreams, replaceUpstreams, replaceServiceId, action, false, false, false);
   }
 
   public BaragonRequest(String loadBalancerRequestId, BaragonService loadBalancerService, List<UpstreamInfo> addUpstreams, List<UpstreamInfo> removeUpstreams) {
-    this(loadBalancerRequestId, loadBalancerService, addUpstreams, removeUpstreams, Collections.<UpstreamInfo>emptyList(),Optional.<String>absent(), Optional.of(RequestAction.UPDATE), false, false);
+    this(loadBalancerRequestId, loadBalancerService, addUpstreams, removeUpstreams, Collections.<UpstreamInfo>emptyList(),Optional.<String>absent(), Optional.of(RequestAction.UPDATE), false, false, false);
   }
 
   public BaragonRequest(String loadBalancerRequestId, BaragonService loadBalancerService, List<UpstreamInfo> addUpstreams, List<UpstreamInfo> removeUpstreams, Optional<String> replaceServiceId) {
-    this(loadBalancerRequestId, loadBalancerService, addUpstreams, removeUpstreams, Collections.<UpstreamInfo>emptyList(), replaceServiceId, Optional.of(RequestAction.UPDATE), false, false);
+    this(loadBalancerRequestId, loadBalancerService, addUpstreams, removeUpstreams, Collections.<UpstreamInfo>emptyList(), replaceServiceId, Optional.of(RequestAction.UPDATE), false, false, false);
   }
 
   public BaragonRequest withUpdatedGroups(BaragonGroupAlias updatedFromAlias) {
@@ -140,6 +150,10 @@ public class BaragonRequest {
     return noReload;
   }
 
+  public boolean isUpstreamUpdateOnly() {
+    return upstreamUpdateOnly;
+  }
+
   @Override
   public String toString() {
     return "BaragonRequest [" +
@@ -151,6 +165,7 @@ public class BaragonRequest {
         ", action=" + action +
         ", noValidate=" + noValidate +
         ", noReload=" + noReload +
+        ", upstreamUpdateOnly=" + upstreamUpdateOnly +
         ']';
   }
 
@@ -189,6 +204,9 @@ public class BaragonRequest {
     if (!noReload == request.noReload) {
       return false;
     }
+    if (!upstreamUpdateOnly == request.upstreamUpdateOnly) {
+      return false;
+    }
 
     return true;
   }
@@ -203,6 +221,7 @@ public class BaragonRequest {
     result = 31 * result + action.hashCode();
     result = 31 * result + (noValidate ? 1 : 0);
     result = 31 * result + (noReload ? 1 : 0);
+    result = 31 * result + (upstreamUpdateOnly ? 1 : 0);
     return result;
   }
 }
