@@ -4,9 +4,11 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -67,6 +69,20 @@ public class FilesystemConfigHelper {
     }
   }
 
+  public void reloadConfigs() throws Exception {
+    if (!agentLock.tryLock(agentLockTimeoutMs, TimeUnit.MILLISECONDS)) {
+      LOG.warn("Failed to acquire lock for reload");
+      throw new LockTimeoutException("Timed out waiting to acquire lock for reload", agentLock);
+    }
+    LOG.debug("Acquired agent lock, reloading configs");
+    try {
+      LOG.debug("Reloading configs");
+      adapter.reloadConfigs();
+    }  finally {
+      agentLock.unlock();
+    }
+  }
+
   public void checkAndReload() throws Exception {
     if (!agentLock.tryLock(agentLockTimeoutMs, TimeUnit.MILLISECONDS)) {
       LOG.warn("Failed to acquire lock for reload");
@@ -107,7 +123,7 @@ public class FilesystemConfigHelper {
       writeConfigs(newConfigs);
       adapter.checkConfigs();
     } catch (Exception e) {
-      LOG.error(String.format("Caught exception while writing configs for %s, reverting to backups!", service.getServiceId()), e);
+      LOG.error("Caught exception while writing configs for {}, reverting to backups!", service.getServiceId(), e);
       saveAsFailed(service);
       if (previousConfigsExist) {
         restoreConfigs(service);
@@ -116,8 +132,46 @@ public class FilesystemConfigHelper {
       }
       throw Throwables.propagate(e);
     }
-    LOG.info(String.format("Apply finished for %s", service.getServiceId()));
+    LOG.info("Apply finished for {}", service.getServiceId());
   }
+
+  public void bootstrapApplyWrite(ServiceContext context, Collection<BaragonConfigFile> newConfigs) throws InvalidConfigException, LbAdapterExecuteException, IOException, MissingTemplateException {
+    final BaragonService service = context.getService();
+    final boolean previousConfigsExist = configsExist(service);
+    LOG.info("Going to write {}: {}", service.getServiceId(), Joiner.on(", ").join(context.getUpstreams()));
+    backupConfigs(service);
+    try {
+      writeConfigs(newConfigs);
+    } catch (Exception e) {
+      LOG.error("Caught exception while writing configs for {}, reverting to backups!", service.getServiceId(), e);
+      saveAsFailed(service);
+      if (previousConfigsExist) {
+        restoreConfigs(service);
+      } else {
+        remove(service);
+      }
+      throw Throwables.propagate(e);
+    }
+    LOG.info("Writing finished for {}", service.getServiceId());
+  }
+
+  public void bootstrapApplyCheck(List<Optional<Pair<ServiceContext, Collection<BaragonConfigFile>>>> applied) {
+    LOG.info("Going to check the configs");
+    try {
+      adapter.checkConfigs();
+    } catch (Exception e) {
+      LOG.error("Caught exception while checking configs", e);
+      applied.stream().forEach(item -> {
+        final ServiceContext context = item.get().getKey();
+        final BaragonService service = context.getService();
+        saveAsFailed(service);
+        LOG.info("Marked {}: as failed", service.getServiceId());
+      });
+      throw Throwables.propagate(e);
+    }
+    LOG.info("Completed checking the configs");
+  }
+
 
   public void apply(ServiceContext context, Optional<BaragonService> maybeOldService, boolean revertOnFailure, boolean noReload, boolean noValidate, boolean delayReload, Optional<Integer> batchItemNumber) throws InvalidConfigException, LbAdapterExecuteException, IOException, MissingTemplateException, InterruptedException, LockTimeoutException {
     final BaragonService service = context.getService();
@@ -266,7 +320,7 @@ public class FilesystemConfigHelper {
         }
         Files.write(file.getContent().getBytes(Charsets.UTF_8), new File(file.getFullPath()));
       } catch (IOException e) {
-        LOG.error(String.format("Failed writing %s", file.getFullPath()), e);
+        LOG.error("Failed writing {}", file.getFullPath(), e);
         throw new RuntimeException(String.format("Failed writing %s", file.getFullPath()), e);
       }
     }
@@ -301,7 +355,7 @@ public class FilesystemConfigHelper {
         File dest = new File(filename + BACKUP_FILENAME_SUFFIX);
         Files.move(src, dest);
       } catch (IOException e) {
-        LOG.error(String.format("Failed to backup %s", filename), e);
+        LOG.error("Failed to backup {]", filename, e);
         throw new RuntimeException(String.format("Failed to backup %s", filename));
       }
     }
@@ -337,7 +391,7 @@ public class FilesystemConfigHelper {
           File dest = new File(filename + FAILED_CONFIG_SUFFIX);
           Files.copy(src, dest);
         } catch (IOException e) {
-          LOG.warn(String.format("Failed to save failed config %s", filename), e);
+          LOG.warn("Failed to save failed config {}", filename, e);
         }
       }
     }
@@ -353,7 +407,7 @@ public class FilesystemConfigHelper {
         File dest = new File(filename);
         Files.copy(src, dest);
       } catch (IOException e) {
-        LOG.error(String.format("Failed to restore %s", filename), e);
+        LOG.error("Failed to restore {}", filename, e);
         throw new RuntimeException(String.format("Failed to restore %s", filename));
       }
     }
