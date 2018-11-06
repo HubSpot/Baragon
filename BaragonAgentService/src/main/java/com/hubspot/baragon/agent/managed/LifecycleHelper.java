@@ -55,10 +55,10 @@ import com.hubspot.baragon.models.BaragonConfigFile;
 import com.hubspot.baragon.models.BaragonServiceState;
 import com.hubspot.baragon.models.ServiceContext;
 import com.hubspot.baragon.models.TrafficSourceState;
-import com.hubspot.horizon.HttpClient;
 import com.hubspot.horizon.HttpRequest;
 import com.hubspot.horizon.HttpRequest.Method;
 import com.hubspot.horizon.HttpResponse;
+import com.hubspot.horizon.ning.NingHttpClient;
 
 import ch.qos.logback.classic.LoggerContext;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -77,7 +77,7 @@ public class LifecycleHelper {
   private final BaragonStateDatastore stateDatastore;
   private final ServerProvider serverProvider;
   private final AtomicReference<BaragonAgentState> agentState;
-  private final HttpClient httpClient;
+  private final NingHttpClient httpClient;
   private final ScheduledExecutorService executorService;
   private final LeaderLatch leaderLatch;
   private final ReentrantLock agentLock;
@@ -93,7 +93,7 @@ public class LifecycleHelper {
                          BaragonStateDatastore stateDatastore,
                          ServerProvider serverProvider,
                          AtomicReference<BaragonAgentState> agentState,
-                         @Named(BaragonAgentServiceModule.BARAGON_AGENT_HTTP_CLIENT) HttpClient httpClient,
+                         @Named(BaragonAgentServiceModule.BARAGON_AGENT_HTTP_CLIENT) NingHttpClient httpClient,
                          @Named(BaragonAgentServiceModule.AGENT_SCHEDULED_EXECUTOR) ScheduledExecutorService executorService,
                          @Named(BaragonAgentServiceModule.AGENT_LEADER_LATCH) LeaderLatch leaderLatch,
                          @Named(BaragonAgentServiceModule.AGENT_LOCK) ReentrantLock agentLock,
@@ -143,7 +143,6 @@ public class LifecycleHelper {
         throw new AgentServiceNotifyException(String.format("Bad response received from BaragonService %s", response.getAsString()));
       }
       try {
-        LOG.debug("Got {} response {}", action, response.getAsString());
         return response.getAs(AgentCheckInResponse.class);
       } catch (Exception e) {
         if (response.isSuccess()) {

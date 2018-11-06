@@ -63,9 +63,8 @@ import com.hubspot.baragon.models.BaragonAgentMetadata;
 import com.hubspot.baragon.models.BaragonAgentState;
 import com.hubspot.baragon.utils.JavaUtils;
 import com.hubspot.dropwizard.guicier.DropwizardAwareModule;
-import com.hubspot.horizon.HttpClient;
 import com.hubspot.horizon.HttpConfig;
-import com.hubspot.horizon.apache.ApacheHttpClient;
+import com.hubspot.horizon.ning.NingHttpClient;
 
 import io.dropwizard.jetty.HttpConnectorFactory;
 import io.dropwizard.server.SimpleServerFactory;
@@ -267,7 +266,7 @@ public class BaragonAgentServiceModule extends DropwizardAwareModule<BaragonAgen
   @Provides
   @Singleton
   @Named(BARAGON_AGENT_HTTP_CLIENT)
-  public HttpClient providesApacheHttpClient(HttpClientConfiguration config, ObjectMapper objectMapper) {
+  public NingHttpClient providesApacheHttpClient(HttpClientConfiguration config, ObjectMapper objectMapper) {
     HttpConfig.Builder configBuilder = HttpConfig.newBuilder()
       .setRequestTimeoutSeconds(config.getRequestTimeoutInMs() / 1000)
       .setUserAgent(config.getUserAgent())
@@ -276,7 +275,7 @@ public class BaragonAgentServiceModule extends DropwizardAwareModule<BaragonAgen
       .setMaxRetries(config.getMaxRequestRetry())
       .setObjectMapper(objectMapper);
 
-    return new ApacheHttpClient(configBuilder.build());
+    return new NingHttpClient(configBuilder.build());
   }
 
   @Singleton
