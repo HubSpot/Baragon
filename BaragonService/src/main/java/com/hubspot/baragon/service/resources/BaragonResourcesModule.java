@@ -17,5 +17,6 @@ public class BaragonResourcesModule extends AbstractModule {
     bind(StatusResource.class);
     bind(UIResource.class);
     bind(WorkerResource.class);
+    bind(AliasesResource.class);
   }
 }

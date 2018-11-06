@@ -20,6 +20,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.hubspot.baragon.models.BaragonAgentMetadata;
 import com.hubspot.baragon.models.BaragonGroup;
+import com.hubspot.baragon.models.BaragonGroupAlias;
 import com.hubspot.baragon.models.BaragonRequest;
 import com.hubspot.baragon.models.BaragonResponse;
 import com.hubspot.baragon.models.BaragonService;
@@ -55,6 +56,8 @@ public class BaragonServiceClient {
   private static final String STATE_RELOAD_FORMAT = STATE_SERVICE_ID_FORMAT + "/reload";
 
   private static final String STATUS_FORMAT = "%s/status";
+
+  private static final String ALIASES_FORMAT = "%s/aliases/%s";
 
   private static final TypeReference<Collection<String>> STRING_COLLECTION = new TypeReference<Collection<String>>() {};
   private static final TypeReference<Collection<BaragonGroup>> BARAGON_GROUP_COLLECTION = new TypeReference<Collection<BaragonGroup>>() {};
@@ -358,5 +361,22 @@ public class BaragonServiceClient {
   public Collection<QueuedRequestId> getQueuedRequests() {
     final String uri = String.format(REQUEST_FORMAT, getBaseUrl());
     return getCollection(uri, "queued requests", QUEUED_REQUEST_COLLECTION);
+  }
+
+  // Aliases
+
+  public Optional<BaragonGroupAlias> getAlias(String name) {
+    final String uri = String.format(ALIASES_FORMAT, getBaseUrl(), name);
+    return getSingle(uri, "alias", name, BaragonGroupAlias.class);
+  }
+
+  public void createAlias(String name, BaragonGroupAlias alias) {
+    final String uri = String.format(ALIASES_FORMAT, getBaseUrl(), name);
+    post(uri, "alias", Optional.of(alias), Optional.absent());
+  }
+
+  public void deleteAlias(String name) {
+    final String uri = String.format(ALIASES_FORMAT, getBaseUrl(), name);
+    delete(uri, "alias", name, Collections.emptyMap());
   }
 }
