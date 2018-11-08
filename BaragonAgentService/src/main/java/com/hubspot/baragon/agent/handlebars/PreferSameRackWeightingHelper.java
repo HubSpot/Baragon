@@ -81,8 +81,7 @@ public class PreferSameRackWeightingHelper {
 
       final String currentRack = agentMetadata.getEc2().getAvailabilityZone().get();
       final String testingRack = currentUpstream.getRackId().get();
-
-      final BigDecimal countOfAllRacks = new BigDecimal(allRacks.size());
+      
       final BigDecimal countOfCurrentRack = new BigDecimal(Collections.frequency(allRacks, currentRack));
       final BigDecimal countOfTestingRack = new BigDecimal((Collections.frequency(allRacks, testingRack))); // assume this is always in upstream
 
