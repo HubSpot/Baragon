@@ -53,7 +53,8 @@ public class PreferSameRackWeightingHelper {
     }
     final BigDecimal totalPendingLoad = rackHelper.getTotalPendingLoad(allRacks);
     final BigDecimal capacity = rackHelper.calculateCapacity(allRacks);
-    return preferSameRackWeightingOperation(upstreams, currentUpstream, allRacks, capacity, totalPendingLoad, null);
+    final BigDecimal multiplier = rackHelper.calculateMultiplier(allRacks);
+    return preferSameRackWeightingOperation(upstreams, currentUpstream, allRacks, capacity, multiplier, totalPendingLoad, null);
   }
 
   /**
@@ -70,6 +71,7 @@ public class PreferSameRackWeightingHelper {
                                                       UpstreamInfo currentUpstream,
                                                       List<String> allRacks,
                                                       BigDecimal capacity,
+                                                      BigDecimal multiplier,
                                                       BigDecimal totalPendingLoad,
                                                       Options options) {
 
@@ -79,8 +81,6 @@ public class PreferSameRackWeightingHelper {
 
       final String currentRack = agentMetadata.getEc2().getAvailabilityZone().get();
       final String testingRack = currentUpstream.getRackId().get();
-
-      final BigDecimal countOfAllRacks = new BigDecimal(allRacks.size());
       final BigDecimal countOfCurrentRack = new BigDecimal(Collections.frequency(allRacks, currentRack));
       final BigDecimal countOfTestingRack = new BigDecimal((Collections.frequency(allRacks, testingRack))); // assume this is always in upstream
 
@@ -94,7 +94,7 @@ public class PreferSameRackWeightingHelper {
         if (load.compareTo(capacity) == -1) { // load is less than capacity
           return "";
         }
-        final BigDecimal weight = capacity.multiply(countOfAllRacks).multiply(countOfTestingRack);
+        final BigDecimal weight = capacity.multiply(multiplier);
         return getWeight(weight);
       }
 
@@ -110,7 +110,7 @@ public class PreferSameRackWeightingHelper {
       }
 
       final BigDecimal pendingLoadFromCurrentRackToTestingRack = (extraCapacityInTestingRack.divide(totalPendingLoad, 10, BigDecimal.ROUND_HALF_UP)).multiply(pendingLoadInCurrentRack);
-      final BigDecimal weight = pendingLoadFromCurrentRackToTestingRack.multiply(countOfAllRacks).multiply(countOfTestingRack);
+      final BigDecimal weight = pendingLoadFromCurrentRackToTestingRack.multiply(multiplier);
       return getWeight(weight);
     }
     return ""; // If the required data isn't present for some reason, send even traffic everywhere (i.e. everything has a weight of 1)
