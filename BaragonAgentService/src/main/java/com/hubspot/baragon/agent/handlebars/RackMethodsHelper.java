@@ -33,6 +33,11 @@ public class RackMethodsHelper {
     return new BigDecimal((new HashSet<>(allRacks)).size()).divide(new BigDecimal(allRacks.size()), 10, BigDecimal.ROUND_HALF_UP);
   }
 
+  public BigDecimal calculateMultiplier(List<String> allRacks) {
+    /* multiplier is the factor by which fractional weights should be scaled to get an integer value*/
+    return new BigDecimal((new HashSet<>(allRacks)).size()).multiply(new BigDecimal(allRacks.size()));
+  }
+
   /**
    * @param allRacks
    * @return the total pending load that have to be distributed to other upstreams

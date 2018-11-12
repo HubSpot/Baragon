@@ -61,7 +61,7 @@ public class PreferSameRackWeightingBalancedTest {
       CharSequence result = helper.preferSameRackWeighting(UPSTREAMS, currentUpstream, null);
       results.add(result.toString());
     }
-    Assert.assertEquals(Arrays.asList("", "", "weight=4", "backup", "backup"), results);
+    Assert.assertEquals(Arrays.asList("weight=2", "weight=2", "weight=16", "backup", "backup"), results);
   }
 
   @Test
@@ -74,7 +74,7 @@ public class PreferSameRackWeightingBalancedTest {
       CharSequence result = helper.preferSameRackWeighting(UPSTREAMS, currentUpstream, null);
       results.add(result.toString());
     }
-    Assert.assertEquals(Arrays.asList("", "", "backup", "weight=4", "backup"), results);
+    Assert.assertEquals(Arrays.asList("weight=2", "weight=2", "backup", "weight=16", "backup"), results);
   }
 
   @Test
@@ -87,7 +87,7 @@ public class PreferSameRackWeightingBalancedTest {
       CharSequence result = helper.preferSameRackWeighting(UPSTREAMS, currentUpstream, null);
       results.add(result.toString());
     }
-    Assert.assertEquals(Arrays.asList("", "", "backup", "backup", "weight=4"), results);
+    Assert.assertEquals(Arrays.asList("weight=2", "weight=2", "backup", "backup", "weight=16"), results);
   }
 
   @Test
@@ -104,7 +104,7 @@ public class PreferSameRackWeightingBalancedTest {
   }
 
 
-  private static final Collection<String> LARGER_AVAILABILITY_ZONES = Arrays.asList("us-east-1a", "us-east-1a", "us-east-1b", "us-east-1b", "us-east-1b", "us-east-1b", "us-east-1c", "us-east-1c", "us-east-1c", "us-east-1e", "us-east-1e");
+  private static final Collection<String> LARGER_AVAILABILITY_ZONES = Arrays.asList("us-east-1a", "us-east-1a", "us-east-1b", "us-east-1b", "us-east-1b", "us-east-1b", "us-east-1c", "us-east-1c", "us-east-1c", "us-east-1c", "us-east-1e", "us-east-1e");
   private static final Collection<UpstreamInfo> MANY_UPSTREAMS = LARGER_AVAILABILITY_ZONES.stream().map((availabilityZone) -> new UpstreamInfo("testhost:8080", Optional.absent(), Optional.of(availabilityZone))).collect(Collectors.toList());
 
 
@@ -118,7 +118,7 @@ public class PreferSameRackWeightingBalancedTest {
       CharSequence result = helper.preferSameRackWeighting(MANY_UPSTREAMS, currentUpstream, null);
       results.add(result.toString());
     }
-    Assert.assertEquals(Arrays.asList("weight=8", "weight=8", "weight=2", "weight=2", "weight=2", "weight=2", "", "", "", "backup", "backup"), results);
+    Assert.assertEquals(Arrays.asList("weight=16", "weight=16", "weight=2", "weight=2", "weight=2", "weight=2", "weight=2", "weight=2", "weight=2", "weight=2", "backup", "backup"), results);
   }
 
   @Test
@@ -131,7 +131,7 @@ public class PreferSameRackWeightingBalancedTest {
       CharSequence result = helper.preferSameRackWeighting(MANY_UPSTREAMS, currentUpstream, null);
       results.add(result.toString());
     }
-    Assert.assertEquals(Arrays.asList("backup", "backup", "", "", "", "", "backup", "backup", "backup", "backup", "backup"), results);
+    Assert.assertEquals(Arrays.asList("backup", "backup", "", "", "", "", "backup", "backup", "backup", "backup", "backup", "backup"), results);
   }
 
   @Test
@@ -144,7 +144,7 @@ public class PreferSameRackWeightingBalancedTest {
       CharSequence result = helper.preferSameRackWeighting(MANY_UPSTREAMS, currentUpstream, null);
       results.add(result.toString());
     }
-    Assert.assertEquals(Arrays.asList("backup", "backup", "backup", "backup", "backup", "backup", "", "", "", "backup", "backup"), results);
+    Assert.assertEquals(Arrays.asList("backup", "backup", "backup", "backup", "backup", "backup", "", "", "", "", "backup", "backup"), results);
   }
 
   @Test
@@ -157,7 +157,7 @@ public class PreferSameRackWeightingBalancedTest {
       CharSequence result = helper.preferSameRackWeighting(MANY_UPSTREAMS, currentUpstream, null);
       results.add(result.toString());
     }
-    Assert.assertEquals(Arrays.asList("", "", "", "", "", "", "", "", "", "", ""), results);
+    Assert.assertEquals(Arrays.asList("", "", "", "", "", "", "", "", "", "", "", ""), results);
   }
 
   @Test
@@ -170,7 +170,7 @@ public class PreferSameRackWeightingBalancedTest {
       CharSequence result = helper.preferSameRackWeighting(MANY_UPSTREAMS, currentUpstream, null);
       results.add(result.toString());
     }
-    Assert.assertEquals(Arrays.asList("backup", "backup", "weight=2", "weight=2", "weight=2", "weight=2", "", "", "", "weight=8", "weight=8"), results);
+    Assert.assertEquals(Arrays.asList("backup", "backup", "weight=2", "weight=2", "weight=2", "weight=2", "weight=2", "weight=2", "weight=2", "weight=2", "weight=16", "weight=16"), results);
   }
 
   private static final Collection<String> NULL_AVAILABILITY_ZONES = Arrays.asList(null, null, null, null);
@@ -202,7 +202,7 @@ public class PreferSameRackWeightingBalancedTest {
       CharSequence result = helper.preferSameRackWeighting(NEW_UPSTREAMS, currentUpstream, null);
       results.add(result.toString());
     }
-    Assert.assertEquals(Arrays.asList("weight=6", "weight=6", "", "", "", "", "", ""), results);
+    Assert.assertEquals(Arrays.asList("weight=9", "weight=9", "", "", "", "", "", ""), results);
   }
   @Test
   public void testBigDecimalToIntegerCase1E() {
