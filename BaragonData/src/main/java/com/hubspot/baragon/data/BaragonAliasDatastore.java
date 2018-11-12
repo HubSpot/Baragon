@@ -1,6 +1,7 @@
 package com.hubspot.baragon.data;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.apache.curator.framework.CuratorFramework;
@@ -28,6 +29,10 @@ public class BaragonAliasDatastore extends AbstractDataStore {
 
   public void saveAlias(String name, BaragonGroupAlias alias) {
     writeToZk(getAliasPath(name), alias);
+  }
+
+  public List<String> getAllAliases() {
+    return getChildren(ALIASES_ROOT);
   }
 
   public Optional<BaragonGroupAlias> getAlias(String name) {

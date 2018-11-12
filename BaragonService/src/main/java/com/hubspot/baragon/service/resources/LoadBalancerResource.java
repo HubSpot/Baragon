@@ -1,6 +1,8 @@
 package com.hubspot.baragon.service.resources;
 
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -18,6 +20,7 @@ import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import com.hubspot.baragon.auth.NoAuth;
+import com.hubspot.baragon.data.BaragonAliasDatastore;
 import com.hubspot.baragon.data.BaragonKnownAgentsDatastore;
 import com.hubspot.baragon.data.BaragonLoadBalancerDatastore;
 import com.hubspot.baragon.data.BaragonStateDatastore;
@@ -38,22 +41,28 @@ public class LoadBalancerResource {
   private final BaragonKnownAgentsDatastore knownAgentsDatastore;
   private final BaragonStateDatastore stateDatastore;
   private final BaragonConfiguration configuration;
+  private final BaragonAliasDatastore aliasDatastore;
 
   @Inject
   public LoadBalancerResource(BaragonLoadBalancerDatastore loadBalancerDatastore,
                               BaragonKnownAgentsDatastore knownAgentsDatastore,
                               BaragonStateDatastore stateDatastore,
-                              BaragonConfiguration configuration) {
+                              BaragonConfiguration configuration,
+                              BaragonAliasDatastore aliasDatastore) {
     this.loadBalancerDatastore = loadBalancerDatastore;
     this.knownAgentsDatastore = knownAgentsDatastore;
     this.stateDatastore = stateDatastore;
     this.configuration = configuration;
+    this.aliasDatastore = aliasDatastore;
   }
 
   @GET
   @NoAuth
   public Collection<String> getClusters() {
-    return loadBalancerDatastore.getLoadBalancerGroupNames();
+    Set<String> allValidGroups = new HashSet<>();
+    allValidGroups.addAll(loadBalancerDatastore.getLoadBalancerGroupNames());
+    allValidGroups.addAll(aliasDatastore.getAllAliases());
+    return allValidGroups;
   }
 
   @GET
