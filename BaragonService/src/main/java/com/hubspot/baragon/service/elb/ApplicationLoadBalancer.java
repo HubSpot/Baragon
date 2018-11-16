@@ -782,9 +782,10 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
       try {
         if ((trafficSource.getRegisterBy() == RegisterBy.INSTANCE_ID && agent.getEc2().getInstanceId().isPresent())
             || (trafficSource.getRegisterBy() == RegisterBy.PRIVATE_IP && agent.getEc2().getPrivateIp().isPresent())) {
-          if (agentShouldRegisterInTargetGroup(agent.getEc2().getInstanceId().get(), targets)) {
+          String id = trafficSource.getRegisterBy() == RegisterBy.INSTANCE_ID ? agent.getEc2().getInstanceId().get() : agent.getEc2().getPrivateIp().get();
+          if (agentShouldRegisterInTargetGroup(id, targets)) {
             targetDescriptions.add(new TargetDescription()
-                .withId(trafficSource.getRegisterBy() == RegisterBy.INSTANCE_ID ? agent.getEc2().getInstanceId().get() : agent.getEc2().getPrivateIp().get()));
+                .withId(id));
             LOG.info("Will register agent {} to target in group {}", agent, targetGroup);
           } else {
             LOG.debug("Agent {} is already registered", agent);
@@ -818,10 +819,10 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
     }
   }
 
-  private boolean agentShouldRegisterInTargetGroup(String baragonAgentInstanceId, Collection<TargetDescription> targets) {
+  private boolean agentShouldRegisterInTargetGroup(String id, Collection<TargetDescription> targets) {
     boolean shouldRegister = true;
     for (TargetDescription target : targets) {
-      if (target.getId().equals(baragonAgentInstanceId)) {
+      if (target.getId().equals(id)) {
         shouldRegister = false;
       }
     }
