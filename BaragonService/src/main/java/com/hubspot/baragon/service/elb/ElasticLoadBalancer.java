@@ -35,9 +35,9 @@ public abstract class ElasticLoadBalancer {
 
   public abstract boolean isInstanceHealthy(String instanceId, String name);
   public abstract AgentCheckInResponse removeInstance(Instance instance, String id, String elbName, String agentId);
-  public abstract AgentCheckInResponse checkRemovedInstance(Instance instance, String elbName, String agentId);
+  public abstract AgentCheckInResponse checkRemovedInstance(String id, String elbName, String agentId);
   public abstract AgentCheckInResponse registerInstance(Instance instance, String id, String elbName, BaragonAgentMetadata agent);
-  public abstract AgentCheckInResponse checkRegisteredInstance(Instance instance, TrafficSource trafficSource, BaragonAgentMetadata agent);
+  public abstract AgentCheckInResponse checkRegisteredInstance(Instance instance, String id, TrafficSource trafficSource, BaragonAgentMetadata agent);
   public abstract void syncAll(Collection<BaragonGroup> groups);
 
   Optional<BaragonKnownAgentMetadata> knownAgent(BaragonGroup group, String instanceId) {
@@ -55,8 +55,6 @@ public abstract class ElasticLoadBalancer {
     for (BaragonAgentMetadata agent : agents) {
       if (agent.getEc2().getInstanceId().isPresent()) {
         instanceIds.add(agent.getEc2().getInstanceId().get());
-      } else {
-        throw new IllegalArgumentException(String.format("Cannot have an absent Agent Instance Id (agent: %s)", agent.getAgentId()));
       }
     }
     return instanceIds;
