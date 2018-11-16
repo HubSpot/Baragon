@@ -64,15 +64,22 @@ public class ElbManager {
     long maxWaitTime = 0L;
     Optional<String> maybeExceptions = Optional.absent();
     if (isElbEnabledAgent(agent, group, groupName)) {
-
+      boolean anyCompatible = false;
+      StringBuilder message = new StringBuilder();
       for (TrafficSource source : group.get().getTrafficSources()) {
         if (source.getRegisterBy() == RegisterBy.PRIVATE_IP && !agent.getEc2().getPrivateIp().isPresent()) {
-          return new AgentCheckInResponse(TrafficSourceState.ERROR, Optional.of("No private ip present to register by"), maxWaitTime);
+          message.append(String.format("No private ip present to register by for source %s ", source.getName()));
+          continue;
+        } else if (source.getRegisterBy() == RegisterBy.INSTANCE_ID && !agent.getEc2().getInstanceId().isPresent()) {
+          message.append(String.format("No instance id present to register by for source %s ", source.getName()));
+          continue;
         }
-        Instance instance = new Instance(agent.getEc2().getInstanceId().get());
+        anyCompatible = true;
+        String id = source.getRegisterBy() == RegisterBy.PRIVATE_IP ? agent.getEc2().getPrivateIp().get() : agent.getEc2().getInstanceId().get();
+        Instance instance = source.getRegisterBy() == RegisterBy.PRIVATE_IP ? null : new Instance(agent.getEc2().getInstanceId().get());
         AgentCheckInResponse response = isStatusCheck ?
-            getLoadBalancer(source.getType()).checkRemovedInstance(instance, source.getName(), agent.getAgentId()) :
-            getLoadBalancer(source.getType()).removeInstance(instance, source.getRegisterBy() == RegisterBy.PRIVATE_IP ? agent.getEc2().getPrivateIp().get() : instance.getInstanceId(), source.getName(), agent.getAgentId());
+            getLoadBalancer(source.getType()).checkRemovedInstance(id, source.getName(), agent.getAgentId()) :
+            getLoadBalancer(source.getType()).removeInstance(instance, id, source.getName(), agent.getAgentId());
         if (response.getState().ordinal() > state.ordinal()) {
           state = response.getState();
         }
@@ -83,6 +90,9 @@ public class ElbManager {
           maxWaitTime = response.getWaitTime();
         }
       }
+      if (!anyCompatible) {
+        return new AgentCheckInResponse(TrafficSourceState.ERROR, Optional.of(message.toString()), maxWaitTime);
+      }
     }
     return new AgentCheckInResponse(state, maybeExceptions, maxWaitTime);
   }
@@ -92,14 +102,22 @@ public class ElbManager {
     Optional<String> maybeVpcException = Optional.absent();
     long maxWaitTime = 0L;
     if (isElbEnabledAgent(agent, group, groupName)) {
+      boolean anyCompatible = false;
+      StringBuilder message = new StringBuilder();
       for (TrafficSource source : group.get().getTrafficSources()) {
         if (source.getRegisterBy() == RegisterBy.PRIVATE_IP && !agent.getEc2().getPrivateIp().isPresent()) {
-          return new AgentCheckInResponse(TrafficSourceState.ERROR, Optional.of("No private ip present to register by"), maxWaitTime);
+          message.append(String.format("No private ip present to register by for source %s ", source.getName()));
+          continue;
+        } else if (source.getRegisterBy() == RegisterBy.INSTANCE_ID && !agent.getEc2().getInstanceId().isPresent()) {
+          message.append(String.format("No instance id present to register by for source %s ", source.getName()));
+          continue;
         }
-        Instance instance = new Instance(agent.getEc2().getInstanceId().get());
+        anyCompatible = true;
+        String id = source.getRegisterBy() == RegisterBy.PRIVATE_IP ? agent.getEc2().getPrivateIp().get() : agent.getEc2().getInstanceId().get();
+        Instance instance = source.getRegisterBy() == RegisterBy.PRIVATE_IP ? null : new Instance(agent.getEc2().getInstanceId().get());
         AgentCheckInResponse response = isStatusCheck ?
-            getLoadBalancer(source.getType()).checkRegisteredInstance(instance, source, agent) :
-            getLoadBalancer(source.getType()).registerInstance(instance, source.getRegisterBy() == RegisterBy.PRIVATE_IP ? agent.getEc2().getPrivateIp().get() : instance.getInstanceId(), source.getName(), agent);
+            getLoadBalancer(source.getType()).checkRegisteredInstance(instance, id, source, agent) :
+            getLoadBalancer(source.getType()).registerInstance(instance, id, source.getName(), agent);
         if (response.getExceptionMessage().isPresent()) {
           maybeVpcException = Optional.of(maybeVpcException.or("") + response.getExceptionMessage().get() + "\n");
         }
@@ -113,6 +131,9 @@ public class ElbManager {
       if (maybeVpcException.isPresent() && configuration.get().isFailWhenNoElbForVpc()) {
         throw new NoMatchingElbForVpcException(maybeVpcException.get());
       }
+      if (!anyCompatible) {
+        return new AgentCheckInResponse(TrafficSourceState.ERROR, Optional.of(message.toString()), maxWaitTime);
+      }
     }
     return new AgentCheckInResponse(state, maybeVpcException, maxWaitTime);
   }
@@ -120,10 +141,12 @@ public class ElbManager {
   public boolean isElbEnabledAgent(BaragonAgentMetadata agent, Optional<BaragonGroup> group, String groupName) {
     if (group.isPresent()) {
       if (!group.get().getTrafficSources().isEmpty()) {
-        if (agent.getEc2().getInstanceId().isPresent()) {
+        if (agent.getEc2().getInstanceId().isPresent() && registerBySourcePresent(group.get(), RegisterBy.INSTANCE_ID)) {
+          return true;
+        } else if (agent.getEc2().getPrivateIp().isPresent() && registerBySourcePresent(group.get(), RegisterBy.PRIVATE_IP)) {
           return true;
         } else {
-          LOG.debug("No instance id for agent {}, can't add to ELB", agent.getAgentId());
+          LOG.debug("No instance id or private ip for agent {}, can't add to ELB", agent.getAgentId());
         }
       } else {
         LOG.debug("No traffic sources for group {}, not adding agent {} to an ELB", group.get().getName(), agent.getAgentId());
@@ -132,6 +155,10 @@ public class ElbManager {
       LOG.debug("Group {} not found for agent {}", groupName, agent.getAgentId());
     }
     return false;
+  }
+
+  private boolean registerBySourcePresent(BaragonGroup group, RegisterBy registerBy) {
+    return group.getTrafficSources().stream().anyMatch((g) -> g.getRegisterBy() == registerBy);
   }
 
   public void syncAll() {

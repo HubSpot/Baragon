@@ -193,10 +193,10 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
   }
 
   @Override
-  public AgentCheckInResponse checkRemovedInstance(Instance instance, String trafficSourceName, String agentId) {
+  public AgentCheckInResponse checkRemovedInstance(String id, String trafficSourceName, String agentId) {
     Optional<TargetGroup> maybeTargetGroup = getTargetGroup(trafficSourceName);
     if (maybeTargetGroup.isPresent()) {
-      return getShutdownResponse(maybeTargetGroup.get().getTargetGroupArn(), new TargetDescription().withId(instance.getInstanceId()), false);
+      return getShutdownResponse(maybeTargetGroup.get().getTargetGroupArn(), new TargetDescription().withId(id), false);
     } else {
       String message = String.format("Could not find target group %s", trafficSourceName);
       LOG.error(message);
@@ -266,7 +266,7 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
     }
   }
 
-  private AgentCheckInResponse instanceHealthResponse(TargetDescription targetDescription, TargetGroup targetGroup, String instanceId) {
+  private AgentCheckInResponse instanceHealthResponse(TargetDescription targetDescription, TargetGroup targetGroup, String id) {
     TrafficSourceState state = TrafficSourceState.DONE;
     Optional<String> exception = Optional.absent();
     try {
@@ -291,7 +291,7 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
             state = TrafficSourceState.ERROR;
         }
       } else {
-        String message = String.format("Instance %s not found in target group", instanceId);
+        String message = String.format("Instance %s not found in target group", id);
         LOG.error(message);
         exception = Optional.of(message);
         state = TrafficSourceState.ERROR;
@@ -303,13 +303,13 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
   }
 
   @Override
-  public AgentCheckInResponse checkRegisteredInstance(Instance instance, TrafficSource trafficSource, BaragonAgentMetadata agent) {
+  public AgentCheckInResponse checkRegisteredInstance(Instance instance, String id, TrafficSource trafficSource, BaragonAgentMetadata agent) {
     Optional<TargetGroup> maybeTargetGroup = getTargetGroup(trafficSource.getName());
     if (maybeTargetGroup.isPresent()) {
       return instanceHealthResponse(
           new TargetDescription().withId(trafficSource.getRegisterBy() == RegisterBy.INSTANCE_ID ? instance.getInstanceId() : agent.getEc2().getPrivateIp().get()),
           maybeTargetGroup.get(),
-          instance.getInstanceId());
+          id);
     } else {
       String message = String.format("Could not find target group %s", trafficSource.getName());
       LOG.error(message);
@@ -782,9 +782,10 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
       try {
         if ((trafficSource.getRegisterBy() == RegisterBy.INSTANCE_ID && agent.getEc2().getInstanceId().isPresent())
             || (trafficSource.getRegisterBy() == RegisterBy.PRIVATE_IP && agent.getEc2().getPrivateIp().isPresent())) {
-          if (agentShouldRegisterInTargetGroup(agent.getEc2().getInstanceId().get(), targetGroup, targets)) {
+          String id = trafficSource.getRegisterBy() == RegisterBy.INSTANCE_ID ? agent.getEc2().getInstanceId().get() : agent.getEc2().getPrivateIp().get();
+          if (agentShouldRegisterInTargetGroup(id, targets)) {
             targetDescriptions.add(new TargetDescription()
-                .withId(trafficSource.getRegisterBy() == RegisterBy.INSTANCE_ID ? agent.getEc2().getInstanceId().get() : agent.getEc2().getPrivateIp().get()));
+                .withId(id));
             LOG.info("Will register agent {} to target in group {}", agent, targetGroup);
           } else {
             LOG.debug("Agent {} is already registered", agent);
@@ -818,10 +819,10 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
     }
   }
 
-  private boolean agentShouldRegisterInTargetGroup(String baragonAgentInstanceId, TargetGroup targetGroup, Collection<TargetDescription> targets) {
+  private boolean agentShouldRegisterInTargetGroup(String id, Collection<TargetDescription> targets) {
     boolean shouldRegister = true;
     for (TargetDescription target : targets) {
-      if (target.getId().equals(baragonAgentInstanceId)) {
+      if (target.getId().equals(id)) {
         shouldRegister = false;
       }
     }
