@@ -78,6 +78,10 @@ public class BaragonAgentEc2Metadata {
 
   private static Optional<String> findVpc() {
     try {
+      Optional<String> maybeManuallySet = Optional.fromNullable(System.getenv("VPC_ID"));
+      if (maybeManuallySet.isPresent()) {
+        return maybeManuallySet;
+      }
       List<EC2MetadataUtils.NetworkInterface> networkInterfaces = EC2MetadataUtils.getNetworkInterfaces();
       if (EC2MetadataUtils.getNetworkInterfaces().isEmpty()) {
         return Optional.absent();

@@ -55,8 +55,6 @@ public abstract class ElasticLoadBalancer {
     for (BaragonAgentMetadata agent : agents) {
       if (agent.getEc2().getInstanceId().isPresent()) {
         instanceIds.add(agent.getEc2().getInstanceId().get());
-      } else {
-        throw new IllegalArgumentException(String.format("Cannot have an absent Agent Instance Id (agent: %s)", agent.getAgentId()));
       }
     }
     return instanceIds;
