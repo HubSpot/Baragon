@@ -790,10 +790,6 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
           } else {
             LOG.debug("Agent {} is already registered", agent);
           }
-        } else {
-          throw new IllegalArgumentException(
-              String.format("Agent instance ID must be present to register with an ELB (Agent %s)",
-                  agent.toString()));
         }
       } catch (Exception exn) {
         LOG.error("Could not create request to register agent {} due to error", agent, exn);
