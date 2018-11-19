@@ -124,6 +124,9 @@ public class BaragonAgentConfiguration extends Configuration {
   @JsonProperty("privateIp")
   private Optional<String> privateIp = Optional.absent();
 
+  @JsonProperty("skipPrivateIp")
+  private boolean skipPrivateIp = false;
+
   public HttpClientConfiguration getHttpClientConfiguration() {
     return httpClientConfiguration;
   }
@@ -350,5 +353,13 @@ public class BaragonAgentConfiguration extends Configuration {
 
   public void setPrivateIp(Optional<String> privateIp) {
     this.privateIp = privateIp;
+  }
+
+  public boolean isSkipPrivateIp() {
+    return skipPrivateIp;
+  }
+
+  public void setSkipPrivateIp(boolean skipPrivateIp) {
+    this.skipPrivateIp = skipPrivateIp;
   }
 }
