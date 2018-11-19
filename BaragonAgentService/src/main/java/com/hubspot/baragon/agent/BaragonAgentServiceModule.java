@@ -215,7 +215,7 @@ public class BaragonAgentServiceModule extends DropwizardAwareModule<BaragonAgen
     final String baseAgentUri = String.format(config.getBaseUrlTemplate(), hostname, httpPort, appRoot);
     final String agentId = String.format("%s:%s", hostname, httpPort);
 
-    return new BaragonAgentMetadata(baseAgentUri, agentId, domain, BaragonAgentEc2Metadata.fromEnvironment(config.getPrivateIp()), config.getGcloudMetadata(), config.getExtraAgentData(), true);
+    return new BaragonAgentMetadata(baseAgentUri, agentId, domain, BaragonAgentEc2Metadata.fromEnvironment(config.getPrivateIp(), config.isSkipPrivateIp()), config.getGcloudMetadata(), config.getExtraAgentData(), true);
   }
 
 
