@@ -138,12 +138,13 @@ public class LifecycleHelper {
   private Callable<AgentCheckInResponse> checkInCallable(String action, boolean addStatusParam) {
     return () -> {
       HttpResponse response = httpClient.execute(buildNotifyServiceRequest(action, addStatusParam));
-      LOG.info(String.format("Got %s response from BaragonService", response.getStatusCode()));
-      if (response.isError()) {
-        throw new AgentServiceNotifyException(String.format("Bad response received from BaragonService %s", response.getAsString()));
-      }
       try {
-        return response.getAs(AgentCheckInResponse.class);
+        if (response.isError()) {
+          throw new AgentServiceNotifyException(String.format("Bad response received from BaragonService %s", response.getAsString()));
+        }
+        AgentCheckInResponse checkInResponse = response.getAs(AgentCheckInResponse.class);
+        LOG.info("Got {} response from BaragonService: {}", response.getStatusCode(), checkInResponse);
+        return checkInResponse;
       } catch (Exception e) {
         if (response.isSuccess()) {
           LOG.warn("Unable to parse response ({}) from successful shutdown call", response.getAsString());
