@@ -8,11 +8,13 @@ import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.api.transaction.CuratorTransactionResult;
 import org.apache.curator.utils.ZKPaths;
 import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.KeeperException.NodeExistsException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.codahale.metrics.annotation.Timed;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Optional;
-import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
@@ -24,6 +26,8 @@ import com.hubspot.baragon.models.QueuedRequestId;
 
 @Singleton
 public class BaragonRequestDatastore extends AbstractDataStore {
+  private static final Logger LOG = LoggerFactory.getLogger(BaragonRequestDatastore.class);
+
   public static final String REQUESTS_FORMAT = "/request";
   public static final String REQUEST_FORMAT = REQUESTS_FORMAT + "/%s";
   public static final String REQUEST_STATE_FORMAT = REQUEST_FORMAT + "/status";
@@ -99,14 +103,14 @@ public class BaragonRequestDatastore extends AbstractDataStore {
   // REQUEST QUEUING
   //
   @Timed
-  public QueuedRequestId enqueueRequest(BaragonRequest request, InternalRequestStates state) {
+  public QueuedRequestId enqueueRequest(BaragonRequest request, InternalRequestStates state) throws NodeExistsException {
     final long start = System.currentTimeMillis();
 
-    try {
-      final String queuedRequestPath = String.format(REQUEST_ENQUEUE_FORMAT, request.getLoadBalancerService().getServiceId(), request.getLoadBalancerRequestId());
-      final String requestPath = String.format(REQUEST_FORMAT, request.getLoadBalancerRequestId());
-      final String requestStatePath = String.format(REQUEST_STATE_FORMAT, request.getLoadBalancerRequestId());
+    final String queuedRequestPath = String.format(REQUEST_ENQUEUE_FORMAT, request.getLoadBalancerService().getServiceId(), request.getLoadBalancerRequestId());
+    final String requestPath = String.format(REQUEST_FORMAT, request.getLoadBalancerRequestId());
+    final String requestStatePath = String.format(REQUEST_STATE_FORMAT, request.getLoadBalancerRequestId());
 
+    try {
       if (!nodeExists(REQUESTS_FORMAT)) {
         createNode(REQUESTS_FORMAT);
       }
@@ -125,9 +129,12 @@ public class BaragonRequestDatastore extends AbstractDataStore {
 
       log(OperationType.WRITE, Optional.of(3), Optional.of(requestBytes.length + stateBytes.length), start, String.format("Transaction Paths [%s + %s + %s]", requestPath, requestStatePath, queuedRequestPath));
 
-      return QueuedRequestId.fromString(ZKPaths.getNodeFromPath(Iterables.find(results, CuratorTransactionResult.ofTypeAndPath(org.apache.curator.framework.api.transaction.OperationType.CREATE, queuedRequestPath)).getResultPath()));
+      return QueuedRequestId.fromString(ZKPaths.getNodeFromPath(Iterables.find(results, CuratorTransactionResult.ofTypeAndPath(org.apache.curator.framework.api.transaction.OperationType.CREATE, queuedRequestPath))
+          .getResultPath()));
+    } catch (NodeExistsException nee) {
+      throw nee;
     } catch (Exception e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 
