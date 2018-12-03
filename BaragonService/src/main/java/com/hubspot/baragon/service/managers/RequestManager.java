@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.zookeeper.KeeperException.NodeExistsException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -237,9 +238,13 @@ public class RequestManager {
       throw new InvalidRequestActionException("The REVERT action may only be used internally by Baragon, you may specify UPDATE, DELETE, RELOAD, or leave the action blank(UPDATE)");
     }
 
-    final QueuedRequestId queuedRequestId = requestDatastore.enqueueRequest(request, InternalRequestStates.PENDING);
+    try {
+      final QueuedRequestId queuedRequestId = requestDatastore.enqueueRequest(request, InternalRequestStates.PENDING);
 
-    requestDatastore.setRequestMessage(request.getLoadBalancerRequestId(), String.format("Queued as %s", queuedRequestId));
+      requestDatastore.setRequestMessage(request.getLoadBalancerRequestId(), String.format("Queued as %s", queuedRequestId));
+    } catch (NodeExistsException nee) {
+      LOG.warn("Tried to write request {}, but already existed, returning current contents", request.getLoadBalancerRequestId());
+    }
 
     return getResponse(request.getLoadBalancerService().getServiceId(), request.getLoadBalancerRequestId()).get();
   }
