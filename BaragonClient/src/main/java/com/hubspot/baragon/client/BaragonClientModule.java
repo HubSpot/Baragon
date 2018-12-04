@@ -4,6 +4,7 @@ import java.util.List;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.guava.GuavaModule;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.google.common.base.Optional;
 import com.google.inject.AbstractModule;
 import com.google.inject.Binder;
@@ -48,6 +49,7 @@ public class BaragonClientModule extends AbstractModule {
     final ObjectMapper objectMapper = new ObjectMapper();
 
     objectMapper.registerModule(new GuavaModule());
+    objectMapper.registerModule(new Jdk8Module());
 
     return objectMapper;
   }
