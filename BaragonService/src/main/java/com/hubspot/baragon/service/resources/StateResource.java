@@ -2,6 +2,8 @@ package com.hubspot.baragon.service.resources;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
@@ -27,8 +29,6 @@ import com.hubspot.baragon.cache.BaragonStateCache;
 import com.hubspot.baragon.cache.CachedBaragonState;
 import com.hubspot.baragon.models.BaragonResponse;
 import com.hubspot.baragon.models.BaragonServiceState;
-import com.hubspot.baragon.models.UpstreamInfo;
-import com.hubspot.baragon.service.exceptions.BaragonNotFoundException;
 import com.hubspot.baragon.service.exceptions.BaragonWebException;
 import com.hubspot.baragon.service.managers.ServiceManager;
 
@@ -77,20 +77,19 @@ public class StateResource {
 
   @GET
   @NoAuth
-  public BaragonServiceState getService(@QueryParam("host") String host, @QueryParam("port") String port) {
+  public List<BaragonServiceState> getService(@QueryParam("host") String host, @QueryParam("port") String port) {
+    // Important - Normally, only a single service is on a given host and port. But in the past we've seen a critsit
+    // where multiple services were on the same host and port. This endpoint returns a collection so we can easily
+    // identify that scenario occur in the future.
     try {
       Collection<BaragonServiceState> services = objectMapper.readValue(stateCache.getState().getUncompressed(), new TypeReference<Collection<BaragonServiceState>>(){});
-      for (BaragonServiceState state : services) {
-        for (UpstreamInfo upstreamInfo : state.getUpstreams()) {
-          if (upstreamInfo.getUpstream().matches(String.format("%s\\.\\w+:%s", host, port))) {
-            return state;
-          }
-        }
-      }
+      return services.stream()
+          .filter(state -> state.getUpstreams().stream()
+              .anyMatch(u -> u.getUpstream().matches(String.format("%s\\.\\w+:%s", host, port))))
+          .collect(Collectors.toList());
     } catch (IOException e) {
       throw new BaragonWebException("Failed to read service data.");
     }
-    throw new BaragonNotFoundException(String.format("Unable to find service running on %s:%s", host, port));
   }
 
   @POST
