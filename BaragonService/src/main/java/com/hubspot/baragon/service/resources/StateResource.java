@@ -65,6 +65,11 @@ public class StateResource {
     return serviceManager.getService(serviceId);
   }
 
+  @GET
+  @NoAuth
+  public Optional<BaragonServiceState> getService(@QueryParam("host") String host, @QueryParam("port") String port) {
+    return serviceManager.getService(host, port);
+  }
 
   @POST
   @Path("/{serviceId}/reload")
