@@ -1,5 +1,8 @@
 package com.hubspot.baragon.service.resources;
 
+import java.io.IOException;
+import java.util.Collection;
+
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
@@ -14,6 +17,8 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 
 import com.codahale.metrics.annotation.Timed;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Optional;
 import com.google.common.net.HttpHeaders;
 import com.google.inject.Inject;
@@ -22,11 +27,15 @@ import com.hubspot.baragon.cache.BaragonStateCache;
 import com.hubspot.baragon.cache.CachedBaragonState;
 import com.hubspot.baragon.models.BaragonResponse;
 import com.hubspot.baragon.models.BaragonServiceState;
+import com.hubspot.baragon.models.UpstreamInfo;
+import com.hubspot.baragon.service.exceptions.BaragonNotFoundException;
+import com.hubspot.baragon.service.exceptions.BaragonWebException;
 import com.hubspot.baragon.service.managers.ServiceManager;
 
 @Path("/state")
 @Produces(MediaType.APPLICATION_JSON)
 public class StateResource {
+  private final ObjectMapper objectMapper;
   private final ServiceManager serviceManager;
   private final BaragonStateCache stateCache;
 
@@ -34,7 +43,8 @@ public class StateResource {
   private String acceptEncoding;
 
   @Inject
-  public StateResource(ServiceManager serviceManager, BaragonStateCache stateCache) {
+  public StateResource(ObjectMapper objectMapper, ServiceManager serviceManager, BaragonStateCache stateCache) {
+    this.objectMapper = objectMapper;
     this.serviceManager = serviceManager;
     this.stateCache = stateCache;
   }
@@ -67,8 +77,20 @@ public class StateResource {
 
   @GET
   @NoAuth
-  public Optional<BaragonServiceState> getService(@QueryParam("host") String host, @QueryParam("port") String port) {
-    return serviceManager.getService(host, port);
+  public BaragonServiceState getService(@QueryParam("host") String host, @QueryParam("port") String port) {
+    try {
+      Collection<BaragonServiceState> services = objectMapper.readValue(stateCache.getState().getUncompressed(), new TypeReference<Collection<BaragonServiceState>>(){});
+      for (BaragonServiceState state : services) {
+        for (UpstreamInfo upstreamInfo : state.getUpstreams()) {
+          if (upstreamInfo.getUpstream().matches(String.format("%s\\.\\w+:%s", host, port))) {
+            return state;
+          }
+        }
+      }
+    } catch (IOException e) {
+      throw new BaragonWebException("Failed to read service data.");
+    }
+    throw new BaragonNotFoundException(String.format("Unable to find service running on %s:%s", host, port));
   }
 
   @POST

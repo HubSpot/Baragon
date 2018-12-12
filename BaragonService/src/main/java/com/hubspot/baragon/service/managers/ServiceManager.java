@@ -1,7 +1,6 @@
 package com.hubspot.baragon.service.managers;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -24,25 +23,6 @@ public class ServiceManager {
   public ServiceManager(BaragonStateDatastore stateDatastore, RequestManager requestManager) {
     this.stateDatastore = stateDatastore;
     this.requestManager = requestManager;
-  }
-
-  public Optional<BaragonServiceState> getService(String host, String port) {
-    Collection<String> services = stateDatastore.getServices();
-
-    try {
-      for (String serviceId : services) {
-        Collection<UpstreamInfo> upstreams = stateDatastore.getUpstreams(serviceId);
-        for (UpstreamInfo upstreamInfo : upstreams) {
-          String upstream = upstreamInfo.getUpstream();
-          if (upstream.matches(String.format("%s\\.\\w+:%s", host, port))) {
-            return getService(serviceId);
-          }
-        }
-      }
-    }catch (Exception e) {
-      throw Throwables.propagate(e);
-    }
-    return Optional.absent();
   }
 
   public Optional<BaragonServiceState> getService(String serviceId) {
