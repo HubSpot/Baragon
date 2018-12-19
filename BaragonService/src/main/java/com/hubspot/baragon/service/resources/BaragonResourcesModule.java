@@ -13,6 +13,7 @@ public class BaragonResourcesModule extends AbstractModule {
     bind(LoadBalancerResource.class);
     bind(MetricsResource.class);
     bind(RequestResource.class);
+    bind(ServiceLookupResource.class);
     bind(StateResource.class);
     bind(StatusResource.class);
     bind(UIResource.class);
