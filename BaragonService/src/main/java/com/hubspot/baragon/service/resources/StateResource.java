@@ -65,7 +65,6 @@ public class StateResource {
     return serviceManager.getService(serviceId);
   }
 
-
   @POST
   @Path("/{serviceId}/reload")
   public BaragonResponse reloadConfigs(@PathParam("serviceId") String serviceId, @DefaultValue("false") @QueryParam("noValidate") boolean noValidate) {
