@@ -77,7 +77,8 @@ public class StateResource {
 
   @GET
   @NoAuth
-  public List<BaragonServiceState> getServices(@QueryParam("hostPort") String hostPort) {
+  @Path("/{hostPort}")
+  public List<BaragonServiceState> getServices(@PathParam("hostPort") String hostPort) {
     // Important - Normally, only a single service is on a given host and port. But in the past we've seen a critsit
     // where multiple services were on the same host and port. This endpoint returns a collection so we can easily
     // identify that scenario occur in the future.
