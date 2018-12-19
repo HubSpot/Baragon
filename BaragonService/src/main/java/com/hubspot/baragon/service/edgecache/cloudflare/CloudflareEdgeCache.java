@@ -1,6 +1,7 @@
 package com.hubspot.baragon.service.edgecache.cloudflare;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -54,34 +55,36 @@ public class CloudflareEdgeCache implements EdgeCache {
     try {
       boolean allSucceeded = true;
       for (String edgeCacheDNS : request.getLoadBalancerService().getEdgeCacheDomains()) {
-        Optional<CloudflareZone> matchingZone = getCloudflareZone(edgeCacheDNS);
+        List<CloudflareZone> matchingZones = getCloudflareZone(edgeCacheDNS);
 
-        if (!matchingZone.isPresent()) {
+        if (matchingZones.isEmpty()) {
           LOG.warn("`edgeCacheDNS` was defined on the request, but no matching Cloudflare Zone was found!");
           return false;
         }
 
-        String zoneId = matchingZone.get().getId();
-        Optional<CloudflareDnsRecord> matchingDnsRecord = getCloudflareDnsRecord(edgeCacheDNS, zoneId);
+        for (CloudflareZone matchingZone : matchingZones) {
+          String zoneId = matchingZone.getId();
+          Optional<CloudflareDnsRecord> matchingDnsRecord = getCloudflareDnsRecord(edgeCacheDNS, zoneId);
 
-        if (!matchingDnsRecord.isPresent()) {
-          LOG.warn("`edgeCacheDNS` was defined on the request, but no matching Cloudflare DNS Record was found!");
-          return false;
+          if (!matchingDnsRecord.isPresent()) {
+            LOG.warn("`edgeCacheDNS` was defined on the request, but no matching Cloudflare DNS Record was found!");
+            return false;
+          }
+
+          if (!matchingDnsRecord.get().isProxied()) {
+            LOG.warn("`edgeCacheDNS` was defined on the request, but {} is not a proxied DNS record!", edgeCacheDNS);
+            return false;
+          }
+
+          String cacheTag = String.format(
+              edgeCacheConfiguration.getIntegrationSettings().get("cacheTagFormat"),
+              request.getLoadBalancerService().getServiceId()
+          );
+
+          LOG.debug("Sending cache purge request against {} for {} to Cloudflare...", matchingDnsRecord.get().getName(), cacheTag);
+
+          allSucceeded = cf.purgeEdgeCache(zoneId, Collections.singletonList(cacheTag)) && allSucceeded;
         }
-
-        if (!matchingDnsRecord.get().isProxied()) {
-          LOG.warn("`edgeCacheDNS` was defined on the request, but {} is not a proxied DNS record!", edgeCacheDNS);
-          return false;
-        }
-
-        String cacheTag = String.format(
-            edgeCacheConfiguration.getIntegrationSettings().get("cacheTagFormat"),
-            request.getLoadBalancerService().getServiceId()
-        );
-
-        LOG.debug("Sending cache purge request against {} for {} to Cloudflare...", matchingDnsRecord.get().getName(), cacheTag);
-
-        allSucceeded = cf.purgeEdgeCache(zoneId, Collections.singletonList(cacheTag)) && allSucceeded;
       }
       return allSucceeded;
 
@@ -95,9 +98,9 @@ public class CloudflareEdgeCache implements EdgeCache {
     return Optional.ofNullable(cf.getDnsRecord(zoneId, edgeCacheDNS));
   }
 
-  private Optional<CloudflareZone> getCloudflareZone(String edgeCacheDNS) throws CloudflareClientException {
+  private List<CloudflareZone> getCloudflareZone(String edgeCacheDNS) throws CloudflareClientException {
     String baseDomain = getBaseDomain(edgeCacheDNS);
-    return Optional.ofNullable(cf.getZone(baseDomain));
+    return cf.getZone(baseDomain);
   }
 
   private String getBaseDomain(String dns) {

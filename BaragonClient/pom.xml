@@ -5,31 +5,12 @@
   <parent>
     <groupId>com.hubspot</groupId>
     <artifactId>Baragon</artifactId>
-    <version>0.7.0-SNAPSHOT</version>
+    <version>0.7.1-SNAPSHOT</version>
   </parent>
 
   <artifactId>BaragonClient</artifactId>
 
   <dependencies>
-    <dependency>
-      <groupId>com.hubspot</groupId>
-      <artifactId>BaragonCore</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>com.google.inject</groupId>
-      <artifactId>guice</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>javax.inject</groupId>
-      <artifactId>javax.inject</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>com.google.guava</groupId>
-      <artifactId>guava</artifactId>
-    </dependency>
 
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
@@ -47,6 +28,25 @@
     </dependency>
 
     <dependency>
+      <groupId>com.fasterxml.jackson.datatype</groupId>
+      <artifactId>jackson-datatype-jdk8</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>com.google.inject</groupId>
+      <artifactId>guice</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.hubspot</groupId>
+      <artifactId>BaragonCore</artifactId>
+    </dependency>
+
+    <dependency>
       <groupId>com.hubspot</groupId>
       <artifactId>HorizonCore</artifactId>
     </dependency>
@@ -54,6 +54,11 @@
     <dependency>
       <groupId>com.hubspot</groupId>
       <artifactId>HorizonNing</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>javax.inject</groupId>
+      <artifactId>javax.inject</artifactId>
     </dependency>
 
     <dependency>

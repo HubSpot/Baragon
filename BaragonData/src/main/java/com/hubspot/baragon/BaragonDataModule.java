@@ -23,6 +23,7 @@ import com.hubspot.baragon.auth.BaragonAuthFilter;
 import com.hubspot.baragon.cache.BaragonStateCache;
 import com.hubspot.baragon.config.AuthConfiguration;
 import com.hubspot.baragon.data.BaragonAgentResponseDatastore;
+import com.hubspot.baragon.data.BaragonAliasDatastore;
 import com.hubspot.baragon.data.BaragonAuthDatastore;
 import com.hubspot.baragon.data.BaragonConnectionStateListener;
 import com.hubspot.baragon.data.BaragonKnownAgentsDatastore;
@@ -76,6 +77,7 @@ public class BaragonDataModule extends AbstractModule {
     bind(BaragonRequestDatastore.class).in(Scopes.SINGLETON);
     bind(BaragonResponseHistoryDatastore.class).in(Scopes.SINGLETON);
     bind(BaragonZkMetaDatastore.class).in(Scopes.SINGLETON);
+    bind(BaragonAliasDatastore.class).in(Scopes.SINGLETON);
 
     bind(ZkParallelFetcher.class).in(Scopes.SINGLETON);
 

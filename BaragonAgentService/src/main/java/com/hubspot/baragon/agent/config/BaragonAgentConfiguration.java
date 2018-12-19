@@ -112,9 +112,6 @@ public class BaragonAgentConfiguration extends Configuration {
   @JsonProperty("zeroWeightString")
   private String zeroWeightString = "backup";
 
-  @JsonProperty("sameRackMultiplier")
-  private int sameRackMultiplier = 2;
-
   @JsonProperty("weightingFormat")
   private String weightingFormat = "weight=%s";
 
@@ -123,6 +120,12 @@ public class BaragonAgentConfiguration extends Configuration {
 
   @JsonProperty("removeFileOnShutdown")
   private Optional<String> removeFileOnShutdown = Optional.absent();
+
+  @JsonProperty("privateIp")
+  private Optional<String> privateIp = Optional.absent();
+
+  @JsonProperty("skipPrivateIp")
+  private boolean skipPrivateIp = false;
 
   public HttpClientConfiguration getHttpClientConfiguration() {
     return httpClientConfiguration;
@@ -312,14 +315,6 @@ public class BaragonAgentConfiguration extends Configuration {
     this.zeroWeightString = zeroWeightString;
   }
 
-  public int getSameRackMultiplier() {
-    return sameRackMultiplier;
-  }
-
-  public void setSameRackMultiplier(int sameRackMultiplier) {
-    this.sameRackMultiplier = sameRackMultiplier;
-  }
-
   public String getWeightingFormat() {
     return weightingFormat;
   }
@@ -350,5 +345,21 @@ public class BaragonAgentConfiguration extends Configuration {
 
   public void setRemoveFileOnShutdown(Optional<String> removeFileOnShutdown) {
     this.removeFileOnShutdown = removeFileOnShutdown;
+  }
+
+  public Optional<String> getPrivateIp() {
+    return privateIp;
+  }
+
+  public void setPrivateIp(Optional<String> privateIp) {
+    this.privateIp = privateIp;
+  }
+
+  public boolean isSkipPrivateIp() {
+    return skipPrivateIp;
+  }
+
+  public void setSkipPrivateIp(boolean skipPrivateIp) {
+    this.skipPrivateIp = skipPrivateIp;
   }
 }

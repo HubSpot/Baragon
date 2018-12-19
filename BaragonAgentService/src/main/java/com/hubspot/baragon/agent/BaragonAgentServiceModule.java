@@ -37,6 +37,7 @@ import com.hubspot.baragon.agent.handlebars.IfContainedInHelperSource;
 import com.hubspot.baragon.agent.handlebars.IfEqualHelperSource;
 import com.hubspot.baragon.agent.handlebars.PreferSameRackWeightingHelper;
 import com.hubspot.baragon.agent.handlebars.ResolveHostnameHelper;
+import com.hubspot.baragon.agent.handlebars.ToNginxVarHelper;
 import com.hubspot.baragon.agent.healthcheck.ConfigChecker;
 import com.hubspot.baragon.agent.healthcheck.LoadBalancerHealthcheck;
 import com.hubspot.baragon.agent.healthcheck.ZooKeeperHealthcheck;
@@ -62,9 +63,8 @@ import com.hubspot.baragon.models.BaragonAgentMetadata;
 import com.hubspot.baragon.models.BaragonAgentState;
 import com.hubspot.baragon.utils.JavaUtils;
 import com.hubspot.dropwizard.guicier.DropwizardAwareModule;
-import com.hubspot.horizon.HttpClient;
 import com.hubspot.horizon.HttpConfig;
-import com.hubspot.horizon.apache.ApacheHttpClient;
+import com.hubspot.horizon.ning.NingHttpClient;
 
 import io.dropwizard.jetty.HttpConnectorFactory;
 import io.dropwizard.server.SimpleServerFactory;
@@ -125,6 +125,7 @@ public class BaragonAgentServiceModule extends DropwizardAwareModule<BaragonAgen
     handlebars.registerHelpers(new PreferSameRackWeightingHelper(config, agentMetadata));
     handlebars.registerHelpers(IfEqualHelperSource.class);
     handlebars.registerHelpers(IfContainedInHelperSource.class);
+    handlebars.registerHelper(ToNginxVarHelper.NAME, new ToNginxVarHelper());
 
     return handlebars;
   }
@@ -214,7 +215,7 @@ public class BaragonAgentServiceModule extends DropwizardAwareModule<BaragonAgen
     final String baseAgentUri = String.format(config.getBaseUrlTemplate(), hostname, httpPort, appRoot);
     final String agentId = String.format("%s:%s", hostname, httpPort);
 
-    return new BaragonAgentMetadata(baseAgentUri, agentId, domain, BaragonAgentEc2Metadata.fromEnvironment(), config.getGcloudMetadata(), config.getExtraAgentData(), true);
+    return new BaragonAgentMetadata(baseAgentUri, agentId, domain, BaragonAgentEc2Metadata.fromEnvironment(config.getPrivateIp(), config.isSkipPrivateIp()), config.getGcloudMetadata(), config.getExtraAgentData(), true);
   }
 
 
@@ -265,7 +266,7 @@ public class BaragonAgentServiceModule extends DropwizardAwareModule<BaragonAgen
   @Provides
   @Singleton
   @Named(BARAGON_AGENT_HTTP_CLIENT)
-  public HttpClient providesApacheHttpClient(HttpClientConfiguration config, ObjectMapper objectMapper) {
+  public NingHttpClient providesApacheHttpClient(HttpClientConfiguration config, ObjectMapper objectMapper) {
     HttpConfig.Builder configBuilder = HttpConfig.newBuilder()
       .setRequestTimeoutSeconds(config.getRequestTimeoutInMs() / 1000)
       .setUserAgent(config.getUserAgent())
@@ -274,7 +275,7 @@ public class BaragonAgentServiceModule extends DropwizardAwareModule<BaragonAgen
       .setMaxRetries(config.getMaxRequestRetry())
       .setObjectMapper(objectMapper);
 
-    return new ApacheHttpClient(configBuilder.build());
+    return new NingHttpClient(configBuilder.build());
   }
 
   @Singleton

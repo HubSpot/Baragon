@@ -20,12 +20,14 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.hubspot.baragon.models.BaragonAgentMetadata;
 import com.hubspot.baragon.models.BaragonGroup;
+import com.hubspot.baragon.models.BaragonGroupAlias;
 import com.hubspot.baragon.models.BaragonRequest;
 import com.hubspot.baragon.models.BaragonResponse;
 import com.hubspot.baragon.models.BaragonService;
 import com.hubspot.baragon.models.BaragonServiceState;
 import com.hubspot.baragon.models.BaragonServiceStatus;
 import com.hubspot.baragon.models.QueuedRequestId;
+import com.hubspot.baragon.models.UpstreamInfo;
 import com.hubspot.horizon.HttpClient;
 import com.hubspot.horizon.HttpRequest;
 import com.hubspot.horizon.HttpRequest.Method;
@@ -50,11 +52,15 @@ public class BaragonServiceClient {
   private static final String REQUEST_FORMAT = "%s/request";
   private static final String REQUEST_ID_FORMAT = REQUEST_FORMAT + "/%s";
 
+  private static final String UPSTREAM_REQUEST_FORMAT = REQUEST_FORMAT + "/upstreams/%s";
+
   private static final String STATE_FORMAT = "%s/state";
   private static final String STATE_SERVICE_ID_FORMAT = STATE_FORMAT + "/%s";
   private static final String STATE_RELOAD_FORMAT = STATE_SERVICE_ID_FORMAT + "/reload";
 
   private static final String STATUS_FORMAT = "%s/status";
+
+  private static final String ALIASES_FORMAT = "%s/aliases/%s";
 
   private static final TypeReference<Collection<String>> STRING_COLLECTION = new TypeReference<Collection<String>>() {};
   private static final TypeReference<Collection<BaragonGroup>> BARAGON_GROUP_COLLECTION = new TypeReference<Collection<BaragonGroup>>() {};
@@ -232,6 +238,30 @@ public class BaragonServiceClient {
     return response;
   }
 
+  private <T> Optional<T> put(String uri, String type, Optional<Class<T>> clazz, Map<String, String> queryParams) {
+    try {
+      HttpResponse response = put(uri, type, queryParams);
+
+      if (clazz.isPresent()) {
+        return Optional.of(response.getAs(clazz.get()));
+      }
+    } catch (Exception e) {
+      LOG.warn("Http post failed", e);
+    }
+
+    return Optional.absent();
+  }
+
+  private HttpResponse put(String uri, String type, Map<String, String> params) {
+    LOG.debug("Posting {} to {}", type, uri);
+    final long start = System.currentTimeMillis();
+    HttpRequest.Builder request = buildRequest(uri, params).setMethod(Method.PUT);
+    HttpResponse response = httpClient.execute(request.build());
+    checkResponse(type, response);
+    LOG.debug("Successfully posted {} in {}ms", type, System.currentTimeMillis() - start);
+    return response;
+  }
+
   // BaragonService overall status
 
   public Optional<BaragonServiceStatus> getBaragonServiceStatus(String baseUrl) {
@@ -352,11 +382,42 @@ public class BaragonServiceClient {
     return delete(uri, "request", requestId, Collections.<String, String>emptyMap(), Optional.of(BaragonResponse.class));
   }
 
+  public Optional<BaragonResponse> addUpstream(String serviceId, UpstreamInfo upstreamInfo) {
+    final String uri = String.format(UPSTREAM_REQUEST_FORMAT, getBaseUrl(), serviceId);
+    return put(uri, "upstream-add", Optional.of(BaragonResponse.class), ImmutableMap.of("upstream", upstreamInfo.toPath()));
+  }
+
+  public Optional<BaragonResponse> setUpstreams(String serviceId, List<UpstreamInfo> upstreamInfo) {
+    final String uri = String.format(UPSTREAM_REQUEST_FORMAT, getBaseUrl(), serviceId);
+    return post(uri, "upstream-add", Optional.of(upstreamInfo), Optional.of(BaragonResponse.class));
+  }
+
+  public Optional<BaragonResponse> removeUpstream(String serviceId, UpstreamInfo upstreamInfo) {
+    final String uri = String.format(UPSTREAM_REQUEST_FORMAT, getBaseUrl(), serviceId);
+    return delete(uri, "upstream-remove", serviceId, ImmutableMap.of("upstream", upstreamInfo.toPath()), Optional.of(BaragonResponse.class));
+  }
 
   // BaragonService queued request actions
 
   public Collection<QueuedRequestId> getQueuedRequests() {
     final String uri = String.format(REQUEST_FORMAT, getBaseUrl());
     return getCollection(uri, "queued requests", QUEUED_REQUEST_COLLECTION);
+  }
+
+  // Aliases
+
+  public Optional<BaragonGroupAlias> getAlias(String name) {
+    final String uri = String.format(ALIASES_FORMAT, getBaseUrl(), name);
+    return getSingle(uri, "alias", name, BaragonGroupAlias.class);
+  }
+
+  public void createAlias(String name, BaragonGroupAlias alias) {
+    final String uri = String.format(ALIASES_FORMAT, getBaseUrl(), name);
+    post(uri, "alias", Optional.of(alias), Optional.absent());
+  }
+
+  public void deleteAlias(String name) {
+    final String uri = String.format(ALIASES_FORMAT, getBaseUrl(), name);
+    delete(uri, "alias", name, Collections.emptyMap());
   }
 }

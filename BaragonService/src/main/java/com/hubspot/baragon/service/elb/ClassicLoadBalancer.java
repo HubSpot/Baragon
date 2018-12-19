@@ -30,6 +30,7 @@ import com.hubspot.baragon.data.BaragonLoadBalancerDatastore;
 import com.hubspot.baragon.models.AgentCheckInResponse;
 import com.hubspot.baragon.models.BaragonAgentMetadata;
 import com.hubspot.baragon.models.BaragonGroup;
+import com.hubspot.baragon.models.RegisterBy;
 import com.hubspot.baragon.models.TrafficSource;
 import com.hubspot.baragon.models.TrafficSourceState;
 import com.hubspot.baragon.models.TrafficSourceType;
@@ -65,7 +66,7 @@ public class ClassicLoadBalancer extends ElasticLoadBalancer {
     return instanceIsHealthy;
   }
 
-  public AgentCheckInResponse removeInstance(Instance instance, String elbName, String agentId) {
+  public AgentCheckInResponse removeInstance(Instance instance, String id, String elbName, String agentId) {
     Optional<LoadBalancerDescription> elb = getElb(elbName);
     if (elb.isPresent()) {
       if (elb.get().getInstances().contains(instance)) {
@@ -79,7 +80,7 @@ public class ClassicLoadBalancer extends ElasticLoadBalancer {
     return new AgentCheckInResponse(TrafficSourceState.DONE, Optional.absent(), 0L);
   }
 
-  public AgentCheckInResponse registerInstance(Instance instance, String elbName, BaragonAgentMetadata agent) {
+  public AgentCheckInResponse registerInstance(Instance instance, String id, String elbName, BaragonAgentMetadata agent) {
     Optional<String> maybeException = Optional.absent();
     Optional<LoadBalancerDescription> elb = getElb(elbName);
     if (elb.isPresent()) {
@@ -99,11 +100,11 @@ public class ClassicLoadBalancer extends ElasticLoadBalancer {
     return new AgentCheckInResponse(TrafficSourceState.DONE, maybeException, 0L);
   }
 
-  public AgentCheckInResponse checkRegisteredInstance(Instance instance, String trafficSourceName, BaragonAgentMetadata agent) {
+  public AgentCheckInResponse checkRegisteredInstance(Instance instance, String id, TrafficSource trafficSource, BaragonAgentMetadata agent) {
     return new AgentCheckInResponse(TrafficSourceState.DONE, Optional.absent(), 0L);
   }
 
-  public AgentCheckInResponse checkRemovedInstance(Instance instance, String elbName, String agentId) {
+  public AgentCheckInResponse checkRemovedInstance(String id, String elbName, String agentId) {
     return new AgentCheckInResponse(TrafficSourceState.DONE, Optional.absent(), 0L);
   }
 
@@ -298,7 +299,7 @@ public class ClassicLoadBalancer extends ElasticLoadBalancer {
     List<String> agentInstanceIds = agentInstanceIds(agents);
     List<DeregisterInstancesFromLoadBalancerRequest> requests = new ArrayList<>();
     for (LoadBalancerDescription elb : elbs) {
-      if (group.getTrafficSources().contains(new TrafficSource(elb.getLoadBalancerName(), TrafficSourceType.CLASSIC))) {
+      if (group.getTrafficSources().contains(new TrafficSource(elb.getLoadBalancerName(), TrafficSourceType.CLASSIC, RegisterBy.INSTANCE_ID))) {
         for (Instance instance : elb.getInstances()) {
           if (!agentInstanceIds.contains(instance.getInstanceId()) && canDeregisterAgent(group, instance.getInstanceId())) {
             List<Instance> instanceList = new ArrayList<>(1);
