@@ -73,6 +73,9 @@ public class BaragonAgentConfiguration extends Configuration {
   @Valid
   private HttpClientConfiguration httpClientConfiguration = new HttpClientConfiguration();
 
+  @JsonProperty("visibleToBaragonService")
+  private boolean visibleToBaragonService = true;
+
   @JsonProperty("registerOnStartup")
   private boolean registerOnStartup = true;
 
@@ -217,6 +220,14 @@ public class BaragonAgentConfiguration extends Configuration {
 
   public void setHeartbeatIntervalSeconds(int heartbeatIntervalSeconds) {
     this.heartbeatIntervalSeconds = heartbeatIntervalSeconds;
+  }
+
+  public boolean isVisibleToBaragonService() {
+    return visibleToBaragonService;
+  }
+
+  public void setVisibleToBaragonService(boolean visibleToBaragonService) {
+    this.visibleToBaragonService = visibleToBaragonService;
   }
 
   public boolean isRegisterOnStartup() {
