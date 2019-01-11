@@ -69,7 +69,7 @@ public class RequestResource {
       BaragonRequest updatedForAliases = aliasDatastore.updateForAliases(request);
       BaragonRequest updatedForDefaultDomains = loadBalancerDatastore.updateForDefaultDomains(updatedForAliases);
       LOG.info("Received request: {}", request);
-      return manager.enqueueRequest(updatedForAliases);
+      return manager.enqueueRequest(updatedForDefaultDomains);
     } catch (Exception e) {
       LOG.error("Caught exception for {}", request.getLoadBalancerRequestId(), e);
       return BaragonResponse.failure(request.getLoadBalancerRequestId(), e.getMessage());
