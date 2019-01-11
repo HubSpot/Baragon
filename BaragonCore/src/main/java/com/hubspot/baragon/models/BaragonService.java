@@ -101,6 +101,10 @@ public class BaragonService {
     return new BaragonService(serviceId, owners, serviceBasePath, additionalPaths, updatedFromAlias.getGroups(), options, templateName, updatedFromAlias.getDomains(), updatedFromAlias.getEdgeCacheDomains());
   }
 
+  public BaragonService withDomains(Set<String> domains) {
+    return new BaragonService(serviceId, owners, serviceBasePath, additionalPaths, loadBalancerGroups, options, templateName, domains, edgeCacheDomains);
+  }
+
   public String getServiceId() {
     return serviceId;
   }

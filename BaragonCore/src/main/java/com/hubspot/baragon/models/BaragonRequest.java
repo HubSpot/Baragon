@@ -2,6 +2,7 @@ package com.hubspot.baragon.models;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -91,6 +92,10 @@ public class BaragonRequest {
 
   public BaragonRequest withUpdatedGroups(BaragonGroupAlias updatedFromAlias) {
     return new BaragonRequest(loadBalancerRequestId, loadBalancerService.withUpdatedGroups(updatedFromAlias), addUpstreams, removeUpstreams, replaceUpstreams, replaceServiceId, action, noValidate, noReload);
+  }
+
+  public BaragonRequest withUpdatedDomains(Set<String> domains) {
+    return new BaragonRequest(loadBalancerRequestId, loadBalancerService.withDomains(domains), addUpstreams, removeUpstreams, replaceUpstreams, replaceServiceId, action, noValidate, noReload);
   }
 
   public String getLoadBalancerRequestId() {
