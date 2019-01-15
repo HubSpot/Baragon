@@ -20,11 +20,11 @@ import javax.ws.rs.core.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import com.hubspot.baragon.auth.NoAuth;
 import com.hubspot.baragon.data.BaragonAliasDatastore;
+import com.hubspot.baragon.data.BaragonLoadBalancerDatastore;
 import com.hubspot.baragon.data.BaragonStateDatastore;
 import com.hubspot.baragon.models.BaragonRequest;
 import com.hubspot.baragon.models.BaragonResponse;
@@ -41,16 +41,19 @@ public class RequestResource {
   private static final Logger LOG = LoggerFactory.getLogger(RequestResource.class);
 
   private final BaragonStateDatastore stateDatastore;
+  private final BaragonLoadBalancerDatastore loadBalancerDatastore;
   private final RequestManager manager;
-  private final ObjectMapper objectMapper;
   private final BaragonAliasDatastore aliasDatastore;
 
   @Inject
-  public RequestResource(BaragonStateDatastore stateDatastore, RequestManager manager, ObjectMapper objectMapper, BaragonAliasDatastore aliasDatastore) {
+  public RequestResource(BaragonStateDatastore stateDatastore,
+                         RequestManager manager,
+                         BaragonAliasDatastore aliasDatastore,
+                         BaragonLoadBalancerDatastore loadBalancerDatastore) {
     this.stateDatastore = stateDatastore;
     this.manager = manager;
-    this.objectMapper = objectMapper;
     this.aliasDatastore = aliasDatastore;
+    this.loadBalancerDatastore = loadBalancerDatastore;
   }
 
   @GET
@@ -64,10 +67,11 @@ public class RequestResource {
   public BaragonResponse enqueueRequest(@Valid BaragonRequest request) {
     try {
       BaragonRequest updatedForAliases = aliasDatastore.updateForAliases(request);
-      LOG.info(String.format("Received request: %s", objectMapper.writeValueAsString(request)));
-      return manager.enqueueRequest(updatedForAliases);
+      BaragonRequest updatedForDefaultDomains = loadBalancerDatastore.updateForDefaultDomains(updatedForAliases);
+      LOG.info("Received request: {}", request);
+      return manager.enqueueRequest(updatedForDefaultDomains);
     } catch (Exception e) {
-      LOG.error(String.format("Caught exception for %s", request.getLoadBalancerRequestId()), e);
+      LOG.error("Caught exception for {}", request.getLoadBalancerRequestId(), e);
       return BaragonResponse.failure(request.getLoadBalancerRequestId(), e.getMessage());
     }
   }
