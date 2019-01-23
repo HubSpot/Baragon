@@ -16,7 +16,6 @@ import org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codahale.metrics.annotation.Timed;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Function;
 import com.google.common.base.MoreObjects;
@@ -52,22 +51,18 @@ public class BaragonStateDatastore extends AbstractDataStore {
     this.zkFetcher = zkFetcher;
   }
 
-  @Timed
   public Collection<String> getServices() {
     return getChildren(SERVICES_FORMAT);
   }
 
-  @Timed
   public boolean serviceExists(String serviceId) {
     return nodeExists(String.format(SERVICE_FORMAT, serviceId));
   }
 
-  @Timed
   public Optional<BaragonService> getService(String serviceId) {
     return readFromZk(String.format(SERVICE_FORMAT, serviceId), BaragonService.class);
   }
 
-  @Timed
   public void removeService(String serviceId) {
     for (String upstream : getUpstreamNodes(serviceId)) {
       deleteNode(String.format(UPSTREAM_FORMAT, serviceId, upstream));
@@ -76,12 +71,10 @@ public class BaragonStateDatastore extends AbstractDataStore {
     deleteNode(String.format(SERVICE_FORMAT, serviceId));
   }
 
-  @Timed
   private Collection<String> getUpstreamNodes(String serviceId) {
     return getChildren(String.format(SERVICE_FORMAT, serviceId));
   }
 
-  @Timed
   public Collection<UpstreamInfo> getUpstreams(String serviceId) throws Exception {
     final Collection<String> upstreamNodes = getUpstreamNodes(serviceId);
     final Collection<UpstreamInfo> upstreams = new ArrayList<>(upstreamNodes.size());
@@ -91,7 +84,11 @@ public class BaragonStateDatastore extends AbstractDataStore {
     return upstreams;
   }
 
-  @Timed
+  public void saveService(BaragonService service) {
+    String servicePath = String.format(SERVICE_FORMAT, service.getServiceId());
+    writeToZk(servicePath, service);
+  }
+
   public void updateService(BaragonRequest request) throws Exception {
     if (!nodeExists(SERVICES_FORMAT)) {
       createNode(SERVICES_FORMAT);
@@ -175,7 +172,6 @@ public class BaragonStateDatastore extends AbstractDataStore {
     return matchingPaths;
   }
 
-  @Timed
   public Collection<BaragonServiceState> getGlobalState() {
     try {
       LOG.info("Starting to compute all service states");

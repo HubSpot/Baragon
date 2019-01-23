@@ -101,6 +101,10 @@ public class BaragonService {
     return new BaragonService(serviceId, owners, serviceBasePath, additionalPaths, updatedFromAlias.getGroups(), options, templateName, updatedFromAlias.getDomains(), updatedFromAlias.getEdgeCacheDomains());
   }
 
+  public BaragonService withDomains(Set<String> domains) {
+    return new BaragonService(serviceId, owners, serviceBasePath, additionalPaths, loadBalancerGroups, options, templateName, domains, edgeCacheDomains);
+  }
+
   public String getServiceId() {
     return serviceId;
   }
@@ -145,12 +149,15 @@ public class BaragonService {
   }
 
   @JsonIgnore
-  public List<String> getAllPaths() {
+  public List<String> getAllPaths(Optional<String> defaultDomain) {
     List<String> allPaths = new ArrayList<>();
     for (String path : additionalPaths) {
       if (!domains.isEmpty()) {
         for (String domain : domains) {
           allPaths.add(String.format("%s%s", domain, path));
+          if (defaultDomain.isPresent() && domain.equals(defaultDomain.get())) {
+            allPaths.add(path); // For the default domain, also add the unqualified path
+          }
         }
       } else {
         allPaths.add(path);
@@ -159,6 +166,9 @@ public class BaragonService {
     if (!domains.isEmpty()) {
       for (String domain : domains) {
         allPaths.add(String.format("%s%s", domain, serviceBasePath));
+        if (defaultDomain.isPresent() && domain.equals(defaultDomain.get())) {
+          allPaths.add(serviceBasePath); // For the default domain, also add the unqualified path
+        }
       }
     } else {
       allPaths.add(serviceBasePath);

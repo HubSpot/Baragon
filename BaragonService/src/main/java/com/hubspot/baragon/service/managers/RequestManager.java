@@ -145,7 +145,8 @@ public class RequestManager {
 
     for (String loadBalancerGroup : service.getLoadBalancerGroups()) {
       Optional<BaragonGroup> maybeGroup = loadBalancerDatastore.getLoadBalancerGroup(loadBalancerGroup);
-      for (String path : service.getAllPaths()) {
+      Optional<String> maybeDefaultDomain = maybeGroup.isPresent() ? maybeGroup.get().getDefaultDomain() : Optional.absent();
+      for (String path : service.getAllPaths(maybeDefaultDomain)) {
         final Optional<String> maybeServiceIdForPath = loadBalancerDatastore.getBasePathServiceId(loadBalancerGroup, path);
         if (maybeServiceIdForPath.isPresent() && !maybeServiceIdForPath.get().equals(service.getServiceId())) {
           if (!request.getReplaceServiceId().isPresent() || (request.getReplaceServiceId().isPresent() && !request.getReplaceServiceId().get().equals(maybeServiceIdForPath.get()))) {
@@ -180,7 +181,9 @@ public class RequestManager {
     // if the request is not in the state datastore (ie. no previous request) clear the base path lock
     if (!maybeOriginalService.isPresent()) {
       for (String loadBalancerGroup : request.getLoadBalancerService().getLoadBalancerGroups()) {
-        for (String path : request.getLoadBalancerService().getAllPaths()) {
+        Optional<BaragonGroup> maybeGroup = loadBalancerDatastore.getLoadBalancerGroup(loadBalancerGroup);
+        Optional<String> maybeDefaultDomain = maybeGroup.isPresent() ? maybeGroup.get().getDefaultDomain() : Optional.absent();
+        for (String path : request.getLoadBalancerService().getAllPaths(maybeDefaultDomain)) {
           loadBalancerDatastore.clearBasePath(loadBalancerGroup, path);
         }
       }
@@ -188,7 +191,13 @@ public class RequestManager {
 
     // if we changed the base path, revert it to the old one
     if (maybeOriginalService.isPresent() && request.getReplaceServiceId().isPresent() && maybeOriginalService.get().getServiceId().equals(request.getReplaceServiceId().get())) {
-      lockBasePaths(request.getLoadBalancerService().getLoadBalancerGroups(), request.getLoadBalancerService().getAllPaths(), maybeOriginalService.get().getServiceId());
+      for (String loadBalancerGroup : request.getLoadBalancerService().getLoadBalancerGroups()) {
+        Optional<BaragonGroup> maybeGroup = loadBalancerDatastore.getLoadBalancerGroup(loadBalancerGroup);
+        Optional<String> maybeDefaultDomain = maybeGroup.isPresent() ? maybeGroup.get().getDefaultDomain() : Optional.absent();
+        for (String path : request.getLoadBalancerService().getAllPaths(maybeDefaultDomain)) {
+          loadBalancerDatastore.setBasePathServiceId(loadBalancerGroup, path, maybeOriginalService.get().getServiceId());
+        }
+      }
     }
   }
 
@@ -200,7 +209,9 @@ public class RequestManager {
 
   public void lockBasePaths(BaragonRequest request) {
     for (String loadBalancerGroup : request.getLoadBalancerService().getLoadBalancerGroups()) {
-      for (String path : request.getLoadBalancerService().getAllPaths()) {
+      Optional<BaragonGroup> maybeGroup = loadBalancerDatastore.getLoadBalancerGroup(loadBalancerGroup);
+      Optional<String> maybeDefaultDomain = maybeGroup.isPresent() ? maybeGroup.get().getDefaultDomain() : Optional.absent();
+      for (String path : request.getLoadBalancerService().getAllPaths(maybeDefaultDomain)) {
         loadBalancerDatastore.setBasePathServiceId(loadBalancerGroup, path, request.getLoadBalancerService().getServiceId());
       }
     }
@@ -340,7 +351,9 @@ public class RequestManager {
     try {
       if (stateDatastore.getUpstreams(request.getLoadBalancerService().getServiceId()).isEmpty()) {
         for (String loadBalancerGroup : request.getLoadBalancerService().getLoadBalancerGroups()) {
-          for (String path : request.getLoadBalancerService().getAllPaths()) {
+          Optional<BaragonGroup> maybeGroup = loadBalancerDatastore.getLoadBalancerGroup(loadBalancerGroup);
+          Optional<String> maybeDefaultDomain = maybeGroup.isPresent() ? maybeGroup.get().getDefaultDomain() : Optional.absent();
+          for (String path : request.getLoadBalancerService().getAllPaths(maybeDefaultDomain)) {
             if (loadBalancerDatastore.getBasePathServiceId(loadBalancerGroup, path).or("").equals(request.getLoadBalancerService().getServiceId())) {
               loadBalancerDatastore.clearBasePath(loadBalancerGroup, path);
             }
@@ -355,10 +368,12 @@ public class RequestManager {
   private void clearChangedBasePaths(BaragonRequest request, Optional<BaragonService> maybeOriginalService) {
     if (maybeOriginalService.isPresent()) {
       try {
-        List<String> newPaths = request.getLoadBalancerService().getAllPaths();
-        for (String oldPath : maybeOriginalService.get().getAllPaths()) {
-          if (!newPaths.contains(oldPath)) {
-            for (String loadBalancerGroup : maybeOriginalService.get().getLoadBalancerGroups()) {
+        for (String loadBalancerGroup : maybeOriginalService.get().getLoadBalancerGroups()) {
+          Optional<BaragonGroup> maybeGroup = loadBalancerDatastore.getLoadBalancerGroup(loadBalancerGroup);
+          Optional<String> maybeDefaultDomain = maybeGroup.isPresent() ? maybeGroup.get().getDefaultDomain() : Optional.absent();
+          List<String> newPaths = request.getLoadBalancerService().getAllPaths(maybeDefaultDomain);
+          for (String oldPath : maybeOriginalService.get().getAllPaths(maybeDefaultDomain)) {
+            if (!newPaths.contains(oldPath)) {
               if (loadBalancerDatastore.getBasePathServiceId(loadBalancerGroup, oldPath).or("").equals(maybeOriginalService.get().getServiceId())) {
                 loadBalancerDatastore.clearBasePath(loadBalancerGroup, oldPath);
               }
@@ -378,7 +393,9 @@ public class RequestManager {
       if (!removedLbGroups.isEmpty()) {
         try {
           for (String loadBalancerGroup : removedLbGroups) {
-            for (String path : maybeOriginalService.get().getAllPaths()) {
+            Optional<BaragonGroup> maybeGroup = loadBalancerDatastore.getLoadBalancerGroup(loadBalancerGroup);
+            Optional<String> maybeDefaultDomain = maybeGroup.isPresent() ? maybeGroup.get().getDefaultDomain() : Optional.absent();
+            for (String path : maybeOriginalService.get().getAllPaths(maybeDefaultDomain)) {
               if (loadBalancerDatastore.getBasePathServiceId(loadBalancerGroup, path).or("").equals(maybeOriginalService.get().getServiceId())) {
                 loadBalancerDatastore.clearBasePath(loadBalancerGroup, path);
               }

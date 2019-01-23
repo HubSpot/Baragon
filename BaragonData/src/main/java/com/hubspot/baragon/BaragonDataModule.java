@@ -34,6 +34,7 @@ import com.hubspot.baragon.data.BaragonStateDatastore;
 import com.hubspot.baragon.data.BaragonWorkerDatastore;
 import com.hubspot.baragon.data.BaragonZkMetaDatastore;
 import com.hubspot.baragon.managers.BaragonAuthManager;
+import com.hubspot.baragon.migrations.ServiceDomainsMigration;
 import com.hubspot.baragon.migrations.UpstreamsMigration;
 import com.hubspot.baragon.migrations.ZkDataMigration;
 import com.hubspot.baragon.migrations.ZkDataMigrationRunner;
@@ -90,6 +91,7 @@ public class BaragonDataModule extends AbstractModule {
 
     Multibinder<ZkDataMigration> zkMigrationBinder = Multibinder.newSetBinder(binder(), ZkDataMigration.class);
     zkMigrationBinder.addBinding().to(UpstreamsMigration.class);
+    zkMigrationBinder.addBinding().to(ServiceDomainsMigration.class);
   }
 
   @Singleton
