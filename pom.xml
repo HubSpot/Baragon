@@ -19,6 +19,7 @@
     <module>BaragonAgentService</module>
     <module>BaragonClient</module>
     <module>BaragonWatcher</module>
+    <module>BaragonKubernetesIntegration</module>
     <module>BaragonServiceIntegrationTests</module>
     <module>BaragonUI</module>
   </modules>
@@ -164,6 +165,18 @@
         <groupId>io.dropwizard.metrics</groupId>
         <artifactId>metrics-graphite</artifactId>
         <version>${dep.dropwizard-metrics.version}</version>
+      </dependency>
+
+      <!-- Kubernetes-->
+      <dependency>
+        <groupId>io.fabric8</groupId>
+        <artifactId>kubernetes-client</artifactId>
+        <version>4.1.1</version>
+      </dependency>
+      <dependency>
+        <groupId>io.fabric8</groupId>
+        <artifactId>kubernetes-model</artifactId>
+        <version>4.1.1</version>
       </dependency>
 
       <dependency>
