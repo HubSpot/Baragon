@@ -100,6 +100,17 @@
 
       <dependency>
         <groupId>com.hubspot</groupId>
+        <artifactId>BaragonKubernetesIntegration</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.hubspot</groupId>
+        <artifactId>BaragonKubernetesIntegrationTests</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.hubspot</groupId>
         <artifactId>BaragonService</artifactId>
         <version>${project.version}</version>
       </dependency>
@@ -132,6 +143,18 @@
         <groupId>com.hubspot</groupId>
         <artifactId>HorizonNing</artifactId>
         <version>${horizon.version}</version>
+      </dependency>
+
+      <!-- Immutables -->
+      <dependency>
+        <groupId>com.hubspot.immutables</groupId>
+        <artifactId>hubspot-style</artifactId>
+        <version>1.0-SNAPSHOT</version>
+      </dependency>
+      <dependency>
+        <groupId>com.hubspot.immutables</groupId>
+        <artifactId>immutables-exceptions</artifactId>
+        <version>1.0-SNAPSHOT</version>
       </dependency>
 
       <!-- Ringleader -->

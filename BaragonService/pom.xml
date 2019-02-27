@@ -219,6 +219,19 @@
       <scope>test</scope>
     </dependency>
     <dependency>
+      <groupId>com.hubspot.immutables</groupId>
+      <artifactId>hubspot-style</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.hubspot.immutables</groupId>
+      <artifactId>immutables-exceptions</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.immutables</groupId>
+      <artifactId>value</artifactId>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
       <groupId>org.apache.curator</groupId>
       <artifactId>curator-test</artifactId>
       <scope>test</scope>

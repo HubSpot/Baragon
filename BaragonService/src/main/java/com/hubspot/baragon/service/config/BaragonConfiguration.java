@@ -98,6 +98,9 @@ public class BaragonConfiguration extends Configuration {
   @JsonProperty("gcloud")
   private GoogleCloudConfiguration googleCloudConfiguration = new GoogleCloudConfiguration();
 
+  @JsonProperty("kubernetesIntegrationConfiguration")
+  private Optional<KubernetesIntegrationConfiguration> kubernetesIntegrationConfiguration= Optional.absent();
+
   public ZooKeeperConfiguration getZooKeeperConfiguration() {
     return zooKeeperConfiguration;
   }
@@ -256,5 +259,17 @@ public class BaragonConfiguration extends Configuration {
 
   public void setGoogleCloudConfiguration(GoogleCloudConfiguration googleCloudConfiguration) {
     this.googleCloudConfiguration = googleCloudConfiguration;
+  }
+
+  public boolean isKubernetesIntegrated() {
+    return kubernetesIntegrationConfiguration.isPresent();
+  }
+
+  public Optional<KubernetesIntegrationConfiguration> getKubernetesIntegrationConfiguration() {
+    return kubernetesIntegrationConfiguration;
+  }
+
+  public void setKubernetesIntegrated(KubernetesIntegrationConfiguration kubernetesIntegrationConfiguration) {
+    this.kubernetesIntegrationConfiguration = Optional.of(kubernetesIntegrationConfiguration);
   }
 }
