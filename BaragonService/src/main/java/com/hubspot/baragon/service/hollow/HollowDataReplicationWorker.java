@@ -22,8 +22,8 @@ import com.hubspot.ringleader.watcher.Event;
 import com.hubspot.ringleader.watcher.Event.Type;
 import com.hubspot.ringleader.watcher.PersistentWatcher;
 
-public class BaragonShipStateToHollowWorker {
-  private static final Logger LOG = LoggerFactory.getLogger(BaragonShipStateToHollowWorker.class);
+public class HollowDataReplicationWorker {
+  private static final Logger LOG = LoggerFactory.getLogger(HollowDataReplicationWorker.class);
 
   private static final int SLEEP_MS = 1_000;
   private static final int LOG_MS = 60_000;
@@ -36,8 +36,8 @@ public class BaragonShipStateToHollowWorker {
   private AtomicInteger skippedCount;
   private AtomicInteger errorCount;
 
-  public BaragonShipStateToHollowWorker(BaragonStateFetcher stateFetcher,
-                                        @Baragon PersistentWatcher watcher) {
+  public HollowDataReplicationWorker(BaragonStateFetcher stateFetcher,
+                                     @Baragon PersistentWatcher watcher) {
     this.stateFetcher = stateFetcher;
     this.stopwatch = Stopwatch.createStarted();
     this.stateQueue = new LinkedBlockingQueue<>();
