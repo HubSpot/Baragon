@@ -36,7 +36,7 @@ public class SchemaSourceHelper {
     private final HollowDataReplicationSchema schema;
     private final String text;
 
-    public ParsingSchemaSource(List<String> schemaStrings) {
+    ParsingSchemaSource(List<String> schemaStrings) {
       this.schema = SchemaParser.parse(schemaStrings);
       this.text = Joiner.on(" ").join(schemaStrings);
     }

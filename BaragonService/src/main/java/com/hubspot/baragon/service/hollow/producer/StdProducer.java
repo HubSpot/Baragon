@@ -203,7 +203,7 @@ public class StdProducer implements HollowDataReplicationProducer {
   private class InternalProducerListener implements HollowProducerListener {
     private final ProducerMetricReporter metricReporter;
 
-    public InternalProducerListener(ProducerMetricReporter metricReporter) {
+    InternalProducerListener(ProducerMetricReporter metricReporter) {
       this.metricReporter = metricReporter;
     }
 
@@ -313,7 +313,7 @@ public class StdProducer implements HollowDataReplicationProducer {
   private static class StdMetricsCollector extends HollowMetricsCollector<HollowProducerMetrics> {
     private final ProducerMetricReporter metricReporter;
 
-    public StdMetricsCollector(ProducerMetricReporter metricReporter) {
+    StdMetricsCollector(ProducerMetricReporter metricReporter) {
       this.metricReporter = metricReporter;
     }
 

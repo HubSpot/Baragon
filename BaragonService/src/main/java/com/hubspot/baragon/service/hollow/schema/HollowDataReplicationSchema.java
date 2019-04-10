@@ -8,7 +8,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import com.google.common.base.Preconditions;
-import com.hubspot.baragon.service.hollow.schema.HollowSchemaWrapper;
 
 public class HollowDataReplicationSchema {
   private final Map<String, HollowSchemaWrapper> schemas;
