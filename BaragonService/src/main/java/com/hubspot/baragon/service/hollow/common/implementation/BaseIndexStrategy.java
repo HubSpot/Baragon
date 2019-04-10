@@ -1,10 +1,13 @@
-package com.hubspot.baragon.service.hollow.common;
+package com.hubspot.baragon.service.hollow.common.implementation;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Optional;
 
 import com.google.common.io.ByteSource;
+import com.hubspot.baragon.service.hollow.common.DataSource;
+import com.hubspot.baragon.service.hollow.common.IndexStrategy;
+import com.hubspot.baragon.service.hollow.common.NamingStrategy;
 import com.netflix.hollow.core.memory.encoding.VarInt;
 
 public abstract class BaseIndexStrategy implements IndexStrategy {

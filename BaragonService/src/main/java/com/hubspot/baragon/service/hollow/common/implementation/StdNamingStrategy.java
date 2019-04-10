@@ -1,4 +1,4 @@
-package com.hubspot.baragon.service.hollow;
+package com.hubspot.baragon.service.hollow.common.implementation;
 
 import java.nio.file.Paths;
 import java.util.Optional;

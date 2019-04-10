@@ -1,4 +1,4 @@
-package com.hubspot.baragon.service.hollow.common;
+package com.hubspot.baragon.service.hollow.common.implementation;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -14,7 +14,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.io.ByteSource;
-import com.hubspot.baragon.service.hollow.common.implementation.BaseIndexStrategy;
+import com.hubspot.baragon.service.hollow.common.DataSource;
+import com.hubspot.baragon.service.hollow.common.NamingStrategy;
 import com.netflix.hollow.core.memory.encoding.VarInt;
 
 public class StdIndexStrategy extends BaseIndexStrategy {
