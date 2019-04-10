@@ -235,7 +235,6 @@
     <dependency>
       <groupId>com.hubspot</groupId>
       <artifactId>Ringleader</artifactId>
-      <version>0.1.5</version>
     </dependency>
   </dependencies>
 
