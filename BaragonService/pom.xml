@@ -243,7 +243,6 @@
     <dependency>
       <groupId>com.yammer.metrics</groupId>
       <artifactId>metrics-core</artifactId>
-      <version>1.0-hubspot-SNAPSHOT</version>
     </dependency>
   </dependencies>
 
