@@ -232,6 +232,11 @@
       <groupId>com.hubspot</groupId>
       <artifactId>BaragonWatcher</artifactId>
     </dependency>
+    <dependency>
+      <groupId>com.hubspot</groupId>
+      <artifactId>Ringleader</artifactId>
+      <version>0.1.9-SNAPSHOT</version>
+    </dependency>
   </dependencies>
 
   <profiles>
