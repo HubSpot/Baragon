@@ -1,4 +1,4 @@
-package com.hubspot.baragon.service.hollow;
+package com.hubspot.baragon.service.hollow.common.schema;
 
 import java.util.Iterator;
 
