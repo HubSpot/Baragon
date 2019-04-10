@@ -1,4 +1,4 @@
-package com.hubspot.baragon.service.hollow.common;
+package com.hubspot.baragon.service.hollow.schema;
 
 import java.io.IOException;
 import java.io.StreamTokenizer;
@@ -17,7 +17,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Preconditions;
-import com.hubspot.baragon.service.hollow.common.schema.HollowDataReplicationSchema;
 import com.netflix.hollow.core.schema.HollowListSchema;
 import com.netflix.hollow.core.schema.HollowMapSchema;
 import com.netflix.hollow.core.schema.HollowObjectSchema;

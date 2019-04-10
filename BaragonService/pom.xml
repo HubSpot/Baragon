@@ -236,6 +236,16 @@
       <groupId>com.hubspot</groupId>
       <artifactId>Ringleader</artifactId>
     </dependency>
+    <dependency>
+      <groupId>com.netflix.hollow</groupId>
+      <artifactId>hollow</artifactId>
+      <version>2.16.1</version>
+    </dependency>
+    <dependency>
+      <groupId>com.yammer.metrics</groupId>
+      <artifactId>metrics-core</artifactId>
+      <version>1.0-hubspot-SNAPSHOT</version>
+    </dependency>
   </dependencies>
 
   <profiles>

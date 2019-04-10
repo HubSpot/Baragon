@@ -1,4 +1,4 @@
-package com.hubspot.baragon.service.hollow.common.schema;
+package com.hubspot.baragon.service.hollow.schema;
 
 import java.util.Collection;
 import java.util.List;
@@ -8,7 +8,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import com.google.common.base.Preconditions;
-import com.hubspot.baragon.service.hollow.common.HollowSchemaWrapper;
+import com.hubspot.baragon.service.hollow.schema.HollowSchemaWrapper;
 
 public class HollowDataReplicationSchema {
   private final Map<String, HollowSchemaWrapper> schemas;

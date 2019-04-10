@@ -1,4 +1,4 @@
-package com.hubspot.baragon.service.hollow.common;
+package com.hubspot.baragon.service.hollow.schema;
 
 import java.util.Collection;
 import java.util.Optional;

@@ -1,4 +1,4 @@
-package com.hubspot.baragon.service.hollow.common;
+package com.hubspot.baragon.service.hollow.schema;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -9,7 +9,6 @@ import java.util.Optional;
 
 import com.google.common.base.Joiner;
 import com.google.common.io.Resources;
-import com.hubspot.baragon.service.hollow.common.schema.HollowDataReplicationSchema;
 
 public class SchemaSourceHelper {
   public static SchemaSource fromResources(String... resources) {
