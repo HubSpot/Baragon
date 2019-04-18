@@ -1,9 +1,11 @@
-package com.hubspot.baragon.service.hollow;
+package com.hubspot.baragon.service.hol.datamodel;
 
 import java.util.Collection;
 
 import com.hubspot.baragon.models.BaragonServiceState;
+import com.netflix.hollow.core.write.objectmapper.HollowPrimaryKey;
 
+@HollowPrimaryKey(fields = "version")
 public class BaragonHollowState {
 
   private final Collection<BaragonServiceState> states;
