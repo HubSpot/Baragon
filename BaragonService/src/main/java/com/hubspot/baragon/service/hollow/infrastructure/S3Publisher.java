@@ -1,4 +1,4 @@
-package com.hubspot.baragon.service.hol.infrastructure;
+package com.hubspot.baragon.service.hollow.infrastructure;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;

@@ -1,4 +1,4 @@
-package com.hubspot.baragon.service.hol;
+package com.hubspot.baragon.service.hollow;
 
 import com.netflix.hollow.api.consumer.HollowConsumer.AnnouncementWatcher;
 import com.netflix.hollow.api.consumer.HollowConsumer.BlobRetriever;
@@ -10,8 +10,8 @@ import com.netflix.hollow.api.producer.HollowProducer.Publisher;
 import com.netflix.hollow.api.producer.fs.HollowFilesystemAnnouncer;
 import com.netflix.hollow.api.producer.fs.HollowFilesystemPublisher;
 
-import com.hubspot.baragon.service.hol.datamodel.BaragonHollowState;
-import com.hubspot.baragon.service.hol.datamodel.StateDataRetriver;
+import com.hubspot.baragon.service.hollow.datamodel.BaragonHollowState;
+import com.hubspot.baragon.service.hollow.datamodel.StateDataRetriver;
 
 import java.io.File;
 import java.util.Optional;

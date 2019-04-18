@@ -1,4 +1,4 @@
-package com.hubspot.baragon.service.hol.datamodel;
+package com.hubspot.baragon.service.hollow.datamodel;
 
 
 import java.util.ArrayDeque;
