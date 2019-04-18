@@ -24,7 +24,7 @@
   </modules>
 
   <properties>
-    <aws.sdk.version>1.11.69</aws.sdk.version>
+    <aws.sdk.version>1.11.497</aws.sdk.version>
     <baragon.jar.name.format>${project.artifactId}-${project.version}</baragon.jar.name.format>
     <basepom.jar.name.format>${baragon.jar.name.format}</basepom.jar.name.format>
     <dep.curator.version>2.12.0</dep.curator.version>
