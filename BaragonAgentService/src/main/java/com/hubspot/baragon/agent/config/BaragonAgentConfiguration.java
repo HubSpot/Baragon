@@ -130,6 +130,12 @@ public class BaragonAgentConfiguration extends Configuration {
   @JsonProperty("skipPrivateIp")
   private boolean skipPrivateIp = false;
 
+  @JsonProperty
+  private long maxResolveCacheSize = 4000;
+
+  @JsonProperty
+  private long expireResolveCacheAfterDays = 30;
+
   public HttpClientConfiguration getHttpClientConfiguration() {
     return httpClientConfiguration;
   }
@@ -372,5 +378,21 @@ public class BaragonAgentConfiguration extends Configuration {
 
   public void setSkipPrivateIp(boolean skipPrivateIp) {
     this.skipPrivateIp = skipPrivateIp;
+  }
+
+  public long getMaxResolveCacheSize() {
+    return maxResolveCacheSize;
+  }
+
+  public void setMaxResolveCacheSize(long maxResolveCacheSize) {
+    this.maxResolveCacheSize = maxResolveCacheSize;
+  }
+
+  public long getExpireResolveCacheAfterDays() {
+    return expireResolveCacheAfterDays;
+  }
+
+  public void setExpireResolveCacheAfterDays(long expireResolveCacheAfterDays) {
+    this.expireResolveCacheAfterDays = expireResolveCacheAfterDays;
   }
 }

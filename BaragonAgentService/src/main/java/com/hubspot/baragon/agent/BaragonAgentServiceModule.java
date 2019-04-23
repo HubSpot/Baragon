@@ -121,7 +121,7 @@ public class BaragonAgentServiceModule extends DropwizardAwareModule<BaragonAgen
     handlebars.registerHelper(FormatTimestampHelper.NAME, new FormatTimestampHelper(config.getDefaultDateFormat()));
     handlebars.registerHelper(FirstOfHelper.NAME, new FirstOfHelper(""));
     handlebars.registerHelper(CurrentRackIsPresentHelper.NAME, new CurrentRackIsPresentHelper(agentMetadata.getEc2().getAvailabilityZone()));
-    handlebars.registerHelper(ResolveHostnameHelper.NAME, new ResolveHostnameHelper());
+    handlebars.registerHelper(ResolveHostnameHelper.NAME, new ResolveHostnameHelper(config.getMaxResolveCacheSize(), config.getExpireResolveCacheAfterDays()));
     handlebars.registerHelpers(new PreferSameRackWeightingHelper(config, agentMetadata));
     handlebars.registerHelpers(IfEqualHelperSource.class);
     handlebars.registerHelpers(IfContainedInHelperSource.class);

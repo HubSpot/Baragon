@@ -298,7 +298,6 @@ export default [
   'Asia/Qyzylorda',
   'Asia/Rangoon',
   'Asia/Riyadh',
-  'Asia/Saigon',
   'Asia/Sakhalin',
   'Asia/Samarkand',
   'Asia/Seoul',
