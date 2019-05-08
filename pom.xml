@@ -21,6 +21,7 @@
     <module>BaragonWatcher</module>
     <module>BaragonServiceIntegrationTests</module>
     <module>BaragonUI</module>
+    <module>BaragonStatePersister</module>
   </modules>
 
   <properties>
@@ -117,6 +118,12 @@
       <dependency>
         <groupId>com.hubspot</groupId>
         <artifactId>BaragonWatcher</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.hubspot</groupId>
+        <artifactId>BaragonStatePersister</artifactId>
         <version>${project.version}</version>
       </dependency>
 
