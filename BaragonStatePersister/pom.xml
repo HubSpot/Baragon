@@ -8,7 +8,7 @@
     <version>0.7.1-SNAPSHOT</version>
   </parent>
 
-  <artifactId>BaragonHollow</artifactId>
+  <artifactId>BaragonStatePersister</artifactId>
 
   <dependencies>
     <dependency>
