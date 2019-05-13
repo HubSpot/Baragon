@@ -52,6 +52,7 @@ import com.hubspot.baragon.service.exceptions.BaragonExceptionNotifier;
 import com.hubspot.baragon.service.gcloud.GoogleCloudManager;
 import com.hubspot.baragon.service.healthcheck.ZooKeeperHealthcheck;
 import com.hubspot.baragon.service.listeners.AbstractLatchListener;
+import com.hubspot.baragon.service.listeners.StatePersisterWorkerListener;
 import com.hubspot.baragon.service.listeners.ElbSyncWorkerListener;
 import com.hubspot.baragon.service.listeners.RequestPurgingListener;
 import com.hubspot.baragon.service.listeners.RequestWorkerListener;
@@ -66,6 +67,7 @@ import com.hubspot.baragon.service.managers.StatusManager;
 import com.hubspot.baragon.service.resources.BaragonResourcesModule;
 import com.hubspot.baragon.service.worker.BaragonElbSyncWorker;
 import com.hubspot.baragon.service.worker.BaragonRequestWorker;
+import com.hubspot.baragon.service.worker.BaragonStatePersisterWorker;
 import com.hubspot.baragon.service.worker.RequestPurgingWorker;
 import com.hubspot.baragon.utils.JavaUtils;
 import com.hubspot.dropwizard.guicier.DropwizardAwareModule;
@@ -131,6 +133,7 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
     binder.bind(BaragonElbSyncWorker.class).in(Scopes.SINGLETON);
     binder.bind(BaragonRequestWorker.class).in(Scopes.SINGLETON);
     binder.bind(RequestPurgingWorker.class).in(Scopes.SINGLETON);
+    binder.bind(BaragonStatePersisterWorker.class).in(Scopes.SINGLETON);
 
     binder.bind(ClassicLoadBalancer.class);
     binder.bind(ApplicationLoadBalancer.class);
@@ -139,6 +142,7 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
     latchBinder.addBinding().to(RequestWorkerListener.class).in(Scopes.SINGLETON);
     latchBinder.addBinding().to(ElbSyncWorkerListener.class).in(Scopes.SINGLETON);
     latchBinder.addBinding().to(RequestPurgingListener.class).in(Scopes.SINGLETON);
+    latchBinder.addBinding().to(StatePersisterWorkerListener.class).in(Scopes.SINGLETON);
   }
 
   @Provides
