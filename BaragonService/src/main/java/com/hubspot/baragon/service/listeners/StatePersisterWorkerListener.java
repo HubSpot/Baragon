@@ -10,24 +10,24 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.hubspot.baragon.service.BaragonServiceModule;
-import com.hubspot.baragon.service.config.BaragonConfiguration;
+import com.hubspot.baragon.service.config.BaragonPersisterWorkerConfiguration;
 import com.hubspot.baragon.service.worker.BaragonStatePersisterWorker;
 
 public class StatePersisterWorkerListener extends AbstractLatchListener {
   private static final Logger LOG = LoggerFactory.getLogger(StatePersisterWorkerListener.class);
 
-  private final ScheduledExecutorService scheduledExecutorService;
-  private final BaragonConfiguration baragonConfiguration;
+  private final BaragonPersisterWorkerConfiguration config;
   private final BaragonStatePersisterWorker baragonStatePersisterWorker;
+  private final ScheduledExecutorService scheduledExecutorService;
 
   private ScheduledFuture<?> statePersisterWorkerFuture = null;
 
-  public StatePersisterWorkerListener(@Named(BaragonServiceModule.BARAGON_SERVICE_SCHEDULED_EXECUTOR) ScheduledExecutorService scheduledExecutorService,
-                                      BaragonConfiguration baragonConfiguration,
-                                      BaragonStatePersisterWorker baragonStatePersisterWorker) {
-    this.scheduledExecutorService = scheduledExecutorService;
-    this.baragonConfiguration = baragonConfiguration;
+  public StatePersisterWorkerListener(BaragonPersisterWorkerConfiguration config,
+                                      BaragonStatePersisterWorker baragonStatePersisterWorker,
+                                      @Named(BaragonServiceModule.BARAGON_SERVICE_SCHEDULED_EXECUTOR) ScheduledExecutorService scheduledExecutorService){
+    this.config = config;
     this.baragonStatePersisterWorker = baragonStatePersisterWorker;
+    this.scheduledExecutorService = scheduledExecutorService;
   }
 
   @Override
@@ -39,8 +39,8 @@ public class StatePersisterWorkerListener extends AbstractLatchListener {
     }
     statePersisterWorkerFuture = scheduledExecutorService.scheduleAtFixedRate(
         baragonStatePersisterWorker,
-        baragonConfiguration.getWorkerConfiguration().getInitialDelayMs(),
-        baragonConfiguration.getWorkerConfiguration().getIntervalMs(),
+        config.getInitialDelayMs(),
+        config.getIntervalMs(),
         TimeUnit.MILLISECONDS);
   }
 
@@ -52,6 +52,6 @@ public class StatePersisterWorkerListener extends AbstractLatchListener {
 
   @Override
   public boolean isEnabled() {
-    return baragonConfiguration.getWorkerConfiguration().isEnabled();
+    return config.isEnabled();
   }
 }
