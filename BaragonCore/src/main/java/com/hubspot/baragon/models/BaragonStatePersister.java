@@ -1,8 +1,6 @@
-package com.hubspot.baragon.state.persister;
+package com.hubspot.baragon.models;
 
 import java.util.Collection;
-
-import com.hubspot.baragon.models.BaragonServiceState;
 
 public interface BaragonStatePersister {
   void persist(Collection<BaragonServiceState> state, int version);

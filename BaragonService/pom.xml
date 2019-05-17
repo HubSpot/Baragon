@@ -228,10 +228,6 @@
       <artifactId>jukito</artifactId>
       <scope>test</scope>
     </dependency>
-    <dependency>
-      <groupId>com.hubspot</groupId>
-      <artifactId>BaragonStatePersister</artifactId>
-    </dependency>
   </dependencies>
 
   <profiles>
