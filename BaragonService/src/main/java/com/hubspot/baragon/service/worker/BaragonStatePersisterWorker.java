@@ -10,7 +10,7 @@ import com.google.common.base.Optional;
 import com.hubspot.baragon.data.BaragonStateDatastore;
 import com.hubspot.baragon.models.BaragonServiceState;
 import com.hubspot.baragon.service.exceptions.BaragonExceptionNotifier;
-import com.hubspot.baragon.models.BaragonStatePersister;
+import com.hubspot.baragon.persister.BaragonStatePersister;
 
 public class BaragonStatePersisterWorker implements Runnable {
   private static final Logger LOG = LoggerFactory.getLogger(BaragonStatePersisterWorker.class);
