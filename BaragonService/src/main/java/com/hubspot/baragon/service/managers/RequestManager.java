@@ -255,13 +255,12 @@ public class RequestManager {
     }
 
     if (request.isNoDuplicateUpstreams()) {
-      String serviceId = request.getLoadBalancerService().getServiceId();
       try {
         if (!validateNoDuplicateUpstreams(request.getAddUpstreams())) {
           throw new InvalidUpstreamsException("If noDuplicateUpstreams is specified, you cannot have duplicate upstreams");
         }
       } catch (Exception e) {
-        LOG.error("Failed to get the existing upstreams for {}, thus not writing request {}", serviceId, request.getLoadBalancerRequestId());
+        LOG.error("Failed to get the existing upstreams for {}, thus not writing request {}", request.getLoadBalancerService().getServiceId(), request.getLoadBalancerRequestId());
       }
     }
 
@@ -278,11 +277,15 @@ public class RequestManager {
 
   private boolean validateNoDuplicateUpstreams(List<UpstreamInfo> addUpstreamsInfos) throws Exception {
     List<String> addUpstreams = getUpstreamsFromUpstreamInfos(addUpstreamsInfos);
-    List<UpstreamInfo> allUpstreams = stateDatastore.getGlobalState().stream()
+    List<String> allUpstreams = getUpstreamsFromUpstreamInfos(getAllUpstreamInfos());
+    return noDuplicateUpstreams(addUpstreams) && Collections.disjoint(addUpstreams, allUpstreams);
+  }
+
+  private List<UpstreamInfo> getAllUpstreamInfos() {
+    return stateDatastore.getGlobalState().stream()
         .map(BaragonServiceState::getUpstreams)
         .flatMap(Collection::stream)
         .collect(Collectors.toList());
-    return noDuplicateUpstreams(addUpstreams) && Collections.disjoint(addUpstreams, getUpstreamsFromUpstreamInfos(allUpstreams));
   }
 
   private List<String> getUpstreamsFromUpstreamInfos(Collection<UpstreamInfo> upstreamInfos) {
@@ -290,11 +293,7 @@ public class RequestManager {
   }
 
   private boolean noDuplicateUpstreams(List<String> upstreams) {
-    // check that there no duplicates in list of upstreams
-     List<String> distinctUpstreams = upstreams.stream()
-        .distinct()
-        .collect(Collectors.toList());
-     return distinctUpstreams.size() == upstreams.size();
+     return (new HashSet<>(upstreams)).size() == upstreams.size();
   }
 
   public Optional<InternalRequestStates> cancelRequest(String requestId) {
