@@ -30,6 +30,7 @@ import com.hubspot.baragon.models.BaragonGroup;
 import com.hubspot.baragon.models.BaragonRequest;
 import com.hubspot.baragon.models.BaragonResponse;
 import com.hubspot.baragon.models.BaragonService;
+import com.hubspot.baragon.models.BaragonServiceState;
 import com.hubspot.baragon.models.InternalRequestStates;
 import com.hubspot.baragon.models.InternalStatesMap;
 import com.hubspot.baragon.models.QueuedRequestId;
@@ -277,7 +278,11 @@ public class RequestManager {
 
   private boolean validateNoDuplicateUpstreams(List<UpstreamInfo> addUpstreamsInfos) throws Exception {
     List<String> addUpstreams = getUpstreamsFromUpstreamInfos(addUpstreamsInfos);
-    return noDuplicateUpstreams(addUpstreams) && Collections.disjoint(addUpstreams, getUpstreamsFromUpstreamInfos(stateDatastore.getAllUpstreams()));
+    List<UpstreamInfo> allUpstreams = stateDatastore.getGlobalState().stream()
+        .map(BaragonServiceState::getUpstreams)
+        .flatMap(Collection::stream)
+        .collect(Collectors.toList());
+    return noDuplicateUpstreams(addUpstreams) && Collections.disjoint(addUpstreams, getUpstreamsFromUpstreamInfos(allUpstreams));
   }
 
   private List<String> getUpstreamsFromUpstreamInfos(Collection<UpstreamInfo> upstreamInfos) {
