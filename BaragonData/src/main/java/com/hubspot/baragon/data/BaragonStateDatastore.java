@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.api.transaction.CuratorTransactionFinal;
@@ -206,11 +207,7 @@ public class BaragonStateDatastore extends AbstractDataStore {
   }
 
   private Collection<BaragonServiceState> computeAllServiceStates() throws Exception {
-    Collection<String> services = new ArrayList<>();
-
-    for (String service : getServices()) {
-      services.add(ZKPaths.makePath(SERVICES_FORMAT, service));
-    }
+    Collection<String> services = getAllServices();
 
     final Map<String, BaragonService> serviceMap = zkFetcher.fetchDataInParallel(services, new BaragonDeserializer<>(objectMapper, BaragonService.class));
     final Map<String, Collection<UpstreamInfo>> serviceToUpstreamInfoMap = fetchServiceToUpstreamInfoMap(services);
@@ -223,6 +220,27 @@ public class BaragonStateDatastore extends AbstractDataStore {
     }
 
     return serviceStates;
+  }
+
+  private Collection<String> getAllServices() {
+    Collection<String> services = new ArrayList<>();
+
+    for (String service : getServices()) {
+      services.add(ZKPaths.makePath(SERVICES_FORMAT, service));
+    }
+
+    return services;
+  }
+
+  public Collection<UpstreamInfo> getAllUpstreams() throws Exception {
+    Collection<String> services = getAllServices();
+    Map<String, Collection<UpstreamInfo>> serviceToUpstreamInfoMap = fetchServiceToUpstreamInfoMap(services);
+    return serviceToUpstreamInfoMap.entrySet()
+        .stream()
+        .map(Entry::getValue)
+        .flatMap(Collection::stream)
+        .collect(Collectors.toList());
+
   }
 
   private Map<String, Collection<UpstreamInfo>> fetchServiceToUpstreamInfoMap(Collection<String> services) throws Exception {
