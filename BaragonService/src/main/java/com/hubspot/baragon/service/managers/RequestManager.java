@@ -1,6 +1,7 @@
 package com.hubspot.baragon.service.managers;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -31,6 +32,7 @@ import com.hubspot.baragon.models.InternalRequestStates;
 import com.hubspot.baragon.models.InternalStatesMap;
 import com.hubspot.baragon.models.QueuedRequestId;
 import com.hubspot.baragon.models.RequestAction;
+import com.hubspot.baragon.models.UpstreamInfo;
 import com.hubspot.baragon.service.config.BaragonConfiguration;
 
 @Singleton
@@ -249,6 +251,17 @@ public class RequestManager {
       throw new InvalidRequestActionException("The REVERT action may only be used internally by Baragon, you may specify UPDATE, DELETE, RELOAD, or leave the action blank(UPDATE)");
     }
 
+    if (request.isNoDuplicateUpstreams()) {
+      String serviceId = request.getLoadBalancerService().getServiceId();
+      try {
+        if (!validateNoDuplicateUpstreams(serviceId, request.getAddUpstreams())) {
+          throw new InvalidUpstreamsException("If noDuplicateUpstreams is specified, you cannot have duplicate upstreams");
+        }
+      } catch (Exception e) {
+        LOG.error("Failed to get the existing upstreams for {}, thus not writing request {}", serviceId, request.getLoadBalancerRequestId());
+      }
+    }
+
     try {
       final QueuedRequestId queuedRequestId = requestDatastore.enqueueRequest(request, InternalRequestStates.PENDING);
 
@@ -258,6 +271,12 @@ public class RequestManager {
     }
 
     return getResponse(request.getLoadBalancerService().getServiceId(), request.getLoadBalancerRequestId()).get();
+  }
+
+  private boolean validateNoDuplicateUpstreams(String serviceId, List<UpstreamInfo> addUpstreams) throws Exception {
+    Collection<UpstreamInfo> existingUpstreams = stateDatastore.getUpstreams(serviceId);
+    existingUpstreams.retainAll(addUpstreams);
+    return existingUpstreams.isEmpty();
   }
 
   public Optional<InternalRequestStates> cancelRequest(String requestId) {
