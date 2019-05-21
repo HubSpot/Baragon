@@ -1,14 +1,10 @@
 package com.hubspot.baragon.service.managers;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.apache.zookeeper.KeeperException.NodeExistsException;
 import org.slf4j.Logger;
@@ -31,12 +27,10 @@ import com.hubspot.baragon.models.BaragonGroup;
 import com.hubspot.baragon.models.BaragonRequest;
 import com.hubspot.baragon.models.BaragonResponse;
 import com.hubspot.baragon.models.BaragonService;
-import com.hubspot.baragon.models.BaragonServiceState;
 import com.hubspot.baragon.models.InternalRequestStates;
 import com.hubspot.baragon.models.InternalStatesMap;
 import com.hubspot.baragon.models.QueuedRequestId;
 import com.hubspot.baragon.models.RequestAction;
-import com.hubspot.baragon.models.UpstreamInfo;
 import com.hubspot.baragon.service.config.BaragonConfiguration;
 
 @Singleton
@@ -255,10 +249,6 @@ public class RequestManager {
       throw new InvalidRequestActionException("The REVERT action may only be used internally by Baragon, you may specify UPDATE, DELETE, RELOAD, or leave the action blank(UPDATE)");
     }
 
-    if (request.isNoDuplicateUpstreams()) {
-      validateNoDuplicateUpstreams(request.getAddUpstreams());
-    }
-
     try {
       final QueuedRequestId queuedRequestId = requestDatastore.enqueueRequest(request, InternalRequestStates.PENDING);
 
@@ -268,43 +258,6 @@ public class RequestManager {
     }
 
     return getResponse(request.getLoadBalancerService().getServiceId(), request.getLoadBalancerRequestId()).get();
-  }
-
-  private void validateNoDuplicateUpstreams(List<UpstreamInfo> addUpstreamsInfos) throws InvalidUpstreamsException {
-    List<String> addUpstreams = getUpstreamsFromUpstreamInfos(addUpstreamsInfos);
-    if (!noDuplicateUpstreams(addUpstreams)) {
-      LOG.error("Duplicate upstreams {} detected", getDuplicateUpstreams(addUpstreams));
-      throw new InvalidUpstreamsException("If noDuplicateUpstreams is specified, you cannot have duplicate upstreams. Found these duplicate upstreams: " + getDuplicateUpstreams(addUpstreams));
-    }
-
-    List<String> allUpstreams = getUpstreamsFromUpstreamInfos(getAllUpstreamInfos());
-    if (!Collections.disjoint(addUpstreams, allUpstreams)) {
-      LOG.error("Duplicate upstreams {} detected", addUpstreams.retainAll(allUpstreams));
-      throw new InvalidUpstreamsException("If noDuplicateUpstreams is specified, you cannot have duplicate upstreams. Found these duplicate upstreams: " + addUpstreams.retainAll(allUpstreams));
-    }
-  }
-
-  private List<UpstreamInfo> getAllUpstreamInfos() {
-    return stateDatastore.getGlobalState().stream()
-        .map(BaragonServiceState::getUpstreams)
-        .flatMap(Collection::stream)
-        .collect(Collectors.toList());
-  }
-
-  private List<String> getUpstreamsFromUpstreamInfos(Collection<UpstreamInfo> upstreamInfos) {
-    return upstreamInfos.stream().map(UpstreamInfo::getUpstream).collect(Collectors.toList());
-  }
-
-  private boolean noDuplicateUpstreams(List<String> upstreams) {
-     return getDuplicateUpstreams(upstreams).isEmpty();
-  }
-
-  private Set<String> getDuplicateUpstreams(List<String> upstreams) {
-    Set<String> uniqueUpstreams = new HashSet<>();
-    Set<String> duplicateElements =  upstreams.stream()
-        .filter(i -> !uniqueUpstreams.add(i))
-        .collect(Collectors.toSet());
-    return duplicateElements;
   }
 
   public Optional<InternalRequestStates> cancelRequest(String requestId) {
