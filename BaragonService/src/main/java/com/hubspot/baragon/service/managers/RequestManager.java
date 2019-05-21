@@ -255,12 +255,8 @@ public class RequestManager {
     }
 
     if (request.isNoDuplicateUpstreams()) {
-      try {
-        if (!validateNoDuplicateUpstreams(request.getAddUpstreams())) {
-          throw new InvalidUpstreamsException("If noDuplicateUpstreams is specified, you cannot have duplicate upstreams");
-        }
-      } catch (Exception e) {
-        LOG.error("Failed to get the existing upstreams for {}, thus not writing request {}", request.getLoadBalancerService().getServiceId(), request.getLoadBalancerRequestId());
+      if (!validateNoDuplicateUpstreams(request.getAddUpstreams())) {
+        throw new InvalidUpstreamsException("If noDuplicateUpstreams is specified, you cannot have duplicate upstreams");
       }
     }
 
@@ -275,7 +271,7 @@ public class RequestManager {
     return getResponse(request.getLoadBalancerService().getServiceId(), request.getLoadBalancerRequestId()).get();
   }
 
-  private boolean validateNoDuplicateUpstreams(List<UpstreamInfo> addUpstreamsInfos) throws Exception {
+  private boolean validateNoDuplicateUpstreams(List<UpstreamInfo> addUpstreamsInfos){
     List<String> addUpstreams = getUpstreamsFromUpstreamInfos(addUpstreamsInfos);
     List<String> allUpstreams = getUpstreamsFromUpstreamInfos(getAllUpstreamInfos());
     return noDuplicateUpstreams(addUpstreams) && Collections.disjoint(addUpstreams, allUpstreams);

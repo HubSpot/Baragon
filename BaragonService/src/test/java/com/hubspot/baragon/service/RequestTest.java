@@ -14,8 +14,11 @@ import org.jukito.JukitoModule;
 import org.jukito.JukitoRunner;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
+import org.junit.runners.model.MultipleFailureException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -191,14 +194,51 @@ public class RequestTest {
 
   @Test
   public void testDuplicateUpstreams(RequestManager requestManager, BaragonRequestWorker requestWorker, BaragonLoadBalancerDatastore loadBalancerDatastore) throws RequestAlreadyEnqueuedException, InvalidRequestActionException, InvalidUpstreamsException {
-    final String requestId = "test-130";
+    final String requestId1 = "test-130";
+    final String requestId2 = "test-131";
+    Set<String> lbGroup = new HashSet<>();
+    lbGroup.add(FAKE_LB_GROUP);
+    final BaragonService service = new BaragonService("testservice3", Collections.<String>emptyList(), "/test", lbGroup, Collections.<String, Object>emptyMap());
+
+    final UpstreamInfo upstream1 = new UpstreamInfo("testhost:8080", Optional.of(requestId1), Optional.<String>absent());
+
+    final BaragonRequest request1 = new BaragonRequest(requestId1, service, ImmutableList.of(upstream1), ImmutableList.<UpstreamInfo>of(), Optional.<String>absent());
+
+    requestManager.enqueueRequest(request1);
+    assertResponseStateExists(requestManager, requestId1, BaragonRequestState.WAITING);
+
+    requestWorker.run();
+    assertResponseStateExists(requestManager, requestId1, BaragonRequestState.INVALID_REQUEST_NOOP);
+
+    final UpstreamInfo upstream2 = new UpstreamInfo("testhost:8080", Optional.of(requestId2), Optional.<String>absent());
+
+    final BaragonRequest request2 = new BaragonRequest(requestId2, service, ImmutableList.of(upstream2), ImmutableList.<UpstreamInfo>of(), Optional.<String>absent());
+
+    requestManager.enqueueRequest(request2);
+    assertResponseStateExists(requestManager, requestId2, BaragonRequestState.WAITING);
+
+    requestWorker.run();
+    assertResponseStateExists(requestManager, requestId2, BaragonRequestState.INVALID_REQUEST_NOOP);
+
+
+  }
+
+  @Rule
+  public ExpectedException expectedEx = ExpectedException.none();
+
+  @Test
+  public void testNoDuplicateUpstreamsInUpstreamsToBeAdded(RequestManager requestManager, BaragonRequestWorker requestWorker, BaragonLoadBalancerDatastore loadBalancerDatastore) throws RequestAlreadyEnqueuedException, InvalidRequestActionException, InvalidUpstreamsException {
+    expectedEx.expect(MultipleFailureException.class);
+    expectedEx.expectMessage("If noDuplicateUpstreams is specified, you cannot have duplicate upstreams");
+    final String requestId = "test-132";
     Set<String> lbGroup = new HashSet<>();
     lbGroup.add(FAKE_LB_GROUP);
     final BaragonService service = new BaragonService("testservice3", Collections.<String>emptyList(), "/test", lbGroup, Collections.<String, Object>emptyMap());
 
     final UpstreamInfo upstream = new UpstreamInfo("testhost:8080", Optional.of(requestId), Optional.<String>absent());
 
-    final BaragonRequest request = new BaragonRequest(requestId, service, ImmutableList.of(upstream, upstream), ImmutableList.<UpstreamInfo>of(), Optional.<String>absent());
+    final BaragonRequest request = new BaragonRequest(requestId, service, ImmutableList.of(upstream, upstream), ImmutableList.<UpstreamInfo>of(), ImmutableList.<UpstreamInfo>of(), Optional.<String>absent(),
+                                                      Optional.of(RequestAction.UPDATE), false, false, false, true);
 
     requestManager.enqueueRequest(request);
     assertResponseStateExists(requestManager, requestId, BaragonRequestState.WAITING);
@@ -208,8 +248,10 @@ public class RequestTest {
   }
 
   @Test
-  public void testNoDuplicateUpstreams(RequestManager requestManager, BaragonRequestWorker requestWorker, BaragonLoadBalancerDatastore loadBalancerDatastore) throws RequestAlreadyEnqueuedException, InvalidRequestActionException, InvalidUpstreamsException {
-    final String requestId = "test-131";
+  public void testNoDuplicateUpstreamsInGlobalState(RequestManager requestManager, BaragonRequestWorker requestWorker, BaragonLoadBalancerDatastore loadBalancerDatastore) throws RequestAlreadyEnqueuedException, InvalidRequestActionException, InvalidUpstreamsException {
+    expectedEx.expect(MultipleFailureException.class);
+    expectedEx.expectMessage("If noDuplicateUpstreams is specified, you cannot have duplicate upstreams");
+    final String requestId = "test-133";
     Set<String> lbGroup = new HashSet<>();
     lbGroup.add(FAKE_LB_GROUP);
     final BaragonService service = new BaragonService("testservice3", Collections.<String>emptyList(), "/test", lbGroup, Collections.<String, Object>emptyMap());
@@ -217,7 +259,7 @@ public class RequestTest {
     final UpstreamInfo upstream = new UpstreamInfo("testhost:8080", Optional.of(requestId), Optional.<String>absent());
 
     final BaragonRequest request = new BaragonRequest(requestId, service, ImmutableList.of(upstream, upstream), ImmutableList.<UpstreamInfo>of(), ImmutableList.<UpstreamInfo>of(), Optional.<String>absent(),
-                                                      Optional.of(RequestAction.UPDATE), false, false, false, true);
+        Optional.of(RequestAction.UPDATE), false, false, false, true);
 
     requestManager.enqueueRequest(request);
     assertResponseStateExists(requestManager, requestId, BaragonRequestState.WAITING);
