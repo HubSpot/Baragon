@@ -229,7 +229,7 @@ public class RequestTest {
   @Test
   public void testNoDuplicateUpstreamsInUpstreamsToBeAdded(RequestManager requestManager, BaragonRequestWorker requestWorker, BaragonLoadBalancerDatastore loadBalancerDatastore) throws RequestAlreadyEnqueuedException, InvalidRequestActionException, InvalidUpstreamsException {
     expectedEx.expect(MultipleFailureException.class);
-    expectedEx.expectMessage("If noDuplicateUpstreams is specified, you cannot have duplicate upstreams");
+    expectedEx.expectMessage("If noDuplicateUpstreams is specified, you cannot have duplicate upstreams. Found these duplicate upstreams: [testhost:8080])");
     final String requestId = "test-132";
     Set<String> lbGroup = new HashSet<>();
     lbGroup.add(FAKE_LB_GROUP);
@@ -250,7 +250,7 @@ public class RequestTest {
   @Test
   public void testNoDuplicateUpstreamsInGlobalState(RequestManager requestManager, BaragonRequestWorker requestWorker, BaragonLoadBalancerDatastore loadBalancerDatastore) throws RequestAlreadyEnqueuedException, InvalidRequestActionException, InvalidUpstreamsException {
     expectedEx.expect(MultipleFailureException.class);
-    expectedEx.expectMessage("If noDuplicateUpstreams is specified, you cannot have duplicate upstreams");
+    expectedEx.expectMessage("If noDuplicateUpstreams is specified, you cannot have duplicate upstreams. Found these duplicate upstreams: [testhost:8080])");
     final String requestId = "test-133";
     Set<String> lbGroup = new HashSet<>();
     lbGroup.add(FAKE_LB_GROUP);

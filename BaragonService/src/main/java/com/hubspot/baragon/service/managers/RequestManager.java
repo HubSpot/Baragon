@@ -1,6 +1,7 @@
 package com.hubspot.baragon.service.managers;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -255,9 +256,7 @@ public class RequestManager {
     }
 
     if (request.isNoDuplicateUpstreams()) {
-      if (!validateNoDuplicateUpstreams(request.getAddUpstreams())) {
-        throw new InvalidUpstreamsException("If noDuplicateUpstreams is specified, you cannot have duplicate upstreams");
-      }
+      validateNoDuplicateUpstreams(request.getAddUpstreams());
     }
 
     try {
@@ -271,10 +270,18 @@ public class RequestManager {
     return getResponse(request.getLoadBalancerService().getServiceId(), request.getLoadBalancerRequestId()).get();
   }
 
-  private boolean validateNoDuplicateUpstreams(List<UpstreamInfo> addUpstreamsInfos){
+  private void validateNoDuplicateUpstreams(List<UpstreamInfo> addUpstreamsInfos) throws InvalidUpstreamsException {
     List<String> addUpstreams = getUpstreamsFromUpstreamInfos(addUpstreamsInfos);
+    if (!noDuplicateUpstreams(addUpstreams)) {
+      LOG.error("Duplicate upstreams {} detected", getDuplicateUpstreams(addUpstreams));
+      throw new InvalidUpstreamsException("If noDuplicateUpstreams is specified, you cannot have duplicate upstreams. Found these duplicate upstreams: " + getDuplicateUpstreams(addUpstreams));
+    }
+
     List<String> allUpstreams = getUpstreamsFromUpstreamInfos(getAllUpstreamInfos());
-    return noDuplicateUpstreams(addUpstreams) && Collections.disjoint(addUpstreams, allUpstreams);
+    if (!Collections.disjoint(addUpstreams, allUpstreams)) {
+      LOG.error("Duplicate upstreams {} detected", addUpstreams.retainAll(allUpstreams));
+      throw new InvalidUpstreamsException("If noDuplicateUpstreams is specified, you cannot have duplicate upstreams. Found these duplicate upstreams: " + addUpstreams.retainAll(allUpstreams));
+    }
   }
 
   private List<UpstreamInfo> getAllUpstreamInfos() {
@@ -289,7 +296,15 @@ public class RequestManager {
   }
 
   private boolean noDuplicateUpstreams(List<String> upstreams) {
-     return (new HashSet<>(upstreams)).size() == upstreams.size();
+     return getDuplicateUpstreams(upstreams).isEmpty();
+  }
+
+  private Set<String> getDuplicateUpstreams(List<String> upstreams) {
+    Set<String> uniqueUpstreams = new HashSet<>();
+    Set<String> duplicateElements =  upstreams.stream()
+        .filter(i -> !uniqueUpstreams.add(i))
+        .collect(Collectors.toSet());
+    return duplicateElements;
   }
 
   public Optional<InternalRequestStates> cancelRequest(String requestId) {
