@@ -2,6 +2,7 @@ package com.hubspot.baragon.service;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -31,6 +32,7 @@ import com.hubspot.baragon.models.BaragonRequest;
 import com.hubspot.baragon.models.BaragonRequestState;
 import com.hubspot.baragon.models.BaragonResponse;
 import com.hubspot.baragon.models.BaragonService;
+import com.hubspot.baragon.models.RequestAction;
 import com.hubspot.baragon.models.UpstreamInfo;
 import com.hubspot.baragon.service.managers.RequestManager;
 import com.hubspot.baragon.service.worker.BaragonRequestWorker;
@@ -185,5 +187,42 @@ public class RequestTest {
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
+  }
+
+  @Test
+  public void testDuplicateUpstreams(RequestManager requestManager, BaragonRequestWorker requestWorker, BaragonLoadBalancerDatastore loadBalancerDatastore) throws RequestAlreadyEnqueuedException, InvalidRequestActionException, InvalidUpstreamsException {
+    final String requestId = "test-130";
+    Set<String> lbGroup = new HashSet<>();
+    lbGroup.add(FAKE_LB_GROUP);
+    final BaragonService service = new BaragonService("testservice3", Collections.<String>emptyList(), "/test", lbGroup, Collections.<String, Object>emptyMap());
+
+    final UpstreamInfo upstream = new UpstreamInfo("testhost:8080", Optional.of(requestId), Optional.<String>absent());
+
+    final BaragonRequest request = new BaragonRequest(requestId, service, ImmutableList.of(upstream, upstream), ImmutableList.<UpstreamInfo>of(), Optional.<String>absent());
+
+    requestManager.enqueueRequest(request);
+    assertResponseStateExists(requestManager, requestId, BaragonRequestState.WAITING);
+
+    requestWorker.run();
+    assertResponseStateExists(requestManager, requestId, BaragonRequestState.INVALID_REQUEST_NOOP);
+  }
+
+  @Test
+  public void testNoDuplicateUpstreams(RequestManager requestManager, BaragonRequestWorker requestWorker, BaragonLoadBalancerDatastore loadBalancerDatastore) throws RequestAlreadyEnqueuedException, InvalidRequestActionException, InvalidUpstreamsException {
+    final String requestId = "test-131";
+    Set<String> lbGroup = new HashSet<>();
+    lbGroup.add(FAKE_LB_GROUP);
+    final BaragonService service = new BaragonService("testservice3", Collections.<String>emptyList(), "/test", lbGroup, Collections.<String, Object>emptyMap());
+
+    final UpstreamInfo upstream = new UpstreamInfo("testhost:8080", Optional.of(requestId), Optional.<String>absent());
+
+    final BaragonRequest request = new BaragonRequest(requestId, service, ImmutableList.of(upstream, upstream), ImmutableList.<UpstreamInfo>of(), ImmutableList.<UpstreamInfo>of(), Optional.<String>absent(),
+                                                      Optional.of(RequestAction.UPDATE), false, false, false, true);
+
+    requestManager.enqueueRequest(request);
+    assertResponseStateExists(requestManager, requestId, BaragonRequestState.WAITING);
+
+    requestWorker.run();
+    assertResponseStateExists(requestManager, requestId, BaragonRequestState.INVALID_REQUEST_NOOP);
   }
 }
