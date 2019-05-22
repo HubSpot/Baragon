@@ -101,11 +101,11 @@ public class BaragonRequest {
   }
 
   public BaragonRequest withUpdatedGroups(BaragonGroupAlias updatedFromAlias) {
-    return new BaragonRequest(loadBalancerRequestId, loadBalancerService.withUpdatedGroups(updatedFromAlias), addUpstreams, removeUpstreams, replaceUpstreams, replaceServiceId, action, noValidate, noReload);
+    return new BaragonRequest(loadBalancerRequestId, loadBalancerService.withUpdatedGroups(updatedFromAlias), addUpstreams, removeUpstreams, replaceUpstreams, replaceServiceId, action, noValidate, noReload, upstreamUpdateOnly, noDuplicateUpstreams);
   }
 
   public BaragonRequest withUpdatedDomains(Set<String> domains) {
-    return new BaragonRequest(loadBalancerRequestId, loadBalancerService.withDomains(domains), addUpstreams, removeUpstreams, replaceUpstreams, replaceServiceId, action, noValidate, noReload);
+    return new BaragonRequest(loadBalancerRequestId, loadBalancerService.withDomains(domains), addUpstreams, removeUpstreams, replaceUpstreams, replaceServiceId, action, noValidate, noReload, upstreamUpdateOnly, noDuplicateUpstreams);
   }
 
   public String getLoadBalancerRequestId() {
