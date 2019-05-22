@@ -273,15 +273,13 @@ public class RequestManager {
   private void validateNoDuplicateUpstreams(List<UpstreamInfo> addUpstreamsInfos) throws InvalidUpstreamsException {
     List<String> addUpstreams = getUpstreamsFromUpstreamInfos(addUpstreamsInfos);
     if (!noDuplicateUpstreams(addUpstreams)) {
-      LOG.error("Duplicate upstreams {} detected", getDuplicateUpstreams(addUpstreams));
       throw new InvalidUpstreamsException("If noDuplicateUpstreams is specified, you cannot have duplicate upstreams. Found these duplicate upstreams: " + getDuplicateUpstreams(addUpstreams));
     }
 
     List<String> allUpstreams = getUpstreamsFromUpstreamInfos(getAllUpstreamInfos());
     if (!Collections.disjoint(addUpstreams, allUpstreams)) {
-      addUpstreams.retainAll(allUpstreams);
-      LOG.error("Duplicate upstreams {} detected", addUpstreams);
-      throw new InvalidUpstreamsException("If noDuplicateUpstreams is specified, you cannot have duplicate upstreams. Found these duplicate upstreams: " + addUpstreams.retainAll(allUpstreams));
+      addUpstreams.retainAll(allUpstreams); // duplicate upstreams retained in addUpstreams
+      throw new InvalidUpstreamsException("If noDuplicateUpstreams is specified, you cannot have duplicate upstreams. Found these duplicate upstreams: " + addUpstreams);
     }
   }
 
