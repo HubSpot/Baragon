@@ -279,7 +279,8 @@ public class RequestManager {
 
     List<String> allUpstreams = getUpstreamsFromUpstreamInfos(getAllUpstreamInfos());
     if (!Collections.disjoint(addUpstreams, allUpstreams)) {
-      LOG.error("Duplicate upstreams {} detected", addUpstreams.retainAll(allUpstreams));
+      addUpstreams.retainAll(allUpstreams); // the duplicate upstreams will be left in the addUpstreams list
+      LOG.error("Duplicate upstreams {} detected", addUpstreams);
       throw new InvalidUpstreamsException("If noDuplicateUpstreams is specified, you cannot have duplicate upstreams. Found these duplicate upstreams: " + addUpstreams.retainAll(allUpstreams));
     }
   }
