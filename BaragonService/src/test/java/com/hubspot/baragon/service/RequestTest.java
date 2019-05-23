@@ -191,37 +191,4 @@ public class RequestTest {
       throw Throwables.propagate(e);
     }
   }
-
-  @Rule
-  public ExpectedException expectedEx = ExpectedException.none();
-
-  @Test
-  public void testNoDuplicateUpstreams(RequestManager requestManager, BaragonRequestWorker requestWorker) throws RequestAlreadyEnqueuedException, InvalidRequestActionException, InvalidUpstreamsException {
-    expectedEx.expect(MultipleFailureException.class);
-    expectedEx.expectMessage("If noDuplicateUpstreams is specified, you cannot have duplicate upstreams. Found these duplicate upstreams: [testhost:8080])");
-    final String requestId1 = "test-132";
-    final String requestId2 = "test-133";
-    Set<String> lbGroup = new HashSet<>();
-    lbGroup.add(FAKE_LB_GROUP);
-
-    final BaragonService service1 = new BaragonService("testservice1", Collections.<String>emptyList(), "/test", lbGroup, Collections.<String, Object>emptyMap());
-    final BaragonService service2 = new BaragonService("testservice2", Collections.<String>emptyList(), "/test", lbGroup, Collections.<String, Object>emptyMap());
-
-    final UpstreamInfo upstream1 = new UpstreamInfo("testhost:8080", Optional.of(requestId1), Optional.<String>absent());
-    final UpstreamInfo upstream2 = new UpstreamInfo("testhost:8080", Optional.of(requestId2), Optional.<String>absent());
-
-    final BaragonRequest request1 = new BaragonRequest(requestId1, service1, ImmutableList.of(upstream1), ImmutableList.<UpstreamInfo>of(), ImmutableList.<UpstreamInfo>of(), Optional.<String>absent(),
-                                                      Optional.of(RequestAction.UPDATE), false, false, false, true);
-    final BaragonRequest request2 = new BaragonRequest(requestId2, service2, ImmutableList.of(upstream2), ImmutableList.<UpstreamInfo>of(), ImmutableList.<UpstreamInfo>of(), Optional.<String>absent(),
-                                                      Optional.of(RequestAction.UPDATE), false, false, false, true);
-
-    requestManager.enqueueRequest(request1);
-
-    requestWorker.run();
-
-    requestManager.enqueueRequest(request2);
-
-    requestWorker.run();
-  }
-
 }
