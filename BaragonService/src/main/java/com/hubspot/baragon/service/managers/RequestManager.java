@@ -271,9 +271,9 @@ public class RequestManager {
 
   private void validateNoDuplicateUpstreams(BaragonRequest request) throws InvalidUpstreamsException {
     List<String> addUpstreams = getUpstreamsFromUpstreamInfos(request.getAddUpstreams());
-    List<String> allUpstreams = getUpstreamsFromUpstreamInfos(getAllUpstreamsInOtherServices(request.getLoadBalancerService().getServiceId()));
-    if (!Collections.disjoint(addUpstreams, allUpstreams)) {
-      addUpstreams.retainAll(allUpstreams); // duplicate upstreams retained in addUpstreams
+    List<String> claimedUpstreams = getUpstreamsFromUpstreamInfos(getAllUpstreamsInOtherServices(request.getLoadBalancerService().getServiceId()));
+    if (!Collections.disjoint(addUpstreams, claimedUpstreams)) {
+      addUpstreams.retainAll(claimedUpstreams); // duplicate upstreams retained in addUpstreams
       throw new InvalidUpstreamsException("If noDuplicateUpstreams is specified, you cannot have duplicate upstreams. Found these duplicate upstreams: " + addUpstreams);
     }
   }
