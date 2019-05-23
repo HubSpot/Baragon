@@ -280,7 +280,7 @@ public class RequestManager {
 
   private List<UpstreamInfo> getAllUpstreamsInOtherServices(String serviceId) {
      List<UpstreamInfo> upstreams = stateDatastore.getGlobalState().stream()
-        .filter(bss -> bss.getService().getServiceId() != serviceId)
+        .filter(bss -> !(bss.getService().getServiceId().equals(serviceId)))
         .map(BaragonServiceState::getUpstreams)
         .flatMap(Collection::stream)
         .collect(Collectors.toList());
