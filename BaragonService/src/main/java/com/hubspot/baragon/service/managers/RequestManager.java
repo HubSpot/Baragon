@@ -1,7 +1,6 @@
 package com.hubspot.baragon.service.managers;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -256,7 +255,7 @@ public class RequestManager {
     }
 
     if (request.isNoDuplicateUpstreams()) {
-      validateNoDuplicateUpstreams(request.getAddUpstreams());
+      validateNoDuplicateUpstreams(request);
     }
 
     try {
@@ -270,21 +269,18 @@ public class RequestManager {
     return getResponse(request.getLoadBalancerService().getServiceId(), request.getLoadBalancerRequestId()).get();
   }
 
-  private void validateNoDuplicateUpstreams(List<UpstreamInfo> addUpstreamsInfos) throws InvalidUpstreamsException {
-    List<String> addUpstreams = getUpstreamsFromUpstreamInfos(addUpstreamsInfos);
-    if (!noDuplicateUpstreams(addUpstreams)) {
-      throw new InvalidUpstreamsException("If noDuplicateUpstreams is specified, you cannot have duplicate upstreams. Found these duplicate upstreams: " + getDuplicateUpstreams(addUpstreams));
-    }
-
-    List<String> allUpstreams = getUpstreamsFromUpstreamInfos(getAllUpstreamInfos());
+  private void validateNoDuplicateUpstreams(BaragonRequest request) throws InvalidUpstreamsException {
+    List<String> addUpstreams = getUpstreamsFromUpstreamInfos(request.getAddUpstreams());
+    List<String> allUpstreams = getUpstreamsFromUpstreamInfos(getAllUpstreamsInOtherServices(request.getLoadBalancerService().getServiceId()));
     if (!Collections.disjoint(addUpstreams, allUpstreams)) {
       addUpstreams.retainAll(allUpstreams); // duplicate upstreams retained in addUpstreams
       throw new InvalidUpstreamsException("If noDuplicateUpstreams is specified, you cannot have duplicate upstreams. Found these duplicate upstreams: " + addUpstreams);
     }
   }
 
-  private List<UpstreamInfo> getAllUpstreamInfos() {
+  private List<UpstreamInfo> getAllUpstreamsInOtherServices(String serviceId) {
     return stateDatastore.getGlobalState().stream()
+        .filter(bss -> bss.getService().getServiceId() != serviceId)
         .map(BaragonServiceState::getUpstreams)
         .flatMap(Collection::stream)
         .collect(Collectors.toList());
@@ -292,18 +288,6 @@ public class RequestManager {
 
   private List<String> getUpstreamsFromUpstreamInfos(Collection<UpstreamInfo> upstreamInfos) {
     return upstreamInfos.stream().map(UpstreamInfo::getUpstream).collect(Collectors.toList());
-  }
-
-  private boolean noDuplicateUpstreams(List<String> upstreams) {
-     return getDuplicateUpstreams(upstreams).isEmpty();
-  }
-
-  private Set<String> getDuplicateUpstreams(List<String> upstreams) {
-    Set<String> uniqueUpstreams = new HashSet<>();
-    Set<String> duplicateElements =  upstreams.stream()
-        .filter(i -> !uniqueUpstreams.add(i))
-        .collect(Collectors.toSet());
-    return duplicateElements;
   }
 
   public Optional<InternalRequestStates> cancelRequest(String requestId) {
