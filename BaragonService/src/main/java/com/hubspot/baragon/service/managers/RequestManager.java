@@ -272,6 +272,8 @@ public class RequestManager {
   private void validateNoDuplicateUpstreams(BaragonRequest request) throws InvalidUpstreamsException {
     List<String> addUpstreams = getUpstreamsFromUpstreamInfos(request.getAddUpstreams());
     List<String> claimedUpstreams = getUpstreamsFromUpstreamInfos(getAllUpstreamsInOtherServices(request.getLoadBalancerService().getServiceId()));
+    LOG.info("add upstreams: {}", addUpstreams);
+    LOG.info("claimed upstreams: {}", claimedUpstreams);
     if (!Collections.disjoint(addUpstreams, claimedUpstreams)) {
       addUpstreams.retainAll(claimedUpstreams); // duplicate upstreams retained in addUpstreams
       throw new InvalidUpstreamsException("If noDuplicateUpstreams is specified, you cannot have duplicate upstreams. Found these duplicate upstreams: " + addUpstreams);
@@ -279,11 +281,13 @@ public class RequestManager {
   }
 
   private List<UpstreamInfo> getAllUpstreamsInOtherServices(String serviceId) {
-    return stateDatastore.getGlobalState().stream()
+     List<UpstreamInfo> upstreams = stateDatastore.getGlobalState().stream()
         .filter(bss -> bss.getService().getServiceId() != serviceId)
         .map(BaragonServiceState::getUpstreams)
         .flatMap(Collection::stream)
         .collect(Collectors.toList());
+     LOG.info("Upstreams: {}", upstreams);
+     return upstreams;
   }
 
   private List<String> getUpstreamsFromUpstreamInfos(Collection<UpstreamInfo> upstreamInfos) {
