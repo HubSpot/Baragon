@@ -13,7 +13,8 @@ public enum InternalRequestStates {
   CANCELLED_SEND_REVERT_REQUESTS(true),
   CANCELLED_CHECK_REVERT_RESPONSES(false),
   CANCELLED(false),
-  FAILED_CANCEL_FAILED(false);
+  FAILED_CANCEL_FAILED(false),
+  COMPLETED_POST_APPLY_FAILED(false),;
 
   private final boolean requireAgentRequest;
 
