@@ -34,6 +34,7 @@ public class InternalStatesMap {
     stateToRequestStateMap.put(InternalRequestStates.CANCELLED_CHECK_REVERT_RESPONSES, BaragonRequestState.CANCELING);
     stateToRequestStateMap.put(InternalRequestStates.CANCELLED, BaragonRequestState.CANCELED);
     stateToRequestStateMap.put(InternalRequestStates.FAILED_CANCEL_FAILED, BaragonRequestState.FAILED);
+    stateToRequestStateMap.put(InternalRequestStates.COMPLETED_POST_APPLY_FAILED, BaragonRequestState.SUCCESS);
   }
 
   private static EnumMap<AgentRequestType, EnumMap<AgentRequestsStatus, InternalRequestStates>> typeToRequestStateMap = new EnumMap<>(AgentRequestType.class);

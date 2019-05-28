@@ -94,7 +94,7 @@ public class RequestManager {
       if (maybeRequest.isPresent() && maybeRequest.get().getLoadBalancerService().getServiceId().equals(serviceId)) {
         Optional<InternalRequestStates> maybeStatus = requestDatastore.getRequestState(requestId);
         if (maybeStatus.isPresent()) {
-          responses.add(new BaragonResponse(requestId, InternalStatesMap.getRequestState(maybeStatus.get()), requestDatastore.getRequestMessage(requestId), Optional.of(agentResponseDatastore.getLastResponses(requestId)), maybeRequest));
+          responses.add(new BaragonResponse(requestId, InternalStatesMap.getRequestState(maybeStatus.get()), requestDatastore.getRequestMessage(requestId), Optional.of(agentResponseDatastore.getLastResponses(requestId)), maybeRequest, maybeStatus.get() == InternalRequestStates.COMPLETED));
         }
       }
     }
@@ -138,7 +138,7 @@ public class RequestManager {
         return Optional.absent();
       }
 
-      return Optional.of(new BaragonResponse(requestId, InternalStatesMap.getRequestState(maybeStatus.get()), requestDatastore.getRequestMessage(requestId), Optional.of(agentResponseDatastore.getLastResponses(requestId)), maybeRequest));
+      return Optional.of(new BaragonResponse(requestId, InternalStatesMap.getRequestState(maybeStatus.get()), requestDatastore.getRequestMessage(requestId), Optional.of(agentResponseDatastore.getLastResponses(requestId)), maybeRequest, maybeStatus.get() == InternalRequestStates.COMPLETED));
     } else {
       return Optional.absent();
     }
@@ -306,7 +306,13 @@ public class RequestManager {
   }
 
   public void saveResponseToHistory(BaragonRequest request, InternalRequestStates state) {
-    BaragonResponse response = new BaragonResponse(request.getLoadBalancerRequestId(), InternalStatesMap.getRequestState(state), requestDatastore.getRequestMessage(request.getLoadBalancerRequestId()), Optional.of(agentResponseDatastore.getLastResponses(request.getLoadBalancerRequestId())), Optional.of(request));
+    BaragonResponse response = new BaragonResponse(
+        request.getLoadBalancerRequestId(),
+        InternalStatesMap.getRequestState(state),
+        requestDatastore.getRequestMessage(request.getLoadBalancerRequestId()),
+        Optional.of(agentResponseDatastore.getLastResponses(request.getLoadBalancerRequestId())),
+        Optional.of(request),
+        state == InternalRequestStates.COMPLETED);
     responseHistoryDatastore.addResponse(request.getLoadBalancerService().getServiceId(), request.getLoadBalancerRequestId(), response);
   }
 
