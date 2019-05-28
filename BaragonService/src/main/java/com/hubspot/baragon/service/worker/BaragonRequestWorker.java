@@ -148,8 +148,11 @@ public class BaragonRequestWorker implements Runnable {
             try {
               requestManager.setRequestMessage(request.getLoadBalancerRequestId(), String.format("%s request succeeded! Added upstreams: %s, Removed upstreams: %s", request.getAction().or(RequestAction.UPDATE), request.getAddUpstreams(), request.getRemoveUpstreams()));
               requestManager.commitRequest(request);
-              performPostApplySteps(request);
-              return InternalRequestStates.COMPLETED;
+              if (performPostApplySteps(request)) {
+                return InternalRequestStates.COMPLETED;
+              } else {
+                return InternalRequestStates.COMPLETED_POST_APPLY_FAILED;
+              }
             } catch (KeeperException ke) {
               String message = String.format("Caught zookeeper error for path %s.", ke.getPath());
               LOG.error(message, ke);
@@ -183,11 +186,16 @@ public class BaragonRequestWorker implements Runnable {
     }
   }
 
-  private void performPostApplySteps(BaragonRequest request) {
-    if (configuration.getEdgeCacheConfiguration().isEnabled() &&
-        edgeCache.invalidateIfNecessary(request)) {
-      LOG.info("Invalidated edge cache for {}", request);
+  private boolean performPostApplySteps(BaragonRequest request) {
+    if (configuration.getEdgeCacheConfiguration().isEnabled()) {
+      if (edgeCache.invalidateIfNecessary(request)) {
+        LOG.info("Invalidated edge cache for {}", request);
+        return true;
+      } else {
+        return false;
+      }
     }
+    return true;
   }
 
   private List<String> getDomainsNotServed(BaragonService service) {

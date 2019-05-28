@@ -5,6 +5,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
@@ -19,9 +22,6 @@ import com.hubspot.baragon.models.InternalRequestStates;
 import com.hubspot.baragon.models.InternalStatesMap;
 import com.hubspot.baragon.service.config.BaragonConfiguration;
 import com.hubspot.baragon.service.exceptions.BaragonExceptionNotifier;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class RequestPurgingWorker implements Runnable {
   private static final Logger LOG = LoggerFactory.getLogger(RequestPurgingWorker.class);
@@ -79,7 +79,7 @@ public class RequestPurgingWorker implements Runnable {
           case SAVE:
             Optional<BaragonRequest> maybeRequest = requestDatastore.getRequest(requestId);
             if (maybeRequest.isPresent()) {
-              BaragonResponse response = new BaragonResponse(maybeRequest.get().getLoadBalancerRequestId(), InternalStatesMap.getRequestState(maybeState.get()), requestDatastore.getRequestMessage(maybeRequest.get().getLoadBalancerRequestId()), Optional.of(agentResponseDatastore.getLastResponses(maybeRequest.get().getLoadBalancerRequestId())), maybeRequest);
+              BaragonResponse response = new BaragonResponse(maybeRequest.get().getLoadBalancerRequestId(), InternalStatesMap.getRequestState(maybeState.get()), requestDatastore.getRequestMessage(maybeRequest.get().getLoadBalancerRequestId()), Optional.of(agentResponseDatastore.getLastResponses(maybeRequest.get().getLoadBalancerRequestId())), maybeRequest, maybeState.get() == InternalRequestStates.COMPLETED);
               responseHistoryDatastore.addResponse(maybeRequest.get().getLoadBalancerService().getServiceId(), maybeRequest.get().getLoadBalancerRequestId(), response);
               requestDatastore.deleteRequest(requestId);
             } else {

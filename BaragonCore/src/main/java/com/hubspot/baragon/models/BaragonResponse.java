@@ -6,6 +6,7 @@ import java.util.Map;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Optional;
 
 @JsonIgnoreProperties( ignoreUnknown = true )
@@ -15,17 +16,18 @@ public class BaragonResponse {
   private final Optional<String> message;
   private final Optional<Map<String, Collection<AgentResponse>>> agentResponses;
   private final Optional<BaragonRequest> request;
+  private final boolean postApplyStepsSucceeded;
 
   public static BaragonResponse failure(String requestId, String message) {
-    return new BaragonResponse(requestId, BaragonRequestState.FAILED, Optional.fromNullable(message), Optional.<Map<String, Collection<AgentResponse>>>absent(), Optional.<BaragonRequest>absent());
+    return new BaragonResponse(requestId, BaragonRequestState.FAILED, Optional.fromNullable(message), Optional.<Map<String, Collection<AgentResponse>>>absent(), Optional.<BaragonRequest>absent(), false);
   }
 
   public static BaragonResponse requestDoesNotExist(String requestId) {
-    return new BaragonResponse(requestId, BaragonRequestState.CANCELED, Optional.<String>of(String.format("Request %s does not exist", requestId)), Optional.<Map<String, Collection<AgentResponse>>>absent(), Optional.<BaragonRequest>absent());
+    return new BaragonResponse(requestId, BaragonRequestState.CANCELED, Optional.<String>of(String.format("Request %s does not exist", requestId)), Optional.<Map<String, Collection<AgentResponse>>>absent(), Optional.<BaragonRequest>absent(), false);
   }
 
   public static BaragonResponse serviceNotFound(String requestId, String serviceId) {
-    return new BaragonResponse(requestId, BaragonRequestState.INVALID_REQUEST_NOOP, Optional.<String>of(String.format("Service %s not found", serviceId)), Optional.<Map<String, Collection<AgentResponse>>>absent(), Optional.<BaragonRequest>absent());
+    return new BaragonResponse(requestId, BaragonRequestState.INVALID_REQUEST_NOOP, Optional.<String>of(String.format("Service %s not found", serviceId)), Optional.<Map<String, Collection<AgentResponse>>>absent(), Optional.<BaragonRequest>absent(), false);
   }
 
   @JsonCreator
@@ -33,12 +35,14 @@ public class BaragonResponse {
                          @JsonProperty("loadBalancerState") BaragonRequestState loadBalancerState,
                          @JsonProperty("message") Optional<String> message,
                          @JsonProperty("agentResponses") Optional<Map<String, Collection<AgentResponse>>> agentResponses,
-                         @JsonProperty("request") Optional<BaragonRequest> request) {
+                         @JsonProperty("request") Optional<BaragonRequest> request,
+                         @JsonProperty("postApplyStepsSucceeded") Boolean postApplyStepsSucceeded) {
     this.loadBalancerRequestId = loadBalancerRequestId;
     this.loadBalancerState = loadBalancerState;
     this.message = message;
     this.agentResponses = agentResponses;
     this.request = request;
+    this.postApplyStepsSucceeded = MoreObjects.firstNonNull(postApplyStepsSucceeded, loadBalancerState == BaragonRequestState.SUCCESS);
   }
 
   public String getLoadBalancerRequestId() {
