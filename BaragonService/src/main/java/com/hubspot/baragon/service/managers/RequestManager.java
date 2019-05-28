@@ -242,6 +242,10 @@ public class RequestManager {
       }
     }
 
+    if (request.isNoDuplicateUpstreams()) {
+      validateNoDuplicateUpstreams(request);
+    }
+
     if (request.isNoReload() && request.getAction().isPresent() && request.getAction().get().equals(RequestAction.RELOAD)) {
       throw new InvalidRequestActionException("You can not specify 'noReload' on a request with action 'RELOAD'");
     }
@@ -252,10 +256,6 @@ public class RequestManager {
 
     if (request.getAction().isPresent() && request.getAction().equals(Optional.of(RequestAction.REVERT))) {
       throw new InvalidRequestActionException("The REVERT action may only be used internally by Baragon, you may specify UPDATE, DELETE, RELOAD, or leave the action blank(UPDATE)");
-    }
-
-    if (request.isNoDuplicateUpstreams()) {
-      validateNoDuplicateUpstreams(request);
     }
 
     try {
