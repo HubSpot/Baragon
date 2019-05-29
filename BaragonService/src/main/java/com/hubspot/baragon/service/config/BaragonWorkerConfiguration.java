@@ -18,6 +18,8 @@ public class BaragonWorkerConfiguration {
   @Min(1)
   private int maxBatchSize = 50;
 
+  private int maxRequestsPerPoll = 10;
+
   public boolean isEnabled() {
     return enabled;
   }
@@ -48,5 +50,13 @@ public class BaragonWorkerConfiguration {
 
   public void setMaxBatchSize(int maxBatchSize) {
     this.maxBatchSize = maxBatchSize;
+  }
+
+  public int getMaxRequestsPerPoll() {
+    return maxRequestsPerPoll;
+  }
+
+  public void setMaxRequestsPerPoll(int maxRequestsPerPoll) {
+    this.maxRequestsPerPoll = maxRequestsPerPoll;
   }
 }
