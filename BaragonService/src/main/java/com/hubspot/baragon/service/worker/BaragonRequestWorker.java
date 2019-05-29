@@ -243,6 +243,7 @@ public class BaragonRequestWorker implements Runnable {
 
     try {
       final List<QueuedRequestId> queuedRequestIds = requestManager.getQueuedRequestIds();
+      int added = 0;
 
       if (!queuedRequestIds.isEmpty()) {
         final Set<String> handledServices = Sets.newHashSet();
@@ -266,6 +267,10 @@ public class BaragonRequestWorker implements Runnable {
 
             queuedRequestsWithState.add(new QueuedRequestWithState(queuedRequestId, maybeRequest.get(), maybeState.get()));
             handledServices.add(queuedRequestId.getServiceId());
+            added++;
+          }
+          if (added >= configuration.getWorkerConfiguration().getMaxRequestsPerPoll()) {
+            break;
           }
         }
 
