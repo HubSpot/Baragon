@@ -83,7 +83,7 @@ public class BaragonRequest {
   }
 
   public BaragonRequest(String loadBalancerRequestId, BaragonService loadBalancerService, List<UpstreamInfo> addUpstreams, List<UpstreamInfo> removeUpstreams, List<UpstreamInfo> replaceUpstreams,
-                         Optional<String> replaceServiceId, Optional<RequestAction> action, boolean noValidate, boolean noReload) {
+                        Optional<String> replaceServiceId, Optional<RequestAction> action, boolean noValidate, boolean noReload) {
     this(loadBalancerRequestId, loadBalancerService, addUpstreams, removeUpstreams, replaceUpstreams, replaceServiceId, action, noValidate, noReload, false, false);
   }
   public BaragonRequest(String loadBalancerRequestId, BaragonService loadBalancerService, List<UpstreamInfo> addUpstreams, List<UpstreamInfo> removeUpstreams, List<UpstreamInfo> replaceUpstreams, Optional<String> replaceServiceId, Optional<RequestAction> action, boolean noValidate) {
@@ -103,11 +103,11 @@ public class BaragonRequest {
   }
 
   public BaragonRequest withUpdatedGroups(BaragonGroupAlias updatedFromAlias) {
-    return new BaragonRequest(loadBalancerRequestId, loadBalancerService.withUpdatedGroups(updatedFromAlias), addUpstreams, removeUpstreams, replaceUpstreams, replaceServiceId, action, noValidate, noReload, upstreamUpdateOnly);
+    return new BaragonRequest(loadBalancerRequestId, loadBalancerService.withUpdatedGroups(updatedFromAlias), addUpstreams, removeUpstreams, replaceUpstreams, replaceServiceId, action, noValidate, noReload, upstreamUpdateOnly, noDuplicateUpstreams);
   }
 
   public BaragonRequest withUpdatedDomains(Set<String> domains) {
-    return new BaragonRequest(loadBalancerRequestId, loadBalancerService.withDomains(domains), addUpstreams, removeUpstreams, replaceUpstreams, replaceServiceId, action, noValidate, noReload, upstreamUpdateOnly);
+    return new BaragonRequest(loadBalancerRequestId, loadBalancerService.withDomains(domains), addUpstreams, removeUpstreams, replaceUpstreams, replaceServiceId, action, noValidate, noReload, upstreamUpdateOnly, noDuplicateUpstreams);
   }
 
   public String getLoadBalancerRequestId() {
