@@ -5,7 +5,7 @@
   <parent>
     <groupId>com.hubspot</groupId>
     <artifactId>basepom</artifactId>
-    <version>25.3</version>
+    <version>25.4</version>
   </parent>
 
   <artifactId>Baragon</artifactId>
@@ -32,8 +32,6 @@
     <dep.google.apis.version>beta-rev76-1.23.0</dep.google.apis.version>
     <dep.httpclient.version>4.5.5</dep.httpclient.version>
     <dep.httpcore.version>4.4.9</dep.httpcore.version>
-    <dep.mockito.version>2.23.4</dep.mockito.version>
-    <dep.objenesis.version>2.6</dep.objenesis.version>
     <dep.zookeeper.version>3.4.8</dep.zookeeper.version>
     <jukito.version>1.5</jukito.version>
     <ringleader.version>0.1.5</ringleader.version>
@@ -197,15 +195,6 @@
           <groupId>com.github.eirslett</groupId>
           <artifactId>frontend-maven-plugin</artifactId>
           <version>0.0.23</version>
-        </plugin>
-        <plugin>
-          <groupId>org.basepom.maven</groupId>
-          <artifactId>duplicate-finder-maven-plugin</artifactId>
-          <configuration>
-            <ignoredClassPatterns>
-              <ignoredClassPattern>^META-INF.versions.9.module-info$</ignoredClassPattern>
-            </ignoredClassPatterns>
-          </configuration>
         </plugin>
       </plugins>
     </pluginManagement>
