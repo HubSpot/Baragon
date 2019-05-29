@@ -1,7 +1,6 @@
 package com.hubspot.baragon.agent.handlebars;
 
 import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.concurrent.TimeUnit;
 
@@ -35,8 +34,7 @@ public class ResolveHostnameHelper implements Helper<String> {
         if (cached != null) {
           ip = cached;
         } else {
-          InetSocketAddress socketAddress = new InetSocketAddress(InetAddress.getByName(hostAndPort.getHost()), hostAndPort.getPort());
-          ip = socketAddress.getHostName();
+          ip = InetAddress.getByName(hostAndPort.getHost()).getHostAddress();
           resolveCache.put(hostAndPort.getHost(), ip);
         }
         return String.format("%s:%d", ip, port);
