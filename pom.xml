@@ -9,7 +9,7 @@
   </parent>
 
   <artifactId>Baragon</artifactId>
-  <version>0.7.1-SNAPSHOT</version>
+  <version>0.8.0</version>
   <packaging>pom</packaging>
 
   <modules>
@@ -178,7 +178,7 @@
           <artifactId>docker-maven-plugin</artifactId>
           <version>0.13.0</version>
           <configuration>
-            <images></images>
+            <images />
             <!-- default to no images to allow building from parent, let submodules override -->
           </configuration>
           <executions>
@@ -215,7 +215,7 @@
     <connection>scm:git:git@github.com:HubSpot/Baragon.git</connection>
     <developerConnection>scm:git:ssh://git@github.com/HubSpot/Baragon.git</developerConnection>
     <url>git@github.com:HubSpot/Baragon.git</url>
-    <tag>HEAD</tag>
+    <tag>Baragon-0.8.0</tag>
   </scm>
 
 </project>
