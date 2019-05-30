@@ -5,7 +5,7 @@
   <parent>
     <groupId>com.hubspot</groupId>
     <artifactId>basepom</artifactId>
-    <version>18.3</version>
+    <version>25.4</version>
   </parent>
 
   <artifactId>Baragon</artifactId>
@@ -24,15 +24,16 @@
   </modules>
 
   <properties>
-    <aws.sdk.version>1.11.69</aws.sdk.version>
+    <aws.sdk.version>1.11.461</aws.sdk.version>
     <baragon.jar.name.format>${project.artifactId}-${project.version}</baragon.jar.name.format>
     <basepom.jar.name.format>${baragon.jar.name.format}</basepom.jar.name.format>
     <dep.curator.version>2.12.0</dep.curator.version>
     <dep.google.api-client.version>1.23.0</dep.google.api-client.version>
     <dep.google.apis.version>beta-rev76-1.23.0</dep.google.apis.version>
+    <dep.httpclient.version>4.5.5</dep.httpclient.version>
+    <dep.httpcore.version>4.4.9</dep.httpcore.version>
     <dep.zookeeper.version>3.4.8</dep.zookeeper.version>
     <jukito.version>1.5</jukito.version>
-    <project.build.targetJdk>1.8</project.build.targetJdk>
     <ringleader.version>0.1.5</ringleader.version>
   </properties>
 
@@ -138,12 +139,6 @@
         <groupId>com.hubspot</groupId>
         <artifactId>Ringleader</artifactId>
         <version>${ringleader.version}</version>
-        <exclusions>
-          <exclusion>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-          </exclusion>
-        </exclusions>
       </dependency>
 
       <!-- Dropwizard -->
@@ -170,12 +165,6 @@
         <groupId>org.jukito</groupId>
         <artifactId>jukito</artifactId>
         <version>${jukito.version}</version>
-        <exclusions>
-          <exclusion>
-            <groupId>com.google.inject</groupId>
-            <artifactId>guice</artifactId>
-          </exclusion>
-        </exclusions>
       </dependency>
 
     </dependencies>
@@ -201,11 +190,6 @@
               <phase>pre-integration-test</phase>
             </execution>
           </executions>
-        </plugin>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-failsafe-plugin</artifactId>
-          <version>2.18.1</version>
         </plugin>
         <plugin>
           <groupId>com.github.eirslett</groupId>
