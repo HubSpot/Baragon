@@ -3,17 +3,20 @@ package com.hubspot.baragon.service.worker;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
 
 import org.apache.zookeeper.KeeperException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
@@ -217,7 +220,7 @@ public class BaragonRequestWorker implements Runnable {
     return message.substring(0, message.length() -1) + " ]";
   }
 
-  public Map<QueuedRequestWithState, InternalRequestStates> handleQueuedRequests(Set<QueuedRequestWithState> queuedRequestsWithState) {
+  public Map<QueuedRequestWithState, InternalRequestStates> handleQueuedRequests(List<QueuedRequestWithState> queuedRequestsWithState) {
     Map<QueuedRequestWithState, InternalRequestStates> results = new HashMap<>();
     Set<QueuedRequestWithState> toApply = Sets.newHashSet();
     for (QueuedRequestWithState queuedRequestWithState : queuedRequestsWithState) {
@@ -274,7 +277,9 @@ public class BaragonRequestWorker implements Runnable {
           }
         }
 
-        Map<QueuedRequestWithState, InternalRequestStates> results = handleQueuedRequests(queuedRequestsWithState);
+        List<QueuedRequestWithState> prioritizedQueuedRequestsWithState = queuedRequestsWithState.stream().sorted(queuedRequestComparator()).collect(Collectors.toList());
+
+        Map<QueuedRequestWithState, InternalRequestStates> results = handleQueuedRequests(prioritizedQueuedRequestsWithState);
 
         for (Map.Entry<QueuedRequestWithState, InternalRequestStates> result : results.entrySet()) {
           if (result.getValue() != result.getKey().getCurrentState()) {
@@ -293,5 +298,31 @@ public class BaragonRequestWorker implements Runnable {
       LOG.warn("Caught exception", e);
       exceptionNotifier.notify(e, Collections.<String, String>emptyMap());
     }
+  }
+
+  @VisibleForTesting
+  static Comparator<QueuedRequestWithState> queuedRequestComparator() {
+    return (requestA, requestB) -> {
+      // noValidate & noReload comes first
+      if ((requestA.getRequest().isNoValidate() && requestA.getRequest().isNoReload()) && (!requestB.getRequest().isNoReload() || !requestB.getRequest().isNoValidate())) {
+        return -1;
+      }
+
+      if ((requestB.getRequest().isNoValidate() && requestB.getRequest().isNoReload()) && (!requestA.getRequest().isNoReload() || !requestA.getRequest().isNoValidate())) {
+        return 1;
+      }
+
+      // Then noValidate *or* noReload
+      if ((requestA.getRequest().isNoValidate() || requestA.getRequest().isNoReload()) && (!requestB.getRequest().isNoReload() && !requestB.getRequest().isNoValidate())) {
+        return -1;
+      }
+
+      if ((requestB.getRequest().isNoValidate() || requestB.getRequest().isNoReload()) && (!requestA.getRequest().isNoReload() && !requestA.getRequest().isNoValidate())) {
+        return 1;
+      }
+
+      // Then everything else
+      return 0;
+    };
   }
 }
