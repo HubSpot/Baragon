@@ -89,7 +89,7 @@ public class BaragonStateDatastore extends AbstractDataStore {
     writeToZk(servicePath, service);
   }
 
-  public boolean isUpstreamUpdateOnly(BaragonRequest update) {
+  public boolean isServiceUnchanged(BaragonRequest update) {
     if (update.isUpstreamUpdateOnly()) {
       return true;
     }
@@ -100,7 +100,7 @@ public class BaragonStateDatastore extends AbstractDataStore {
       return false;
     }
 
-    if (update.getLoadBalancerService().equals(maybeExistingService.get()) && (!update.getAddUpstreams().isEmpty() || !update.getRemoveUpstreams().isEmpty() || !update.getReplaceUpstreams().isEmpty())){
+    if (update.getLoadBalancerService().equals(maybeExistingService.get())){
       return true;
     }
 
@@ -116,7 +116,7 @@ public class BaragonStateDatastore extends AbstractDataStore {
     Collection<UpstreamInfo> currentUpstreams = getUpstreams(serviceId);
     String servicePath = String.format(SERVICE_FORMAT, serviceId);
     CuratorTransactionFinal transaction;
-    if (nodeExists(servicePath) && !isUpstreamUpdateOnly(request)) {
+    if (nodeExists(servicePath) && !isServiceUnchanged(request)) {
       transaction = curatorFramework.inTransaction().setData().forPath(servicePath, serialize(request.getLoadBalancerService())).and();
     } else {
       transaction = curatorFramework.inTransaction().create().forPath(servicePath, serialize(request.getLoadBalancerService())).and();

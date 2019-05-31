@@ -249,80 +249,78 @@ public class BaragonRequestWorker implements Runnable {
     workerLastStartAt.set(System.currentTimeMillis());
 
     try {
+      Map<QueuedRequestWithState, InternalRequestStates> results = new HashMap<>();
       final List<QueuedRequestId> queuedRequestIds = requestManager.getQueuedRequestIds();
       int added = 0;
 
-      Map<String, List<QueuedRequestId>> requestsGroupedByService = queuedRequestIds.stream().collect(Collectors.groupingBy(QueuedRequestId::getServiceId));
+      while (added < configuration.getWorkerConfiguration().getMaxRequestsPerPoll() && !queuedRequestIds.isEmpty()) {
+        Map<String, List<QueuedRequestId>> requestsGroupedByService = queuedRequestIds.stream().collect(Collectors.groupingBy(QueuedRequestId::getServiceId));
 
-      ArrayList<QueuedRequestId> upstreamOnlyRequests = new ArrayList<>();
+        ArrayList<QueuedRequestId> nonServiceChanges = new ArrayList<>();
+        Optional<QueuedRequestId> serviceChange = Optional.absent();
 
-      for (Map.Entry<String, List<QueuedRequestId>> requestsForService : requestsGroupedByService.entrySet()) {
-        for (QueuedRequestId request : requestsForService.getValue()) {
-          if (added >= configuration.getWorkerConfiguration().getMaxRequestsPerPoll()) {
-            break;
-          }
-
-          if (requestManager.getRequest(request.getRequestId())
-              .transform(stateDatastore::isUpstreamUpdateOnly)
-              .or(false)) {
-            upstreamOnlyRequests.add(request);
-            added++;
-          } else {
-            break;
-          }
-        }
-      }
-
-      List<QueuedRequestWithState> batchedUpstreamOnlyUpdates = upstreamOnlyRequests.stream()
-          .map(this::hydrateQueuedRequestWithState)
-          .filter(Optional::isPresent)
-          .map(Optional::get)
-          .collect(Collectors.toList());
-
-      LOG.debug("Immediately sending out {} upstream-only updates", batchedUpstreamOnlyUpdates.size());
-
-      // These are batched requests which only update upstreams. Send these out immediately.
-      handleQueuedRequests(batchedUpstreamOnlyUpdates);
-
-      // Now handle the remaining requests as usual.
-      queuedRequestIds.removeAll(upstreamOnlyRequests);
-
-      if (!queuedRequestIds.isEmpty()) {
-        final Set<String> handledServices = Sets.newHashSet();
-        final Set<QueuedRequestWithState> queuedRequestsWithState = Sets.newHashSet();
-        for (QueuedRequestId queuedRequestId : queuedRequestIds) {
-          if (added >= configuration.getWorkerConfiguration().getMaxRequestsPerPoll()) {
-            break;
-          }
-
-          if (!handledServices.contains(queuedRequestId.getServiceId())) {
-            Optional<QueuedRequestWithState> queuedRequestWithState = hydrateQueuedRequestWithState(queuedRequestId);
-
-            if (!queuedRequestWithState.isPresent()) {
-              continue;
+        for (Map.Entry<String, List<QueuedRequestId>> requestsForService : requestsGroupedByService.entrySet()) {
+          for (QueuedRequestId request : requestsForService.getValue()) {
+            if (added >= configuration.getWorkerConfiguration().getMaxRequestsPerPoll()) {
+              break;
             }
 
-            queuedRequestsWithState.add(queuedRequestWithState.get());
-            handledServices.add(queuedRequestId.getServiceId());
-            added++;
+            // Grab as many non-service-change BaragonRequests as we can.
+            if (requestManager.getRequest(request.getRequestId())
+                .transform(stateDatastore::isServiceUnchanged)
+                .or(false)) {
+              nonServiceChanges.add(request);
+              added++;
+            } else {
+              // Once we hit a BaragonRequest that specifies changes to a BaragonService, stop collecting requests.
+              serviceChange = Optional.of(request);
+              added++;
+              break;
+            }
           }
         }
 
-        List<QueuedRequestWithState> prioritizedQueuedRequestsWithState = queuedRequestsWithState.stream().sorted(queuedRequestComparator()).collect(Collectors.toList());
+        // Now take the list of non-service-change requests,
+        // hydrate them with state,
+        // and sort them such that the quicker noValidate / noReload requests come first.
+        List<QueuedRequestWithState> batchedUpstreamOnlyUpdates = nonServiceChanges.stream()
+            .map(this::hydrateQueuedRequestWithState)
+            .filter(Optional::isPresent)
+            .map(Optional::get)
+            .sorted(queuedRequestComparator())
+            .collect(Collectors.toList());
 
-        Map<QueuedRequestWithState, InternalRequestStates> results = handleQueuedRequests(prioritizedQueuedRequestsWithState);
+        // Then send them off.
+        LOG.debug("Processing {} BaragonRequests which don't modify a BaragonService", batchedUpstreamOnlyUpdates.size());
+        results.putAll(handleQueuedRequests(batchedUpstreamOnlyUpdates));
 
-        for (Map.Entry<QueuedRequestWithState, InternalRequestStates> result : results.entrySet()) {
-          if (result.getValue() != result.getKey().getCurrentState()) {
-            LOG.info(String.format("%s: %s --> %s", result.getKey().getQueuedRequestId().getRequestId(), result.getKey().getCurrentState(), result.getValue()));
-            requestManager.setRequestState(result.getKey().getQueuedRequestId().getRequestId(), result.getValue());
+        // Now send off the service change request.
+        if (serviceChange.isPresent()) {
+          LOG.debug("Processing one BaragonRequest which changes a BaragonService");
+          Optional<QueuedRequestWithState> maybeHydratedServiceChangeRequest = hydrateQueuedRequestWithState(serviceChange.get());
+          if (maybeHydratedServiceChangeRequest.isPresent()) {
+            results.putAll(handleQueuedRequests(Collections.singletonList(maybeHydratedServiceChangeRequest.get())));
           }
+        }
 
-          if (InternalStatesMap.isRemovable(result.getValue())) {
-            requestManager.removeQueuedRequest(result.getKey().getQueuedRequestId());
-            requestManager.saveResponseToHistory(result.getKey().getRequest(), result.getValue());
-            requestManager.deleteRequest(result.getKey().getQueuedRequestId().getRequestId());
-          }
+        queuedRequestIds.removeAll(nonServiceChanges);
+        if (serviceChange.isPresent()) {
+          queuedRequestIds.remove(serviceChange.get());
+        }
+
+        // ...and repeat until we've processed up to the limit of requests
+      }
+
+      for (Map.Entry<QueuedRequestWithState, InternalRequestStates> result : results.entrySet()) {
+        if (result.getValue() != result.getKey().getCurrentState()) {
+          LOG.info(String.format("%s: %s --> %s", result.getKey().getQueuedRequestId().getRequestId(), result.getKey().getCurrentState(), result.getValue()));
+          requestManager.setRequestState(result.getKey().getQueuedRequestId().getRequestId(), result.getValue());
+        }
+
+        if (InternalStatesMap.isRemovable(result.getValue())) {
+          requestManager.removeQueuedRequest(result.getKey().getQueuedRequestId());
+          requestManager.saveResponseToHistory(result.getKey().getRequest(), result.getValue());
+          requestManager.deleteRequest(result.getKey().getQueuedRequestId().getRequestId());
         }
       }
     } catch (Exception e) {
