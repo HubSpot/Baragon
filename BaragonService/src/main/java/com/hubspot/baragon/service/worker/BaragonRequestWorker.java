@@ -263,7 +263,7 @@ public class BaragonRequestWorker implements Runnable {
           }
 
           if (requestManager.getRequest(request.getRequestId())
-              .transform(someRequest -> someRequest.isUpstreamUpdateOnly() || stateDatastore.isUpstreamUpdateOnly(someRequest))
+              .transform(stateDatastore::isUpstreamUpdateOnly)
               .or(false)) {
             upstreamOnlyRequests.add(request);
             added++;
