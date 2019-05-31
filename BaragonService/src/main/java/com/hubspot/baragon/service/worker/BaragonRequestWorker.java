@@ -24,6 +24,7 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import com.hubspot.baragon.BaragonDataModule;
+import com.hubspot.baragon.data.BaragonStateDatastore;
 import com.hubspot.baragon.models.AgentRequestType;
 import com.hubspot.baragon.models.AgentRequestsStatus;
 import com.hubspot.baragon.models.AgentResponse;
@@ -47,6 +48,7 @@ public class BaragonRequestWorker implements Runnable {
 
   private final AgentManager agentManager;
   private final RequestManager requestManager;
+  private final BaragonStateDatastore stateDatastore;
   private final AtomicLong workerLastStartAt;
   private final BaragonExceptionNotifier exceptionNotifier;
   private final BaragonConfiguration configuration;
@@ -55,12 +57,14 @@ public class BaragonRequestWorker implements Runnable {
   @Inject
   public BaragonRequestWorker(AgentManager agentManager,
                               RequestManager requestManager,
+                              BaragonStateDatastore stateDatastore,
                               BaragonExceptionNotifier exceptionNotifier,
                               BaragonConfiguration configuration,
                               EdgeCache edgeCache,
                               @Named(BaragonDataModule.BARAGON_SERVICE_WORKER_LAST_START) AtomicLong workerLastStartAt) {
     this.agentManager = agentManager;
     this.requestManager = requestManager;
+    this.stateDatastore = stateDatastore;
     this.edgeCache = edgeCache;
     this.workerLastStartAt = workerLastStartAt;
     this.exceptionNotifier = exceptionNotifier;
@@ -248,32 +252,59 @@ public class BaragonRequestWorker implements Runnable {
       final List<QueuedRequestId> queuedRequestIds = requestManager.getQueuedRequestIds();
       int added = 0;
 
+      Map<String, List<QueuedRequestId>> requestsGroupedByService = queuedRequestIds.stream().collect(Collectors.groupingBy(QueuedRequestId::getServiceId));
+
+      ArrayList<QueuedRequestId> upstreamOnlyRequests = new ArrayList<>();
+
+      for (Map.Entry<String, List<QueuedRequestId>> requestsForService : requestsGroupedByService.entrySet()) {
+        for (QueuedRequestId request : requestsForService.getValue()) {
+          if (added >= configuration.getWorkerConfiguration().getMaxRequestsPerPoll()) {
+            break;
+          }
+
+          if (requestManager.getRequest(request.getRequestId())
+              .transform(someRequest -> someRequest.isUpstreamUpdateOnly() || stateDatastore.isUpstreamUpdateOnly(someRequest))
+              .or(false)) {
+            upstreamOnlyRequests.add(request);
+            added++;
+          } else {
+            break;
+          }
+        }
+      }
+
+      List<QueuedRequestWithState> batchedUpstreamOnlyUpdates = upstreamOnlyRequests.stream()
+          .map(this::hydrateQueuedRequestWithState)
+          .filter(Optional::isPresent)
+          .map(Optional::get)
+          .collect(Collectors.toList());
+
+      LOG.debug("Immediately sending out {} upstream-only updates", batchedUpstreamOnlyUpdates.size());
+
+      // These are batched requests which only update upstreams. Send these out immediately.
+      handleQueuedRequests(batchedUpstreamOnlyUpdates);
+
+      // Now handle the remaining requests as usual.
+      queuedRequestIds.removeAll(upstreamOnlyRequests);
+
       if (!queuedRequestIds.isEmpty()) {
         final Set<String> handledServices = Sets.newHashSet();
         final Set<QueuedRequestWithState> queuedRequestsWithState = Sets.newHashSet();
         for (QueuedRequestId queuedRequestId : queuedRequestIds) {
-          if (!handledServices.contains(queuedRequestId.getServiceId())) {
-            final String requestId = queuedRequestId.getRequestId();
-            final Optional<InternalRequestStates> maybeState = requestManager.getRequestState(requestId);
-
-            if (!maybeState.isPresent()) {
-              LOG.warn(String.format("%s does not have a request status!", requestId));
-              continue;
-            }
-
-            final Optional<BaragonRequest> maybeRequest = requestManager.getRequest(requestId);
-
-            if (!maybeRequest.isPresent()) {
-              LOG.warn(String.format("%s does not have a request object!", requestId));
-              continue;
-            }
-
-            queuedRequestsWithState.add(new QueuedRequestWithState(queuedRequestId, maybeRequest.get(), maybeState.get()));
-            handledServices.add(queuedRequestId.getServiceId());
-            added++;
-          }
           if (added >= configuration.getWorkerConfiguration().getMaxRequestsPerPoll()) {
             break;
+          }
+
+          if (!handledServices.contains(queuedRequestId.getServiceId())) {
+            Optional<QueuedRequestWithState> queuedRequestWithState = hydrateQueuedRequestWithState(queuedRequestId);
+
+            if (!queuedRequestWithState.isPresent()) {
+              continue;
+            }
+
+            queuedRequestsWithState.add(queuedRequestWithState.get());
+            handledServices.add(queuedRequestId.getServiceId());
+            added++;
           }
         }
 
@@ -298,6 +329,25 @@ public class BaragonRequestWorker implements Runnable {
       LOG.warn("Caught exception", e);
       exceptionNotifier.notify(e, Collections.<String, String>emptyMap());
     }
+  }
+
+  private Optional<QueuedRequestWithState> hydrateQueuedRequestWithState(QueuedRequestId queuedRequestId) {
+    final String requestId = queuedRequestId.getRequestId();
+    final Optional<InternalRequestStates> maybeState = requestManager.getRequestState(requestId);
+
+    if (!maybeState.isPresent()) {
+      LOG.warn(String.format("%s does not have a request status!", requestId));
+      return Optional.absent();
+    }
+
+    final Optional<BaragonRequest> maybeRequest = requestManager.getRequest(requestId);
+
+    if (!maybeRequest.isPresent()) {
+      LOG.warn(String.format("%s does not have a request object!", requestId));
+      return Optional.absent();
+    }
+
+    return Optional.of(new QueuedRequestWithState(queuedRequestId, maybeRequest.get(), maybeState.get()));
   }
 
   @VisibleForTesting
