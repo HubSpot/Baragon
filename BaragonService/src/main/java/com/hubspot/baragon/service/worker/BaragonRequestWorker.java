@@ -228,7 +228,7 @@ public class BaragonRequestWorker implements Runnable {
     return message.substring(0, message.length() - 1) + " ]";
   }
 
-  public Map<QueuedRequestWithState, InternalRequestStates> handleQueuedRequests(List<QueuedRequestWithState> queuedRequestsWithState) {
+  private Map<QueuedRequestWithState, InternalRequestStates> handleQueuedRequests(List<QueuedRequestWithState> queuedRequestsWithState) {
     Map<QueuedRequestWithState, InternalRequestStates> results = new HashMap<>();
     Set<QueuedRequestWithState> toApply = Sets.newHashSet();
     for (QueuedRequestWithState queuedRequestWithState : queuedRequestsWithState) {
@@ -277,38 +277,42 @@ public class BaragonRequestWorker implements Runnable {
 
         // Then send them off.
         LOG.debug("Processing {} BaragonRequests which don't modify a BaragonService", nonServiceChanges.size());
-        results.putAll(handleQueuedRequests(hydratedNonServiceChanges));
+        handleResultStates(handleQueuedRequests(hydratedNonServiceChanges));
 
         // Now send off the service change requests.
-        for (QueuedRequestId serviceChange : serviceChanges) {
-          LOG.debug("Processing one BaragonRequest which changes a BaragonService");
-          Optional<QueuedRequestWithState> maybeHydratedServiceChangeRequest = hydrateQueuedRequestWithState(serviceChange);
-          if (maybeHydratedServiceChangeRequest.isPresent()) {
-            results.putAll(handleQueuedRequests(Collections.singletonList(maybeHydratedServiceChangeRequest.get())));
-          }
-        }
+        List<QueuedRequestWithState> hydratedServiceChanges = serviceChanges.stream()
+            .map(this::hydrateQueuedRequestWithState)
+            .filter(Optional::isPresent)
+            .map(Optional::get)
+            .sorted(queuedRequestComparator())
+            .collect(Collectors.toList());
+
+        LOG.debug("Processing {} BaragonRequests which modify a BaragonService", serviceChanges.size());
+        handleResultStates(handleQueuedRequests(hydratedServiceChanges));
 
         queuedRequestIds.removeAll(nonServiceChanges);
         queuedRequestIds.removeAll(serviceChanges);
 
         // ...and repeat until we've processed up to the limit of requests
       }
-
-      for (Map.Entry<QueuedRequestWithState, InternalRequestStates> result : results.entrySet()) {
-        if (result.getValue() != result.getKey().getCurrentState()) {
-          LOG.info(String.format("%s: %s --> %s", result.getKey().getQueuedRequestId().getRequestId(), result.getKey().getCurrentState(), result.getValue()));
-          requestManager.setRequestState(result.getKey().getQueuedRequestId().getRequestId(), result.getValue());
-        }
-
-        if (InternalStatesMap.isRemovable(result.getValue())) {
-          requestManager.removeQueuedRequest(result.getKey().getQueuedRequestId());
-          requestManager.saveResponseToHistory(result.getKey().getRequest(), result.getValue());
-          requestManager.deleteRequest(result.getKey().getQueuedRequestId().getRequestId());
-        }
-      }
     } catch (Exception e) {
       LOG.warn("Caught exception", e);
       exceptionNotifier.notify(e, Collections.<String, String>emptyMap());
+    }
+  }
+
+  private void handleResultStates(Map<QueuedRequestWithState, InternalRequestStates> results) {
+    for (Map.Entry<QueuedRequestWithState, InternalRequestStates> result : results.entrySet()) {
+      if (result.getValue() != result.getKey().getCurrentState()) {
+        LOG.info(String.format("%s: %s --> %s", result.getKey().getQueuedRequestId().getRequestId(), result.getKey().getCurrentState(), result.getValue()));
+        requestManager.setRequestState(result.getKey().getQueuedRequestId().getRequestId(), result.getValue());
+      }
+
+      if (InternalStatesMap.isRemovable(result.getValue())) {
+        requestManager.removeQueuedRequest(result.getKey().getQueuedRequestId());
+        requestManager.saveResponseToHistory(result.getKey().getRequest(), result.getValue());
+        requestManager.deleteRequest(result.getKey().getQueuedRequestId().getRequestId());
+      }
     }
   }
 
