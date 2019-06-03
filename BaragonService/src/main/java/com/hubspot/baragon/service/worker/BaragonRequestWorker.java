@@ -253,7 +253,6 @@ public class BaragonRequestWorker implements Runnable {
     workerLastStartAt.set(System.currentTimeMillis());
 
     try {
-      Map<QueuedRequestWithState, InternalRequestStates> results = new HashMap<>();
       final List<QueuedRequestId> queuedRequestIds = requestManager.getQueuedRequestIds();
       int added = 0;
 
