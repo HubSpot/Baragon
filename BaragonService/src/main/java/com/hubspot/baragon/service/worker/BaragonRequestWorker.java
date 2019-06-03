@@ -257,7 +257,7 @@ public class BaragonRequestWorker implements Runnable {
         Map<String, List<QueuedRequestId>> requestsGroupedByService = queuedRequestIds.stream().collect(Collectors.groupingBy(QueuedRequestId::getServiceId));
 
         ArrayList<QueuedRequestId> nonServiceChanges = new ArrayList<>();
-        Optional<QueuedRequestId> serviceChange = Optional.absent();
+        ArrayList<QueuedRequestId> serviceChanges = new ArrayList<>();
 
         for (Map.Entry<String, List<QueuedRequestId>> requestsForService : requestsGroupedByService.entrySet()) {
           for (QueuedRequestId request : requestsForService.getValue()) {
@@ -266,14 +266,12 @@ public class BaragonRequestWorker implements Runnable {
             }
 
             // Grab as many non-service-change BaragonRequests as we can.
-            if (requestManager.getRequest(request.getRequestId())
-                .transform(stateDatastore::isServiceUnchanged)
-                .or(false)) {
+            if (requestManager.getRequest(request.getRequestId()).transform(stateDatastore::isServiceUnchanged).or(false)) {
               nonServiceChanges.add(request);
               added++;
             } else {
-              // Once we hit a BaragonRequest that specifies changes to a BaragonService, stop collecting requests.
-              serviceChange = Optional.of(request);
+              // Once we hit a BaragonRequest that specifies BaragonService changes, stop collecting requests for this service.
+              serviceChanges.add(request);
               added++;
               break;
             }
@@ -283,7 +281,7 @@ public class BaragonRequestWorker implements Runnable {
         // Now take the list of non-service-change requests,
         // hydrate them with state,
         // and sort them such that the quicker noValidate / noReload requests come first.
-        List<QueuedRequestWithState> batchedUpstreamOnlyUpdates = nonServiceChanges.stream()
+        List<QueuedRequestWithState> hydratedNonServiceChanges = nonServiceChanges.stream()
             .map(this::hydrateQueuedRequestWithState)
             .filter(Optional::isPresent)
             .map(Optional::get)
@@ -291,22 +289,20 @@ public class BaragonRequestWorker implements Runnable {
             .collect(Collectors.toList());
 
         // Then send them off.
-        LOG.debug("Processing {} BaragonRequests which don't modify a BaragonService", batchedUpstreamOnlyUpdates.size());
-        results.putAll(handleQueuedRequests(batchedUpstreamOnlyUpdates));
+        LOG.debug("Processing {} BaragonRequests which don't modify a BaragonService", nonServiceChanges.size());
+        results.putAll(handleQueuedRequests(hydratedNonServiceChanges));
 
-        // Now send off the service change request.
-        if (serviceChange.isPresent()) {
+        // Now send off the service change requests.
+        for (QueuedRequestId serviceChange : serviceChanges) {
           LOG.debug("Processing one BaragonRequest which changes a BaragonService");
-          Optional<QueuedRequestWithState> maybeHydratedServiceChangeRequest = hydrateQueuedRequestWithState(serviceChange.get());
+          Optional<QueuedRequestWithState> maybeHydratedServiceChangeRequest = hydrateQueuedRequestWithState(serviceChange);
           if (maybeHydratedServiceChangeRequest.isPresent()) {
             results.putAll(handleQueuedRequests(Collections.singletonList(maybeHydratedServiceChangeRequest.get())));
           }
         }
 
         queuedRequestIds.removeAll(nonServiceChanges);
-        if (serviceChange.isPresent()) {
-          queuedRequestIds.remove(serviceChange.get());
-        }
+        queuedRequestIds.removeAll(serviceChanges);
 
         // ...and repeat until we've processed up to the limit of requests
       }
