@@ -93,11 +93,14 @@ public class BaragonRequestWorker implements Runnable {
     switch (agentManager.getRequestsStatus(request, InternalStatesMap.getRequestType(currentState))) {
       case FAILURE:
         agentResponses = agentManager.getAgentResponses(request.getLoadBalancerRequestId());
-        requestManager.setRequestMessage(request.getLoadBalancerRequestId(), String.format("Apply failed {%s}, %s failed {%s}", buildResponseString(agentResponses, AgentRequestType.APPLY), InternalStatesMap.getRequestType(currentState).name(), buildResponseString(agentResponses, InternalStatesMap.getRequestType(currentState))));
+        requestManager.setRequestMessage(request.getLoadBalancerRequestId(), String.format("Apply failed {%s}, %s failed {%s}", buildResponseString(agentResponses, AgentRequestType.APPLY), InternalStatesMap
+            .getRequestType(currentState)
+            .name(), buildResponseString(agentResponses, InternalStatesMap.getRequestType(currentState))));
         return InternalStatesMap.getFailureState(currentState);
       case SUCCESS:
         agentResponses = agentManager.getAgentResponses(request.getLoadBalancerRequestId());
-        requestManager.setRequestMessage(request.getLoadBalancerRequestId(), String.format("Apply failed {%s}, %s OK.", buildResponseString(agentResponses, AgentRequestType.APPLY), InternalStatesMap.getRequestType(currentState).name()));
+        requestManager.setRequestMessage(request.getLoadBalancerRequestId(), String.format("Apply failed {%s}, %s OK.", buildResponseString(agentResponses, AgentRequestType.APPLY), InternalStatesMap.getRequestType(currentState)
+            .name()));
         requestManager.revertBasePath(request);
         return InternalStatesMap.getSuccessState(currentState);
       case RETRY:
@@ -135,7 +138,7 @@ public class BaragonRequestWorker implements Runnable {
           List<String> domainsNotServed = getDomainsNotServed(request.getLoadBalancerService());
           if (!domainsNotServed.isEmpty()) {
             requestManager.setRequestMessage(request.getLoadBalancerRequestId(), String.format("No groups present that serve domains: %s", domainsNotServed));
-            return  InternalRequestStates.INVALID_REQUEST_NOOP;
+            return InternalRequestStates.INVALID_REQUEST_NOOP;
           }
         }
 
@@ -153,7 +156,8 @@ public class BaragonRequestWorker implements Runnable {
             return InternalRequestStates.FAILED_SEND_REVERT_REQUESTS;
           case SUCCESS:
             try {
-              requestManager.setRequestMessage(request.getLoadBalancerRequestId(), String.format("%s request succeeded! Added upstreams: %s, Removed upstreams: %s", request.getAction().or(RequestAction.UPDATE), request.getAddUpstreams(), request.getRemoveUpstreams()));
+              requestManager.setRequestMessage(request.getLoadBalancerRequestId(), String.format("%s request succeeded! Added upstreams: %s, Removed upstreams: %s", request.getAction()
+                  .or(RequestAction.UPDATE), request.getAddUpstreams(), request.getRemoveUpstreams()));
               requestManager.commitRequest(request);
               if (performPostApplySteps(request)) {
                 return InternalRequestStates.COMPLETED;
@@ -221,7 +225,7 @@ public class BaragonRequestWorker implements Runnable {
     for (Map.Entry<String, String> entry : conflicts.entrySet()) {
       message = String.format("%s %s on group %s,", message, entry.getValue(), entry.getKey());
     }
-    return message.substring(0, message.length() -1) + " ]";
+    return message.substring(0, message.length() - 1) + " ]";
   }
 
   public Map<QueuedRequestWithState, InternalRequestStates> handleQueuedRequests(List<QueuedRequestWithState> queuedRequestsWithState) {
@@ -259,24 +263,7 @@ public class BaragonRequestWorker implements Runnable {
         ArrayList<QueuedRequestId> nonServiceChanges = new ArrayList<>();
         ArrayList<QueuedRequestId> serviceChanges = new ArrayList<>();
 
-        for (Map.Entry<String, List<QueuedRequestId>> requestsForService : requestsGroupedByService.entrySet()) {
-          for (QueuedRequestId request : requestsForService.getValue()) {
-            if (added >= configuration.getWorkerConfiguration().getMaxRequestsPerPoll()) {
-              break;
-            }
-
-            // Grab as many non-service-change BaragonRequests as we can.
-            if (requestManager.getRequest(request.getRequestId()).transform(stateDatastore::isServiceUnchanged).or(false)) {
-              nonServiceChanges.add(request);
-              added++;
-            } else {
-              // Once we hit a BaragonRequest that specifies BaragonService changes, stop collecting requests for this service.
-              serviceChanges.add(request);
-              added++;
-              break;
-            }
-          }
-        }
+        added = collectRequests(added, requestsGroupedByService, nonServiceChanges, serviceChanges);
 
         // Now take the list of non-service-change requests,
         // hydrate them with state,
@@ -323,6 +310,33 @@ public class BaragonRequestWorker implements Runnable {
       LOG.warn("Caught exception", e);
       exceptionNotifier.notify(e, Collections.<String, String>emptyMap());
     }
+  }
+
+  private int collectRequests(int previouslyAdded,
+                              Map<String, List<QueuedRequestId>> requestsGroupedByService,
+                              ArrayList<QueuedRequestId> nonServiceChanges,
+                              ArrayList<QueuedRequestId> serviceChanges) {
+    int added = previouslyAdded;
+
+    for (Map.Entry<String, List<QueuedRequestId>> requestsForService : requestsGroupedByService.entrySet()) {
+      for (QueuedRequestId request : requestsForService.getValue()) {
+        if (added >= configuration.getWorkerConfiguration().getMaxRequestsPerPoll()) {
+          return added;
+        }
+
+        // Grab as many non-service-change BaragonRequests as we can.
+        if (requestManager.getRequest(request.getRequestId()).transform(stateDatastore::isServiceUnchanged).or(false)) {
+          nonServiceChanges.add(request);
+          added++;
+        } else {
+          // Once we hit a BaragonRequest that specifies BaragonService changes, stop collecting requests for this service.
+          serviceChanges.add(request);
+          added++;
+          break;
+        }
+      }
+    }
+    return added;
   }
 
   private Optional<QueuedRequestWithState> hydrateQueuedRequestWithState(QueuedRequestId queuedRequestId) {
