@@ -12,6 +12,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import org.apache.curator.framework.CuratorFramework;
+import org.apache.curator.framework.api.transaction.CuratorTransaction;
 import org.apache.curator.framework.api.transaction.CuratorTransactionFinal;
 import org.apache.curator.utils.ZKPaths;
 import org.apache.zookeeper.data.Stat;
@@ -117,14 +118,15 @@ public class BaragonStateDatastore extends AbstractDataStore {
     String serviceId = request.getLoadBalancerService().getServiceId();
     Collection<UpstreamInfo> currentUpstreams = getUpstreams(serviceId);
     String servicePath = String.format(SERVICE_FORMAT, serviceId);
-    CuratorTransactionFinal transaction;
+    CuratorTransaction transaction = curatorFramework.inTransaction();
     if (nodeExists(servicePath) && !isServiceUnchanged(request)) {
       LOG.debug("Updating existing service {}", request.getLoadBalancerService().getServiceId());
       transaction = curatorFramework.inTransaction().setData().forPath(servicePath, serialize(request.getLoadBalancerService())).and();
-    } else {
+    } else if (!nodeExists(servicePath)) {
       LOG.debug("Creating new node for service {}", request.getLoadBalancerService().getServiceId());
       transaction = curatorFramework.inTransaction().create().forPath(servicePath, serialize(request.getLoadBalancerService())).and();
     }
+    // Otherwise, the service node exists, but it hasn't changed, so don't update it.
 
     Set<String> pathsToDelete = new HashSet<>();
     if (!request.getReplaceUpstreams().isEmpty()) {
@@ -163,12 +165,12 @@ public class BaragonStateDatastore extends AbstractDataStore {
     }
 
     LOG.debug("pathsToDelete right before the commit: {}", pathsToDelete);
-    transaction.commit();
+    ((CuratorTransactionFinal) transaction).commit();
   }
 
   private void deleteMatchingUpstreams(String serviceId,
                                        Collection<UpstreamInfo> currentUpstreams,
-                                       CuratorTransactionFinal transaction,
+                                       CuratorTransaction transaction,
                                        Set<String> pathsToDelete,
                                        UpstreamInfo upstreamInfo) throws Exception {
     List<String> matchingUpstreamPaths = matchingUpstreamHostPorts(currentUpstreams, upstreamInfo);
