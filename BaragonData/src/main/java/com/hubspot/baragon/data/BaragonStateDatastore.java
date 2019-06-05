@@ -5,9 +5,11 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.api.transaction.CuratorTransactionFinal;
@@ -122,22 +124,10 @@ public class BaragonStateDatastore extends AbstractDataStore {
       transaction = curatorFramework.inTransaction().create().forPath(servicePath, serialize(request.getLoadBalancerService())).and();
     }
 
-    List<String> pathsToDelete = new ArrayList<>();
+    Set<String> pathsToDelete = new HashSet<>();
     if (!request.getReplaceUpstreams().isEmpty()) {
       for (UpstreamInfo upstreamInfo : currentUpstreams) {
-        List<String> matchingUpstreamPaths = matchingUpstreamPaths(currentUpstreams, upstreamInfo);
-        if (matchingUpstreamPaths.isEmpty()) {
-          LOG.warn("No upstream node found to delete for {}, current upstream nodes are {}", upstreamInfo, currentUpstreams);
-        } else {
-          for (String matchingPath : matchingUpstreamPaths) {
-            String fullPath = String.format(UPSTREAM_FORMAT, serviceId, matchingPath);
-            if (nodeExists(fullPath) && !pathsToDelete.contains(fullPath)) {
-              LOG.info("Deleting {}", fullPath);
-              pathsToDelete.add(fullPath);
-              transaction.delete().forPath(fullPath).and();
-            }
-          }
-        }
+        deleteMatchingUpstreams(serviceId, currentUpstreams, transaction, pathsToDelete, upstreamInfo);
       }
       for (UpstreamInfo upstreamInfo : request.getReplaceUpstreams()) {
         String addPath = String.format(UPSTREAM_FORMAT, serviceId, upstreamInfo.toPath());
@@ -147,23 +137,11 @@ public class BaragonStateDatastore extends AbstractDataStore {
       }
     } else {
       for (UpstreamInfo upstreamInfo : request.getRemoveUpstreams()) {
-        List<String> matchingUpstreamPaths = matchingUpstreamPaths(currentUpstreams, upstreamInfo);
-        if (matchingUpstreamPaths.isEmpty()) {
-          LOG.warn("No upstream node found to delete for {}, current upstream nodes are {}", upstreamInfo, currentUpstreams);
-        } else {
-          for (String matchingPath : matchingUpstreamPaths) {
-            String fullPath = String.format(UPSTREAM_FORMAT, serviceId, matchingPath);
-            if (nodeExists(fullPath) && !pathsToDelete.contains(fullPath)) {
-              LOG.info("Deleting {}", fullPath);
-              pathsToDelete.add(fullPath);
-              transaction.delete().forPath(fullPath).and();
-            }
-          }
-        }
+        deleteMatchingUpstreams(serviceId, currentUpstreams, transaction, pathsToDelete, upstreamInfo);
       }
       for (UpstreamInfo upstreamInfo : request.getAddUpstreams()) {
         String addPath = String.format(UPSTREAM_FORMAT, serviceId, upstreamInfo.toPath());
-        List<String> matchingUpstreamPaths = matchingUpstreamPaths(currentUpstreams, upstreamInfo);
+        List<String> matchingUpstreamPaths = matchingUpstreamHostPorts(currentUpstreams, upstreamInfo);
         for (String matchingPath : matchingUpstreamPaths) {
           String fullPath = String.format(UPSTREAM_FORMAT, serviceId, matchingPath);
           if (nodeExists(fullPath) && !pathsToDelete.contains(fullPath) && !fullPath.equals(addPath)) {
@@ -181,7 +159,27 @@ public class BaragonStateDatastore extends AbstractDataStore {
     transaction.commit();
   }
 
-  private List<String> matchingUpstreamPaths(Collection<UpstreamInfo> currentUpstreams, UpstreamInfo toAdd) {
+  private void deleteMatchingUpstreams(String serviceId,
+                                       Collection<UpstreamInfo> currentUpstreams,
+                                       CuratorTransactionFinal transaction,
+                                       Set<String> pathsToDelete,
+                                       UpstreamInfo upstreamInfo) throws Exception {
+    List<String> matchingUpstreamPaths = matchingUpstreamHostPorts(currentUpstreams, upstreamInfo);
+    if (matchingUpstreamPaths.isEmpty()) {
+      LOG.warn("No upstream node found to delete for {}, current upstream nodes are {}", upstreamInfo, currentUpstreams);
+    } else {
+      for (String matchingPath : matchingUpstreamPaths) {
+        String fullPath = String.format(UPSTREAM_FORMAT, serviceId, matchingPath);
+        if (nodeExists(fullPath) && !pathsToDelete.contains(fullPath)) {
+          LOG.info("Deleting {}", fullPath);
+          pathsToDelete.add(fullPath);
+          transaction.delete().forPath(fullPath).and();
+        }
+      }
+    }
+  }
+
+  private List<String> matchingUpstreamHostPorts(Collection<UpstreamInfo> currentUpstreams, UpstreamInfo toAdd) {
     List<String> matchingPaths = new ArrayList<>();
     for (UpstreamInfo upstreamInfo : currentUpstreams) {
       if (UpstreamInfo.upstreamAndGroupMatches(upstreamInfo, toAdd)) {
