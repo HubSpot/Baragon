@@ -120,10 +120,10 @@ public class BaragonStateDatastore extends AbstractDataStore {
     String servicePath = String.format(SERVICE_FORMAT, serviceId);
     CuratorTransaction transaction = curatorFramework.inTransaction();
     if (nodeExists(servicePath) && !isServiceUnchanged(request)) {
-      LOG.debug("Updating existing service {}", request.getLoadBalancerService().getServiceId());
+      LOG.trace("Updating existing service {}", request.getLoadBalancerService().getServiceId());
       transaction = curatorFramework.inTransaction().setData().forPath(servicePath, serialize(request.getLoadBalancerService())).and();
     } else if (!nodeExists(servicePath)) {
-      LOG.debug("Creating new node for service {}", request.getLoadBalancerService().getServiceId());
+      LOG.trace("Creating new node for service {}", request.getLoadBalancerService().getServiceId());
       transaction = curatorFramework.inTransaction().create().forPath(servicePath, serialize(request.getLoadBalancerService())).and();
     }
     // Otherwise, the service node exists, but it hasn't changed, so don't update it.
@@ -157,14 +157,16 @@ public class BaragonStateDatastore extends AbstractDataStore {
             transaction.delete().forPath(fullPath).and();
           }
         }
-        if (!nodeExists(addPath) || pathsToDelete.contains(addPath)) {
-          LOG.info("Creating new upstream node {}. nodeExists: {}; pathsToDelete: {}", addPath, nodeExists(addPath), pathsToDelete);
+        boolean nodeExists = nodeExists(addPath);
+        LOG.trace("About to check if we should create a new upstream node at {}. nodeExists: {}; pathsToDelete: {}", addPath, nodeExists, pathsToDelete);
+        if (!nodeExists || pathsToDelete.contains(addPath)) {
+          LOG.info("Creating new upstream node {}", addPath);
           transaction.create().forPath(addPath).and();
         }
       }
     }
 
-    LOG.debug("pathsToDelete right before the commit: {}", pathsToDelete);
+    LOG.trace("pathsToDelete right before the commit: {}", pathsToDelete);
     ((CuratorTransactionFinal) transaction).commit();
   }
 
