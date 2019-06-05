@@ -298,6 +298,8 @@ public class BaragonRequestWorker implements Runnable {
     } catch (Exception e) {
       LOG.warn("Caught exception", e);
       exceptionNotifier.notify(e, Collections.<String, String>emptyMap());
+    } finally {
+      LOG.debug("Finished poller loop.");
     }
   }
 
