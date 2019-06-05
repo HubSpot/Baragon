@@ -119,8 +119,10 @@ public class BaragonStateDatastore extends AbstractDataStore {
     String servicePath = String.format(SERVICE_FORMAT, serviceId);
     CuratorTransactionFinal transaction;
     if (nodeExists(servicePath) && !isServiceUnchanged(request)) {
+      LOG.debug("Updating existing service {}", request.getLoadBalancerService().getServiceId());
       transaction = curatorFramework.inTransaction().setData().forPath(servicePath, serialize(request.getLoadBalancerService())).and();
     } else {
+      LOG.debug("Creating new node for service {}", request.getLoadBalancerService().getServiceId());
       transaction = curatorFramework.inTransaction().create().forPath(servicePath, serialize(request.getLoadBalancerService())).and();
     }
 
