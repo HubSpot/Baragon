@@ -159,6 +159,8 @@ public class BaragonStateDatastore extends AbstractDataStore {
         }
       }
     }
+
+    LOG.debug("pathsToDelete right before the commit: {}", pathsToDelete);
     transaction.commit();
   }
 
