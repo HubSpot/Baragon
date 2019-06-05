@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
 import javax.ws.rs.core.Response;
@@ -13,7 +12,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Optional;
-import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
@@ -68,8 +66,8 @@ public class AgentRequestManager {
     this.agentLockTimeoutMs = agentLockTimeoutMs;
   }
 
-  public Set<AgentBatchResponseItem> processRequests(Set<BaragonRequestBatchItem> batch) throws InterruptedException {
-    Set<AgentBatchResponseItem> responses = Sets.newHashSet();
+  public List<AgentBatchResponseItem> processRequests(List<BaragonRequestBatchItem> batch) throws InterruptedException {
+    List<AgentBatchResponseItem> responses = new ArrayList<>(batch.size());
     int i = 0;
     for (BaragonRequestBatchItem item : batch) {
       boolean isLast = i == batch.size() - 1;

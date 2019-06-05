@@ -16,7 +16,6 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
@@ -219,7 +218,7 @@ public class BaragonRequestWorker implements Runnable {
 
   public Map<QueuedRequestWithState, InternalRequestStates> handleQueuedRequests(Set<QueuedRequestWithState> queuedRequestsWithState) {
     Map<QueuedRequestWithState, InternalRequestStates> results = new HashMap<>();
-    Set<QueuedRequestWithState> toApply = Sets.newHashSet();
+    List<QueuedRequestWithState> toApply = new ArrayList<>();
     for (QueuedRequestWithState queuedRequestWithState : queuedRequestsWithState) {
       if (!queuedRequestWithState.getCurrentState().isRequireAgentRequest()) {
         try {
