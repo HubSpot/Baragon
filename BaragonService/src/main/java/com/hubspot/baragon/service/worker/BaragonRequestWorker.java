@@ -232,6 +232,7 @@ public class BaragonRequestWorker implements Runnable {
     Map<QueuedRequestWithState, InternalRequestStates> results = new HashMap<>();
     Set<QueuedRequestWithState> toApply = Sets.newHashSet();
     for (QueuedRequestWithState queuedRequestWithState : queuedRequestsWithState) {
+      LOG.debug("Handling {}", queuedRequestsWithState);
       if (!queuedRequestWithState.getCurrentState().isRequireAgentRequest()) {
         try {
           results.put(queuedRequestWithState, handleState(queuedRequestWithState.getCurrentState(), queuedRequestWithState.getRequest()));
