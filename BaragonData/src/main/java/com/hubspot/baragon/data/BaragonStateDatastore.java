@@ -136,22 +136,25 @@ public class BaragonStateDatastore extends AbstractDataStore {
         }
       }
     } else {
+      LOG.debug("Removing upstreams {}", request.getRemoveUpstreams());
       for (UpstreamInfo upstreamInfo : request.getRemoveUpstreams()) {
         deleteMatchingUpstreams(serviceId, currentUpstreams, transaction, pathsToDelete, upstreamInfo);
       }
+
+      LOG.debug("Adding upstreams {}", request.getAddUpstreams());
       for (UpstreamInfo upstreamInfo : request.getAddUpstreams()) {
         String addPath = String.format(UPSTREAM_FORMAT, serviceId, upstreamInfo.toPath());
         List<String> matchingUpstreamPaths = matchingUpstreamHostPorts(currentUpstreams, upstreamInfo);
         for (String matchingPath : matchingUpstreamPaths) {
           String fullPath = String.format(UPSTREAM_FORMAT, serviceId, matchingPath);
           if (nodeExists(fullPath) && !pathsToDelete.contains(fullPath) && !fullPath.equals(addPath)) {
-            LOG.info("Deleting {}", fullPath);
+            LOG.info("Deleting existing upstream {} because it matches new upstream", fullPath);
             pathsToDelete.add(fullPath);
             transaction.delete().forPath(fullPath).and();
           }
         }
         if (!nodeExists(addPath) || pathsToDelete.contains(addPath)) {
-          LOG.info("Creating {}", addPath);
+          LOG.info("Creating new upstream node {}", addPath);
           transaction.create().forPath(addPath).and();
         }
       }
