@@ -1,8 +1,11 @@
 package com.hubspot.baragon.service.resources;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import javax.validation.Valid;
 import javax.ws.rs.Consumes;
@@ -29,6 +32,7 @@ import com.hubspot.baragon.data.BaragonStateDatastore;
 import com.hubspot.baragon.models.BaragonRequest;
 import com.hubspot.baragon.models.BaragonResponse;
 import com.hubspot.baragon.models.BaragonService;
+import com.hubspot.baragon.models.BaragonServiceState;
 import com.hubspot.baragon.models.QueuedRequestId;
 import com.hubspot.baragon.models.UpstreamInfo;
 import com.hubspot.baragon.service.managers.RequestManager;
@@ -150,11 +154,15 @@ public class RequestResource {
     if (!maybeService.isPresent()) {
       throw new WebApplicationException(String.format("Service %s not found", serviceId), 400);
     }
+    return removeUpstream(maybeService.get(), Collections.singletonList(upstreamInfo));
+  }
+
+  private BaragonResponse removeUpstream(BaragonService service, List<UpstreamInfo> upstreamInfos) {
     return enqueueRequest(new BaragonRequest(
         UUID.randomUUID().toString(),
-        maybeService.get(),
+        service,
         Collections.emptyList(),
-        Collections.singletonList(upstreamInfo),
+        upstreamInfos,
         Collections.emptyList(),
         Optional.absent(),
         Optional.absent(),
@@ -162,5 +170,23 @@ public class RequestResource {
         false,
         true
     ));
+  }
+
+  @DELETE
+  @Path("/upstream")
+  public Set<BaragonResponse> deleteOccurencesOfUpstream(@QueryParam("host") String host) {
+    if (host == null) {
+      throw new WebApplicationException("host must not be null", 400);
+    }
+    Set<BaragonResponse> results = new HashSet<>();
+    for (BaragonServiceState serviceState : stateDatastore.getGlobalState()) {
+      List<UpstreamInfo> matching = serviceState.getUpstreams().stream()
+          .filter((u) -> u.getUpstream().split(":")[0].equals(host))
+          .collect(Collectors.toList());
+      if (!matching.isEmpty()) {
+        results.add(removeUpstream(serviceState.getService(), matching));
+      }
+    }
+    return results;
   }
 }
