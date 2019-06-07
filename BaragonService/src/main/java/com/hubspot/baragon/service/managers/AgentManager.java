@@ -11,6 +11,9 @@ import java.util.Set;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -44,8 +47,6 @@ import com.ning.http.client.AsyncCompletionHandler;
 import com.ning.http.client.AsyncHttpClient;
 import com.ning.http.client.AsyncHttpClient.BoundRequestBuilder;
 import com.ning.http.client.Response;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @Singleton
 public class AgentManager {
@@ -109,7 +110,7 @@ public class AgentManager {
     return builder;
   }
 
-  private AsyncHttpClient.BoundRequestBuilder buildAgentBatchRequest(String url, Set<BaragonRequestBatchItem> batch) throws JsonProcessingException {
+  private AsyncHttpClient.BoundRequestBuilder buildAgentBatchRequest(String url, List<BaragonRequestBatchItem> batch) throws JsonProcessingException {
     final BoundRequestBuilder builder = asyncHttpClient.preparePost(url);
     if (baragonAuthKey.isPresent()) {
       builder.addQueryParameter("authkey", baragonAuthKey.get());
@@ -119,10 +120,10 @@ public class AgentManager {
     return builder;
   }
 
-  public Map<QueuedRequestWithState, InternalRequestStates> sendRequests(final Set<QueuedRequestWithState> queuedRequestsWithState) {
+  public Map<QueuedRequestWithState, InternalRequestStates> sendRequests(final List<QueuedRequestWithState> queuedRequestsWithState) {
     Map<QueuedRequestWithState, InternalRequestStates> results = new HashMap<>();
 
-    Map<String, Set<BaragonRequestBatchItem>> requestsByGroup = new HashMap<>();
+    Map<String, List<BaragonRequestBatchItem>> requestsByGroup = new HashMap<>();
 
     for (QueuedRequestWithState queuedRequestWithState : queuedRequestsWithState) {
       final BaragonRequest request = queuedRequestWithState.getRequest();
@@ -136,13 +137,15 @@ public class AgentManager {
         if (requestsByGroup.containsKey(group)) {
             requestsByGroup.get(group).add(new BaragonRequestBatchItem(request.getLoadBalancerRequestId(), request.getAction(), InternalStatesMap.getRequestType(queuedRequestWithState.getCurrentState())));
         } else {
-          requestsByGroup.put(group, Sets.newHashSet(new BaragonRequestBatchItem(request.getLoadBalancerRequestId(), request.getAction(), InternalStatesMap.getRequestType(queuedRequestWithState.getCurrentState()))));
+          List<BaragonRequestBatchItem> batchItemsForGroup = new ArrayList<>();
+          batchItemsForGroup.add(new BaragonRequestBatchItem(request.getLoadBalancerRequestId(), request.getAction(), InternalStatesMap.getRequestType(queuedRequestWithState.getCurrentState())));
+          requestsByGroup.put(group, batchItemsForGroup);
         }
       }
       results.put(queuedRequestWithState, InternalStatesMap.getWaitingState(queuedRequestWithState.getCurrentState()));
     }
 
-    for (Map.Entry<String, Set<BaragonRequestBatchItem>> entry : requestsByGroup.entrySet()) {
+    for (Map.Entry<String, List<BaragonRequestBatchItem>> entry : requestsByGroup.entrySet()) {
       for (final BaragonAgentMetadata agentMetadata : loadBalancerDatastore.getAgentMetadata(entry.getKey())) {
         final String baseUrl = agentMetadata.getBaseAgentUri();
         if (agentMetadata.isBatchEnabled()) {
@@ -158,8 +161,8 @@ public class AgentManager {
     return results;
   }
 
-  private void sendBatchRequest(final String baseUrl, final Set<BaragonRequestBatchItem> originalBatch) {
-    final Set<BaragonRequestBatchItem> batch = Sets.newHashSet(originalBatch);
+  private void sendBatchRequest(final String baseUrl, final List<BaragonRequestBatchItem> originalBatch) {
+    final ArrayList<BaragonRequestBatchItem> batch = new ArrayList<>(originalBatch);
     Set<BaragonRequestBatchItem> doNotSend = Sets.newHashSet();
     for (BaragonRequestBatchItem item : batch) {
       if (!shouldSendRequest(baseUrl, item.getRequestId(), item.getRequestType())) {
