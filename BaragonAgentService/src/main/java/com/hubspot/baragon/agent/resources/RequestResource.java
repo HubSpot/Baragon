@@ -35,7 +35,7 @@ public class RequestResource {
   @POST
   @Path("/literal")
   public Response applyLiteral(@PathParam("requestId") String requestId, BaragonRequest baragonRequest) throws InterruptedException {
-    return agentRequestManager.processRequest(requestId, RequestAction.UPDATE, baragonRequest, Optional.absent(), false, Optional.absent());
+    return agentRequestManager.processRequest(requestId, RequestAction.UPDATE, baragonRequest, Optional.absent(), Collections.emptyMap(), false, Optional.absent());
   }
 
   @POST
