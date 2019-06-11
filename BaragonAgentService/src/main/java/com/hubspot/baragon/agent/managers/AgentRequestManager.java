@@ -149,22 +149,27 @@ public class AgentRequestManager {
       agentState.set(BaragonAgentState.APPLYING);
       LOG.info("Received request to {} with id {}", action, requestId);
       Collection<UpstreamInfo> existingUpstreamsForThisService;
+      String serviceId;
       switch (action) {
         case DELETE:
           return delete(request, maybeOldService, delayReload);
         case RELOAD:
           return reload(request, delayReload);
         case REVERT:
-          existingUpstreamsForThisService = existingUpstreams.get(request.getLoadBalancerService().getServiceId());
+          serviceId = maybeOldService.or(request.getLoadBalancerService()).getServiceId();
+          existingUpstreamsForThisService = existingUpstreams.get(serviceId);
           if (existingUpstreamsForThisService == null || existingUpstreamsForThisService.isEmpty()) {
-            existingUpstreamsForThisService = new ArrayList<>(stateDatastore.getUpstreams(maybeOldService.or(request.getLoadBalancerService()).getServiceId()));
+            existingUpstreamsForThisService = new ArrayList<>(stateDatastore.getUpstreams(serviceId));
+            existingUpstreams.put(serviceId, existingUpstreamsForThisService);
           }
 
           return revert(request, maybeOldService, existingUpstreamsForThisService, delayReload, batchItemNumber);
         default:
-          existingUpstreamsForThisService = existingUpstreams.get(request.getLoadBalancerService().getServiceId());
+          serviceId = request.getLoadBalancerService().getServiceId();
+          existingUpstreamsForThisService = existingUpstreams.get(serviceId);
           if (existingUpstreamsForThisService == null || existingUpstreamsForThisService.isEmpty()) {
-            existingUpstreamsForThisService = new ArrayList<>(stateDatastore.getUpstreams(request.getLoadBalancerService().getServiceId()));
+            existingUpstreamsForThisService = new ArrayList<>(stateDatastore.getUpstreams(serviceId));
+            existingUpstreams.put(serviceId, existingUpstreamsForThisService);
           }
 
           return apply(request, maybeOldService, existingUpstreamsForThisService, delayReload, batchItemNumber);
