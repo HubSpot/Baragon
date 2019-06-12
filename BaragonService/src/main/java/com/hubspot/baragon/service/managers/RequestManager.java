@@ -154,20 +154,14 @@ public class RequestManager {
       for (String path : service.getAllPaths(maybeDefaultDomain)) {
         final Optional<String> maybeServiceIdForPath = loadBalancerDatastore.getBasePathServiceId(loadBalancerGroup, path);
         if (maybeServiceIdForPath.isPresent() && !maybeServiceIdForPath.get().equals(service.getServiceId())) {
-          if (!request.getReplaceServiceId().isPresent() || (request.getReplaceServiceId().isPresent() && !request.getReplaceServiceId().get().equals(maybeServiceIdForPath.get()))) {
-            LOG.info("Found base path conflict for {} at path {} with service {}", service.getServiceId(), path, maybeServiceIdForPath.get());
-            loadBalancerServiceIds.put(loadBalancerGroup, maybeServiceIdForPath.get());
-            continue;
-          }
+          loadBalancerServiceIds.put(loadBalancerGroup, maybeServiceIdForPath.get());
+          continue;
         }
         if (!path.startsWith("/")) {
           if (maybeGroup.isPresent() && maybeGroup.get().getDefaultDomain().isPresent() && path.startsWith(maybeGroup.get().getDefaultDomain().get())) {
             Optional<String> maybeServiceForDefaultDomainPath = loadBalancerDatastore.getBasePathServiceId(loadBalancerGroup, path.replace(maybeGroup.get().getDefaultDomain().get(), ""));
             if (maybeServiceForDefaultDomainPath.isPresent() && !maybeServiceForDefaultDomainPath.get().equals(service.getServiceId())) {
-              if (!request.getReplaceServiceId().isPresent() || (request.getReplaceServiceId().isPresent() && !request.getReplaceServiceId().get().equals(maybeServiceForDefaultDomainPath.get()))) {
-                LOG.info("Found base path conflict for {} at path {} with service {}", service.getServiceId(),path.replace(maybeGroup.get().getDefaultDomain().get(), ""), maybeServiceForDefaultDomainPath.get());
-                loadBalancerServiceIds.put(loadBalancerGroup, maybeServiceForDefaultDomainPath.get());
-              }
+              loadBalancerServiceIds.put(loadBalancerGroup, maybeServiceForDefaultDomainPath.get());
             }
           }
         }
@@ -178,13 +172,7 @@ public class RequestManager {
   }
 
   public void revertBasePath(BaragonRequest request) {
-    Optional<BaragonService> maybeOriginalService = Optional.absent();
-    if (request.getReplaceServiceId().isPresent()) {
-      maybeOriginalService = stateDatastore.getService(request.getReplaceServiceId().get());
-    }
-    if (!maybeOriginalService.isPresent()) {
-      maybeOriginalService = stateDatastore.getService(request.getLoadBalancerService().getServiceId());
-    }
+    Optional<BaragonService> maybeOriginalService = stateDatastore.getService(request.getLoadBalancerService().getServiceId());
     // if the request is not in the state datastore (ie. no previous request) clear the base path lock
     if (!maybeOriginalService.isPresent()) {
       for (String loadBalancerGroup : request.getLoadBalancerService().getLoadBalancerGroups()) {
@@ -192,17 +180,6 @@ public class RequestManager {
         Optional<String> maybeDefaultDomain = maybeGroup.isPresent() ? maybeGroup.get().getDefaultDomain() : Optional.absent();
         for (String path : request.getLoadBalancerService().getAllPaths(maybeDefaultDomain)) {
           loadBalancerDatastore.clearBasePath(loadBalancerGroup, path);
-        }
-      }
-    }
-
-    // if we changed the base path, revert it to the old one
-    if (maybeOriginalService.isPresent() && request.getReplaceServiceId().isPresent() && maybeOriginalService.get().getServiceId().equals(request.getReplaceServiceId().get())) {
-      for (String loadBalancerGroup : request.getLoadBalancerService().getLoadBalancerGroups()) {
-        Optional<BaragonGroup> maybeGroup = loadBalancerDatastore.getLoadBalancerGroup(loadBalancerGroup);
-        Optional<String> maybeDefaultDomain = maybeGroup.isPresent() ? maybeGroup.get().getDefaultDomain() : Optional.absent();
-        for (String path : request.getLoadBalancerService().getAllPaths(maybeDefaultDomain)) {
-          loadBalancerDatastore.setBasePathServiceId(loadBalancerGroup, path, maybeOriginalService.get().getServiceId());
         }
       }
     }
@@ -353,21 +330,11 @@ public class RequestManager {
   }
 
   private Optional<BaragonService> getOriginalService(BaragonRequest request) {
-    Optional<BaragonService> maybeOriginalService = Optional.absent();
-    if (request.getReplaceServiceId().isPresent()) {
-      maybeOriginalService = stateDatastore.getService(request.getReplaceServiceId().get());
-    }
-    if (!maybeOriginalService.isPresent()) {
-      maybeOriginalService = stateDatastore.getService(request.getLoadBalancerService().getServiceId());
-    }
-    return maybeOriginalService;
+    return stateDatastore.getService(request.getLoadBalancerService().getServiceId());
   }
 
   private void deleteRemovedServices(BaragonRequest request) {
     stateDatastore.removeService(request.getLoadBalancerService().getServiceId());
-    if (request.getReplaceServiceId().isPresent() && stateDatastore.getService(request.getReplaceServiceId().get()).isPresent()) {
-      stateDatastore.removeService(request.getReplaceServiceId().get());
-    }
     stateDatastore.incrementStateVersion();
   }
 

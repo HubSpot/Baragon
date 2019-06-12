@@ -27,6 +27,7 @@ import com.hubspot.baragon.data.BaragonAliasDatastore;
 import com.hubspot.baragon.data.BaragonLoadBalancerDatastore;
 import com.hubspot.baragon.data.BaragonStateDatastore;
 import com.hubspot.baragon.models.BaragonRequest;
+import com.hubspot.baragon.models.BaragonRequestBuilder;
 import com.hubspot.baragon.models.BaragonResponse;
 import com.hubspot.baragon.models.BaragonService;
 import com.hubspot.baragon.models.QueuedRequestId;
@@ -107,18 +108,16 @@ public class RequestResource {
     if (!maybeService.isPresent()) {
       throw new WebApplicationException(String.format("Service %s not found", serviceId), 400);
     }
-    return enqueueRequest(new BaragonRequest(
-        UUID.randomUUID().toString(),
-        maybeService.get(),
-        Collections.singletonList(upstreamInfo),
-        Collections.emptyList(),
-        Collections.emptyList(),
-        Optional.absent(),
-        Optional.absent(),
-        true,
-        false,
-        true
-    ));
+    return enqueueRequest(new BaragonRequestBuilder().setLoadBalancerRequestId(UUID.randomUUID().toString())
+        .setLoadBalancerService(maybeService.get())
+        .setAddUpstreams(Collections.singletonList(upstreamInfo))
+        .setRemoveUpstreams(Collections.emptyList())
+        .setReplaceUpstreams(Collections.emptyList())
+        .setAction(Optional.absent())
+        .setNoValidate(true)
+        .setNoReload(false)
+        .setUpstreamUpdateOnly(true)
+        .build());
   }
 
   @POST
@@ -128,18 +127,16 @@ public class RequestResource {
     if (!maybeService.isPresent()) {
       throw new WebApplicationException(String.format("Service %s not found", serviceId), 400);
     }
-    return enqueueRequest(new BaragonRequest(
-        UUID.randomUUID().toString(),
-        maybeService.get(),
-        Collections.emptyList(),
-        Collections.emptyList(),
-        upstreams,
-        Optional.absent(),
-        Optional.absent(),
-        true,
-        false,
-        true
-    ));
+    return enqueueRequest(new BaragonRequestBuilder().setLoadBalancerRequestId(UUID.randomUUID().toString())
+        .setLoadBalancerService(maybeService.get())
+        .setAddUpstreams(Collections.emptyList())
+        .setRemoveUpstreams(Collections.emptyList())
+        .setReplaceUpstreams(upstreams)
+        .setAction(Optional.absent())
+        .setNoValidate(true)
+        .setNoReload(false)
+        .setUpstreamUpdateOnly(true)
+        .build());
   }
 
   @DELETE
@@ -150,17 +147,15 @@ public class RequestResource {
     if (!maybeService.isPresent()) {
       throw new WebApplicationException(String.format("Service %s not found", serviceId), 400);
     }
-    return enqueueRequest(new BaragonRequest(
-        UUID.randomUUID().toString(),
-        maybeService.get(),
-        Collections.emptyList(),
-        Collections.singletonList(upstreamInfo),
-        Collections.emptyList(),
-        Optional.absent(),
-        Optional.absent(),
-        true,
-        false,
-        true
-    ));
+    return enqueueRequest(new BaragonRequestBuilder().setLoadBalancerRequestId(UUID.randomUUID().toString())
+        .setLoadBalancerService(maybeService.get())
+        .setAddUpstreams(Collections.emptyList())
+        .setRemoveUpstreams(Collections.singletonList(upstreamInfo))
+        .setReplaceUpstreams(Collections.emptyList())
+        .setAction(Optional.absent())
+        .setNoValidate(true)
+        .setNoReload(false)
+        .setUpstreamUpdateOnly(true)
+        .build());
   }
 }
