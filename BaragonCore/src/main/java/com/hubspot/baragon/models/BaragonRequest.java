@@ -33,6 +33,7 @@ public class BaragonRequest {
   @Valid
   private final List<UpstreamInfo> removeUpstreams;
 
+  @Deprecated
   private final Optional<String> replaceServiceId;
 
   private final Optional<RequestAction> action;

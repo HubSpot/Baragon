@@ -280,15 +280,7 @@ public class AgentRequestManager {
   }
 
   private Optional<BaragonService> getOldService(BaragonRequest request) {
-    Optional<BaragonService> service = Optional.absent();
-    if (request.getReplaceServiceId().isPresent()) {
-      service = stateDatastore.getService(request.getReplaceServiceId().get());
-    }
-    if (service.isPresent()) {
-      return service;
-    } else {
-      return stateDatastore.getService(request.getLoadBalancerService().getServiceId());
-    }
+    return stateDatastore.getService(request.getLoadBalancerService().getServiceId());
   }
 
   private void triggerTesting() throws Exception {
