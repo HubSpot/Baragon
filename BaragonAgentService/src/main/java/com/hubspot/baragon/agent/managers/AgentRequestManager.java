@@ -72,6 +72,7 @@ public class AgentRequestManager {
 
   public List<AgentBatchResponseItem> processRequests(List<BaragonRequestBatchItem> batch) throws InterruptedException {
     Map<String, Optional<BaragonRequest>> requests = new HashMap<>();
+    Map<String, Optional<BaragonService>> services = new HashMap<>();
 
     // Grab the existing upstreams at the start of this batch, and have apply() and revert() calls modify the list in-memory as we work through batch items
     Map<String, Collection<UpstreamInfo>> existingUpstreamsForThisBatch = batch.stream()
@@ -80,12 +81,11 @@ public class AgentRequestManager {
 
           requests.put(requestItem.getRequestId(), maybeRequest);
 
-          Optional<BaragonService> oldService;
+          Optional<BaragonService> oldService = Optional.absent();
 
           if (maybeRequest.isPresent()) {
-            oldService = getOldService(maybeRequest.get());
-          } else {
-            oldService = Optional.absent();
+            oldService = services.getOrDefault(maybeRequest.get().getLoadBalancerService().getServiceId(), getOldService(maybeRequest.get()));
+            services.put(maybeRequest.get().getLoadBalancerService().getServiceId(), oldService);
           }
 
           return oldService;
@@ -98,7 +98,7 @@ public class AgentRequestManager {
             return stateDatastore.getUpstreams(service.getServiceId());
           } catch (Exception e) {
             LOG.warn("Unable to get upstream information for service {}", service.getServiceId(), e);
-            return new ArrayList<>();
+            throw new RuntimeException("Unable to get upstream information for service {}", e);
           }
         }));
 
@@ -106,7 +106,7 @@ public class AgentRequestManager {
     int i = 0;
     for (BaragonRequestBatchItem item : batch) {
       boolean isLast = i == batch.size() - 1;
-      responses.add(getResponseItem(processRequest(item.getRequestId(), requests.get(item.getRequestId()), existingUpstreamsForThisBatch, actionForBatchItem(item), !isLast, Optional.of(i)), item));
+      responses.add(getResponseItem(processRequest(item.getRequestId(), existingUpstreamsForThisBatch, services, requests, actionForBatchItem(item), !isLast, Optional.of(i)), item));
       i++;
     }
     return responses;
@@ -132,23 +132,35 @@ public class AgentRequestManager {
     }
   }
 
-  public Response processRequest(String requestId, Optional<BaragonRequest> maybeRequest, Map<String, Collection<UpstreamInfo>> existingUpstreams, Optional<RequestAction> maybeAction, boolean delayReload, Optional<Integer> batchItemNumber) throws InterruptedException {
-    if (!maybeRequest.isPresent()) {
+  public Response processRequest(String requestId,
+                                 Map<String, Collection<UpstreamInfo>> existingUpstreams,
+                                 Map<String, Optional<BaragonService>> services,
+                                 Map<String, Optional<BaragonRequest>> requests,
+                                 Optional<RequestAction> maybeAction,
+                                 boolean delayReload,
+                                 Optional<Integer> batchItemNumber) throws InterruptedException {
+    if (requests.get(requestId) == null || !requests.get(requestId).isPresent()) {
       return Response.status(Response.Status.NOT_FOUND).entity(String.format("Request %s does not exist", requestId)).build();
     }
-    final BaragonRequest request = maybeRequest.get();
-    RequestAction action = maybeAction.or(request.getAction().or(RequestAction.UPDATE));
-    Optional<BaragonService> maybeOldService = getOldService(request);
 
-    return processRequest(requestId, action, request, maybeOldService, existingUpstreams, delayReload, batchItemNumber);
+    BaragonRequest request = requests.get(requestId).get();
+
+    RequestAction action = maybeAction.or(request.getAction().or(RequestAction.UPDATE));
+
+    return processRequest(requestId, action, request, services.get(request.getLoadBalancerService().getServiceId()), existingUpstreams, delayReload, batchItemNumber);
   }
 
-  public Response processRequest(String requestId, RequestAction action, BaragonRequest request, Optional<BaragonService> maybeOldService, Map<String, Collection<UpstreamInfo>> existingUpstreams, boolean delayReload, Optional<Integer> batchItemNumber) {
+  public Response processRequest(String requestId,
+                                 RequestAction action,
+                                 BaragonRequest request,
+                                 Optional<BaragonService> maybeOldService,
+                                 Map<String, Collection<UpstreamInfo>> existingUpstreams,
+                                 boolean delayReload,
+                                 Optional<Integer> batchItemNumber) {
     long start = System.currentTimeMillis();
     try {
       agentState.set(BaragonAgentState.APPLYING);
       LOG.info("Received request to {} with id {}", action, requestId);
-      Collection<UpstreamInfo> existingUpstreamsForThisService;
       String serviceId;
       switch (action) {
         case DELETE:
@@ -156,23 +168,11 @@ public class AgentRequestManager {
         case RELOAD:
           return reload(request, delayReload);
         case REVERT:
-          serviceId = maybeOldService.or(request.getLoadBalancerService()).getServiceId();
-          existingUpstreamsForThisService = existingUpstreams.get(serviceId);
-          if (existingUpstreamsForThisService == null || existingUpstreamsForThisService.isEmpty()) {
-            existingUpstreamsForThisService = new ArrayList<>(stateDatastore.getUpstreams(serviceId));
-            existingUpstreams.put(serviceId, existingUpstreamsForThisService);
-          }
-
-          return revert(request, maybeOldService, existingUpstreamsForThisService, delayReload, batchItemNumber);
+          serviceId = request.getLoadBalancerService().getServiceId();
+          return revert(request, maybeOldService, existingUpstreams.get(serviceId), delayReload, batchItemNumber);
         default:
           serviceId = request.getLoadBalancerService().getServiceId();
-          existingUpstreamsForThisService = existingUpstreams.get(serviceId);
-          if (existingUpstreamsForThisService == null || existingUpstreamsForThisService.isEmpty()) {
-            existingUpstreamsForThisService = new ArrayList<>(stateDatastore.getUpstreams(serviceId));
-            existingUpstreams.put(serviceId, existingUpstreamsForThisService);
-          }
-
-          return apply(request, maybeOldService, existingUpstreamsForThisService, delayReload, batchItemNumber);
+          return apply(request, maybeOldService, existingUpstreams.get(serviceId), delayReload, batchItemNumber);
       }
     } catch (LockTimeoutException e) {
       LOG.error("Couldn't acquire agent lock for {} in {} ms", requestId, agentLockTimeoutMs, e);
