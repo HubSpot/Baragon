@@ -104,11 +104,31 @@ public class BaragonRequest {
   }
 
   public BaragonRequest withUpdatedGroups(BaragonGroupAlias updatedFromAlias) {
-    return new BaragonRequest(loadBalancerRequestId, loadBalancerService.withUpdatedGroups(updatedFromAlias), addUpstreams, removeUpstreams, replaceUpstreams, replaceServiceId, action, noValidate, noReload, upstreamUpdateOnly, noDuplicateUpstreams);
+    return new BaragonRequestBuilder().setLoadBalancerRequestId(loadBalancerRequestId)
+        .setLoadBalancerService(loadBalancerService.withUpdatedGroups(updatedFromAlias))
+        .setAddUpstreams(addUpstreams)
+        .setRemoveUpstreams(removeUpstreams)
+        .setReplaceUpstreams(replaceUpstreams)
+        .setAction(action)
+        .setNoValidate(noValidate)
+        .setNoReload(noReload)
+        .setUpstreamUpdateOnly(upstreamUpdateOnly)
+        .setNoDuplicateUpstreams(noDuplicateUpstreams)
+        .build();
   }
 
   public BaragonRequest withUpdatedDomains(Set<String> domains) {
-    return new BaragonRequest(loadBalancerRequestId, loadBalancerService.withDomains(domains), addUpstreams, removeUpstreams, replaceUpstreams, replaceServiceId, action, noValidate, noReload, upstreamUpdateOnly, noDuplicateUpstreams);
+    return new BaragonRequestBuilder().setLoadBalancerRequestId(loadBalancerRequestId)
+        .setLoadBalancerService(loadBalancerService.withDomains(domains))
+        .setAddUpstreams(addUpstreams)
+        .setRemoveUpstreams(removeUpstreams)
+        .setReplaceUpstreams(replaceUpstreams)
+        .setAction(action)
+        .setNoValidate(noValidate)
+        .setNoReload(noReload)
+        .setUpstreamUpdateOnly(upstreamUpdateOnly)
+        .setNoDuplicateUpstreams(noDuplicateUpstreams)
+        .build();
   }
 
   public String getLoadBalancerRequestId() {

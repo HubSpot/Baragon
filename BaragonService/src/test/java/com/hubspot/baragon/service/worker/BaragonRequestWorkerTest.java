@@ -12,7 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Optional;
-import com.hubspot.baragon.models.BaragonRequest;
+import com.hubspot.baragon.models.BaragonRequestBuilder;
 import com.hubspot.baragon.models.QueuedRequestId;
 import com.hubspot.baragon.models.QueuedRequestWithState;
 import com.hubspot.baragon.models.UpstreamInfo;
@@ -25,38 +25,62 @@ public class BaragonRequestWorkerTest {
     List<QueuedRequestWithState> queuedRequestsWithState = Arrays.asList(
         new QueuedRequestWithState(
             new QueuedRequestId("serviceA", "requestIdA", 0),
-            new BaragonRequest(
-                "requestIdA", null,
-                Collections.singletonList(new UpstreamInfo(null, Optional.absent(), Optional.absent())),
-                Collections.singletonList(new UpstreamInfo(null, Optional.absent(), Optional.absent())),
-                Collections.emptyList(), Optional.absent(), Optional.absent(), false, false, false, false),
+            new BaragonRequestBuilder().setLoadBalancerRequestId("requestIdA")
+                .setLoadBalancerService(null)
+                .setAddUpstreams(Collections.singletonList(new UpstreamInfo(null, Optional.absent(), Optional.absent())))
+                .setRemoveUpstreams(Collections.singletonList(new UpstreamInfo(null, Optional.absent(), Optional.absent())))
+                .setReplaceUpstreams(Collections.emptyList())
+                .setAction(Optional.absent())
+                .setNoValidate(false)
+                .setNoReload(false)
+                .setUpstreamUpdateOnly(false)
+                .setNoDuplicateUpstreams(false)
+                .build(),
             null
         ),
         new QueuedRequestWithState(
             new QueuedRequestId("serviceB", "requestIdB", 0),
-            new BaragonRequest(
-                "requestIdB", null,
-                Collections.singletonList(new UpstreamInfo(null, Optional.absent(), Optional.absent())),
-                Collections.singletonList(new UpstreamInfo(null, Optional.absent(), Optional.absent())),
-                Collections.emptyList(), Optional.absent(), Optional.absent(), true, true, false, false),
+            new BaragonRequestBuilder().setLoadBalancerRequestId("requestIdB")
+                .setLoadBalancerService(null)
+                .setAddUpstreams(Collections.singletonList(new UpstreamInfo(null, Optional.absent(), Optional.absent())))
+                .setRemoveUpstreams(Collections.singletonList(new UpstreamInfo(null, Optional.absent(), Optional.absent())))
+                .setReplaceUpstreams(Collections.emptyList())
+                .setAction(Optional.absent())
+                .setNoValidate(true)
+                .setNoReload(true)
+                .setUpstreamUpdateOnly(false)
+                .setNoDuplicateUpstreams(false)
+                .build(),
             null
         ),
         new QueuedRequestWithState(
             new QueuedRequestId("serviceC", "requestIdC", 0),
-            new BaragonRequest(
-                "requestIdC", null,
-                Collections.singletonList(new UpstreamInfo(null, Optional.absent(), Optional.absent())),
-                Collections.singletonList(new UpstreamInfo(null, Optional.absent(), Optional.absent())),
-                Collections.emptyList(), Optional.absent(), Optional.absent(), true, false, false, false),
+            new BaragonRequestBuilder().setLoadBalancerRequestId("requestIdC")
+                .setLoadBalancerService(null)
+                .setAddUpstreams(Collections.singletonList(new UpstreamInfo(null, Optional.absent(), Optional.absent())))
+                .setRemoveUpstreams(Collections.singletonList(new UpstreamInfo(null, Optional.absent(), Optional.absent())))
+                .setReplaceUpstreams(Collections.emptyList())
+                .setAction(Optional.absent())
+                .setNoValidate(true)
+                .setNoReload(false)
+                .setUpstreamUpdateOnly(false)
+                .setNoDuplicateUpstreams(false)
+                .build(),
             null
         ),
         new QueuedRequestWithState(
             new QueuedRequestId("serviceC", "requestIdC", 0),
-            new BaragonRequest(
-                "requestIdC", null,
-                Collections.singletonList(new UpstreamInfo(null, Optional.absent(), Optional.absent())),
-                Collections.singletonList(new UpstreamInfo(null, Optional.absent(), Optional.absent())),
-                Collections.emptyList(), Optional.absent(), Optional.absent(), false, true, false, false),
+            new BaragonRequestBuilder().setLoadBalancerRequestId("requestIdC")
+                .setLoadBalancerService(null)
+                .setAddUpstreams(Collections.singletonList(new UpstreamInfo(null, Optional.absent(), Optional.absent())))
+                .setRemoveUpstreams(Collections.singletonList(new UpstreamInfo(null, Optional.absent(), Optional.absent())))
+                .setReplaceUpstreams(Collections.emptyList())
+                .setAction(Optional.absent())
+                .setNoValidate(false)
+                .setNoReload(true)
+                .setUpstreamUpdateOnly(false)
+                .setNoDuplicateUpstreams(false)
+                .build(),
             null
         )
     );

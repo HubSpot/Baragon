@@ -9,6 +9,7 @@ import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 import com.hubspot.baragon.data.BaragonStateDatastore;
 import com.hubspot.baragon.models.BaragonRequest;
+import com.hubspot.baragon.models.BaragonRequestBuilder;
 import com.hubspot.baragon.models.BaragonResponse;
 import com.hubspot.baragon.models.BaragonService;
 import com.hubspot.baragon.models.BaragonServiceState;
@@ -71,11 +72,27 @@ public class ServiceManager {
     List<UpstreamInfo> empty = Collections.emptyList();
     List<UpstreamInfo> remove;
     remove =  new ArrayList<>(stateDatastore.getUpstreams(service.getServiceId()));
-    return new BaragonRequest(requestId, service, empty, remove, empty, Optional.<String>absent(), Optional.of(RequestAction.DELETE), noValidate, noReload);
+    return new BaragonRequestBuilder().setLoadBalancerRequestId(requestId)
+        .setLoadBalancerService(service)
+        .setAddUpstreams(empty)
+        .setRemoveUpstreams(remove)
+        .setReplaceUpstreams(empty)
+        .setAction(Optional.of(RequestAction.DELETE))
+        .setNoValidate(noValidate)
+        .setNoReload(noReload)
+        .build();
   }
 
   private BaragonRequest buildReloadRequest(BaragonService service, String requestId, boolean noValidate) {
     List<UpstreamInfo> empty = Collections.emptyList();
-    return new BaragonRequest(requestId, service, empty, empty, empty, Optional.<String>absent(), Optional.of(RequestAction.RELOAD), noValidate, false);
+    return new BaragonRequestBuilder().setLoadBalancerRequestId(requestId)
+        .setLoadBalancerService(service)
+        .setAddUpstreams(empty)
+        .setRemoveUpstreams(empty)
+        .setReplaceUpstreams(empty)
+        .setAction(Optional.of(RequestAction.RELOAD))
+        .setNoValidate(noValidate)
+        .setNoReload(false)
+        .build();
   }
 }
