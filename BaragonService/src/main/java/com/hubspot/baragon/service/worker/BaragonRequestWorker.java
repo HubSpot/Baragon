@@ -330,7 +330,7 @@ public class BaragonRequestWorker implements Runnable {
         }
 
         // Grab as many non-service-change BaragonRequests as we can.
-        if (requestManager.getRequest(request.getRequestId()).transform(this::isBatchBoundary).or(false)) {
+        if (requestManager.getRequest(request.getRequestId()).transform(someRequest -> !isBatchBoundary(someRequest)).or(false)) {
           nonServiceChanges.add(request);
           added++;
         } else {
