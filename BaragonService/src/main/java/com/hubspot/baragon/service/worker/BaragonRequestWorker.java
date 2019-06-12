@@ -330,7 +330,7 @@ public class BaragonRequestWorker implements Runnable {
         }
 
         // Grab as many non-service-change BaragonRequests as we can.
-        if (requestManager.getRequest(request.getRequestId()).transform(stateDatastore::isServiceUnchanged).or(false)) {
+        if (requestManager.getRequest(request.getRequestId()).transform(this::isBatchBoundary).or(false)) {
           nonServiceChanges.add(request);
           added++;
         } else {
@@ -342,6 +342,10 @@ public class BaragonRequestWorker implements Runnable {
       }
     }
     return added;
+  }
+
+  private boolean isBatchBoundary(BaragonRequest baragonRequest) {
+    return !stateDatastore.isServiceUnchanged(baragonRequest) || !baragonRequest.getAction().or(RequestAction.UPDATE).equals(RequestAction.UPDATE);
   }
 
   private Optional<QueuedRequestWithState> hydrateQueuedRequestWithState(QueuedRequestId queuedRequestId) {
