@@ -174,10 +174,10 @@ public class AgentRequestManager {
           return reload(request, delayReload);
         case REVERT:
           serviceId = request.getLoadBalancerService().getServiceId();
-          return revert(request, maybeOldService, existingUpstreams.get(serviceId), delayReload, batchItemNumber);
+          return revert(request, maybeOldService, existingUpstreams.computeIfAbsent(serviceId, (key) -> new ArrayList<>()), delayReload, batchItemNumber);
         default:
           serviceId = request.getLoadBalancerService().getServiceId();
-          return apply(request, maybeOldService, existingUpstreams.get(serviceId), delayReload, batchItemNumber);
+          return apply(request, maybeOldService, existingUpstreams.computeIfAbsent(serviceId, (key) -> new ArrayList<>()), delayReload, batchItemNumber);
       }
     } catch (LockTimeoutException e) {
       LOG.error("Couldn't acquire agent lock for {} in {} ms", requestId, agentLockTimeoutMs, e);
