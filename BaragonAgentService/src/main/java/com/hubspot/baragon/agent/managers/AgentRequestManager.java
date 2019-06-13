@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.ws.rs.core.Response;
 
@@ -75,7 +76,7 @@ public class AgentRequestManager {
     Map<String, Optional<BaragonService>> services = new HashMap<>();
 
     // Grab the existing upstreams at the start of this batch, and have apply() and revert() calls modify the list in-memory as we work through batch items
-    Map<String, Collection<UpstreamInfo>> existingUpstreamsForThisBatch = batch.stream()
+    Stream<BaragonService> servicesInThisBatch = batch.stream()
         .map(requestItem -> {
           final Optional<BaragonRequest> maybeRequest = requestDatastore.getRequest(requestItem.getRequestId());
 
@@ -91,7 +92,13 @@ public class AgentRequestManager {
           return oldService;
         })
         .filter(Optional::isPresent)
-        .map(Optional::get)
+        .map(Optional::get);
+
+    final Map<String, Long> numRequestsByService = servicesInThisBatch.collect(Collectors.groupingBy(BaragonService::getServiceId, Collectors.counting()));
+
+    LOG.debug("Requests in this batch by service: {}", numRequestsByService);
+
+    Map<String, Collection<UpstreamInfo>> existingUpstreamsForThisBatch = servicesInThisBatch
         .distinct()
         .collect(Collectors.toMap(BaragonService::getServiceId, service -> {
           try {
