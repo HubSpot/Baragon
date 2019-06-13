@@ -28,6 +28,7 @@ import com.hubspot.baragon.exceptions.InvalidUpstreamsException;
 import com.hubspot.baragon.exceptions.RequestAlreadyEnqueuedException;
 import com.hubspot.baragon.models.BaragonAgentMetadata;
 import com.hubspot.baragon.models.BaragonRequest;
+import com.hubspot.baragon.models.BaragonRequestBuilder;
 import com.hubspot.baragon.models.BaragonRequestState;
 import com.hubspot.baragon.models.BaragonResponse;
 import com.hubspot.baragon.models.BaragonService;
@@ -95,7 +96,11 @@ public class RequestTest {
 
     final UpstreamInfo upstream = new UpstreamInfo("testhost:8080", Optional.of(requestId), Optional.<String>absent());
 
-    final BaragonRequest request = new BaragonRequest(requestId, service, ImmutableList.of(upstream), ImmutableList.<UpstreamInfo>of(), Optional.<String>absent());
+    final BaragonRequest request = new BaragonRequestBuilder().setLoadBalancerRequestId(requestId)
+        .setLoadBalancerService(service)
+        .setAddUpstreams(ImmutableList.of(upstream))
+        .setRemoveUpstreams(ImmutableList.<UpstreamInfo>of())
+        .build();
 
     try {
       assertResponseStateAbsent(requestManager, requestId);
@@ -122,7 +127,11 @@ public class RequestTest {
 
     final UpstreamInfo upstream = new UpstreamInfo("testhost:8080", Optional.of(requestId), Optional.<String>absent());
 
-    final BaragonRequest request = new BaragonRequest(requestId, service, ImmutableList.of(upstream), ImmutableList.<UpstreamInfo>of(), Optional.<String>absent());
+    final BaragonRequest request = new BaragonRequestBuilder().setLoadBalancerRequestId(requestId)
+        .setLoadBalancerService(service)
+        .setAddUpstreams(ImmutableList.of(upstream))
+        .setRemoveUpstreams(ImmutableList.<UpstreamInfo>of())
+        .build();
 
     BaragonResponse response = requestManager.enqueueRequest(request);
     BaragonResponse repeatResponse = requestManager.enqueueRequest(request);
@@ -140,7 +149,11 @@ public class RequestTest {
 
     final UpstreamInfo upstream = new UpstreamInfo("testhost:8080", Optional.of(requestId), Optional.<String>absent());
 
-    final BaragonRequest request = new BaragonRequest(requestId, service, ImmutableList.of(upstream), ImmutableList.<UpstreamInfo>of(), Optional.<String>absent());
+    final BaragonRequest request = new BaragonRequestBuilder().setLoadBalancerRequestId(requestId)
+        .setLoadBalancerService(service)
+        .setAddUpstreams(ImmutableList.of(upstream))
+        .setRemoveUpstreams(ImmutableList.<UpstreamInfo>of())
+        .build();
 
     try {
       assertResponseStateAbsent(requestManager, requestId);
@@ -169,7 +182,11 @@ public class RequestTest {
 
     final UpstreamInfo upstream = new UpstreamInfo("testhost:8080", Optional.of(requestId), Optional.<String>absent());
 
-    final BaragonRequest request = new BaragonRequest(requestId, service, ImmutableList.of(upstream), ImmutableList.<UpstreamInfo>of(), Optional.<String>absent());
+    final BaragonRequest request = new BaragonRequestBuilder().setLoadBalancerRequestId(requestId)
+        .setLoadBalancerService(service)
+        .setAddUpstreams(ImmutableList.of(upstream))
+        .setRemoveUpstreams(ImmutableList.<UpstreamInfo>of())
+        .build();
 
     try {
       assertResponseStateAbsent(requestManager, requestId);

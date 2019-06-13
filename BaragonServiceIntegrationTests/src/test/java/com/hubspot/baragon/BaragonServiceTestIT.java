@@ -31,6 +31,7 @@ import com.google.inject.Injector;
 import com.hubspot.baragon.client.BaragonServiceClient;
 import com.hubspot.baragon.models.BaragonAgentMetadata;
 import com.hubspot.baragon.models.BaragonRequest;
+import com.hubspot.baragon.models.BaragonRequestBuilder;
 import com.hubspot.baragon.models.BaragonRequestState;
 import com.hubspot.baragon.models.BaragonResponse;
 import com.hubspot.baragon.models.BaragonService;
@@ -68,7 +69,11 @@ public class BaragonServiceTestIT {
     BaragonService lbService = new BaragonService(serviceId, new ArrayList<String>(), basePath, additionalPaths,
         new HashSet<String>(Arrays.asList(LOAD_BALANCER_GROUP)), options.isPresent() ? options.get() : new HashMap<String, Object>(), template, Collections.<String>emptySet(), Optional.absent());
     
-    BaragonRequest request = new BaragonRequest(requestId, lbService, Arrays.asList(upstream), new ArrayList<UpstreamInfo>(), replaceServiceId);
+    BaragonRequest request = new BaragonRequestBuilder().setLoadBalancerRequestId(requestId)
+        .setLoadBalancerService(lbService)
+        .setAddUpstreams(Arrays.asList(upstream))
+        .setRemoveUpstreams(new ArrayList<UpstreamInfo>())
+        .build();
     baragonServiceClient.enqueueRequest(request);
   }
   
