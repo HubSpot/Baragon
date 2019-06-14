@@ -28,6 +28,7 @@ import com.hubspot.baragon.models.AgentRequestType;
 import com.hubspot.baragon.models.AgentRequestsStatus;
 import com.hubspot.baragon.models.AgentResponse;
 import com.hubspot.baragon.models.BaragonRequest;
+import com.hubspot.baragon.models.BaragonRequestBuilder;
 import com.hubspot.baragon.models.BaragonService;
 import com.hubspot.baragon.models.InternalRequestStates;
 import com.hubspot.baragon.models.InternalStatesMap;
@@ -271,6 +272,7 @@ public class BaragonRequestWorker implements Runnable {
             .map(this::hydrateQueuedRequestWithState)
             .filter(Optional::isPresent)
             .map(Optional::get)
+            .map(this::setNoValidateIfRequestRemovesUpstreamsOnly)
             .sorted(queuedRequestComparator())
             .collect(Collectors.toList());
 
@@ -300,6 +302,36 @@ public class BaragonRequestWorker implements Runnable {
     } finally {
       LOG.debug("Finished poller loop.");
     }
+  }
+
+  private QueuedRequestWithState setNoValidateIfRequestRemovesUpstreamsOnly(QueuedRequestWithState nonServiceChangeRequest) {
+    BaragonRequest originalRequest = nonServiceChangeRequest.getRequest();
+
+    boolean upstreamRemovalsOnly = !originalRequest.getRemoveUpstreams().isEmpty()
+            && originalRequest.getAddUpstreams().isEmpty()
+            && originalRequest.getReplaceUpstreams().isEmpty();
+
+    if (upstreamRemovalsOnly) {
+      // This BaragonRequest doesn't change the associated BaragonService, and only removes upstreams. We can skip the config check on the nginx side.
+      return new QueuedRequestWithState(
+          nonServiceChangeRequest.getQueuedRequestId(),
+          new BaragonRequestBuilder()
+              .setAddUpstreams(originalRequest.getAddUpstreams())
+              .setLoadBalancerRequestId(originalRequest.getLoadBalancerRequestId())
+              .setLoadBalancerService(originalRequest.getLoadBalancerService())
+              .setRemoveUpstreams(originalRequest.getRemoveUpstreams())
+              .setAction(originalRequest.getAction())
+              .setNoReload(originalRequest.isNoReload())
+              .setNoValidate(true)
+              .setReplaceUpstreams(originalRequest.getReplaceUpstreams())
+              .setUpstreamUpdateOnly(originalRequest.isUpstreamUpdateOnly())
+              .setNoDuplicateUpstreams(originalRequest.isNoDuplicateUpstreams())
+              .build(),
+          nonServiceChangeRequest.getCurrentState()
+      );
+    }
+
+    return nonServiceChangeRequest;
   }
 
   private void handleResultStates(Map<QueuedRequestWithState, InternalRequestStates> results) {
