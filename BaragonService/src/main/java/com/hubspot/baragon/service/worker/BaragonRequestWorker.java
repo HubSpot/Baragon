@@ -35,12 +35,14 @@ import com.hubspot.baragon.models.InternalStatesMap;
 import com.hubspot.baragon.models.QueuedRequestId;
 import com.hubspot.baragon.models.QueuedRequestWithState;
 import com.hubspot.baragon.models.RequestAction;
+import com.hubspot.baragon.models.UpstreamInfo;
 import com.hubspot.baragon.service.config.BaragonConfiguration;
 import com.hubspot.baragon.service.edgecache.EdgeCache;
 import com.hubspot.baragon.service.exceptions.BaragonExceptionNotifier;
 import com.hubspot.baragon.service.managers.AgentManager;
 import com.hubspot.baragon.service.managers.RequestManager;
 import com.hubspot.baragon.utils.JavaUtils;
+import com.hubspot.baragon.utils.UpstreamResolver;
 
 @Singleton
 public class BaragonRequestWorker implements Runnable {
@@ -53,6 +55,7 @@ public class BaragonRequestWorker implements Runnable {
   private final BaragonExceptionNotifier exceptionNotifier;
   private final BaragonConfiguration configuration;
   private final EdgeCache edgeCache;
+  private final UpstreamResolver resolver;
 
   @Inject
   public BaragonRequestWorker(AgentManager agentManager,
@@ -61,10 +64,12 @@ public class BaragonRequestWorker implements Runnable {
                               BaragonExceptionNotifier exceptionNotifier,
                               BaragonConfiguration configuration,
                               EdgeCache edgeCache,
+                              UpstreamResolver resolver,
                               @Named(BaragonDataModule.BARAGON_SERVICE_WORKER_LAST_START) AtomicLong workerLastStartAt) {
     this.agentManager = agentManager;
     this.requestManager = requestManager;
     this.stateDatastore = stateDatastore;
+    this.resolver = resolver;
     this.edgeCache = edgeCache;
     this.workerLastStartAt = workerLastStartAt;
     this.exceptionNotifier = exceptionNotifier;
@@ -273,6 +278,7 @@ public class BaragonRequestWorker implements Runnable {
             .filter(Optional::isPresent)
             .map(Optional::get)
             .map(this::setNoValidateIfRequestRemovesUpstreamsOnly)
+            .map(this::preResolveDNS)
             .sorted(queuedRequestComparator())
             .collect(Collectors.toList());
 
@@ -342,6 +348,71 @@ public class BaragonRequestWorker implements Runnable {
     }
 
     return nonServiceChangeRequest;
+  }
+
+  private QueuedRequestWithState preResolveDNS(QueuedRequestWithState nonServiceChangeRequest) {
+    if (!nonServiceChangeRequest.getRequest().getLoadBalancerService().isPreResolveUpstreamDns()) {
+      return nonServiceChangeRequest;
+    }
+
+    BaragonRequest originalRequest = nonServiceChangeRequest.getRequest();
+
+    List<UpstreamInfo> maybeResolvedAddUpstreams = resolveDNSForAllUpstreams(nonServiceChangeRequest.getRequest().getAddUpstreams());
+    List<UpstreamInfo> maybeResolvedRemoveUpstreams = resolveDNSForAllUpstreams(nonServiceChangeRequest.getRequest().getRemoveUpstreams());
+    List<UpstreamInfo> maybeResolvedReplaceUpstreams = resolveDNSForAllUpstreams(nonServiceChangeRequest.getRequest().getReplaceUpstreams());
+
+    if (allUpstreamsAreResolved(maybeResolvedAddUpstreams)
+        && allUpstreamsAreResolved(maybeResolvedRemoveUpstreams)
+        && allUpstreamsAreResolved(maybeResolvedReplaceUpstreams)) {
+      LOG.trace("Request {} does not change a BaragonService and all upstreams were pre-resolved. Setting noValidate.", nonServiceChangeRequest.getQueuedRequestId().getRequestId());
+      BaragonRequest requestWithResolvedUpstreams = new BaragonRequestBuilder()
+          .setAddUpstreams(maybeResolvedAddUpstreams)
+          .setLoadBalancerRequestId(originalRequest.getLoadBalancerRequestId())
+          .setLoadBalancerService(originalRequest.getLoadBalancerService())
+          .setRemoveUpstreams(maybeResolvedRemoveUpstreams)
+          .setAction(originalRequest.getAction())
+          .setNoReload(originalRequest.isNoReload())
+          .setNoValidate(true)
+          .setReplaceUpstreams(maybeResolvedReplaceUpstreams)
+          .setUpstreamUpdateOnly(originalRequest.isUpstreamUpdateOnly())
+          .setNoDuplicateUpstreams(originalRequest.isNoDuplicateUpstreams())
+          .build();
+
+      try {
+        requestManager.updateRequest(requestWithResolvedUpstreams);
+      } catch (Exception e) {
+        // This is just an optimization, so don't blow up if it fails.
+        LOG.warn("Unable to set resolved upstreams for request {}", nonServiceChangeRequest.getQueuedRequestId().getRequestId(), e);
+      }
+
+      return new QueuedRequestWithState(
+          nonServiceChangeRequest.getQueuedRequestId(),
+          requestWithResolvedUpstreams,
+          nonServiceChangeRequest.getCurrentState()
+      );
+    }
+
+    return nonServiceChangeRequest;
+  }
+
+  private boolean allUpstreamsAreResolved(Collection<UpstreamInfo> upstreams) {
+    if (upstreams.isEmpty()) {
+      return true;
+    }
+
+    return upstreams.stream().allMatch(upstreamInfo -> upstreamInfo.getResolvedUpstream().isPresent());
+  }
+
+  private List<UpstreamInfo> resolveDNSForAllUpstreams(Collection<UpstreamInfo> upstreams) {
+    return upstreams.stream()
+        .map(upstreamInfo -> new UpstreamInfo(
+            upstreamInfo.getUpstream(),
+            upstreamInfo.getRequestId(), upstreamInfo.getRackId(),
+            upstreamInfo.getOriginalPath(),
+            Optional.fromNullable(upstreamInfo.getGroup()),
+            resolver.resolveUpstreamDNS(upstreamInfo.getUpstream())
+        ))
+        .collect(Collectors.toList());
   }
 
   private void handleResultStates(Map<QueuedRequestWithState, InternalRequestStates> results) {

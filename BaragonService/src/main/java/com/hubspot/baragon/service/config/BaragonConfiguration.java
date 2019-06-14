@@ -98,6 +98,12 @@ public class BaragonConfiguration extends Configuration {
   @JsonProperty("gcloud")
   private GoogleCloudConfiguration googleCloudConfiguration = new GoogleCloudConfiguration();
 
+  @JsonProperty
+  private long maxResolveCacheSize = 4000;
+
+  @JsonProperty
+  private long expireResolveCacheAfterDays = 30;
+
   public ZooKeeperConfiguration getZooKeeperConfiguration() {
     return zooKeeperConfiguration;
   }
@@ -256,5 +262,21 @@ public class BaragonConfiguration extends Configuration {
 
   public void setGoogleCloudConfiguration(GoogleCloudConfiguration googleCloudConfiguration) {
     this.googleCloudConfiguration = googleCloudConfiguration;
+  }
+
+  public long getMaxResolveCacheSize() {
+    return maxResolveCacheSize;
+  }
+
+  public void setMaxResolveCacheSize(long maxResolveCacheSize) {
+    this.maxResolveCacheSize = maxResolveCacheSize;
+  }
+
+  public long getExpireResolveCacheAfterDays() {
+    return expireResolveCacheAfterDays;
+  }
+
+  public void setExpireResolveCacheAfterDays(long expireResolveCacheAfterDays) {
+    this.expireResolveCacheAfterDays = expireResolveCacheAfterDays;
   }
 }

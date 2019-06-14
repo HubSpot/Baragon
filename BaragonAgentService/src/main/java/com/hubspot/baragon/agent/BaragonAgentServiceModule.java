@@ -62,6 +62,7 @@ import com.hubspot.baragon.models.BaragonAgentEc2Metadata;
 import com.hubspot.baragon.models.BaragonAgentMetadata;
 import com.hubspot.baragon.models.BaragonAgentState;
 import com.hubspot.baragon.utils.JavaUtils;
+import com.hubspot.baragon.utils.UpstreamResolver;
 import com.hubspot.dropwizard.guicier.DropwizardAwareModule;
 import com.hubspot.horizon.HttpConfig;
 import com.hubspot.horizon.ning.NingHttpClient;
@@ -115,13 +116,13 @@ public class BaragonAgentServiceModule extends DropwizardAwareModule<BaragonAgen
 
   @Provides
   @Singleton
-  public Handlebars providesHandlebars(BaragonAgentConfiguration config, BaragonAgentMetadata agentMetadata) {
+  public Handlebars providesHandlebars(BaragonAgentConfiguration config, BaragonAgentMetadata agentMetadata, UpstreamResolver resolver) {
     final Handlebars handlebars = new Handlebars();
 
     handlebars.registerHelper(FormatTimestampHelper.NAME, new FormatTimestampHelper(config.getDefaultDateFormat()));
     handlebars.registerHelper(FirstOfHelper.NAME, new FirstOfHelper(""));
     handlebars.registerHelper(CurrentRackIsPresentHelper.NAME, new CurrentRackIsPresentHelper(agentMetadata.getEc2().getAvailabilityZone()));
-    handlebars.registerHelper(ResolveHostnameHelper.NAME, new ResolveHostnameHelper(config.getMaxResolveCacheSize(), config.getExpireResolveCacheAfterDays()));
+    handlebars.registerHelper(ResolveHostnameHelper.NAME, new ResolveHostnameHelper(resolver));
     handlebars.registerHelpers(new PreferSameRackWeightingHelper(config, agentMetadata));
     handlebars.registerHelpers(IfEqualHelperSource.class);
     handlebars.registerHelpers(IfContainedInHelperSource.class);
@@ -298,5 +299,11 @@ public class BaragonAgentServiceModule extends DropwizardAwareModule<BaragonAgen
   @Provides
   public AtomicReference<BaragonAgentState> providesAgentState() {
     return new AtomicReference<>(BaragonAgentState.BOOTSTRAPING);
+  }
+
+  @Provides
+  @Singleton
+  public UpstreamResolver provideUpstreamResolver(BaragonAgentConfiguration config) {
+    return new UpstreamResolver(config.getMaxResolveCacheSize(), config.getExpireResolveCacheAfterDays());
   }
 }
