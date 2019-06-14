@@ -351,7 +351,7 @@ public class BaragonRequestWorker implements Runnable {
   }
 
   private QueuedRequestWithState preResolveDNS(QueuedRequestWithState nonServiceChangeRequest) {
-    if (!nonServiceChangeRequest.getRequest().getLoadBalancerService().isPreResolveUpstreamDns()) {
+    if (!nonServiceChangeRequest.getRequest().getLoadBalancerService().isPreResolveUpstreamDNS()) {
       return nonServiceChangeRequest;
     }
 
