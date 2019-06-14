@@ -111,6 +111,7 @@ public class BaragonService {
         .setTemplateName(templateName)
         .setDomains(updatedFromAlias.getDomains())
         .setEdgeCacheDomains(updatedFromAlias.getEdgeCacheDomains())
+        .setPreResolveUpstreamDNS(preResolveUpstreamDNS)
         .build();
   }
 
@@ -124,6 +125,7 @@ public class BaragonService {
         .setTemplateName(templateName)
         .setDomains(domains)
         .setEdgeCacheDomains(edgeCacheDomains)
+        .setPreResolveUpstreamDNS(preResolveUpstreamDNS)
         .build();
   }
 
