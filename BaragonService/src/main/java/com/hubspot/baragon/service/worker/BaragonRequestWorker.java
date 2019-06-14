@@ -312,6 +312,7 @@ public class BaragonRequestWorker implements Runnable {
             && originalRequest.getReplaceUpstreams().isEmpty();
 
     if (upstreamRemovalsOnly) {
+      LOG.trace("Request {} does not change a BaragonService and only removes upstreams. Setting noValidate.", nonServiceChangeRequest.getQueuedRequestId().getRequestId());
       // This BaragonRequest doesn't change the associated BaragonService, and only removes upstreams. We can skip the config check on the nginx side.
       return new QueuedRequestWithState(
           nonServiceChangeRequest.getQueuedRequestId(),
