@@ -45,6 +45,10 @@ public class UpstreamResolver {
         }
         return Optional.of(String.format("%s:%d", ip, port));
       } else {
+        try {
+          InetAddresses.forString(address);
+          return Optional.of(address);
+        } catch (IllegalArgumentException e) { }
         return Optional.of(InetAddress.getByName(address).getHostAddress());
       }
     } catch (UnknownHostException uhe) {
