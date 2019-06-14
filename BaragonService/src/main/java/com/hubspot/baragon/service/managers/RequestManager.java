@@ -79,6 +79,10 @@ public class RequestManager {
     requestDatastore.setRequestMessage(requestId, message);
   }
 
+  public void updateRequest(BaragonRequest request) throws Exception {
+    requestDatastore.updateRequest(request);
+  }
+
   public List<QueuedRequestId> getQueuedRequestIds() {
     return requestDatastore.getQueuedRequestIds();
   }
