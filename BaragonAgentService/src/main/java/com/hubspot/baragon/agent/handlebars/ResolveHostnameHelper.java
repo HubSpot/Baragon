@@ -29,7 +29,8 @@ public class ResolveHostnameHelper implements Helper<Object> {
       return resolved;
     } else if (upstream instanceof UpstreamInfo) {
       UpstreamInfo upstreamInfo = ((UpstreamInfo) upstream);
-      LOG.trace("Trying to resolve an UpstreamInfo upstream of {}", upstreamInfo);
+      LOG.trace("Trying to resolve an UpstreamInfo upstream of {} with upstreamInfo.getResolvedUpstream() = {}, resolver.resolveUpstreamDNS(upstreamInfo.getUpstream()) = {}, upstreamInfo.getUpstream() = {}", upstreamInfo, upstreamInfo
+          .getResolvedUpstream(), resolver.resolveUpstreamDNS(upstreamInfo.getUpstream()), upstreamInfo.getUpstream());
       String resolved = upstreamInfo.getResolvedUpstream().or(resolver.resolveUpstreamDNS(upstreamInfo.getUpstream())).or(upstreamInfo.getUpstream());
       LOG.trace("Resolved {} to {}", upstreamInfo, resolved);
       return resolved;
