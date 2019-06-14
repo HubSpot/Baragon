@@ -24,15 +24,16 @@ public class UpstreamResolver {
 
   public Optional<String> resolveUpstreamDNS(String address) {
     try {
-      InetAddresses.forString(address);
-      return Optional.of(address); // `address` is already an IP
-    } catch (IllegalArgumentException e) {
-      // `address` is not an IP, continue and try to resolve it
-    }
-
-    try {
       if (address.contains(":")) {
         HostAndPort hostAndPort = HostAndPort.fromString(address);
+
+        try {
+          InetAddresses.forString(hostAndPort.getHost());
+          return Optional.of(address); // `address` is already an IP
+        } catch (IllegalArgumentException e) {
+          // `address` is not an IP, continue and try to resolve it
+        }
+
         String cached = resolveCache.getIfPresent(hostAndPort.getHost());
         String ip;
         int port = hostAndPort.getPort();
