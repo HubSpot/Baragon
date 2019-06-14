@@ -71,7 +71,7 @@ public class BaragonRequestDatastore extends AbstractDataStore {
 
     final String requestPath = String.format(REQUEST_FORMAT, request.getLoadBalancerRequestId());
 
-    writeToZk(requestPath, objectMapper.writeValueAsBytes(request));
+    writeToZk(requestPath, request);
 
     return maybeRequest.get();
   }
