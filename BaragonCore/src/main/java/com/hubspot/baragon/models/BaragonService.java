@@ -49,7 +49,7 @@ public class BaragonService {
 
   private final Set<String> edgeCacheDomains;
 
-  private final boolean preResolveUpstreamDns;
+  private final boolean preResolveUpstreamDNS;
 
   public BaragonService(@JsonProperty("serviceId") String serviceId,
                         @JsonProperty("owners") Collection<String> owners,
@@ -76,7 +76,7 @@ public class BaragonService {
       edgeDomains.add(edgeCacheDNS.get());
     }
     this.edgeCacheDomains = edgeDomains;
-    this.preResolveUpstreamDns = preResolveUpstreamDNS;
+    this.preResolveUpstreamDNS = preResolveUpstreamDNS;
   }
 
   public BaragonService(String serviceId, Collection<String> owners, String serviceBasePath, List<String> additionalPaths, Set<String> loadBalancerGroups, Map<String, Object> options,
@@ -170,8 +170,8 @@ public class BaragonService {
     return edgeCacheDomains;
   }
 
-  public boolean isPreResolveUpstreamDns() {
-    return preResolveUpstreamDns;
+  public boolean isPreResolveUpstreamDNS() {
+    return preResolveUpstreamDNS;
   }
 
   @JsonIgnore
@@ -215,7 +215,7 @@ public class BaragonService {
         ", domains=" + domains +
         ", edgeCacheDNS=" + edgeCacheDNS +
         ", edgeCacheDomains=" + edgeCacheDomains +
-        ", preResolveUpstreamDNS=" + preResolveUpstreamDns +
+        ", preResolveUpstreamDNS=" + preResolveUpstreamDNS +
         '}';
   }
 
@@ -236,13 +236,13 @@ public class BaragonService {
           Objects.equals(this.domains, that.domains) &&
           Objects.equals(this.edgeCacheDNS, that.edgeCacheDNS) &&
           Objects.equals(this.edgeCacheDomains, that.edgeCacheDomains) &&
-          Objects.equals(this.preResolveUpstreamDns, that.preResolveUpstreamDns);
+          Objects.equals(this.preResolveUpstreamDNS, that.preResolveUpstreamDNS);
     }
     return false;
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(serviceId, owners, serviceBasePath, additionalPaths, loadBalancerGroups, options, templateName, domains, edgeCacheDNS, edgeCacheDomains, preResolveUpstreamDns);
+    return Objects.hash(serviceId, owners, serviceBasePath, additionalPaths, loadBalancerGroups, options, templateName, domains, edgeCacheDNS, edgeCacheDomains, preResolveUpstreamDNS);
   }
 }
