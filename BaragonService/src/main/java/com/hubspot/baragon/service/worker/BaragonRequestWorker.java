@@ -314,20 +314,29 @@ public class BaragonRequestWorker implements Runnable {
     if (upstreamRemovalsOnly) {
       LOG.trace("Request {} does not change a BaragonService and only removes upstreams. Setting noValidate.", nonServiceChangeRequest.getQueuedRequestId().getRequestId());
       // This BaragonRequest doesn't change the associated BaragonService, and only removes upstreams. We can skip the config check on the nginx side.
+      BaragonRequest requestWithNoValidate = new BaragonRequestBuilder()
+          .setAddUpstreams(originalRequest.getAddUpstreams())
+          .setLoadBalancerRequestId(originalRequest.getLoadBalancerRequestId())
+          .setLoadBalancerService(originalRequest.getLoadBalancerService())
+          .setRemoveUpstreams(originalRequest.getRemoveUpstreams())
+          .setAction(originalRequest.getAction())
+          .setNoReload(originalRequest.isNoReload())
+          .setNoValidate(true)
+          .setReplaceUpstreams(originalRequest.getReplaceUpstreams())
+          .setUpstreamUpdateOnly(originalRequest.isUpstreamUpdateOnly())
+          .setNoDuplicateUpstreams(originalRequest.isNoDuplicateUpstreams())
+          .build();
+
+      try {
+        requestManager.updateRequest(requestWithNoValidate);
+      } catch (Exception e) {
+        // This is just an optimization, so don't blow up if it fails.
+        LOG.warn("Unable to set noValidate for request {}", nonServiceChangeRequest.getQueuedRequestId().getRequestId(), e);
+      }
+
       return new QueuedRequestWithState(
           nonServiceChangeRequest.getQueuedRequestId(),
-          new BaragonRequestBuilder()
-              .setAddUpstreams(originalRequest.getAddUpstreams())
-              .setLoadBalancerRequestId(originalRequest.getLoadBalancerRequestId())
-              .setLoadBalancerService(originalRequest.getLoadBalancerService())
-              .setRemoveUpstreams(originalRequest.getRemoveUpstreams())
-              .setAction(originalRequest.getAction())
-              .setNoReload(originalRequest.isNoReload())
-              .setNoValidate(true)
-              .setReplaceUpstreams(originalRequest.getReplaceUpstreams())
-              .setUpstreamUpdateOnly(originalRequest.isUpstreamUpdateOnly())
-              .setNoDuplicateUpstreams(originalRequest.isNoDuplicateUpstreams())
-              .build(),
+          requestWithNoValidate,
           nonServiceChangeRequest.getCurrentState()
       );
     }
