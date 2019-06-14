@@ -24,11 +24,15 @@ public class ResolveHostnameHelper implements Helper<Object> {
     if (upstream instanceof String) {
       String address = ((String) upstream);
       LOG.trace("Trying to resolve a String upstream of {}", address);
-      return resolver.resolveUpstreamDNS(address).or(address);
+      String resolved = resolver.resolveUpstreamDNS(address).or(address);
+      LOG.trace("Resolved {} to {}", address, resolved);
+      return resolved;
     } else if (upstream instanceof UpstreamInfo) {
       UpstreamInfo upstreamInfo = ((UpstreamInfo) upstream);
       LOG.trace("Trying to resolve an UpstreamInfo upstream of {}", upstreamInfo);
-      return upstreamInfo.getResolvedUpstream().or(resolver.resolveUpstreamDNS(upstreamInfo.getUpstream())).or(upstreamInfo.getUpstream());
+      String resolved = upstreamInfo.getResolvedUpstream().or(resolver.resolveUpstreamDNS(upstreamInfo.getUpstream())).or(upstreamInfo.getUpstream());
+      LOG.trace("Resolved {} to {}", upstreamInfo, resolved);
+      return resolved;
     } else {
       LOG.error("resolveHostname called with invalid context {} and options {}", upstream, options);
       throw new IllegalArgumentException(String.format("Don't know how to process upstream %s", upstream.toString()));
