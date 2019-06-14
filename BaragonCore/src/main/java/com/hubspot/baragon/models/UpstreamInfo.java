@@ -22,7 +22,7 @@ public class UpstreamInfo {
 
   private final String upstream;
 
-  private final Optional<String> resolvedUpstream;
+  private final String resolvedUpstream;
 
   @Size(max=250)
   @Pattern(regexp = "^$|[^\\s/|]+", message = "cannot contain whitespace, '/', or '|'")
@@ -80,7 +80,7 @@ public class UpstreamInfo {
     this.rackId = rackId.or("");
     this.originalPath = originalPath;
     this.group = group.or(DEFAULT_GROUP);
-    this.resolvedUpstream = resolvedUpstream;
+    this.resolvedUpstream = resolvedUpstream.or("");
   }
 
   public String getUpstream() {
@@ -88,7 +88,7 @@ public class UpstreamInfo {
   }
 
   public Optional<String> getResolvedUpstream() {
-    return resolvedUpstream;
+    return Strings.isNullOrEmpty(resolvedUpstream) ? Optional.<String>absent() : Optional.of(resolvedUpstream);
   }
 
   public Optional<String> getRequestId() {
