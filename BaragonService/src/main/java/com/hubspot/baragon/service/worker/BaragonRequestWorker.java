@@ -272,7 +272,7 @@ public class BaragonRequestWorker implements Runnable {
             .map(this::hydrateQueuedRequestWithState)
             .filter(Optional::isPresent)
             .map(Optional::get)
-            .map(this::setNoValidateIfPossible)
+            .map(this::setNoValidateIfRequestRemovesUpstreamsOnly)
             .sorted(queuedRequestComparator())
             .collect(Collectors.toList());
 
@@ -304,9 +304,14 @@ public class BaragonRequestWorker implements Runnable {
     }
   }
 
-  private QueuedRequestWithState setNoValidateIfPossible(QueuedRequestWithState nonServiceChangeRequest) {
+  private QueuedRequestWithState setNoValidateIfRequestRemovesUpstreamsOnly(QueuedRequestWithState nonServiceChangeRequest) {
     BaragonRequest originalRequest = nonServiceChangeRequest.getRequest();
-    if (originalRequest.getAddUpstreams().isEmpty() && originalRequest.getReplaceUpstreams().isEmpty() && !originalRequest.getRemoveUpstreams().isEmpty()) {
+
+    boolean upstreamRemovalsOnly = !originalRequest.getRemoveUpstreams().isEmpty()
+            && originalRequest.getAddUpstreams().isEmpty()
+            && originalRequest.getReplaceUpstreams().isEmpty();
+
+    if (upstreamRemovalsOnly) {
       // This BaragonRequest doesn't change the associated BaragonService, and only removes upstreams. We can skip the config check on the nginx side.
       return new QueuedRequestWithState(
           nonServiceChangeRequest.getQueuedRequestId(),
