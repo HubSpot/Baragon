@@ -62,6 +62,21 @@ public class BaragonRequestDatastore extends AbstractDataStore {
   }
 
   @Timed
+  public BaragonRequest updateRequest(BaragonRequest request) throws Exception {
+    final Optional<BaragonRequest> maybeRequest = getRequest(request.getLoadBalancerRequestId());
+
+    if (!maybeRequest.isPresent()) {
+      throw new IllegalStateException("No such request exists!");
+    }
+
+    final String requestPath = String.format(REQUEST_FORMAT, request.getLoadBalancerRequestId());
+
+    writeToZk(requestPath, request);
+
+    return maybeRequest.get();
+  }
+
+  @Timed
   public List<String> getAllRequestIds() {
     return getChildren(REQUESTS_FORMAT);
   }

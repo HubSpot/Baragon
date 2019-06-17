@@ -34,12 +34,14 @@ import com.hubspot.baragon.models.InternalStatesMap;
 import com.hubspot.baragon.models.QueuedRequestId;
 import com.hubspot.baragon.models.QueuedRequestWithState;
 import com.hubspot.baragon.models.RequestAction;
+import com.hubspot.baragon.models.UpstreamInfo;
 import com.hubspot.baragon.service.config.BaragonConfiguration;
 import com.hubspot.baragon.service.edgecache.EdgeCache;
 import com.hubspot.baragon.service.exceptions.BaragonExceptionNotifier;
 import com.hubspot.baragon.service.managers.AgentManager;
 import com.hubspot.baragon.service.managers.RequestManager;
 import com.hubspot.baragon.utils.JavaUtils;
+import com.hubspot.baragon.utils.UpstreamResolver;
 
 @Singleton
 public class BaragonRequestWorker implements Runnable {
@@ -52,6 +54,7 @@ public class BaragonRequestWorker implements Runnable {
   private final BaragonExceptionNotifier exceptionNotifier;
   private final BaragonConfiguration configuration;
   private final EdgeCache edgeCache;
+  private final UpstreamResolver resolver;
 
   @Inject
   public BaragonRequestWorker(AgentManager agentManager,
@@ -60,10 +63,12 @@ public class BaragonRequestWorker implements Runnable {
                               BaragonExceptionNotifier exceptionNotifier,
                               BaragonConfiguration configuration,
                               EdgeCache edgeCache,
+                              UpstreamResolver resolver,
                               @Named(BaragonDataModule.BARAGON_SERVICE_WORKER_LAST_START) AtomicLong workerLastStartAt) {
     this.agentManager = agentManager;
     this.requestManager = requestManager;
     this.stateDatastore = stateDatastore;
+    this.resolver = resolver;
     this.edgeCache = edgeCache;
     this.workerLastStartAt = workerLastStartAt;
     this.exceptionNotifier = exceptionNotifier;
@@ -270,7 +275,10 @@ public class BaragonRequestWorker implements Runnable {
         List<QueuedRequestWithState> hydratedNonServiceChanges = nonServiceChanges.stream()
             .map(this::hydrateQueuedRequestWithState)
             .filter(Optional::isPresent)
-            .map(Optional::get)
+            .map(someRequest -> new MaybeAdjustedRequest(someRequest.get(), false))
+            .map(this::setNoValidateIfRequestRemovesUpstreamsOnly)
+            .map(this::preResolveDNS)
+            .map(this::saveAdjustedRequest)
             .sorted(queuedRequestComparator())
             .collect(Collectors.toList());
 
@@ -300,6 +308,107 @@ public class BaragonRequestWorker implements Runnable {
     } finally {
       LOG.debug("Finished poller loop.");
     }
+  }
+
+  private static class MaybeAdjustedRequest {
+    QueuedRequestWithState request;
+    boolean wasAdjusted;
+
+    private MaybeAdjustedRequest(QueuedRequestWithState request, boolean wasAdjusted) {
+      this.request = request;
+      this.wasAdjusted = wasAdjusted;
+    }
+  }
+
+  private QueuedRequestWithState saveAdjustedRequest(MaybeAdjustedRequest maybeAdjustedRequest) {
+    if (maybeAdjustedRequest.wasAdjusted) {
+      try {
+        requestManager.updateRequest(maybeAdjustedRequest.request.getRequest());
+      } catch (Exception e) {
+        // This is just an optimization, so don't blow up if it fails.
+        LOG.warn("Unable to save adjustments for request {}", maybeAdjustedRequest.request.getQueuedRequestId().getRequestId(), e);
+      }
+    }
+
+    return maybeAdjustedRequest.request;
+  }
+
+  private MaybeAdjustedRequest setNoValidateIfRequestRemovesUpstreamsOnly(MaybeAdjustedRequest nonServiceChangeRequest) {
+    BaragonRequest originalRequest = nonServiceChangeRequest.request.getRequest();
+
+    if (nonServiceChangeRequest.request.getRequest().isNoValidate()) {
+      return nonServiceChangeRequest;
+    }
+
+    boolean upstreamRemovalsOnly = !originalRequest.getRemoveUpstreams().isEmpty()
+        && originalRequest.getAddUpstreams().isEmpty()
+        && originalRequest.getReplaceUpstreams().isEmpty();
+
+    if (upstreamRemovalsOnly) {
+      LOG.trace("Request {} does not change a BaragonService and only removes upstreams. Setting noValidate.", nonServiceChangeRequest.request.getQueuedRequestId().getRequestId());
+      // This BaragonRequest doesn't change the associated BaragonService, and only removes upstreams. We can skip the config check on the nginx side.
+      BaragonRequest requestWithNoValidate = originalRequest.toBuilder().setNoValidate(true).build();
+
+      return new MaybeAdjustedRequest(new QueuedRequestWithState(
+          nonServiceChangeRequest.request.getQueuedRequestId(),
+          requestWithNoValidate,
+          nonServiceChangeRequest.request.getCurrentState()
+      ), true);
+    }
+
+    return nonServiceChangeRequest;
+  }
+
+  private MaybeAdjustedRequest preResolveDNS(MaybeAdjustedRequest nonServiceChangeRequest) {
+    if (!nonServiceChangeRequest.request.getRequest().getLoadBalancerService().isPreResolveUpstreamDNS()) {
+      return nonServiceChangeRequest;
+    }
+
+    BaragonRequest originalRequest = nonServiceChangeRequest.request.getRequest();
+
+    List<UpstreamInfo> maybeResolvedAddUpstreams = resolveDNSForAllUpstreams(nonServiceChangeRequest.request.getRequest().getAddUpstreams());
+    List<UpstreamInfo> maybeResolvedRemoveUpstreams = resolveDNSForAllUpstreams(nonServiceChangeRequest.request.getRequest().getRemoveUpstreams());
+    List<UpstreamInfo> maybeResolvedReplaceUpstreams = resolveDNSForAllUpstreams(nonServiceChangeRequest.request.getRequest().getReplaceUpstreams());
+
+    if (allUpstreamsAreResolved(maybeResolvedAddUpstreams)
+        && allUpstreamsAreResolved(maybeResolvedRemoveUpstreams)
+        && allUpstreamsAreResolved(maybeResolvedReplaceUpstreams)) {
+      LOG.trace("Request {} does not change a BaragonService and all upstreams were pre-resolved. Setting noValidate.", nonServiceChangeRequest.request.getQueuedRequestId().getRequestId());
+      BaragonRequest requestWithResolvedUpstreams = originalRequest.toBuilder()
+          .setAddUpstreams(maybeResolvedAddUpstreams)
+          .setRemoveUpstreams(maybeResolvedRemoveUpstreams)
+          .setReplaceUpstreams(maybeResolvedReplaceUpstreams)
+          .setNoValidate(true)
+          .build();
+
+      return new MaybeAdjustedRequest(new QueuedRequestWithState(
+          nonServiceChangeRequest.request.getQueuedRequestId(),
+          requestWithResolvedUpstreams,
+          nonServiceChangeRequest.request.getCurrentState()
+      ), true);
+    }
+
+    return nonServiceChangeRequest;
+  }
+
+  private boolean allUpstreamsAreResolved(Collection<UpstreamInfo> upstreams) {
+    if (upstreams.isEmpty()) {
+      return true;
+    }
+
+    return upstreams.stream().allMatch(upstreamInfo -> upstreamInfo.getResolvedUpstream().isPresent());
+  }
+
+  private List<UpstreamInfo> resolveDNSForAllUpstreams(Collection<UpstreamInfo> upstreams) {
+    return upstreams.stream()
+        .map(upstreamInfo -> new UpstreamInfo(
+            upstreamInfo.getUpstream(),
+            upstreamInfo.getRequestId(), upstreamInfo.getRackId(),
+            upstreamInfo.getOriginalPath(),
+            Optional.fromNullable(upstreamInfo.getGroup()),
+            resolver.resolveUpstreamDNS(upstreamInfo.getUpstream())
+        ))
+        .collect(Collectors.toList());
   }
 
   private void handleResultStates(Map<QueuedRequestWithState, InternalRequestStates> results) {

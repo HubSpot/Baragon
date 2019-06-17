@@ -68,6 +68,7 @@ import com.hubspot.baragon.service.worker.BaragonElbSyncWorker;
 import com.hubspot.baragon.service.worker.BaragonRequestWorker;
 import com.hubspot.baragon.service.worker.RequestPurgingWorker;
 import com.hubspot.baragon.utils.JavaUtils;
+import com.hubspot.baragon.utils.UpstreamResolver;
 import com.hubspot.dropwizard.guicier.DropwizardAwareModule;
 import com.ning.http.client.AsyncHttpClient;
 import com.ning.http.client.AsyncHttpClientConfig;
@@ -400,5 +401,11 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
   @Singleton
   public Optional<SentryConfiguration> sentryConfiguration(final BaragonConfiguration config) {
     return config.getSentryConfiguration();
+  }
+
+  @Provides
+  @Singleton
+  public UpstreamResolver provideUpstreamResolver(BaragonConfiguration config) {
+    return new UpstreamResolver(config.getMaxResolveCacheSize(), config.getExpireResolveCacheAfterDays());
   }
 }
