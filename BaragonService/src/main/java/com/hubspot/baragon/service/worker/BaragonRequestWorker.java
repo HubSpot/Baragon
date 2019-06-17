@@ -337,6 +337,10 @@ public class BaragonRequestWorker implements Runnable {
   private MaybeAdjustedRequest setNoValidateIfRequestRemovesUpstreamsOnly(MaybeAdjustedRequest nonServiceChangeRequest) {
     BaragonRequest originalRequest = nonServiceChangeRequest.request.getRequest();
 
+    if (nonServiceChangeRequest.request.getRequest().isNoValidate()) {
+      return nonServiceChangeRequest;
+    }
+
     boolean upstreamRemovalsOnly = !originalRequest.getRemoveUpstreams().isEmpty()
         && originalRequest.getAddUpstreams().isEmpty()
         && originalRequest.getReplaceUpstreams().isEmpty();
