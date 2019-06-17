@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 
 import com.github.jknack.handlebars.Helper;
 import com.github.jknack.handlebars.Options;
+import com.google.common.base.Optional;
 import com.hubspot.baragon.models.UpstreamInfo;
 import com.hubspot.baragon.utils.UpstreamResolver;
 
@@ -29,9 +30,12 @@ public class ResolveHostnameHelper implements Helper<Object> {
       return resolved;
     } else if (upstream instanceof UpstreamInfo) {
       UpstreamInfo upstreamInfo = ((UpstreamInfo) upstream);
-      LOG.trace("Trying to resolve an UpstreamInfo upstream of {} with upstreamInfo.getResolvedUpstream() = {}, resolver.resolveUpstreamDNS(upstreamInfo.getUpstream()) = {}, upstreamInfo.getUpstream() = {}", upstreamInfo, upstreamInfo
-          .getResolvedUpstream(), resolver.resolveUpstreamDNS(upstreamInfo.getUpstream()), upstreamInfo.getUpstream());
-      String resolved = upstreamInfo.getResolvedUpstream().or(resolver.resolveUpstreamDNS(upstreamInfo.getUpstream())).or(upstreamInfo.getUpstream());
+      final Optional<String> maybeResolvedUpstream = resolver.resolveUpstreamDNS(upstreamInfo.getUpstream());
+      LOG.trace(
+          "Trying to resolve an UpstreamInfo upstream of {} with upstreamInfo.getResolvedUpstream() = {}, resolver.resolveUpstreamDNS(upstreamInfo.getUpstream()) = {}, upstreamInfo.getUpstream() = {}",
+          upstreamInfo, upstreamInfo.getResolvedUpstream(), maybeResolvedUpstream, upstreamInfo.getUpstream()
+      );
+      String resolved = upstreamInfo.getResolvedUpstream().or(maybeResolvedUpstream).or(upstreamInfo.getUpstream());
       LOG.trace("Resolved {} to {}", upstreamInfo, resolved);
       return resolved;
     } else {
