@@ -104,31 +104,11 @@ public class BaragonRequest {
   }
 
   public BaragonRequest withUpdatedGroups(BaragonGroupAlias updatedFromAlias) {
-    return new BaragonRequestBuilder().setLoadBalancerRequestId(loadBalancerRequestId)
-        .setLoadBalancerService(loadBalancerService.withUpdatedGroups(updatedFromAlias))
-        .setAddUpstreams(addUpstreams)
-        .setRemoveUpstreams(removeUpstreams)
-        .setReplaceUpstreams(replaceUpstreams)
-        .setAction(action)
-        .setNoValidate(noValidate)
-        .setNoReload(noReload)
-        .setUpstreamUpdateOnly(upstreamUpdateOnly)
-        .setNoDuplicateUpstreams(noDuplicateUpstreams)
-        .build();
+    return toBuilder().setLoadBalancerService(loadBalancerService.withUpdatedGroups(updatedFromAlias)).build();
   }
 
   public BaragonRequest withUpdatedDomains(Set<String> domains) {
-    return new BaragonRequestBuilder().setLoadBalancerRequestId(loadBalancerRequestId)
-        .setLoadBalancerService(loadBalancerService.withDomains(domains))
-        .setAddUpstreams(addUpstreams)
-        .setRemoveUpstreams(removeUpstreams)
-        .setReplaceUpstreams(replaceUpstreams)
-        .setAction(action)
-        .setNoValidate(noValidate)
-        .setNoReload(noReload)
-        .setUpstreamUpdateOnly(upstreamUpdateOnly)
-        .setNoDuplicateUpstreams(noDuplicateUpstreams)
-        .build();
+    return toBuilder().setLoadBalancerService(loadBalancerService.withDomains(domains)).build();
   }
 
   public String getLoadBalancerRequestId() {
@@ -203,6 +183,7 @@ public class BaragonRequest {
         ", loadBalancerService=" + loadBalancerService +
         ", addUpstreams=" + addUpstreams +
         ", removeUpstreams=" + removeUpstreams +
+        ", replaceUpstreams=" + replaceUpstreams +
         ", replaceServiceId=" + replaceServiceId +
         ", action=" + action +
         ", noValidate=" + noValidate +
@@ -235,6 +216,9 @@ public class BaragonRequest {
     if (!removeUpstreams.equals(request.removeUpstreams)) {
       return false;
     }
+    if (!replaceUpstreams.equals(request.replaceUpstreams)) {
+      return false;
+    }
     if (!replaceServiceId.equals(request.replaceServiceId)) {
       return false;
     }
@@ -258,12 +242,27 @@ public class BaragonRequest {
     return true;
   }
 
+  public BaragonRequestBuilder toBuilder() {
+    return new BaragonRequestBuilder()
+        .setLoadBalancerService(loadBalancerService)
+        .setAddUpstreams(addUpstreams)
+        .setRemoveUpstreams(removeUpstreams)
+        .setReplaceUpstreams(replaceUpstreams)
+        .setLoadBalancerRequestId(loadBalancerRequestId)
+        .setAction(action)
+        .setNoValidate(noValidate)
+        .setNoReload(noReload)
+        .setUpstreamUpdateOnly(upstreamUpdateOnly)
+        .setNoDuplicateUpstreams(noDuplicateUpstreams);
+  }
+
   @Override
   public int hashCode() {
     int result = loadBalancerRequestId.hashCode();
     result = 31 * result + loadBalancerService.hashCode();
     result = 31 * result + addUpstreams.hashCode();
     result = 31 * result + removeUpstreams.hashCode();
+    result = 31 * result + replaceUpstreams.hashCode();
     result = 31 * result + replaceServiceId.hashCode();
     result = 31 * result + action.hashCode();
     result = 31 * result + (noValidate ? 1 : 0);
