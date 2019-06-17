@@ -203,6 +203,7 @@ public class BaragonRequest {
         ", loadBalancerService=" + loadBalancerService +
         ", addUpstreams=" + addUpstreams +
         ", removeUpstreams=" + removeUpstreams +
+        ", replaceUpstreams=" + replaceUpstreams +
         ", replaceServiceId=" + replaceServiceId +
         ", action=" + action +
         ", noValidate=" + noValidate +
@@ -235,6 +236,9 @@ public class BaragonRequest {
     if (!removeUpstreams.equals(request.removeUpstreams)) {
       return false;
     }
+    if (!replaceUpstreams.equals(request.replaceUpstreams)) {
+      return false;
+    }
     if (!replaceServiceId.equals(request.replaceServiceId)) {
       return false;
     }
@@ -264,6 +268,7 @@ public class BaragonRequest {
     result = 31 * result + loadBalancerService.hashCode();
     result = 31 * result + addUpstreams.hashCode();
     result = 31 * result + removeUpstreams.hashCode();
+    result = 31 * result + replaceUpstreams.hashCode();
     result = 31 * result + replaceServiceId.hashCode();
     result = 31 * result + action.hashCode();
     result = 31 * result + (noValidate ? 1 : 0);
