@@ -23,33 +23,38 @@ public class UpstreamResolver {
   }
 
   public Optional<String> resolveUpstreamDNS(String address) {
+    String host;
+    Optional<Integer> port = Optional.absent();
+
+    if (address.contains(":")) {
+      HostAndPort hostAndPort = HostAndPort.fromString(address);
+      host = hostAndPort.getHost();
+      port = Optional.of(hostAndPort.getPort());
+    } else {
+      host = address;
+    }
+
     try {
-      if (address.contains(":")) {
-        HostAndPort hostAndPort = HostAndPort.fromString(address);
+      InetAddresses.forString(host);
+      return Optional.of(address); // `address` is already an IP
+    } catch (IllegalArgumentException e) {
+      // `address` is not an IP, continue and try to resolve it
+    }
 
-        try {
-          InetAddresses.forString(hostAndPort.getHost());
-          return Optional.of(address); // `address` is already an IP
-        } catch (IllegalArgumentException e) {
-          // `address` is not an IP, continue and try to resolve it
-        }
-
-        String cached = resolveCache.getIfPresent(hostAndPort.getHost());
-        String ip;
-        int port = hostAndPort.getPort();
-        if (cached != null) {
-          ip = cached;
-        } else {
-          ip = InetAddress.getByName(hostAndPort.getHost()).getHostAddress();
-          resolveCache.put(hostAndPort.getHost(), ip);
-        }
-        return Optional.of(String.format("%s:%d", ip, port));
+    try {
+      String cached = resolveCache.getIfPresent(host);
+      String ip;
+      if (cached != null) {
+        ip = cached;
       } else {
-        try {
-          InetAddresses.forString(address);
-          return Optional.of(address);
-        } catch (IllegalArgumentException e) { }
-        return Optional.of(InetAddress.getByName(address).getHostAddress());
+        ip = InetAddress.getByName(host).getHostAddress();
+        resolveCache.put(host, ip);
+      }
+
+      if (port.isPresent()) {
+        return Optional.of(String.format("%s:%d", ip, port.get()));
+      } else {
+        return Optional.of(String.format("%s", ip));
       }
     } catch (UnknownHostException uhe) {
       // Don't let this exception block rendering of the template, the lb config check will still fail if the host is truly unknown
