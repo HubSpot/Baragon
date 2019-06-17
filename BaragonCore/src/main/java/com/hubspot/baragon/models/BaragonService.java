@@ -80,6 +80,11 @@ public class BaragonService {
   }
 
   public BaragonService(String serviceId, Collection<String> owners, String serviceBasePath, List<String> additionalPaths, Set<String> loadBalancerGroups, Map<String, Object> options,
+                        Optional<String> templateName, Set<String> domains, Optional<String> edgeCacheDNS, Set<String> edgeCacheDomains) {
+    this(serviceId, owners, serviceBasePath, additionalPaths, loadBalancerGroups, options, templateName, domains, edgeCacheDNS, edgeCacheDomains, false);
+  }
+
+  public BaragonService(String serviceId, Collection<String> owners, String serviceBasePath, List<String> additionalPaths, Set<String> loadBalancerGroups, Map<String, Object> options,
                         Optional<String> templateName, Set<String> domains, Optional<String> edgeCacheDNS) {
     this(serviceId, owners, serviceBasePath, additionalPaths, loadBalancerGroups, options, templateName, domains, edgeCacheDNS, Collections.emptySet(), false);
   }
