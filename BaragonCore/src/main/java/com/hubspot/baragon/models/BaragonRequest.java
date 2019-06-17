@@ -104,31 +104,11 @@ public class BaragonRequest {
   }
 
   public BaragonRequest withUpdatedGroups(BaragonGroupAlias updatedFromAlias) {
-    return new BaragonRequestBuilder().setLoadBalancerRequestId(loadBalancerRequestId)
-        .setLoadBalancerService(loadBalancerService.withUpdatedGroups(updatedFromAlias))
-        .setAddUpstreams(addUpstreams)
-        .setRemoveUpstreams(removeUpstreams)
-        .setReplaceUpstreams(replaceUpstreams)
-        .setAction(action)
-        .setNoValidate(noValidate)
-        .setNoReload(noReload)
-        .setUpstreamUpdateOnly(upstreamUpdateOnly)
-        .setNoDuplicateUpstreams(noDuplicateUpstreams)
-        .build();
+    return toBuilder().setLoadBalancerService(loadBalancerService.withUpdatedGroups(updatedFromAlias)).build();
   }
 
   public BaragonRequest withUpdatedDomains(Set<String> domains) {
-    return new BaragonRequestBuilder().setLoadBalancerRequestId(loadBalancerRequestId)
-        .setLoadBalancerService(loadBalancerService.withDomains(domains))
-        .setAddUpstreams(addUpstreams)
-        .setRemoveUpstreams(removeUpstreams)
-        .setReplaceUpstreams(replaceUpstreams)
-        .setAction(action)
-        .setNoValidate(noValidate)
-        .setNoReload(noReload)
-        .setUpstreamUpdateOnly(upstreamUpdateOnly)
-        .setNoDuplicateUpstreams(noDuplicateUpstreams)
-        .build();
+    return toBuilder().setLoadBalancerService(loadBalancerService.withDomains(domains)).build();
   }
 
   public String getLoadBalancerRequestId() {
@@ -260,6 +240,20 @@ public class BaragonRequest {
     }
 
     return true;
+  }
+
+  public BaragonRequestBuilder toBuilder() {
+    return new BaragonRequestBuilder()
+        .setLoadBalancerService(loadBalancerService)
+        .setAddUpstreams(addUpstreams)
+        .setRemoveUpstreams(removeUpstreams)
+        .setReplaceUpstreams(replaceUpstreams)
+        .setLoadBalancerRequestId(loadBalancerRequestId)
+        .setAction(action)
+        .setNoValidate(noValidate)
+        .setNoReload(noReload)
+        .setUpstreamUpdateOnly(upstreamUpdateOnly)
+        .setNoDuplicateUpstreams(noDuplicateUpstreams);
   }
 
   @Override
