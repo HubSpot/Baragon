@@ -1,3 +1,7 @@
 env:
   MAVEN_ARGS: "-Dbaragon.jar.name.format=\\${project.artifactId} -Dgpg.skip=true"
-  SET_VERSION_OVERRIDE: "0.9.0-$GIT_BRANCH-SNAPSHOT"
+  SET_VERSION_OVERRIDE: "0.10.0-$GIT_BRANCH-SNAPSHOT"
+
+provides:
+ - name: BaragonAgentService
+   version: 0.10.0-SNAPSHOT
