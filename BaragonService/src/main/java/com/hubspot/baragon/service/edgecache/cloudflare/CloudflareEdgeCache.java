@@ -57,7 +57,7 @@ public class CloudflareEdgeCache implements EdgeCache {
       for (String edgeCacheDNS : request.getLoadBalancerService().getEdgeCacheDomains()) {
         List<CloudflareZone> matchingZones = getCloudflareZone(edgeCacheDNS);
 
-        if (matchingZones.isEmpty()) {
+        if (matchingZones == null || matchingZones.isEmpty()) {
           LOG.warn("`edgeCacheDNS` was defined on the request, but no matching Cloudflare Zone was found!");
           return false;
         }
@@ -88,8 +88,8 @@ public class CloudflareEdgeCache implements EdgeCache {
       }
       return allSucceeded;
 
-    } catch (CloudflareClientException e) {
-      LOG.error("Unable to invalidate Cloudflare cache for request {}", request, e);
+    } catch (Throwable t) {
+      LOG.error("Unable to invalidate Cloudflare cache for request {}", request, t);
       return false;
     }
   }
