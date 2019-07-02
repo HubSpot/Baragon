@@ -88,8 +88,8 @@ public class CloudflareEdgeCache implements EdgeCache {
       }
       return allSucceeded;
 
-    } catch (CloudflareClientException e) {
-      LOG.error("Unable to invalidate Cloudflare cache for request {}", request, e);
+    } catch (Throwable t) {
+      LOG.error("Unable to invalidate Cloudflare cache for request {}", request, t);
       return false;
     }
   }
