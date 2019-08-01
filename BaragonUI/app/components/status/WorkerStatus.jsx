@@ -10,7 +10,7 @@ const workerItem = (worker) => {
   );
 };
 
-const WorkerStatus = ({workerLag, elbWorkerLag, zookeeperState, workers}) => {
+const WorkerStatus = ({workerLag, elbWorkerLag, oldestPendingRequest, zookeeperState, workers}) => {
   return (
     <div className="col-md-6">
       <ul className="list-group">
@@ -19,6 +19,9 @@ const WorkerStatus = ({workerLag, elbWorkerLag, zookeeperState, workers}) => {
         </li>
         <li className="list-group-item">
           <h4>ELB Worker Lag <span className="pull-right">{Utils.humanizeWorkerLag(elbWorkerLag)}</span></h4>
+        </li>
+        <li className="list-group-item">
+          <h4>Oldest Pending Request <span className="pull-right">{Utils.humanizeWorkerLag(oldestPendingRequest)}</span></h4>
         </li>
         <li className="list-group-item">
           <h4>ZK Connection State <span className="pull-right">{zookeeperState}</span></h4>
@@ -37,6 +40,7 @@ const WorkerStatus = ({workerLag, elbWorkerLag, zookeeperState, workers}) => {
 WorkerStatus.propTypes = {
   workerLag: React.PropTypes.number.isRequired,
   elbWorkerLag: React.PropTypes.number.isRequired,
+  oldestPendingRequest: React.PropTypes.number.isRequired,
   zookeeperState: React.PropTypes.string.isRequired,
   workers: React.PropTypes.array.isRequired,
 };

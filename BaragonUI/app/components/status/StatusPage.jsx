@@ -20,6 +20,7 @@ const StatusPage = ({status, workers, queuedRequests, router}) => {
           workerLag={status.workerLagMs}
           elbWorkerLag={status.elbWorkerLagMs}
           zookeeperState={status.zookeeperState}
+          oldestPendingRequest={status.oldestPendingRequest}
           workers={workers}
         />
       <PendingRequests
