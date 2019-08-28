@@ -28,9 +28,11 @@ import com.hubspot.baragon.exceptions.InvalidUpstreamsException;
 import com.hubspot.baragon.exceptions.RequestAlreadyEnqueuedException;
 import com.hubspot.baragon.models.BaragonAgentMetadata;
 import com.hubspot.baragon.models.BaragonRequest;
+import com.hubspot.baragon.models.BaragonRequestBuilder;
 import com.hubspot.baragon.models.BaragonRequestState;
 import com.hubspot.baragon.models.BaragonResponse;
 import com.hubspot.baragon.models.BaragonService;
+import com.hubspot.baragon.models.BaragonServiceBuilder;
 import com.hubspot.baragon.models.UpstreamInfo;
 import com.hubspot.baragon.service.managers.RequestManager;
 import com.hubspot.baragon.service.worker.BaragonRequestWorker;
@@ -91,11 +93,20 @@ public class RequestTest {
     final String requestId = "test-126";
     Set<String> lbGroup = new HashSet<>();
     lbGroup.add(FAKE_LB_GROUP);
-    final BaragonService service = new BaragonService("testservice1", Collections.<String>emptyList(), "/test", lbGroup, Collections.<String, Object>emptyMap());
+    final BaragonService service = new BaragonServiceBuilder().setServiceId("testservice1")
+        .setOwners(Collections.<String>emptyList())
+        .setServiceBasePath("/test")
+        .setLoadBalancerGroups(lbGroup)
+        .setOptions(Collections.<String, Object>emptyMap())
+        .build();
 
     final UpstreamInfo upstream = new UpstreamInfo("testhost:8080", Optional.of(requestId), Optional.<String>absent());
 
-    final BaragonRequest request = new BaragonRequest(requestId, service, ImmutableList.of(upstream), ImmutableList.<UpstreamInfo>of(), Optional.<String>absent());
+    final BaragonRequest request = new BaragonRequestBuilder().setLoadBalancerRequestId(requestId)
+        .setLoadBalancerService(service)
+        .setAddUpstreams(ImmutableList.of(upstream))
+        .setRemoveUpstreams(ImmutableList.<UpstreamInfo>of())
+        .build();
 
     try {
       assertResponseStateAbsent(requestManager, requestId);
@@ -118,11 +129,20 @@ public class RequestTest {
     final String requestId = "test-127";
     Set<String> lbGroup = new HashSet<>();
     lbGroup.add(FAKE_LB_GROUP);
-    final BaragonService service = new BaragonService("testservice2", Collections.<String>emptyList(), "/test", lbGroup, Collections.<String, Object>emptyMap());
+    final BaragonService service = new BaragonServiceBuilder().setServiceId("testservice2")
+        .setOwners(Collections.<String>emptyList())
+        .setServiceBasePath("/test")
+        .setLoadBalancerGroups(lbGroup)
+        .setOptions(Collections.<String, Object>emptyMap())
+        .build();
 
     final UpstreamInfo upstream = new UpstreamInfo("testhost:8080", Optional.of(requestId), Optional.<String>absent());
 
-    final BaragonRequest request = new BaragonRequest(requestId, service, ImmutableList.of(upstream), ImmutableList.<UpstreamInfo>of(), Optional.<String>absent());
+    final BaragonRequest request = new BaragonRequestBuilder().setLoadBalancerRequestId(requestId)
+        .setLoadBalancerService(service)
+        .setAddUpstreams(ImmutableList.of(upstream))
+        .setRemoveUpstreams(ImmutableList.<UpstreamInfo>of())
+        .build();
 
     BaragonResponse response = requestManager.enqueueRequest(request);
     BaragonResponse repeatResponse = requestManager.enqueueRequest(request);
@@ -136,11 +156,20 @@ public class RequestTest {
     Set<String> lbGroup = new HashSet<>();
     lbGroup.add(REAL_LB_GROUP);
 
-    final BaragonService service = new BaragonService("testservice3", Collections.<String>emptyList(), "/foo", lbGroup, Collections.<String, Object>emptyMap());
+    final BaragonService service = new BaragonServiceBuilder().setServiceId("testservice3")
+        .setOwners(Collections.<String>emptyList())
+        .setServiceBasePath("/foo")
+        .setLoadBalancerGroups(lbGroup)
+        .setOptions(Collections.<String, Object>emptyMap())
+        .build();
 
     final UpstreamInfo upstream = new UpstreamInfo("testhost:8080", Optional.of(requestId), Optional.<String>absent());
 
-    final BaragonRequest request = new BaragonRequest(requestId, service, ImmutableList.of(upstream), ImmutableList.<UpstreamInfo>of(), Optional.<String>absent());
+    final BaragonRequest request = new BaragonRequestBuilder().setLoadBalancerRequestId(requestId)
+        .setLoadBalancerService(service)
+        .setAddUpstreams(ImmutableList.of(upstream))
+        .setRemoveUpstreams(ImmutableList.<UpstreamInfo>of())
+        .build();
 
     try {
       assertResponseStateAbsent(requestManager, requestId);
@@ -165,11 +194,24 @@ public class RequestTest {
     Set<String> lbGroup = new HashSet<>();
     lbGroup.add(REAL_LB_GROUP);
 
-    final BaragonService service = new BaragonService("testservice4", Collections.<String>emptyList(), "/foo", Collections.singletonList("/some-other-path"), lbGroup, Collections.<String, Object>emptyMap(), Optional.<String>absent(), Collections.<String>emptySet(), Optional.absent());
+    final BaragonService service = new BaragonServiceBuilder().setServiceId("testservice4")
+        .setOwners(Collections.<String>emptyList())
+        .setServiceBasePath("/foo")
+        .setAdditionalPaths(Collections.singletonList("/some-other-path"))
+        .setLoadBalancerGroups(lbGroup)
+        .setOptions(Collections.<String, Object>emptyMap())
+        .setTemplateName(Optional.<String>absent())
+        .setDomains(Collections.<String>emptySet())
+        .setEdgeCacheDNS(Optional.absent())
+        .build();
 
     final UpstreamInfo upstream = new UpstreamInfo("testhost:8080", Optional.of(requestId), Optional.<String>absent());
 
-    final BaragonRequest request = new BaragonRequest(requestId, service, ImmutableList.of(upstream), ImmutableList.<UpstreamInfo>of(), Optional.<String>absent());
+    final BaragonRequest request = new BaragonRequestBuilder().setLoadBalancerRequestId(requestId)
+        .setLoadBalancerService(service)
+        .setAddUpstreams(ImmutableList.of(upstream))
+        .setRemoveUpstreams(ImmutableList.<UpstreamInfo>of())
+        .build();
 
     try {
       assertResponseStateAbsent(requestManager, requestId);

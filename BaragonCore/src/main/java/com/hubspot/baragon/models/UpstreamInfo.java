@@ -1,5 +1,8 @@
 package com.hubspot.baragon.models;
 
+import javax.validation.constraints.Pattern;
+import javax.validation.constraints.Size;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -8,9 +11,6 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Optional;
 import com.google.common.base.Strings;
 import com.google.common.io.BaseEncoding;
-
-import javax.validation.constraints.Pattern;
-import javax.validation.constraints.Size;
 
 @JsonIgnoreProperties( ignoreUnknown = true )
 public class UpstreamInfo {
@@ -21,6 +21,8 @@ public class UpstreamInfo {
   }
 
   private final String upstream;
+
+  private final String resolvedUpstream;
 
   @Size(max=250)
   @Pattern(regexp = "^$|[^\\s/|]+", message = "cannot contain whitespace, '/', or '|'")
@@ -45,20 +47,25 @@ public class UpstreamInfo {
       Optional<String> requestId = split.length > 1 && !split[1].equals("") ? Optional.of(split[1]) : Optional.<String>absent();
       Optional<String> rackId = split.length > 2 && !split[2].equals("") ? Optional.of(split[2]) : Optional.<String>absent();
       Optional<String> group = split.length > 3 && !split[3].equals("") ? Optional.of(split[3]) : Optional.<String>absent();
-      return new UpstreamInfo(upstream, requestId, rackId, Optional.of(value), group);
+      Optional<String> resolvedUpstream = split.length > 4 && !split[4].equals("") ? Optional.of(split[4]) : Optional.<String>absent();
+      return new UpstreamInfo(upstream, requestId, rackId, Optional.of(value), group, resolvedUpstream);
     }
   }
 
   public static UpstreamInfo fromUnEncodedString(String upstream) {
-    return new UpstreamInfo(upstream, Optional.<String>absent(), Optional.<String>absent(), Optional.of(upstream), Optional.<String>absent());
+    return new UpstreamInfo(upstream, Optional.<String>absent(), Optional.<String>absent(), Optional.of(upstream), Optional.<String>absent(), Optional.absent());
   }
 
   public UpstreamInfo(String upstream, Optional<String> requestId, Optional<String> rackId) {
-    this(upstream, requestId, rackId, Optional.<String>absent(), Optional.<String>absent());
+    this(upstream, requestId, rackId, Optional.<String>absent(), Optional.<String>absent(), Optional.absent());
   }
 
   public UpstreamInfo(String upstream, Optional<String> requestId, Optional<String> rackId, Optional<String> group) {
-    this(upstream, requestId, rackId, Optional.<String>absent(), group);
+    this(upstream, requestId, rackId, Optional.<String>absent(), group, Optional.absent());
+  }
+
+  public UpstreamInfo(String upstream, Optional<String> requestId, Optional<String> rackId, Optional<String> originalPath, Optional<String> group) {
+    this(upstream, requestId, rackId, originalPath, group, Optional.absent());
   }
 
   @JsonCreator
@@ -66,16 +73,22 @@ public class UpstreamInfo {
                       @JsonProperty("requestId") Optional<String> requestId,
                       @JsonProperty("rackId") Optional<String> rackId,
                       @JsonProperty("originalPath") Optional<String> originalPath,
-                      @JsonProperty("group") Optional<String> group) {
+                      @JsonProperty("group") Optional<String> group,
+                      @JsonProperty("resolvedUpstream") Optional<String> resolvedUpstream) {
     this.upstream = upstream;
     this.requestId = requestId.or("");
     this.rackId = rackId.or("");
     this.originalPath = originalPath;
     this.group = group.or(DEFAULT_GROUP);
+    this.resolvedUpstream = resolvedUpstream.or("");
   }
 
   public String getUpstream() {
     return upstream;
+  }
+
+  public Optional<String> getResolvedUpstream() {
+    return Strings.isNullOrEmpty(resolvedUpstream) ? Optional.<String>absent() : Optional.of(resolvedUpstream);
   }
 
   public Optional<String> getRequestId() {
@@ -101,7 +114,7 @@ public class UpstreamInfo {
   }
 
   public String toPath() {
-    return String.format("%s|%s|%s|%s", sanitizeUpstream(upstream), requestId, rackId, group);
+    return String.format("%s|%s|%s|%s|%s", sanitizeUpstream(upstream), requestId, rackId, group, resolvedUpstream);
   }
 
   protected String sanitizeUpstream(String name) {
@@ -128,6 +141,9 @@ public class UpstreamInfo {
     if (!upstream.equals(that.upstream)) {
       return false;
     }
+    if (!resolvedUpstream.equals(that.resolvedUpstream)) {
+      return false;
+    }
     if (!originalPath.equals(that.originalPath)) {
       return false;
     }
@@ -141,6 +157,7 @@ public class UpstreamInfo {
   @Override
   public int hashCode() {
     int result = upstream.hashCode();
+    result = 31 * result + resolvedUpstream.hashCode();
     result = 31 * result + requestId.hashCode();
     result = 31 * result + rackId.hashCode();
     result = 31 * result + originalPath.hashCode();

@@ -49,6 +49,8 @@ public class BaragonService {
 
   private final Set<String> edgeCacheDomains;
 
+  private final boolean preResolveUpstreamDNS;
+
   public BaragonService(@JsonProperty("serviceId") String serviceId,
                         @JsonProperty("owners") Collection<String> owners,
                         @JsonProperty("serviceBasePath") String serviceBasePath,
@@ -58,7 +60,8 @@ public class BaragonService {
                         @JsonProperty("templateName") Optional<String> templateName,
                         @JsonProperty("domains") Set<String> domains,
                         @JsonProperty("edgeCacheDNS") Optional<String> edgeCacheDNS,
-                        @JsonProperty("edgeCacheDomains") Set<String> edgeCacheDomains) {
+                        @JsonProperty("edgeCacheDomains") Set<String> edgeCacheDomains,
+                        @JsonProperty("preResolveUpstreamDNS") boolean preResolveUpstreamDNS) {
     this.serviceId = serviceId;
     this.owners = owners;
     this.serviceBasePath = serviceBasePath;
@@ -73,36 +76,62 @@ public class BaragonService {
       edgeDomains.add(edgeCacheDNS.get());
     }
     this.edgeCacheDomains = edgeDomains;
+    this.preResolveUpstreamDNS = preResolveUpstreamDNS;
+  }
+
+  public BaragonService(String serviceId, Collection<String> owners, String serviceBasePath, List<String> additionalPaths, Set<String> loadBalancerGroups, Map<String, Object> options,
+                        Optional<String> templateName, Set<String> domains, Optional<String> edgeCacheDNS, Set<String> edgeCacheDomains) {
+    this(serviceId, owners, serviceBasePath, additionalPaths, loadBalancerGroups, options, templateName, domains, edgeCacheDNS, edgeCacheDomains, false);
   }
 
   public BaragonService(String serviceId, Collection<String> owners, String serviceBasePath, List<String> additionalPaths, Set<String> loadBalancerGroups, Map<String, Object> options,
                         Optional<String> templateName, Set<String> domains, Optional<String> edgeCacheDNS) {
-    this(serviceId, owners, serviceBasePath, additionalPaths, loadBalancerGroups, options, templateName, domains, edgeCacheDNS, Collections.emptySet());
+    this(serviceId, owners, serviceBasePath, additionalPaths, loadBalancerGroups, options, templateName, domains, edgeCacheDNS, Collections.emptySet(), false);
   }
 
   public BaragonService(String serviceId, Collection<String> owners, String serviceBasePath, List<String> additionalPaths, Set<String> loadBalancerGroups, Map<String, Object> options,
                         Optional<String> templateName, Set<String> domains, Set<String> edgeCacheDomains) {
-    this(serviceId, owners, serviceBasePath, additionalPaths, loadBalancerGroups, options, templateName, domains, Optional.absent(), edgeCacheDomains);
+    this(serviceId, owners, serviceBasePath, additionalPaths, loadBalancerGroups, options, templateName, domains, Optional.absent(), edgeCacheDomains, false);
   }
 
   public BaragonService(String serviceId, Collection<String> owners, String serviceBasePath, List<String> additionalPaths, Set<String> loadBalancerGroups, Map<String, Object> options, Optional<String> templateName, Set<String> domains) {
-    this(serviceId, owners, serviceBasePath, additionalPaths, loadBalancerGroups, options, templateName, domains, Optional.absent(), Collections.emptySet());
+    this(serviceId, owners, serviceBasePath, additionalPaths, loadBalancerGroups, options, templateName, domains, Optional.absent(), Collections.emptySet(), false);
   }
 
   public BaragonService(String serviceId, Collection<String> owners, String serviceBasePath, List<String> additionalPaths, Set<String> loadBalancerGroups, Map<String, Object> options, Optional<String> templateName) {
-    this(serviceId, owners, serviceBasePath, additionalPaths, loadBalancerGroups, options, templateName, Collections.<String>emptySet(), Optional.absent(), Collections.emptySet());
+    this(serviceId, owners, serviceBasePath, additionalPaths, loadBalancerGroups, options, templateName, Collections.<String>emptySet(), Optional.absent(), Collections.emptySet(), false);
   }
 
   public BaragonService(String serviceId, Collection<String> owners, String serviceBasePath, Set<String> loadBalancerGroups, Map<String, Object> options) {
-    this(serviceId, owners, serviceBasePath, Collections.<String>emptyList(), loadBalancerGroups, options, Optional.<String>absent(), Collections.<String>emptySet(), Optional.absent(), Collections.emptySet());
+    this(serviceId, owners, serviceBasePath, Collections.<String>emptyList(), loadBalancerGroups, options, Optional.<String>absent(), Collections.<String>emptySet(), Optional.absent(), Collections.emptySet(), false);
   }
 
   public BaragonService withUpdatedGroups(BaragonGroupAlias updatedFromAlias) {
-    return new BaragonService(serviceId, owners, serviceBasePath, additionalPaths, updatedFromAlias.getGroups(), options, templateName, updatedFromAlias.getDomains(), updatedFromAlias.getEdgeCacheDomains());
+    return new BaragonServiceBuilder().setServiceId(serviceId)
+        .setOwners(owners)
+        .setServiceBasePath(serviceBasePath)
+        .setAdditionalPaths(additionalPaths)
+        .setLoadBalancerGroups(updatedFromAlias.getGroups())
+        .setOptions(options)
+        .setTemplateName(templateName)
+        .setDomains(updatedFromAlias.getDomains())
+        .setEdgeCacheDomains(updatedFromAlias.getEdgeCacheDomains())
+        .setPreResolveUpstreamDNS(preResolveUpstreamDNS)
+        .build();
   }
 
   public BaragonService withDomains(Set<String> domains) {
-    return new BaragonService(serviceId, owners, serviceBasePath, additionalPaths, loadBalancerGroups, options, templateName, domains, edgeCacheDomains);
+    return new BaragonServiceBuilder().setServiceId(serviceId)
+        .setOwners(owners)
+        .setServiceBasePath(serviceBasePath)
+        .setAdditionalPaths(additionalPaths)
+        .setLoadBalancerGroups(loadBalancerGroups)
+        .setOptions(options)
+        .setTemplateName(templateName)
+        .setDomains(domains)
+        .setEdgeCacheDomains(edgeCacheDomains)
+        .setPreResolveUpstreamDNS(preResolveUpstreamDNS)
+        .build();
   }
 
   public String getServiceId() {
@@ -148,6 +177,10 @@ public class BaragonService {
     return edgeCacheDomains;
   }
 
+  public boolean isPreResolveUpstreamDNS() {
+    return preResolveUpstreamDNS;
+  }
+
   @JsonIgnore
   public List<String> getAllPaths(Optional<String> defaultDomain) {
     List<String> allPaths = new ArrayList<>();
@@ -189,6 +222,7 @@ public class BaragonService {
         ", domains=" + domains +
         ", edgeCacheDNS=" + edgeCacheDNS +
         ", edgeCacheDomains=" + edgeCacheDomains +
+        ", preResolveUpstreamDNS=" + preResolveUpstreamDNS +
         '}';
   }
 
@@ -208,13 +242,14 @@ public class BaragonService {
           Objects.equals(this.templateName, that.templateName) &&
           Objects.equals(this.domains, that.domains) &&
           Objects.equals(this.edgeCacheDNS, that.edgeCacheDNS) &&
-          Objects.equals(this.edgeCacheDomains, that.edgeCacheDomains);
+          Objects.equals(this.edgeCacheDomains, that.edgeCacheDomains) &&
+          Objects.equals(this.preResolveUpstreamDNS, that.preResolveUpstreamDNS);
     }
     return false;
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(serviceId, owners, serviceBasePath, additionalPaths, loadBalancerGroups, options, templateName, domains, edgeCacheDNS, edgeCacheDomains);
+    return Objects.hash(serviceId, owners, serviceBasePath, additionalPaths, loadBalancerGroups, options, templateName, domains, edgeCacheDNS, edgeCacheDomains, preResolveUpstreamDNS);
   }
 }

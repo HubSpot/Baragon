@@ -3,6 +3,11 @@ package com.hubspot.baragon.service.managers;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.apache.curator.framework.recipes.leader.LeaderLatch;
+import org.apache.curator.framework.state.ConnectionState;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -13,10 +18,6 @@ import com.hubspot.baragon.models.BaragonServiceStatus;
 import com.hubspot.baragon.service.BaragonServiceModule;
 import com.ning.http.client.AsyncHttpClient;
 import com.ning.http.client.Response;
-import org.apache.curator.framework.recipes.leader.LeaderLatch;
-import org.apache.curator.framework.state.ConnectionState;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @Singleton
 public class StatusManager {
@@ -53,9 +54,9 @@ public class StatusManager {
     final long workerLagMs = System.currentTimeMillis() - workerLastStart.get();
     final long elbWorkerLagMs = System.currentTimeMillis() - elbWorkerLastStart.get();
     if (connectionStateString.equals("CONNECTED") || connectionStateString.equals("RECONNECTED")) {
-      return new BaragonServiceStatus(leaderLatch.hasLeadership(), requestDatastore.getQueuedRequestCount(), workerLagMs, elbWorkerLagMs,connectionStateString);
+      return new BaragonServiceStatus(leaderLatch.hasLeadership(), requestDatastore.getQueuedRequestCount(), workerLagMs, elbWorkerLagMs,connectionStateString, requestDatastore.getOldestQueuedRequestAge());
     } else {
-      return new BaragonServiceStatus(leaderLatch.hasLeadership(), 0, workerLagMs, elbWorkerLagMs, connectionStateString);
+      return new BaragonServiceStatus(leaderLatch.hasLeadership(), 0, workerLagMs, elbWorkerLagMs, connectionStateString, 0L);
     }
   }
 

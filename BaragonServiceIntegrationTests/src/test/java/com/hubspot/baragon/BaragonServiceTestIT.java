@@ -31,9 +31,11 @@ import com.google.inject.Injector;
 import com.hubspot.baragon.client.BaragonServiceClient;
 import com.hubspot.baragon.models.BaragonAgentMetadata;
 import com.hubspot.baragon.models.BaragonRequest;
+import com.hubspot.baragon.models.BaragonRequestBuilder;
 import com.hubspot.baragon.models.BaragonRequestState;
 import com.hubspot.baragon.models.BaragonResponse;
 import com.hubspot.baragon.models.BaragonService;
+import com.hubspot.baragon.models.BaragonServiceBuilder;
 import com.hubspot.baragon.models.BaragonServiceState;
 import com.hubspot.baragon.models.BaragonServiceStatus;
 import com.hubspot.baragon.models.UpstreamInfo;
@@ -65,10 +67,22 @@ public class BaragonServiceTestIT {
   
   private void setupTestService(String requestId, String serviceId, String basePath, List<String> additionalPaths, Optional<String> replaceServiceId, Optional<Map<String, Object>> options, Optional<String> template) {
     UpstreamInfo upstream = new UpstreamInfo(UPSTREAM, Optional.<String>absent(), Optional.<String>absent());
-    BaragonService lbService = new BaragonService(serviceId, new ArrayList<String>(), basePath, additionalPaths,
-        new HashSet<String>(Arrays.asList(LOAD_BALANCER_GROUP)), options.isPresent() ? options.get() : new HashMap<String, Object>(), template, Collections.<String>emptySet(), Optional.absent());
+    BaragonService lbService = new BaragonServiceBuilder().setServiceId(serviceId)
+        .setOwners(new ArrayList<String>())
+        .setServiceBasePath(basePath)
+        .setAdditionalPaths(additionalPaths)
+        .setLoadBalancerGroups(new HashSet<String>(Arrays.asList(LOAD_BALANCER_GROUP)))
+        .setOptions(options.isPresent() ? options.get() : new HashMap<String, Object>())
+        .setTemplateName(template)
+        .setDomains(Collections.<String>emptySet())
+        .setEdgeCacheDNS(Optional.absent())
+        .build();
     
-    BaragonRequest request = new BaragonRequest(requestId, lbService, Arrays.asList(upstream), new ArrayList<UpstreamInfo>(), replaceServiceId);
+    BaragonRequest request = new BaragonRequestBuilder().setLoadBalancerRequestId(requestId)
+        .setLoadBalancerService(lbService)
+        .setAddUpstreams(Arrays.asList(upstream))
+        .setRemoveUpstreams(new ArrayList<UpstreamInfo>())
+        .build();
     baragonServiceClient.enqueueRequest(request);
   }
   

@@ -9,6 +9,7 @@ import org.apache.curator.framework.api.transaction.CuratorTransactionResult;
 import org.apache.curator.utils.ZKPaths;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException.NodeExistsException;
+import org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,6 +60,21 @@ public class BaragonRequestDatastore extends AbstractDataStore {
     }
 
     return maybeRequest;
+  }
+
+  @Timed
+  public BaragonRequest updateRequest(BaragonRequest request) throws Exception {
+    final Optional<BaragonRequest> maybeRequest = getRequest(request.getLoadBalancerRequestId());
+
+    if (!maybeRequest.isPresent()) {
+      throw new IllegalStateException("No such request exists!");
+    }
+
+    final String requestPath = String.format(REQUEST_FORMAT, request.getLoadBalancerRequestId());
+
+    writeToZk(requestPath, request);
+
+    return maybeRequest.get();
   }
 
   @Timed
@@ -151,6 +167,22 @@ public class BaragonRequestDatastore extends AbstractDataStore {
     }
 
     return queuedRequestIds;
+  }
+
+  public long getOldestQueuedRequestAge() {
+    long now = System.currentTimeMillis();;
+    long oldest = now;
+    for (String child : getChildren(REQUEST_QUEUE_FORMAT)) {
+      try {
+        Stat stat = curatorFramework.checkExists().forPath(ZKPaths.makePath(REQUEST_QUEUE_FORMAT, child));
+        if (stat != null && stat.getMtime() < oldest) {
+          oldest = stat.getMtime();
+        }
+      } catch (Exception e) {
+        LOG.warn("Could not check exists for queued request id {}", child);
+      }
+    }
+    return now - oldest;
   }
 
   @Timed
