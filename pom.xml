@@ -352,6 +352,12 @@
       </dependency>
 
       <dependency>
+        <groupId>org.yaml</groupId>
+        <artifactId>snakeyaml</artifactId>
+        <version>1.23</version>
+      </dependency>
+
+      <dependency>
         <groupId>name.falgout.jeffrey.testing.junit5</groupId>
         <artifactId>guice-extension</artifactId>
         <version>1.1.1</version>
