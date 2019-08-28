@@ -1,24 +1,18 @@
 package com.hubspot.baragon.auth;
 
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-import org.jukito.JukitoModule;
-import org.jukito.JukitoRunner;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import com.google.inject.Inject;
-import com.hubspot.baragon.managers.BaragonAuthManager;
 
-@RunWith(JukitoRunner.class)
+import name.falgout.jeffrey.testing.junit.guice.GuiceExtension;
+import name.falgout.jeffrey.testing.junit.guice.IncludeModule;
+
+@ExtendWith(GuiceExtension.class)
+@IncludeModule(AuthFilterTestModule.class)
 public class BaragonAuthFilterTest {
-
-  public static class DataTestModule extends JukitoModule {
-    @Override
-    protected void configureTest() {
-      bindMock(BaragonAuthManager.class);
-    }
-  }
 
   @Test
   @Inject

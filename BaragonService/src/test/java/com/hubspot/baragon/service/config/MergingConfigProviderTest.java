@@ -1,12 +1,13 @@
 package com.hubspot.baragon.service.config;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -62,27 +63,32 @@ public class MergingConfigProviderTest {
     assertEquals("master-auth-key", mergedConfig.getMasterAuthKey());
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void itThrowsExnOnNonObjectOverride() throws Exception {
-    buildConfigSourceProvider(DEFAULT_PATH)
-        .open(JUST_A_STRING_PATH);
+    Assertions.assertThrows(IllegalArgumentException.class, () ->
+        buildConfigSourceProvider(DEFAULT_PATH)
+            .open(JUST_A_STRING_PATH)
+    );
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void itThrowsExnOnNonObjectDefault() throws Exception {
-    buildConfigSourceProvider(JUST_A_STRING_PATH)
-        .open(OVERRIDE_PATH);
+    Assertions.assertThrows(IllegalArgumentException.class, () ->
+        buildConfigSourceProvider(JUST_A_STRING_PATH)
+            .open(OVERRIDE_PATH));
   }
 
-  @Test(expected = FileNotFoundException.class)
+  @Test
   public void itThrowsExnOnNotFoundOverridePath() throws Exception {
-    buildConfigSourceProvider(DEFAULT_PATH)
-        .open(DOESNT_EXIST_PATH);
+    Assertions.assertThrows(FileNotFoundException.class, () ->
+        buildConfigSourceProvider(DEFAULT_PATH)
+            .open(DOESNT_EXIST_PATH));
   }
 
-  @Test(expected = FileNotFoundException.class)
+  @Test
   public void itThrowsExnOnNotFoundDefaultPath() throws Exception {
-    buildConfigSourceProvider(DOESNT_EXIST_PATH)
-        .open(OVERRIDE_PATH);
+    Assertions.assertThrows(FileNotFoundException.class, () ->
+        buildConfigSourceProvider(DOESNT_EXIST_PATH)
+            .open(OVERRIDE_PATH));
   }
 }

@@ -2,12 +2,13 @@ package com.hubspot.baragon.client;
 
 import java.util.Collections;
 
+import org.junit.jupiter.api.Test;
+
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.Stage;
-import org.junit.Test;
 
 public class BaragonServiceClientModuleTest {
 
