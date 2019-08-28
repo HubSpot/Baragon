@@ -1,14 +1,13 @@
 package com.hubspot.baragon.service;
 
-import com.hubspot.baragon.auth.BaragonAuthBundle;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.google.common.base.Strings;
+import com.hubspot.baragon.auth.BaragonAuthBundle;
 import com.hubspot.baragon.service.bundles.CorsBundle;
 import com.hubspot.baragon.service.config.BaragonConfiguration;
+import com.hubspot.baragon.service.config.MergingConfigProvider;
 import com.hubspot.baragon.service.resources.BaragonResourcesModule;
 import com.hubspot.dropwizard.guicier.GuiceBundle;
-import com.hubspot.baragon.service.config.MergingConfigProvider;
-import com.palominolabs.metrics.guice.MetricsInstrumentationModule;
 
 import io.dropwizard.Application;
 import io.dropwizard.assets.AssetsBundle;
@@ -32,7 +31,6 @@ public class BaragonService extends Application<BaragonConfiguration> {
 
     GuiceBundle<BaragonConfiguration> guiceBundle = GuiceBundle.defaultBuilder(BaragonConfiguration.class)
         .modules(new BaragonServiceModule())
-        .modules(new MetricsInstrumentationModule(bootstrap.getMetricRegistry()))
         .modules(new BaragonResourcesModule())
         .build();
 
