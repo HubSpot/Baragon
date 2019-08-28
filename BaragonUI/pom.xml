@@ -12,8 +12,8 @@
   <packaging>jar</packaging>
 
   <properties>
-    <nodeVersion>v6.2.1</nodeVersion>
-    <npmVersion>3.9.3</npmVersion>
+    <nodeVersion>v8.9.3</nodeVersion>
+    <npmVersion>5.5.1</npmVersion>
   </properties>
 
   <profiles>
