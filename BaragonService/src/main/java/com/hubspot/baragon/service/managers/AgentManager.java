@@ -104,7 +104,7 @@ public class AgentManager {
     }
 
     if (baragonAuthKey.isPresent()) {
-      builder.addQueryParameter("authkey", baragonAuthKey.get());
+      builder.addQueryParam("authkey", baragonAuthKey.get());
     }
 
     return builder;
@@ -113,7 +113,7 @@ public class AgentManager {
   private AsyncHttpClient.BoundRequestBuilder buildAgentBatchRequest(String url, List<BaragonRequestBatchItem> batch) throws JsonProcessingException {
     final BoundRequestBuilder builder = asyncHttpClient.preparePost(url);
     if (baragonAuthKey.isPresent()) {
-      builder.addQueryParameter("authkey", baragonAuthKey.get());
+      builder.addQueryParam("authkey", baragonAuthKey.get());
     }
     builder.addHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON);
     builder.setBody(objectMapper.writeValueAsBytes(batch));
