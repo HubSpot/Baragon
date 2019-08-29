@@ -55,6 +55,8 @@
     <dep.zookeeper.version>3.4.14</dep.zookeeper.version>
     <dropwizard.guicier.version>1.3.5.1</dropwizard.guicier.version>
     <dropwizard.version>1.3.12</dropwizard.version>
+    <horizon.version>0.1.2</horizon.version>
+    <ning.async.version>1.9.38</ning.async.version>
     <ringleader.version>0.1.5</ringleader.version>
   </properties>
 

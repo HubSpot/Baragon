@@ -296,9 +296,9 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
     AsyncHttpClientConfig.Builder builder = new AsyncHttpClientConfig.Builder();
 
     builder.setMaxRequestRetry(config.getMaxRequestRetry());
-    builder.setRequestTimeoutInMs(config.getRequestTimeoutInMs());
-    builder.setFollowRedirects(true);
-    builder.setConnectionTimeoutInMs(config.getConnectionTimeoutInMs());
+    builder.setRequestTimeout(config.getRequestTimeoutInMs());
+    builder.setFollowRedirect(true);
+    builder.setConnectTimeout(config.getConnectionTimeoutInMs());
     builder.setUserAgent(config.getUserAgent());
 
     return new AsyncHttpClient(builder.build());

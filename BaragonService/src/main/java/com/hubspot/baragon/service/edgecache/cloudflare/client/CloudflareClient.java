@@ -150,10 +150,10 @@ public class CloudflareClient {
       }
     }
 
-    page.asSet().forEach(p -> builder.addQueryParameter("page", page.get().toString()));
-    perPage.asSet().forEach(p -> builder.addQueryParameter("per_page", perPage.get().toString()));
-    order.asSet().forEach(o -> builder.addQueryParameter("order", order.get()));
-    direction.asSet().forEach(d -> builder.addQueryParameter("direction", direction.get()));
+    page.asSet().forEach(p -> builder.addQueryParam("page", page.get().toString()));
+    perPage.asSet().forEach(p -> builder.addQueryParam("per_page", perPage.get().toString()));
+    order.asSet().forEach(o -> builder.addQueryParam("order", order.get()));
+    direction.asSet().forEach(d -> builder.addQueryParam("direction", direction.get()));
 
     try {
       return builder.execute().get();

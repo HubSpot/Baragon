@@ -2,9 +2,11 @@ package com.hubspot.baragon;
 
 import java.util.concurrent.atomic.AtomicLong;
 
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.Logger;
-import ch.qos.logback.classic.LoggerContext;
+import org.apache.curator.framework.CuratorFramework;
+import org.apache.curator.framework.CuratorFrameworkFactory;
+import org.apache.curator.retry.RetryOneTime;
+import org.apache.curator.test.TestingServer;
+import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.guava.GuavaModule;
@@ -19,11 +21,10 @@ import com.hubspot.baragon.service.BaragonLoadBalancerTestDatastore;
 import com.hubspot.baragon.service.BaragonServiceModule;
 import com.ning.http.client.AsyncHttpClient;
 import com.ning.http.client.AsyncHttpClientConfig;
-import org.apache.curator.framework.CuratorFramework;
-import org.apache.curator.framework.CuratorFrameworkFactory;
-import org.apache.curator.retry.RetryOneTime;
-import org.apache.curator.test.TestingServer;
-import org.slf4j.LoggerFactory;
+
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.LoggerContext;
 
 public class BaragonServiceTestModule extends AbstractModule {
   @Override
@@ -58,9 +59,9 @@ public class BaragonServiceTestModule extends AbstractModule {
     AsyncHttpClientConfig.Builder builder = new AsyncHttpClientConfig.Builder();
 
     builder.setMaxRequestRetry(config.getMaxRequestRetry());
-    builder.setRequestTimeoutInMs(config.getRequestTimeoutInMs());
-    builder.setFollowRedirects(true);
-    builder.setConnectionTimeoutInMs(config.getConnectionTimeoutInMs());
+    builder.setRequestTimeout(config.getRequestTimeoutInMs());
+    builder.setFollowRedirect(true);
+    builder.setConnectTimeout(config.getConnectionTimeoutInMs());
     builder.setUserAgent(config.getUserAgent());
 
     return new AsyncHttpClient(builder.build());
