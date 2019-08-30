@@ -196,6 +196,13 @@
         </exclusions>
       </dependency>
 
+      <!-- metrics -->
+      <dependency>
+        <groupId>io.dropwizard.metrics</groupId>
+        <artifactId>metrics-graphite</artifactId>
+        <version>${dep.dropwizard-metrics.version}</version>
+      </dependency>
+
       <dependency>
         <groupId>io.fabric8</groupId>
         <artifactId>kubernetes-client</artifactId>
@@ -205,13 +212,6 @@
         <groupId>io.fabric8</groupId>
         <artifactId>kubernetes-model</artifactId>
         <version>${dep.fabric8.version}</version>
-      </dependency>
-
-      <!-- metrics -->
-      <dependency>
-        <groupId>io.dropwizard.metrics</groupId>
-        <artifactId>metrics-graphite</artifactId>
-        <version>${dep.dropwizard-metrics.version}</version>
       </dependency>
 
       <dependency>
