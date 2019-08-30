@@ -1,5 +1,6 @@
 package com.hubspot.baragon.agent.kubernetes;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -43,14 +44,16 @@ public class BaragonAgentKubernetesListener extends KubernetesEndpointListener {
       return;
     }
 
-    BaragonRequest baragonRequest = createBaragonRequest(updatedService, activeUpstreams);
+    Collection<UpstreamInfo> existingUpstreams = stateDatastore.getUpstreams(updatedService.getServiceId());
+
+    BaragonRequest baragonRequest = createBaragonRequest(updatedService, activeUpstreams, existingUpstreams);
 
     agentRequestManager.processRequest(
         baragonRequest.getLoadBalancerRequestId(),
         RequestAction.UPDATE,
         baragonRequest,
         Optional.absent(),
-        Collections.emptyMap(),
+        Collections.singletonMap(updatedService.getServiceId(), existingUpstreams),
         false,
         Optional.absent());
   }

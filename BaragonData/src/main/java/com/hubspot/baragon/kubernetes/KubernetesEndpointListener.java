@@ -1,6 +1,6 @@
 package com.hubspot.baragon.kubernetes;
 
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -15,7 +15,7 @@ import com.hubspot.baragon.models.RequestAction;
 import com.hubspot.baragon.models.UpstreamInfo;
 
 public abstract class KubernetesEndpointListener {
-  private final BaragonStateDatastore stateDatastore;
+  protected final BaragonStateDatastore stateDatastore;
   private final KubernetesConfiguration kubernetesConfiguration;
 
   public KubernetesEndpointListener(BaragonStateDatastore stateDatastore,
@@ -27,19 +27,18 @@ public abstract class KubernetesEndpointListener {
   public abstract void processUpdate(BaragonService updatedService, List<UpstreamInfo> activeUpstreams);
 
   protected BaragonRequest createBaragonRequest(BaragonService updatedService, List<UpstreamInfo> activeUpstreams) {
-    Map<Boolean, List<UpstreamInfo>> existingUpstreams = stateDatastore.getUpstreams(updatedService.getServiceId())
-        .stream()
+    return createBaragonRequest(updatedService, activeUpstreams, stateDatastore.getUpstreams(updatedService.getServiceId()));
+  }
+
+  protected BaragonRequest createBaragonRequest(BaragonService updatedService, List<UpstreamInfo> activeUpstreams, Collection<UpstreamInfo> existingUpstreams) {
+    Map<Boolean, List<UpstreamInfo>> partitionedUpstreams = existingUpstreams.stream()
         .collect(Collectors.partitioningBy((u) -> kubernetesConfiguration.getUpstreamGroups().contains(u.getGroup())));
 
-    List<UpstreamInfo> nonK8sUpstreams = existingUpstreams.getOrDefault(false, Collections.emptyList());
-    List<UpstreamInfo> toRemove = existingUpstreams.getOrDefault(true, Collections.emptyList())
+    List<UpstreamInfo> nonK8sUpstreams = partitionedUpstreams.getOrDefault(false, Collections.emptyList());
+    List<UpstreamInfo> toRemove = partitionedUpstreams.getOrDefault(true, Collections.emptyList())
         .stream()
         .filter((u) -> !activeUpstreams.contains(u))
         .collect(Collectors.toList());
-
-    List<UpstreamInfo> allUpstreamsToAdd = new ArrayList<>();
-    allUpstreamsToAdd.addAll(activeUpstreams);
-    allUpstreamsToAdd.addAll(nonK8sUpstreams);
 
     BaragonService relevantService;
     if (nonK8sUpstreams.isEmpty()) {
@@ -54,7 +53,7 @@ public abstract class KubernetesEndpointListener {
     return new BaragonRequest(
         requestId,
         relevantService,
-        allUpstreamsToAdd,
+        activeUpstreams,
         toRemove,
         Collections.emptyList(),
         Optional.absent(),
