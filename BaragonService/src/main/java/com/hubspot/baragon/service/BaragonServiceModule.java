@@ -35,9 +35,12 @@ import com.google.inject.name.Named;
 import com.hubspot.baragon.BaragonDataModule;
 import com.hubspot.baragon.config.AuthConfiguration;
 import com.hubspot.baragon.config.HttpClientConfiguration;
+import com.hubspot.baragon.config.KubernetesConfiguration;
 import com.hubspot.baragon.config.ZooKeeperConfiguration;
 import com.hubspot.baragon.data.BaragonConnectionStateListener;
 import com.hubspot.baragon.data.BaragonWorkerDatastore;
+import com.hubspot.baragon.kubernetes.KubernetesEndpointListener;
+import com.hubspot.baragon.kubernetes.KubernetesWatcherModule;
 import com.hubspot.baragon.service.config.BaragonConfiguration;
 import com.hubspot.baragon.service.config.BaragonServiceDWSettings;
 import com.hubspot.baragon.service.config.EdgeCacheConfiguration;
@@ -51,8 +54,10 @@ import com.hubspot.baragon.service.elb.ClassicLoadBalancer;
 import com.hubspot.baragon.service.exceptions.BaragonExceptionNotifier;
 import com.hubspot.baragon.service.gcloud.GoogleCloudManager;
 import com.hubspot.baragon.service.healthcheck.ZooKeeperHealthcheck;
+import com.hubspot.baragon.service.kubernetes.BaragonServiceKubernetesListener;
 import com.hubspot.baragon.service.listeners.AbstractLatchListener;
 import com.hubspot.baragon.service.listeners.ElbSyncWorkerListener;
+import com.hubspot.baragon.service.listeners.KubernetesWatchListener;
 import com.hubspot.baragon.service.listeners.RequestPurgingListener;
 import com.hubspot.baragon.service.listeners.RequestWorkerListener;
 import com.hubspot.baragon.service.managed.BaragonExceptionNotifierManaged;
@@ -140,6 +145,13 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
     latchBinder.addBinding().to(RequestWorkerListener.class).in(Scopes.SINGLETON);
     latchBinder.addBinding().to(ElbSyncWorkerListener.class).in(Scopes.SINGLETON);
     latchBinder.addBinding().to(RequestPurgingListener.class).in(Scopes.SINGLETON);
+
+    // Kubernetes
+    if (getConfiguration().getKubernetesConfiguration().isEnabled()) {
+      binder.bind(KubernetesEndpointListener.class).to(BaragonServiceKubernetesListener.class).in(Scopes.SINGLETON);
+      latchBinder.addBinding().to(KubernetesWatchListener.class).in(Scopes.SINGLETON);
+      binder.install(new KubernetesWatcherModule());
+    }
   }
 
   @Provides
@@ -407,5 +419,11 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
   @Singleton
   public UpstreamResolver provideUpstreamResolver(BaragonConfiguration config) {
     return new UpstreamResolver(config.getMaxResolveCacheSize(), config.getExpireResolveCacheAfterDays());
+  }
+
+  @Provides
+  @Singleton
+  public KubernetesConfiguration provideKubernetesConfig(BaragonConfiguration config) {
+    return config.getKubernetesConfiguration();
   }
 }

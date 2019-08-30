@@ -41,6 +41,8 @@ import com.hubspot.baragon.agent.handlebars.ToNginxVarHelper;
 import com.hubspot.baragon.agent.healthcheck.ConfigChecker;
 import com.hubspot.baragon.agent.healthcheck.LoadBalancerHealthcheck;
 import com.hubspot.baragon.agent.healthcheck.ZooKeeperHealthcheck;
+import com.hubspot.baragon.agent.kubernetes.BaragonAgentKubernetesListener;
+import com.hubspot.baragon.agent.kubernetes.KubernetesWatcherManaged;
 import com.hubspot.baragon.agent.lbs.FilesystemConfigHelper;
 import com.hubspot.baragon.agent.lbs.LbConfigGenerator;
 import com.hubspot.baragon.agent.lbs.LocalLbAdapter;
@@ -55,9 +57,12 @@ import com.hubspot.baragon.agent.resources.BargonAgentResourcesModule;
 import com.hubspot.baragon.agent.workers.AgentHeartbeatWorker;
 import com.hubspot.baragon.config.AuthConfiguration;
 import com.hubspot.baragon.config.HttpClientConfiguration;
+import com.hubspot.baragon.config.KubernetesConfiguration;
 import com.hubspot.baragon.config.ZooKeeperConfiguration;
 import com.hubspot.baragon.data.BaragonConnectionStateListener;
 import com.hubspot.baragon.data.BaragonLoadBalancerDatastore;
+import com.hubspot.baragon.kubernetes.KubernetesEndpointListener;
+import com.hubspot.baragon.kubernetes.KubernetesWatcherModule;
 import com.hubspot.baragon.models.BaragonAgentEc2Metadata;
 import com.hubspot.baragon.models.BaragonAgentMetadata;
 import com.hubspot.baragon.models.BaragonAgentState;
@@ -112,6 +117,13 @@ public class BaragonAgentServiceModule extends DropwizardAwareModule<BaragonAgen
     binder.bind(ServerProvider.class).in(Scopes.SINGLETON);
     binder.bind(FilesystemConfigHelper.class).in(Scopes.SINGLETON);
     binder.bind(AgentHeartbeatWorker.class).in(Scopes.SINGLETON);
+
+    // Kubernetes
+    if (getConfiguration().getKubernetesConfiguration().isEnabled()) {
+      binder.bind(KubernetesEndpointListener.class).to(BaragonAgentKubernetesListener.class).in(Scopes.SINGLETON);
+      binder.bind(KubernetesWatcherManaged.class).asEagerSingleton();
+      binder.install(new KubernetesWatcherModule());
+    }
   }
 
   @Provides
@@ -305,5 +317,11 @@ public class BaragonAgentServiceModule extends DropwizardAwareModule<BaragonAgen
   @Singleton
   public UpstreamResolver provideUpstreamResolver(BaragonAgentConfiguration config) {
     return new UpstreamResolver(config.getMaxResolveCacheSize(), config.getExpireResolveCacheAfterDays());
+  }
+
+  @Provides
+  @Singleton
+  public KubernetesConfiguration provideKubernetesConfig(BaragonAgentConfiguration config) {
+    return config.getKubernetesConfiguration();
   }
 }
