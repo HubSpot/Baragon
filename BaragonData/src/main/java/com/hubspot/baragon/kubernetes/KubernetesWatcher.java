@@ -1,7 +1,9 @@
 package com.hubspot.baragon.kubernetes;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -13,6 +15,8 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import com.hubspot.baragon.config.KubernetesConfiguration;
+import com.hubspot.baragon.data.BaragonAliasDatastore;
+import com.hubspot.baragon.models.BaragonGroupAlias;
 import com.hubspot.baragon.models.BaragonService;
 import com.hubspot.baragon.models.UpstreamInfo;
 
@@ -30,14 +34,17 @@ public class KubernetesWatcher implements Watcher<Endpoints> {
 
   private final KubernetesEndpointListener listener;
   private final KubernetesConfiguration kubernetesConfiguration;
+  private final BaragonAliasDatastore aliasDatastore;
   private final KubernetesClient kubernetesClient;
 
   @Inject
   public KubernetesWatcher(KubernetesEndpointListener listener,
                            KubernetesConfiguration kubernetesConfiguration,
+                           BaragonAliasDatastore aliasDatastore,
                            @Named(KubernetesWatcherModule.BARAGON_KUBERNETES_CLIENT) KubernetesClient kubernetesClient) {
     this.listener = listener;
     this.kubernetesConfiguration = kubernetesConfiguration;
+    this.aliasDatastore = aliasDatastore;
     this.kubernetesClient = kubernetesClient;
   }
 
@@ -72,17 +79,35 @@ public class KubernetesWatcher implements Watcher<Endpoints> {
       return;
     }
 
+    String lbGroupsString = annotations.get(kubernetesConfiguration.getLbGroupsAnnotation());
+    if (lbGroupsString == null) {
+      LOG.warn("Could not get load balancer groups for kubernetes event (action: {}, endpoints: {})", action, endpoints);
+      return;
+    }
+    Optional<String> domainsString = Optional.fromNullable(annotations.get(kubernetesConfiguration.getDomainsAnnotation()));
+    // non-aliased edgeCacheDomains not yet supported
+    BaragonGroupAlias groupsAndDomains = aliasDatastore.processAliases(
+        new HashSet<>(Arrays.asList(lbGroupsString.split(","))),
+        domainsString.transform((d) -> new HashSet<>(Arrays.asList(d.split(",")))).or(new HashSet<>()),
+        Collections.emptySet()
+    );
+
+    Optional<String> ownerString = Optional.fromNullable(annotations.get(kubernetesConfiguration.getOwnersAnnotation()));
+    List<String> owners = ownerString.transform((o) -> Arrays.asList(o.split(","))).or(new ArrayList<>());
+
+    Optional<String> templateName = Optional.fromNullable(annotations.get(kubernetesConfiguration.getTemplateNameAnnotation()));
+
     BaragonService service = new BaragonService(
         serviceName,
-        Collections.emptyList(), // TODO - get owners
+        owners,
         basePath,
-        Collections.emptyList(), // TODO - additionalPaths
-        Collections.emptySet(), // TODO get + remap groups for aliases
-        Collections.emptyMap(), // TODO - custom options
-        Optional.absent(), // TODO - template name
-        Collections.emptySet(), // TODO - domains
+        Collections.emptyList(), // additionalPaths not yet supported
+        groupsAndDomains.getGroups(),
+        Collections.emptyMap(), // custom options not yet supported
+        templateName,
+        groupsAndDomains.getDomains(),
         Optional.absent(),
-        Collections.emptySet(),
+        groupsAndDomains.getEdgeCacheDomains(),
         false // Always using IPs to start with
     );
     listener.processUpdate(service, parseActiveUpstreams(endpoints, upstreamGroup));

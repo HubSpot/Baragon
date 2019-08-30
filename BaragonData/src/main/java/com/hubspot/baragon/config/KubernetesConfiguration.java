@@ -10,10 +10,14 @@ import com.google.common.collect.ImmutableList;
 
 public class KubernetesConfiguration {
   private boolean enabled = false;
-  private String basePathAnnotation = "baragon.hubspot.com/basePath";
+  private String basePathAnnotation = "baragon.hubspot.com/base-path";
   private Map<String, String> baragonLabelFilter = Collections.emptyMap();
-  private String serviceNameLabel = "baragon.hubspot.com/serviceName";
-  private String upstreamGroupsLabel = "baragon.hubspot.com/upstreamGroup";
+  private String serviceNameLabel = "baragon.hubspot.com/service-name";
+  private String upstreamGroupsLabel = "baragon.hubspot.com/upstream-group";
+  private String lbGroupsAnnotation = "baragon.hubspot.com/lb-groups";
+  private String domainsAnnotation = "baragon.hubspot.com/domains";
+  private String ownersAnnotation = "baragon.hubspot.com/owners";
+  private String templateNameAnnotation = "baragon.hubspot.com/template-name";
 
   @NotEmpty
   private List<String> upstreamGroups = ImmutableList.of("k8s");
@@ -68,5 +72,37 @@ public class KubernetesConfiguration {
 
   public void setUpstreamGroups(List<String> upstreamGroups) {
     this.upstreamGroups = upstreamGroups;
+  }
+
+  public String getLbGroupsAnnotation() {
+    return lbGroupsAnnotation;
+  }
+
+  public void setLbGroupsAnnotation(String lbGroupsAnnotation) {
+    this.lbGroupsAnnotation = lbGroupsAnnotation;
+  }
+
+  public String getDomainsAnnotation() {
+    return domainsAnnotation;
+  }
+
+  public void setDomainsAnnotation(String domainsAnnotation) {
+    this.domainsAnnotation = domainsAnnotation;
+  }
+
+  public String getOwnersAnnotation() {
+    return ownersAnnotation;
+  }
+
+  public void setOwnersAnnotation(String ownersAnnotation) {
+    this.ownersAnnotation = ownersAnnotation;
+  }
+
+  public String getTemplateNameAnnotation() {
+    return templateNameAnnotation;
+  }
+
+  public void setTemplateNameAnnotation(String templateNameAnnotation) {
+    this.templateNameAnnotation = templateNameAnnotation;
   }
 }
