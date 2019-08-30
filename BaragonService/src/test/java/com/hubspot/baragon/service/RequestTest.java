@@ -1,7 +1,7 @@
 package com.hubspot.baragon.service;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -9,12 +9,10 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.jukito.JukitoModule;
-import org.jukito.JukitoRunner;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,21 +35,18 @@ import com.hubspot.baragon.models.UpstreamInfo;
 import com.hubspot.baragon.service.managers.RequestManager;
 import com.hubspot.baragon.service.worker.BaragonRequestWorker;
 
-@RunWith(JukitoRunner.class)
+import name.falgout.jeffrey.testing.junit.guice.GuiceExtension;
+import name.falgout.jeffrey.testing.junit.guice.IncludeModule;
+
+@ExtendWith(GuiceExtension.class)
+@IncludeModule(BaragonServiceTestModule.class)
 public class RequestTest {
   private static final Logger LOG = LoggerFactory.getLogger(RequestTest.class);
 
   public static final String REAL_LB_GROUP = "real";
   public static final String FAKE_LB_GROUP = "fake";
 
-  public static class Module extends JukitoModule {
-    @Override
-    protected void configureTest() {
-      install(new BaragonServiceTestModule());
-    }
-  }
-
-  @Before
+  @BeforeEach
   public void setupLbGroups(BaragonLoadBalancerTestDatastore loadBalancerDatastore) {
     loadBalancerDatastore.setLoadBalancerGroupsOverride(Optional.of(Collections.singleton(REAL_LB_GROUP)));
     BaragonAgentMetadata agent1 = BaragonAgentMetadata.fromString("http://127.0.0.1:8080/baragon-agent/v2");
@@ -60,7 +55,7 @@ public class RequestTest {
     loadBalancerDatastore.setLoadBalancerAgentsOverride(Optional.of(agents));
   }
 
-  @After
+  @AfterEach
   public void clearBasePaths(BaragonLoadBalancerDatastore loadBalancerDatastore) {
     LOG.debug("Clearing base paths...");
     for (String loadBalancerGroup : loadBalancerDatastore.getLoadBalancerGroupNames()) {
@@ -74,7 +69,7 @@ public class RequestTest {
   private Optional<BaragonResponse> assertResponseStateExists(RequestManager requestManager, String requestId, BaragonRequestState expected) {
     final Optional<BaragonResponse> maybeResponse = requestManager.getResponse(requestId);
 
-    assertTrue(String.format("Response for request %s exists", requestId), maybeResponse.isPresent());
+    assertTrue(maybeResponse.isPresent(), String.format("Response for request %s exists", requestId));
     assertEquals(expected, maybeResponse.get().getLoadBalancerState());
 
     return maybeResponse;
@@ -83,7 +78,7 @@ public class RequestTest {
   private Optional<BaragonResponse> assertResponseStateAbsent(RequestManager requestManager, String requestId) {
     final Optional<BaragonResponse> maybeResponse = requestManager.getResponse(requestId);
 
-    assertTrue(String.format("Response for request %s does not exist", requestId), !maybeResponse.isPresent());
+    assertTrue(!maybeResponse.isPresent(), String.format("Response for request %s does not exist", requestId));
 
     return maybeResponse;
   }

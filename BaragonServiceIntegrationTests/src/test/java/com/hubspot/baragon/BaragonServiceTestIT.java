@@ -1,8 +1,8 @@
 package com.hubspot.baragon;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -14,14 +14,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.Stopwatch;
-import org.junit.rules.TestRule;
-import org.junit.rules.TestWatcher;
-import org.junit.runner.Description;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -121,33 +116,12 @@ public class BaragonServiceTestIT {
   
   // ----------------------------------------------------
   
-  @Before
+  @BeforeEach
   public void setup() throws Exception {
     baragonServiceClient = getInjector().getInstance(BaragonServiceClient.class);
   }
-  
-  @Rule
-  public TestRule watcher = new TestWatcher() {
-     protected void starting(Description description) {
-        LOG.info("\nStarting: " + description.getMethodName());
-     }
-     protected void succeeded(Description description) {
-       LOG.info("\u001B[32mTest passed\u001B[0m");
-     }
-     protected void failed(Throwable e, Description description) {
-       LOG.info("\u001B[31mTest failed\u001B[0m");
-     }
-  };
-  
-  @Rule
-  public Stopwatch stopwatch = new Stopwatch() {
-      @Override
-      protected void finished(long nanos, Description description) {
-        LOG.info("(" + nanos / 1000000000.0 + " s)");
-      }
-  };
-  
-  @After
+
+  @AfterEach
   public void teardown() throws Exception {
     for(BaragonServiceState state :baragonServiceClient.getGlobalState()) {
       removeService(state.getService().getServiceId());

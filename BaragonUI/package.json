@@ -8,8 +8,8 @@
     "url": "git@github.com:HubSpot/Baragon.git"
   },
   "engines": {
-    "node": "~6.2.1",
-    "npm": "~3.9.3"
+    "node": "~8.9.3",
+    "npm": "~5.5.1"
   },
   "bin": {},
   "scripts": {
@@ -97,7 +97,7 @@
     "gulp-util": "^3.0.7",
     "mocha": "^3.1.2",
     "nib": "^1.1.0",
-    "node-sass": "^3.8.0",
+    "node-sass": "^4.7.2",
     "react-copy-to-clipboard": "^4.2.3",
     "react-hot-loader": "^3.0.0-beta.2",
     "resolve-url-loader": "^1.6.0",

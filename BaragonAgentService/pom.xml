@@ -40,6 +40,10 @@
       <artifactId>guava-retrying</artifactId>
     </dependency>
     <dependency>
+      <groupId>com.github.spotbugs</groupId>
+      <artifactId>spotbugs-annotations</artifactId>
+    </dependency>
+    <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
     </dependency>
@@ -57,19 +61,15 @@
     </dependency>
     <dependency>
       <groupId>com.hubspot</groupId>
-      <artifactId>HorizonNing</artifactId>
+      <artifactId>HorizonCore</artifactId>
     </dependency>
     <dependency>
       <groupId>com.hubspot</groupId>
-      <artifactId>HorizonCore</artifactId>
+      <artifactId>HorizonNing</artifactId>
     </dependency>
     <dependency>
       <groupId>com.hubspot.dropwizard</groupId>
       <artifactId>dropwizard-guicier</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.palominolabs.metrics</groupId>
-      <artifactId>metrics-guice</artifactId>
     </dependency>
     <dependency>
       <groupId>io.dropwizard</groupId>
@@ -148,13 +148,18 @@
       <artifactId>slf4j-api</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.jukito</groupId>
-      <artifactId>jukito</artifactId>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-api</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-engine</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.platform</groupId>
+      <artifactId>junit-platform-runner</artifactId>
       <scope>test</scope>
     </dependency>
   </dependencies>
@@ -166,7 +171,7 @@
         <artifactId>maven-compiler-plugin</artifactId>
         <configuration>
           <!-- turn off Werror, because Antlr annotation processor logs a warning with JDK 7 -->
-          <compilerArguments combine.self="override" />
+          <compilerArguments combine.self="override"></compilerArguments>
         </configuration>
       </plugin>
     </plugins>
