@@ -1,9 +1,7 @@
 package com.hubspot.baragon.agent.kubernetes;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,65 +19,40 @@ import com.hubspot.baragon.models.BaragonService;
 import com.hubspot.baragon.models.RequestAction;
 import com.hubspot.baragon.models.UpstreamInfo;
 
-public class BaragonAgentKubernetesListener implements KubernetesEndpointListener {
+public class BaragonAgentKubernetesListener extends KubernetesEndpointListener {
   private static final Logger LOG = LoggerFactory.getLogger(BaragonAgentKubernetesListener.class);
 
-  private final KubernetesConfiguration kubernetesConfiguration;
   private final BaragonAgentConfiguration agentConfiguration;
   private final AgentRequestManager agentRequestManager;
-  private final BaragonStateDatastore stateDatastore;
 
   @Inject
   public BaragonAgentKubernetesListener(KubernetesConfiguration kubernetesConfiguration,
                                         BaragonAgentConfiguration agentConfiguration,
                                         AgentRequestManager agentRequestManager,
                                         BaragonStateDatastore stateDatastore) {
-    this.kubernetesConfiguration = kubernetesConfiguration;
+    super(stateDatastore, kubernetesConfiguration);
     this.agentConfiguration = agentConfiguration;
     this.agentRequestManager = agentRequestManager;
-    this.stateDatastore = stateDatastore;
   }
 
+  @Override
   public void processUpdate(BaragonService updatedService, List<UpstreamInfo> activeUpstreams) {
-    // filter for relevant group + merge with existing upstreams + apply updates
     if (!isRelevantUpdate(updatedService)) {
       LOG.debug("Not relevant update for agent's group/domains, skipping ({})", updatedService.getServiceId());
       LOG.trace("Skipped update {} - {}", updatedService, activeUpstreams);
       return;
     }
 
-    List<UpstreamInfo> nonK8sUpstreams = stateDatastore.getUpstreams(updatedService.getServiceId())
-        .stream()
-        .filter((u) -> !kubernetesConfiguration.getUpstreamGroups().contains(u.getGroup()))
-        .collect(Collectors.toList());
-    List<UpstreamInfo> allUpstreams = new ArrayList<>();
-    allUpstreams.addAll(activeUpstreams);
-    allUpstreams.addAll(nonK8sUpstreams);
+    BaragonRequest baragonRequest = createBaragonRequest(updatedService, activeUpstreams);
 
-    BaragonService relevantService;
-    if (nonK8sUpstreams.isEmpty()) {
-      relevantService = updatedService;
-    } else {
-      // K8s integration supports a subset of features, take existing extra options if non-k8s is also present
-      relevantService = stateDatastore.getService(updatedService.getServiceId()).or(updatedService);
-    }
-
-    String requestId = String.format("k8s-%d", System.currentTimeMillis());
-
-    BaragonRequest baragonRequest = new BaragonRequest(
-        requestId,
-        relevantService,
-        Collections.emptyList(),
-        Collections.emptyList(),
-        allUpstreams,
+    agentRequestManager.processRequest(
+        baragonRequest.getLoadBalancerRequestId(),
+        RequestAction.UPDATE,
+        baragonRequest,
         Optional.absent(),
-        Optional.of(RequestAction.UPDATE),
+        Collections.emptyMap(),
         false,
-        false,
-        false,
-        false
-    );
-    agentRequestManager.processRequest(requestId, RequestAction.UPDATE, baragonRequest, Optional.absent(), Collections.emptyMap(), false, Optional.absent());
+        Optional.absent());
   }
 
   private boolean isRelevantUpdate(BaragonService updatedService) {
