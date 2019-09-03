@@ -98,10 +98,6 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
 
   @Override
   public void configure(Binder binder) {
-    binder.requireExplicitBindings();
-    binder.requireExactBindingAnnotations();
-    binder.requireAtInjectOnConstructors();
-
     binder.install(new BaragonDataModule());
     binder.install(new BaragonResourcesModule());
 
