@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.guava.GuavaModule;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Scopes;
@@ -31,6 +32,13 @@ public class BaragonServiceTestModule extends AbstractModule {
   protected void configure() {
     bind(TestingServer.class).in(Scopes.SINGLETON);
     bind(BaragonLoadBalancerDatastore.class).to(BaragonLoadBalancerTestDatastore.class).in(Scopes.SINGLETON);
+
+    final ObjectMapper objectMapper = new ObjectMapper();
+
+    objectMapper.registerModule(new GuavaModule());
+    objectMapper.registerModule(new Jdk8Module());
+
+    bind(ObjectMapper.class).toInstance(objectMapper);
 
     LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
     Logger rootLogger = context.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME);
@@ -65,13 +73,5 @@ public class BaragonServiceTestModule extends AbstractModule {
     builder.setUserAgent(config.getUserAgent());
 
     return new AsyncHttpClient(builder.build());
-  }
-
-  @Singleton
-  @Provides
-  public ObjectMapper provideObjectMapper() {
-    final ObjectMapper objectMapper = new ObjectMapper();
-    objectMapper.registerModule(new GuavaModule());
-    return objectMapper;
   }
 }
