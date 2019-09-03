@@ -73,7 +73,7 @@ public class KubernetesWatcher implements Watcher<Endpoints> {
       return;
     }
 
-    String upstreamGroup = annotations.getOrDefault(kubernetesConfiguration.getUpstreamGroupsLabel(), "default");
+    String upstreamGroup = annotations.getOrDefault(kubernetesConfiguration.getUpstreamGroupsAnnotation(), "default");
     if (!kubernetesConfiguration.getUpstreamGroups().contains(upstreamGroup)) {
       LOG.warn("Upstream group not managed by baragon, skipping (action: {}, endpoints: {})", action, endpoints);
       return;
