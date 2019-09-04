@@ -9,8 +9,6 @@ import org.apache.curator.framework.recipes.cache.PathChildrenCache;
 import org.apache.curator.framework.state.ConnectionState;
 
 import com.codahale.metrics.MetricRegistry;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.guava.GuavaModule;
 import com.google.common.base.Optional;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
@@ -92,16 +90,6 @@ public class BaragonDataModule extends AbstractModule {
     Multibinder<ZkDataMigration> zkMigrationBinder = Multibinder.newSetBinder(binder(), ZkDataMigration.class);
     zkMigrationBinder.addBinding().to(UpstreamsMigration.class);
     zkMigrationBinder.addBinding().to(ServiceDomainsMigration.class);
-  }
-
-  @Singleton
-  @Provides
-  public ObjectMapper provideObjectMapper() {
-    final ObjectMapper objectMapper = new ObjectMapper();
-
-    objectMapper.registerModule(new GuavaModule());
-
-    return objectMapper;
   }
 
   @Provides

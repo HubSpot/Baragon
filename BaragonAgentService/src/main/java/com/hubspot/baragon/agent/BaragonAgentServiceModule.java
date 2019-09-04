@@ -16,6 +16,8 @@ import org.apache.curator.framework.recipes.leader.LeaderLatch;
 import org.apache.curator.retry.ExponentialBackoffRetry;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.guava.GuavaModule;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.github.jknack.handlebars.Handlebars;
 import com.google.common.base.Optional;
 import com.google.common.base.Strings;
@@ -112,6 +114,13 @@ public class BaragonAgentServiceModule extends DropwizardAwareModule<BaragonAgen
     binder.bind(ServerProvider.class).in(Scopes.SINGLETON);
     binder.bind(FilesystemConfigHelper.class).in(Scopes.SINGLETON);
     binder.bind(AgentHeartbeatWorker.class).in(Scopes.SINGLETON);
+
+    final ObjectMapper objectMapper = new ObjectMapper();
+
+    objectMapper.registerModule(new GuavaModule());
+    objectMapper.registerModule(new Jdk8Module());
+
+    binder.bind(ObjectMapper.class).toInstance(objectMapper);
   }
 
   @Provides
