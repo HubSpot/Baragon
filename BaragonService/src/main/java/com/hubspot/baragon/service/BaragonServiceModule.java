@@ -106,9 +106,9 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
     binder.bind(BaragonExceptionNotifier.class).in(Scopes.SINGLETON);
 
     // Managed
-    binder.bind(BaragonExceptionNotifierManaged.class).in(Scopes.SINGLETON);
-    binder.bind(BaragonGraphiteReporterManaged.class).in(Scopes.SINGLETON);
-    binder.bind(BaragonManaged.class).in(Scopes.SINGLETON);
+    binder.bind(BaragonExceptionNotifierManaged.class).asEagerSingleton();
+    binder.bind(BaragonGraphiteReporterManaged.class).asEagerSingleton();
+    binder.bind(BaragonManaged.class).asEagerSingleton();
 
     // Managers
     binder.bind(AgentManager.class).in(Scopes.SINGLETON);

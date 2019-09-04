@@ -101,9 +101,9 @@ public class BaragonAgentServiceModule extends DropwizardAwareModule<BaragonAgen
     binder.bind(ConfigChecker.class).in(Scopes.SINGLETON);
 
     // Managed
-    binder.bind(BaragonAgentGraphiteReporterManaged.class).in(Scopes.SINGLETON);
-    binder.bind(BootstrapManaged.class).in(Scopes.SINGLETON);
-    binder.bind(LifecycleHelper.class).in(Scopes.SINGLETON);
+    binder.bind(BaragonAgentGraphiteReporterManaged.class).asEagerSingleton();
+    binder.bind(BootstrapManaged.class).asEagerSingleton();
+    binder.bind(LifecycleHelper.class).asEagerSingleton();
 
     // Manager
     binder.bind(AgentRequestManager.class).in(Scopes.SINGLETON);
