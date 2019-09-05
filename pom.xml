@@ -32,8 +32,7 @@
     <dep.curator.version>4.2.0</dep.curator.version>
     <dep.dropwizard-metrics.version>4.0.5</dep.dropwizard-metrics.version>
     <dep.findbugs.jsr.version>3.0.2</dep.findbugs.jsr.version>
-    <dep.google.api-client.version>1.23.0</dep.google.api-client.version>
-    <dep.google.apis.version>beta-rev76-1.23.0</dep.google.apis.version>
+    <dep.google.clients.version>1.25.0</dep.google.clients.version>
     <dep.guava.version>25.0-jre</dep.guava.version>
     <dep.hibernate-validator.version>5.4.3.Final</dep.hibernate-validator.version>
     <dep.hk2.version>2.5.0-b63</dep.hk2.version>
@@ -82,18 +81,41 @@
       <dependency>
         <groupId>com.google.api-client</groupId>
         <artifactId>google-api-client</artifactId>
-        <version>${dep.google.api-client.version}</version>
+        <version>${dep.google.clients.version}</version>
         <exclusions>
           <exclusion>
             <groupId>com.google.guava</groupId>
             <artifactId>guava-jdk5</artifactId>
           </exclusion>
+          <exclusion>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+          </exclusion>
         </exclusions>
       </dependency>
+
+      <dependency>
+        <groupId>com.google.oauth-client</groupId>
+        <artifactId>google-oauth-client</artifactId>
+        <version>${dep.google.clients.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+
       <dependency>
         <groupId>com.google.apis</groupId>
         <artifactId>google-api-services-compute</artifactId>
-        <version>${dep.google.apis.version}</version>
+        <version>v1-rev214-${dep.google.clients.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
 
       <dependency>
@@ -104,12 +126,24 @@
       <dependency>
         <groupId>com.google.http-client</groupId>
         <artifactId>google-http-client</artifactId>
-        <version>${dep.google.api-client.version}</version>
+        <version>${dep.google.clients.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>com.google.http-client</groupId>
         <artifactId>google-http-client-jackson2</artifactId>
         <version>${dep.google.api-client.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
 
       <dependency>
