@@ -66,8 +66,13 @@ public class KubernetesWatcher implements Watcher<Endpoints>, Closeable {
           .list();
 
       if (processInitialFetch) {
-        list.getItems()
-          .forEach(this::processUpdatedEndpoint);
+        try {
+          LOG.info("Got {} initial endpoints from k8s", list.getItems().size());
+          list.getItems()
+              .forEach(this::processUpdatedEndpoint);
+        } catch (Throwable t) {
+          LOG.error("Exception processing initial endpoints, still attempting to create watcher", t);
+        }
       }
 
     watch = kubernetesClient.endpoints()
@@ -80,6 +85,7 @@ public class KubernetesWatcher implements Watcher<Endpoints>, Closeable {
 
   @Override
   public void eventReceived(Action action, Endpoints endpoints) {
+    LOG.info("Received {} update from k8s for {}", action, endpoints.getMetadata().getName());
     switch (action) {
       case ADDED:
       case MODIFIED:
@@ -121,51 +127,64 @@ public class KubernetesWatcher implements Watcher<Endpoints>, Closeable {
   }
 
   private BaragonService buildBaragonService(Endpoints endpoints) {
-    Map<String, String> labels = endpoints.getMetadata().getLabels();
-    String serviceName = labels.get(kubernetesConfiguration.getServiceNameLabel());
-    if (serviceName == null) {
-      LOG.warn("Could not get service name for endpoint update (action: {}, endpoints: {})", endpoints);
+    try {
+      Map<String, String> labels = endpoints.getMetadata().getLabels();
+      if (labels == null) {
+        LOG.warn("No labels present on endpoint {}", endpoints.getMetadata().getName());
+        return null;
+      }
+      String serviceName = labels.get(kubernetesConfiguration.getServiceNameLabel());
+      if (serviceName == null) {
+        LOG.warn("Could not get service name for endpoint update (action: {}, endpoints: {})", endpoints);
+        return null;
+      }
+
+      Map<String, String> annotations = endpoints.getMetadata().getAnnotations();
+      if (annotations == null) {
+        LOG.warn("No annotations present on endpoint {}", endpoints.getMetadata().getName());
+        return null;
+      }
+      String basePath = annotations.get(kubernetesConfiguration.getBasePathAnnotation());
+      if (basePath == null) {
+        LOG.warn("Could not get base path for endpoint update (action: {}, endpoints: {})", endpoints);
+        return null;
+      }
+
+      String lbGroupsString = annotations.get(kubernetesConfiguration.getLbGroupsAnnotation());
+      if (lbGroupsString == null) {
+        LOG.warn("Could not get load balancer groups for kubernetes event (action: {}, endpoints: {})", endpoints);
+        return null;
+      }
+      Optional<String> domainsString = Optional.fromNullable(annotations.get(kubernetesConfiguration.getDomainsAnnotation()));
+      // non-aliased edgeCacheDomains not yet supported
+      BaragonGroupAlias groupsAndDomains = aliasDatastore.processAliases(
+          new HashSet<>(Arrays.asList(lbGroupsString.split(","))),
+          domainsString.transform((d) -> new HashSet<>(Arrays.asList(d.split(",")))).or(new HashSet<>()),
+          Collections.emptySet()
+      );
+
+      Optional<String> ownerString = Optional.fromNullable(annotations.get(kubernetesConfiguration.getOwnersAnnotation()));
+      List<String> owners = ownerString.transform((o) -> Arrays.asList(o.split(","))).or(new ArrayList<>());
+
+      Optional<String> templateName = Optional.fromNullable(annotations.get(kubernetesConfiguration.getTemplateNameAnnotation()));
+
+      return new BaragonService(
+          serviceName,
+          owners,
+          basePath,
+          Collections.emptyList(), // TODO - additionalPaths not yet supported
+          groupsAndDomains.getGroups(),
+          Collections.emptyMap(), // TODO - custom options not yet supported
+          templateName,
+          groupsAndDomains.getDomains(),
+          Optional.absent(),
+          groupsAndDomains.getEdgeCacheDomains(),
+          false // Always using IPs to start with
+      );
+    } catch (Throwable t) {
+      LOG.error("Unable to build BaragonService object from endpoint {}", endpoints.getMetadata().getName(), t);
       return null;
     }
-
-    Map<String, String> annotations = endpoints.getMetadata().getAnnotations();
-    String basePath = annotations.get(kubernetesConfiguration.getBasePathAnnotation());
-    if (basePath == null) {
-      LOG.warn("Could not get base path for endpoint update (action: {}, endpoints: {})", endpoints);
-      return null;
-    }
-
-    String lbGroupsString = annotations.get(kubernetesConfiguration.getLbGroupsAnnotation());
-    if (lbGroupsString == null) {
-      LOG.warn("Could not get load balancer groups for kubernetes event (action: {}, endpoints: {})", endpoints);
-      return null;
-    }
-    Optional<String> domainsString = Optional.fromNullable(annotations.get(kubernetesConfiguration.getDomainsAnnotation()));
-    // non-aliased edgeCacheDomains not yet supported
-    BaragonGroupAlias groupsAndDomains = aliasDatastore.processAliases(
-        new HashSet<>(Arrays.asList(lbGroupsString.split(","))),
-        domainsString.transform((d) -> new HashSet<>(Arrays.asList(d.split(",")))).or(new HashSet<>()),
-        Collections.emptySet()
-    );
-
-    Optional<String> ownerString = Optional.fromNullable(annotations.get(kubernetesConfiguration.getOwnersAnnotation()));
-    List<String> owners = ownerString.transform((o) -> Arrays.asList(o.split(","))).or(new ArrayList<>());
-
-    Optional<String> templateName = Optional.fromNullable(annotations.get(kubernetesConfiguration.getTemplateNameAnnotation()));
-
-    return new BaragonService(
-        serviceName,
-        owners,
-        basePath,
-        Collections.emptyList(), // TODO - additionalPaths not yet supported
-        groupsAndDomains.getGroups(),
-        Collections.emptyMap(), // TODO - custom options not yet supported
-        templateName,
-        groupsAndDomains.getDomains(),
-        Optional.absent(),
-        groupsAndDomains.getEdgeCacheDomains(),
-        false // Always using IPs to start with
-    );
   }
 
   private List<UpstreamInfo> parseActiveUpstreams(Endpoints endpoints, String upstreamGroup, String protocol) {
