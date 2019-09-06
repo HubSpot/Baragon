@@ -1,11 +1,13 @@
 package com.hubspot.baragon.kubernetes;
 
+import java.io.Closeable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,13 +33,17 @@ import io.fabric8.kubernetes.client.Watch;
 import io.fabric8.kubernetes.client.Watcher;
 
 @Singleton
-public class KubernetesWatcher implements Watcher<Endpoints> {
+public class KubernetesWatcher implements Watcher<Endpoints>, Closeable {
   private static final Logger LOG = LoggerFactory.getLogger(KubernetesWatcher.class);
 
   private final KubernetesEndpointListener listener;
   private final KubernetesConfiguration kubernetesConfiguration;
   private final BaragonAliasDatastore aliasDatastore;
   private final KubernetesClient kubernetesClient;
+  private final AtomicBoolean closing;
+
+  private Watch watch;
+  private boolean processInitialFetch = false;
 
   @Inject
   public KubernetesWatcher(KubernetesEndpointListener listener,
@@ -48,9 +54,11 @@ public class KubernetesWatcher implements Watcher<Endpoints> {
     this.kubernetesConfiguration = kubernetesConfiguration;
     this.aliasDatastore = aliasDatastore;
     this.kubernetesClient = kubernetesClient;
+    this.closing = new AtomicBoolean(false);
   }
 
-  public Watch createWatch(boolean processInitialFetch) {
+  public void createWatch(boolean processInitialFetch) {
+    this.processInitialFetch = processInitialFetch;
       EndpointsList list = kubernetesClient.endpoints()
           .inAnyNamespace()
           .withLabels(kubernetesConfiguration.getBaragonLabelFilter())
@@ -62,7 +70,7 @@ public class KubernetesWatcher implements Watcher<Endpoints> {
           .forEach(this::processUpdatedEndpoint);
       }
 
-    return kubernetesClient.endpoints()
+    watch = kubernetesClient.endpoints()
         .inAnyNamespace()
         .withLabels(kubernetesConfiguration.getBaragonLabelFilter())
         .withLabel(kubernetesConfiguration.getServiceNameLabel())
@@ -78,7 +86,7 @@ public class KubernetesWatcher implements Watcher<Endpoints> {
         processUpdatedEndpoint(endpoints);
         break;
       case DELETED:
-
+        // TODO
       case ERROR:
       default:
         LOG.warn("No handling for action: {} (endpoints: {})", action, endpoints);
@@ -174,5 +182,21 @@ public class KubernetesWatcher implements Watcher<Endpoints> {
   }
 
   @Override
-  public void onClose(KubernetesClientException cause) {}
+  public void onClose(KubernetesClientException cause) {
+    if (!closing.get()) {
+      LOG.error("Watch closed early, restarting", cause);
+      createWatch(processInitialFetch);
+    } else {
+      LOG.info("Watch closed {}", cause.getMessage());
+    }
+  }
+
+  @Override
+  public void close() {
+    LOG.info("Closing kubernetes watcher");
+    closing.set(true);
+    if (watch != null) {
+      watch.close();
+    }
+  }
 }

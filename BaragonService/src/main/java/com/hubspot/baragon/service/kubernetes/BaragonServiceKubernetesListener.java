@@ -92,6 +92,6 @@ public class BaragonServiceKubernetesListener extends KubernetesEndpointListener
   }
 
   private static class Count {
-    public int count = 0;
+    int count = 0;
   }
 }
