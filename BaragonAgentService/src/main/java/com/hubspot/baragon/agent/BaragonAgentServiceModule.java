@@ -16,6 +16,8 @@ import org.apache.curator.framework.recipes.leader.LeaderLatch;
 import org.apache.curator.retry.ExponentialBackoffRetry;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.guava.GuavaModule;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.github.jknack.handlebars.Handlebars;
 import com.google.common.base.Optional;
 import com.google.common.base.Strings;
@@ -104,9 +106,9 @@ public class BaragonAgentServiceModule extends DropwizardAwareModule<BaragonAgen
     binder.bind(ConfigChecker.class).in(Scopes.SINGLETON);
 
     // Managed
-    binder.bind(BaragonAgentGraphiteReporterManaged.class).in(Scopes.SINGLETON);
-    binder.bind(BootstrapManaged.class).in(Scopes.SINGLETON);
-    binder.bind(LifecycleHelper.class).in(Scopes.SINGLETON);
+    binder.bind(BaragonAgentGraphiteReporterManaged.class).asEagerSingleton();
+    binder.bind(BootstrapManaged.class).asEagerSingleton();
+    binder.bind(LifecycleHelper.class).asEagerSingleton();
 
     // Manager
     binder.bind(AgentRequestManager.class).in(Scopes.SINGLETON);
@@ -118,12 +120,20 @@ public class BaragonAgentServiceModule extends DropwizardAwareModule<BaragonAgen
     binder.bind(FilesystemConfigHelper.class).in(Scopes.SINGLETON);
     binder.bind(AgentHeartbeatWorker.class).in(Scopes.SINGLETON);
 
+
     // Kubernetes
     if (getConfiguration().getKubernetesConfiguration().isEnabled()) {
       binder.bind(KubernetesEndpointListener.class).to(BaragonAgentKubernetesListener.class).in(Scopes.SINGLETON);
       binder.bind(KubernetesWatcherManaged.class).asEagerSingleton();
       binder.install(new KubernetesWatcherModule());
     }
+
+    final ObjectMapper objectMapper = new ObjectMapper();
+
+    objectMapper.registerModule(new GuavaModule());
+    objectMapper.registerModule(new Jdk8Module());
+
+    binder.bind(ObjectMapper.class).toInstance(objectMapper);
   }
 
   @Provides
