@@ -16,9 +16,7 @@ import com.hubspot.baragon.config.KubernetesConfiguration;
 import com.hubspot.baragon.data.BaragonStateDatastore;
 import com.hubspot.baragon.kubernetes.KubernetesEndpointListener;
 import com.hubspot.baragon.models.BaragonRequest;
-import com.hubspot.baragon.models.BaragonRequestBuilder;
 import com.hubspot.baragon.models.BaragonService;
-import com.hubspot.baragon.models.RequestAction;
 import com.hubspot.baragon.models.UpstreamInfo;
 import com.hubspot.baragon.service.BaragonServiceModule;
 import com.hubspot.baragon.service.managers.RequestManager;
@@ -41,14 +39,9 @@ public class BaragonServiceKubernetesListener extends KubernetesEndpointListener
 
   @Override
   public void processDelete(BaragonService service) {
-    String requestId = String.format("k8s-delete-%d", System.nanoTime());
-    BaragonRequest baragonRequest = new BaragonRequestBuilder()
-        .setAction(Optional.of(RequestAction.DELETE))
-        .setLoadBalancerRequestId(requestId)
-        .setLoadBalancerService(service)
-        .build();
     lock.lock();
     try {
+      BaragonRequest baragonRequest = createDeleteRequest(service);
       requestManager.commitRequest(baragonRequest);
     } catch (Throwable t) {
       LOG.error("Could not commit update from kubernetes watcher", t);

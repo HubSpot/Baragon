@@ -37,6 +37,19 @@ public class BaragonAgentKubernetesListener extends KubernetesEndpointListener {
   }
 
   @Override
+  public void processDelete(BaragonService service) {
+    BaragonRequest baragonRequest = createDeleteRequest(service);
+    agentRequestManager.processRequest(
+        baragonRequest.getLoadBalancerRequestId(),
+        RequestAction.DELETE,
+        baragonRequest,
+        Optional.absent(),
+        Collections.singletonMap(service.getServiceId(), Collections.emptyList()),
+        false,
+        Optional.absent());
+  }
+
+  @Override
   public void processUpdate(BaragonService updatedService, List<UpstreamInfo> activeUpstreams) {
     if (!isRelevantUpdate(updatedService)) {
       LOG.debug("Not relevant update for agent's group/domains, skipping ({})", updatedService.getServiceId());

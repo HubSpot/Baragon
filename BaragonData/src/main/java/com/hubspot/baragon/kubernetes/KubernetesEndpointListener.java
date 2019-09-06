@@ -10,6 +10,7 @@ import com.google.common.base.Optional;
 import com.hubspot.baragon.config.KubernetesConfiguration;
 import com.hubspot.baragon.data.BaragonStateDatastore;
 import com.hubspot.baragon.models.BaragonRequest;
+import com.hubspot.baragon.models.BaragonRequestBuilder;
 import com.hubspot.baragon.models.BaragonService;
 import com.hubspot.baragon.models.RequestAction;
 import com.hubspot.baragon.models.UpstreamInfo;
@@ -30,6 +31,15 @@ public abstract class KubernetesEndpointListener {
 
   protected BaragonRequest createBaragonRequest(BaragonService updatedService, List<UpstreamInfo> activeUpstreams) {
     return createBaragonRequest(updatedService, activeUpstreams, stateDatastore.getUpstreams(updatedService.getServiceId()));
+  }
+
+  protected BaragonRequest createDeleteRequest(BaragonService service) {
+    String requestId = String.format("k8s-delete-%d", System.nanoTime());
+    return new BaragonRequestBuilder()
+        .setAction(Optional.of(RequestAction.DELETE))
+        .setLoadBalancerRequestId(requestId)
+        .setLoadBalancerService(service)
+        .build();
   }
 
   protected BaragonRequest createBaragonRequest(BaragonService updatedService, List<UpstreamInfo> activeUpstreams, Collection<UpstreamInfo> existingUpstreams) {
