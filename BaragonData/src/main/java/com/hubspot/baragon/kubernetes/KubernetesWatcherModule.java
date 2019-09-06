@@ -2,7 +2,6 @@ package com.hubspot.baragon.kubernetes;
 
 import com.fasterxml.jackson.datatype.guava.GuavaModule;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.google.inject.Binder;
 import com.google.inject.Module;
 import com.google.inject.Provides;
@@ -25,8 +24,8 @@ public class KubernetesWatcherModule implements Module {
   public void configure(Binder binder) {
     binder.bind(KubernetesWatcher.class).in(Scopes.SINGLETON);
 
-    Serialization.jsonMapper().registerModules(new GuavaModule(), new Jdk8Module(), new JavaTimeModule());
-    PatchUtils.patchMapper().registerModules(new GuavaModule(), new Jdk8Module(), new JavaTimeModule());
+    Serialization.jsonMapper().registerModules(new GuavaModule(), new Jdk8Module());
+    PatchUtils.patchMapper().registerModules(new GuavaModule(), new Jdk8Module());
   }
 
   @Provides
