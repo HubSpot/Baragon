@@ -86,38 +86,59 @@ public class KubernetesWatcher implements Watcher<Endpoints>, Closeable {
         processUpdatedEndpoint(endpoints);
         break;
       case DELETED:
-        // TODO
+        processEndpointDelete(endpoints);
+        break;
       case ERROR:
       default:
         LOG.warn("No handling for action: {} (endpoints: {})", action, endpoints);
     }
   }
 
+  private void processEndpointDelete(Endpoints endpoints) {
+    BaragonService service = buildBaragonService(endpoints);
+    if (service == null) {
+      return;
+    }
+    listener.processDelete(service);
+  }
+
   private void processUpdatedEndpoint(Endpoints endpoints) {
-    Map<String, String> labels = endpoints.getMetadata().getLabels();
-    String serviceName = labels.get(kubernetesConfiguration.getServiceNameLabel());
-    if (serviceName == null) {
-      LOG.warn("Could not get service name for endpoint update (action: {}, endpoints: {})", endpoints);
+    BaragonService service = buildBaragonService(endpoints);
+    if (service == null) {
       return;
     }
 
     Map<String, String> annotations = endpoints.getMetadata().getAnnotations();
-    String basePath = annotations.get(kubernetesConfiguration.getBasePathAnnotation());
-    if (basePath == null) {
-      LOG.warn("Could not get base path for endpoint update (action: {}, endpoints: {})", endpoints);
-      return;
-    }
-
     String upstreamGroup = annotations.getOrDefault(kubernetesConfiguration.getUpstreamGroupsAnnotation(), "default");
     if (!kubernetesConfiguration.getUpstreamGroups().contains(upstreamGroup)) {
       LOG.warn("Upstream group not managed by baragon, skipping (action: {}, endpoints: {})", endpoints);
       return;
     }
 
+    String desiredProtocol = Optional.fromNullable(annotations.get(kubernetesConfiguration.getProtocolAnnotation()))
+        .or("HTTP");
+    listener.processUpdate(service, parseActiveUpstreams(endpoints, upstreamGroup, desiredProtocol));
+  }
+
+  private BaragonService buildBaragonService(Endpoints endpoints) {
+    Map<String, String> labels = endpoints.getMetadata().getLabels();
+    String serviceName = labels.get(kubernetesConfiguration.getServiceNameLabel());
+    if (serviceName == null) {
+      LOG.warn("Could not get service name for endpoint update (action: {}, endpoints: {})", endpoints);
+      return null;
+    }
+
+    Map<String, String> annotations = endpoints.getMetadata().getAnnotations();
+    String basePath = annotations.get(kubernetesConfiguration.getBasePathAnnotation());
+    if (basePath == null) {
+      LOG.warn("Could not get base path for endpoint update (action: {}, endpoints: {})", endpoints);
+      return null;
+    }
+
     String lbGroupsString = annotations.get(kubernetesConfiguration.getLbGroupsAnnotation());
     if (lbGroupsString == null) {
       LOG.warn("Could not get load balancer groups for kubernetes event (action: {}, endpoints: {})", endpoints);
-      return;
+      return null;
     }
     Optional<String> domainsString = Optional.fromNullable(annotations.get(kubernetesConfiguration.getDomainsAnnotation()));
     // non-aliased edgeCacheDomains not yet supported
@@ -131,10 +152,8 @@ public class KubernetesWatcher implements Watcher<Endpoints>, Closeable {
     List<String> owners = ownerString.transform((o) -> Arrays.asList(o.split(","))).or(new ArrayList<>());
 
     Optional<String> templateName = Optional.fromNullable(annotations.get(kubernetesConfiguration.getTemplateNameAnnotation()));
-    String desiredProtocol = Optional.fromNullable(annotations.get(kubernetesConfiguration.getProtocolAnnotation()))
-        .or("HTTP");
 
-    BaragonService service = new BaragonService(
+    return new BaragonService(
         serviceName,
         owners,
         basePath,
@@ -147,7 +166,6 @@ public class KubernetesWatcher implements Watcher<Endpoints>, Closeable {
         groupsAndDomains.getEdgeCacheDomains(),
         false // Always using IPs to start with
     );
-    listener.processUpdate(service, parseActiveUpstreams(endpoints, upstreamGroup, desiredProtocol));
   }
 
   private List<UpstreamInfo> parseActiveUpstreams(Endpoints endpoints, String upstreamGroup, String protocol) {

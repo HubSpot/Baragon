@@ -26,6 +26,8 @@ public abstract class KubernetesEndpointListener {
 
   public abstract void processUpdate(BaragonService updatedService, List<UpstreamInfo> activeUpstreams);
 
+  public abstract void processDelete(BaragonService service);
+
   protected BaragonRequest createBaragonRequest(BaragonService updatedService, List<UpstreamInfo> activeUpstreams) {
     return createBaragonRequest(updatedService, activeUpstreams, stateDatastore.getUpstreams(updatedService.getServiceId()));
   }
@@ -48,7 +50,7 @@ public abstract class KubernetesEndpointListener {
       relevantService = stateDatastore.getService(updatedService.getServiceId()).or(updatedService);
     }
 
-    String requestId = String.format("k8s-%d", System.currentTimeMillis());
+    String requestId = String.format("k8s-%d", System.nanoTime());
 
     return new BaragonRequest(
         requestId,
