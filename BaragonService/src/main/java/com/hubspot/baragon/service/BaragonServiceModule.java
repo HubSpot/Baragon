@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
@@ -32,6 +33,7 @@ import com.google.inject.Scopes;
 import com.google.inject.Singleton;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Named;
+import com.google.inject.name.Names;
 import com.hubspot.baragon.BaragonDataModule;
 import com.hubspot.baragon.config.AuthConfiguration;
 import com.hubspot.baragon.config.HttpClientConfiguration;
@@ -101,6 +103,8 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
 
   public static final String GOOGLE_CLOUD_COMPUTE_SERVICE = "baragon.google.cloud.compute.service";
 
+  public static final String REQUEST_LOCK = "baragon.request.lock";
+
   @Override
   public void configure(Binder binder) {
     binder.requireExplicitBindings();
@@ -152,6 +156,8 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
       latchBinder.addBinding().to(KubernetesWatchListener.class).in(Scopes.SINGLETON);
       binder.install(new KubernetesWatcherModule());
     }
+
+    binder.bind(ReentrantLock.class).annotatedWith(Names.named(REQUEST_LOCK)).toInstance(new ReentrantLock());
   }
 
   @Provides

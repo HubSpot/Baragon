@@ -16,7 +16,7 @@ import com.hubspot.baragon.models.UpstreamInfo;
 
 public abstract class KubernetesEndpointListener {
   protected final BaragonStateDatastore stateDatastore;
-  private final KubernetesConfiguration kubernetesConfiguration;
+  protected final KubernetesConfiguration kubernetesConfiguration;
 
   public KubernetesEndpointListener(BaragonStateDatastore stateDatastore,
                                     KubernetesConfiguration kubernetesConfiguration) {

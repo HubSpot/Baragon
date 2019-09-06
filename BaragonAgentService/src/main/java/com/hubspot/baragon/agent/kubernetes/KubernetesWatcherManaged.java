@@ -23,7 +23,7 @@ public class KubernetesWatcherManaged implements Managed {
   @Override
   public void start() {
     if (kubernetesConfiguration.isEnabled()) {
-      watch = kubernetesWatcher.createWatch();
+      watch = kubernetesWatcher.createWatch(false);
     }
   }
 

@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 import org.apache.zookeeper.KeeperException;
@@ -35,6 +36,7 @@ import com.hubspot.baragon.models.QueuedRequestId;
 import com.hubspot.baragon.models.QueuedRequestWithState;
 import com.hubspot.baragon.models.RequestAction;
 import com.hubspot.baragon.models.UpstreamInfo;
+import com.hubspot.baragon.service.BaragonServiceModule;
 import com.hubspot.baragon.service.config.BaragonConfiguration;
 import com.hubspot.baragon.service.edgecache.EdgeCache;
 import com.hubspot.baragon.service.exceptions.BaragonExceptionNotifier;
@@ -55,6 +57,7 @@ public class BaragonRequestWorker implements Runnable {
   private final BaragonConfiguration configuration;
   private final EdgeCache edgeCache;
   private final UpstreamResolver resolver;
+  private final ReentrantLock lock;
 
   @Inject
   public BaragonRequestWorker(AgentManager agentManager,
@@ -64,7 +67,8 @@ public class BaragonRequestWorker implements Runnable {
                               BaragonConfiguration configuration,
                               EdgeCache edgeCache,
                               UpstreamResolver resolver,
-                              @Named(BaragonDataModule.BARAGON_SERVICE_WORKER_LAST_START) AtomicLong workerLastStartAt) {
+                              @Named(BaragonDataModule.BARAGON_SERVICE_WORKER_LAST_START) AtomicLong workerLastStartAt,
+                              @Named(BaragonServiceModule.REQUEST_LOCK) ReentrantLock lock) {
     this.agentManager = agentManager;
     this.requestManager = requestManager;
     this.stateDatastore = stateDatastore;
@@ -73,6 +77,7 @@ public class BaragonRequestWorker implements Runnable {
     this.workerLastStartAt = workerLastStartAt;
     this.exceptionNotifier = exceptionNotifier;
     this.configuration = configuration;
+    this.lock = lock;
   }
 
   private String buildResponseString(Map<String, Collection<AgentResponse>> agentResponses, AgentRequestType requestType) {
@@ -255,58 +260,63 @@ public class BaragonRequestWorker implements Runnable {
 
   @Override
   public void run() {
-    workerLastStartAt.set(System.currentTimeMillis());
-
+    lock.lock();
     try {
-      final List<QueuedRequestId> queuedRequestIds = requestManager.getQueuedRequestIds();
-      int added = 0;
+      workerLastStartAt.set(System.currentTimeMillis());
 
-      while (added < configuration.getWorkerConfiguration().getMaxRequestsPerPoll() && !queuedRequestIds.isEmpty()) {
-        Map<String, List<QueuedRequestId>> requestsGroupedByService = queuedRequestIds.stream().collect(Collectors.groupingBy(QueuedRequestId::getServiceId));
+      try {
+        final List<QueuedRequestId> queuedRequestIds = requestManager.getQueuedRequestIds();
+        int added = 0;
 
-        ArrayList<QueuedRequestId> nonServiceChanges = new ArrayList<>();
-        ArrayList<QueuedRequestId> serviceChanges = new ArrayList<>();
+        while (added < configuration.getWorkerConfiguration().getMaxRequestsPerPoll() && !queuedRequestIds.isEmpty()) {
+          Map<String, List<QueuedRequestId>> requestsGroupedByService = queuedRequestIds.stream().collect(Collectors.groupingBy(QueuedRequestId::getServiceId));
 
-        added = collectRequests(added, requestsGroupedByService, nonServiceChanges, serviceChanges);
+          ArrayList<QueuedRequestId> nonServiceChanges = new ArrayList<>();
+          ArrayList<QueuedRequestId> serviceChanges = new ArrayList<>();
 
-        // Now take the list of non-service-change requests,
-        // hydrate them with state,
-        // and sort them such that the quicker noValidate / noReload requests come first.
-        List<QueuedRequestWithState> hydratedNonServiceChanges = nonServiceChanges.stream()
-            .map(this::hydrateQueuedRequestWithState)
-            .filter(Optional::isPresent)
-            .map(someRequest -> new MaybeAdjustedRequest(someRequest.get(), false))
-            .map(this::setNoValidateIfRequestRemovesUpstreamsOnly)
-            .map(this::preResolveDNS)
-            .map(this::saveAdjustedRequest)
-            .sorted(queuedRequestComparator())
-            .collect(Collectors.toList());
+          added = collectRequests(added, requestsGroupedByService, nonServiceChanges, serviceChanges);
 
-        // Then send them off.
-        LOG.debug("Processing {} BaragonRequests which don't modify a BaragonService", nonServiceChanges.size());
-        handleResultStates(handleQueuedRequests(hydratedNonServiceChanges));
+          // Now take the list of non-service-change requests,
+          // hydrate them with state,
+          // and sort them such that the quicker noValidate / noReload requests come first.
+          List<QueuedRequestWithState> hydratedNonServiceChanges = nonServiceChanges.stream()
+              .map(this::hydrateQueuedRequestWithState)
+              .filter(Optional::isPresent)
+              .map(someRequest -> new MaybeAdjustedRequest(someRequest.get(), false))
+              .map(this::setNoValidateIfRequestRemovesUpstreamsOnly)
+              .map(this::preResolveDNS)
+              .map(this::saveAdjustedRequest)
+              .sorted(queuedRequestComparator())
+              .collect(Collectors.toList());
 
-        // Now send off the service change requests.
-        List<QueuedRequestWithState> hydratedServiceChanges = serviceChanges.stream()
-            .map(this::hydrateQueuedRequestWithState)
-            .filter(Optional::isPresent)
-            .map(Optional::get)
-            .sorted(queuedRequestComparator())
-            .collect(Collectors.toList());
+          // Then send them off.
+          LOG.debug("Processing {} BaragonRequests which don't modify a BaragonService", nonServiceChanges.size());
+          handleResultStates(handleQueuedRequests(hydratedNonServiceChanges));
 
-        LOG.debug("Processing {} BaragonRequests which modify a BaragonService", serviceChanges.size());
-        handleResultStates(handleQueuedRequests(hydratedServiceChanges));
+          // Now send off the service change requests.
+          List<QueuedRequestWithState> hydratedServiceChanges = serviceChanges.stream()
+              .map(this::hydrateQueuedRequestWithState)
+              .filter(Optional::isPresent)
+              .map(Optional::get)
+              .sorted(queuedRequestComparator())
+              .collect(Collectors.toList());
 
-        queuedRequestIds.removeAll(nonServiceChanges);
-        queuedRequestIds.removeAll(serviceChanges);
+          LOG.debug("Processing {} BaragonRequests which modify a BaragonService", serviceChanges.size());
+          handleResultStates(handleQueuedRequests(hydratedServiceChanges));
 
-        // ...and repeat until we've processed up to the limit of requests
+          queuedRequestIds.removeAll(nonServiceChanges);
+          queuedRequestIds.removeAll(serviceChanges);
+
+          // ...and repeat until we've processed up to the limit of requests
+        }
+      } catch (Exception e) {
+        LOG.warn("Caught exception", e);
+        exceptionNotifier.notify(e, Collections.<String, String>emptyMap());
+      } finally {
+        LOG.debug("Finished poller loop.");
       }
-    } catch (Exception e) {
-      LOG.warn("Caught exception", e);
-      exceptionNotifier.notify(e, Collections.<String, String>emptyMap());
     } finally {
-      LOG.debug("Finished poller loop.");
+      lock.unlock();
     }
   }
 

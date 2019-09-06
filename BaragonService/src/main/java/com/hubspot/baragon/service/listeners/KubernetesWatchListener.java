@@ -27,7 +27,7 @@ public class KubernetesWatchListener extends AbstractLatchListener {
   @Override
   public void isLeader() {
     LOG.info("We are the leader! Starting KubernetesWatcher...");
-    watch = kubernetesWatcher.createWatch();
+    watch = kubernetesWatcher.createWatch(true);
 
   }
 

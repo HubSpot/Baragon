@@ -18,6 +18,7 @@ public class KubernetesConfiguration {
   private String domainsAnnotation = "baragon.hubspot.com/domains";
   private String ownersAnnotation = "baragon.hubspot.com/owners";
   private String templateNameAnnotation = "baragon.hubspot.com/template-name";
+  private String protocolAnnotation = "baragon.hubspot.com/protocol";
 
   @NotEmpty
   private List<String> upstreamGroups = ImmutableList.of("k8s");
@@ -104,5 +105,13 @@ public class KubernetesConfiguration {
 
   public void setTemplateNameAnnotation(String templateNameAnnotation) {
     this.templateNameAnnotation = templateNameAnnotation;
+  }
+
+  public String getProtocolAnnotation() {
+    return protocolAnnotation;
+  }
+
+  public void setProtocolAnnotation(String protocolAnnotation) {
+    this.protocolAnnotation = protocolAnnotation;
   }
 }
