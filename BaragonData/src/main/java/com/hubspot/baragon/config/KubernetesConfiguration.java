@@ -10,6 +10,21 @@ import com.google.common.collect.ImmutableList;
 
 public class KubernetesConfiguration {
   private boolean enabled = false;
+
+  // Client Configuration
+  private int maxConcurrentRequests = 64;
+  private int maxConcurrentRequestsPerHost = 10;
+  private int connectTimeoutMillis = 5000;
+  private int requestTimeoutMillis = 30000;
+  private int websocketTimeoutMillis = 5000;
+  private int websocketPingIntervalMillis = 5000;
+  private int loggingIntervalMillis = 900000;
+  private int watchReconnectIntervalMillis = 1000;
+  private int watchReconnectLimit = -1;
+  private String masterUrl;
+  private String token;
+
+  // Annotations + Labels
   private String basePathAnnotation = "baragon.hubspot.com/base-path";
   private Map<String, String> baragonLabelFilter = Collections.emptyMap();
   private String serviceNameLabel = "baragon.hubspot.com/service-name";
@@ -29,6 +44,94 @@ public class KubernetesConfiguration {
 
   public void setEnabled(boolean enabled) {
     this.enabled = enabled;
+  }
+
+  public int getMaxConcurrentRequests() {
+    return maxConcurrentRequests;
+  }
+
+  public void setMaxConcurrentRequests(int maxConcurrentRequests) {
+    this.maxConcurrentRequests = maxConcurrentRequests;
+  }
+
+  public int getMaxConcurrentRequestsPerHost() {
+    return maxConcurrentRequestsPerHost;
+  }
+
+  public void setMaxConcurrentRequestsPerHost(int maxConcurrentRequestsPerHost) {
+    this.maxConcurrentRequestsPerHost = maxConcurrentRequestsPerHost;
+  }
+
+  public int getConnectTimeoutMillis() {
+    return connectTimeoutMillis;
+  }
+
+  public void setConnectTimeoutMillis(int connectTimeoutMillis) {
+    this.connectTimeoutMillis = connectTimeoutMillis;
+  }
+
+  public int getRequestTimeoutMillis() {
+    return requestTimeoutMillis;
+  }
+
+  public void setRequestTimeoutMillis(int requestTimeoutMillis) {
+    this.requestTimeoutMillis = requestTimeoutMillis;
+  }
+
+  public int getWebsocketTimeoutMillis() {
+    return websocketTimeoutMillis;
+  }
+
+  public void setWebsocketTimeoutMillis(int websocketTimeoutMillis) {
+    this.websocketTimeoutMillis = websocketTimeoutMillis;
+  }
+
+  public int getWebsocketPingIntervalMillis() {
+    return websocketPingIntervalMillis;
+  }
+
+  public void setWebsocketPingIntervalMillis(int websocketPingIntervalMillis) {
+    this.websocketPingIntervalMillis = websocketPingIntervalMillis;
+  }
+
+  public int getLoggingIntervalMillis() {
+    return loggingIntervalMillis;
+  }
+
+  public void setLoggingIntervalMillis(int loggingIntervalMillis) {
+    this.loggingIntervalMillis = loggingIntervalMillis;
+  }
+
+  public int getWatchReconnectIntervalMillis() {
+    return watchReconnectIntervalMillis;
+  }
+
+  public void setWatchReconnectIntervalMillis(int watchReconnectIntervalMillis) {
+    this.watchReconnectIntervalMillis = watchReconnectIntervalMillis;
+  }
+
+  public int getWatchReconnectLimit() {
+    return watchReconnectLimit;
+  }
+
+  public void setWatchReconnectLimit(int watchReconnectLimit) {
+    this.watchReconnectLimit = watchReconnectLimit;
+  }
+
+  public String getMasterUrl() {
+    return masterUrl;
+  }
+
+  public void setMasterUrl(String masterUrl) {
+    this.masterUrl = masterUrl;
+  }
+
+  public String getToken() {
+    return token;
+  }
+
+  public void setToken(String token) {
+    this.token = token;
   }
 
   public String getBasePathAnnotation() {
