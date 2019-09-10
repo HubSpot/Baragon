@@ -137,7 +137,7 @@
       <dependency>
         <groupId>com.google.http-client</groupId>
         <artifactId>google-http-client-jackson2</artifactId>
-        <version>${dep.google.api-client.version}</version>
+        <version>${dep.google.clients.version}</version>
         <exclusions>
           <exclusion>
             <groupId>com.google.guava</groupId>
