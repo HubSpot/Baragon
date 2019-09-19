@@ -386,8 +386,4 @@ public class AgentManager {
     }
     return domains;
   }
-
-  public int getInProgressRequests(String baseUrl) {
-    return agentResponseDatastore.getPendingRequestsCount(baseUrl);
-  }
 }
