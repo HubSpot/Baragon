@@ -104,6 +104,8 @@ public class BaragonConfiguration extends Configuration {
   @JsonProperty
   private long expireResolveCacheAfterDays = 30;
 
+  private int maxConcurrentApplyRequests = 10;
+
   public ZooKeeperConfiguration getZooKeeperConfiguration() {
     return zooKeeperConfiguration;
   }
@@ -278,5 +280,13 @@ public class BaragonConfiguration extends Configuration {
 
   public void setExpireResolveCacheAfterDays(long expireResolveCacheAfterDays) {
     this.expireResolveCacheAfterDays = expireResolveCacheAfterDays;
+  }
+
+  public int getMaxConcurrentApplyRequests() {
+    return maxConcurrentApplyRequests;
+  }
+
+  public void setMaxConcurrentApplyRequests(int maxConcurrentApplyRequests) {
+    this.maxConcurrentApplyRequests = maxConcurrentApplyRequests;
   }
 }
