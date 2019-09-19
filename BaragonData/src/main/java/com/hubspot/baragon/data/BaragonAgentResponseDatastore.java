@@ -69,10 +69,8 @@ public class BaragonAgentResponseDatastore extends AbstractDataStore {
     return getChildren(String.format(AGENT_RESPONSES_FORMAT, requestId, requestType, encodeUrl(baseUrl)));
   }
 
-  public int getPendingRequestsCount() {
-    return pendingRequests.values().stream()
-        .mapToInt(AtomicInteger::get)
-        .sum();
+  public int getPendingRequestsCount(String baseUrl) {
+    return pendingRequests.computeIfAbsent(baseUrl, (b) -> new AtomicInteger(0)).get();
   }
 
   @Timed
