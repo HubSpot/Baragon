@@ -20,6 +20,8 @@ public class BaragonWorkerConfiguration {
 
   private int maxRequestsPerPoll = 10;
 
+  private int maxConcurrentApplyRequests = 10;
+
   public boolean isEnabled() {
     return enabled;
   }
@@ -58,5 +60,13 @@ public class BaragonWorkerConfiguration {
 
   public void setMaxRequestsPerPoll(int maxRequestsPerPoll) {
     this.maxRequestsPerPoll = maxRequestsPerPoll;
+  }
+
+  public int getMaxConcurrentApplyRequests() {
+    return maxConcurrentApplyRequests;
+  }
+
+  public void setMaxConcurrentApplyRequests(int maxConcurrentApplyRequests) {
+    this.maxConcurrentApplyRequests = maxConcurrentApplyRequests;
   }
 }
