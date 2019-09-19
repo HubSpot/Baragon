@@ -497,8 +497,8 @@ public class BaragonRequestWorker implements Runnable {
         return 1;
       }
 
-      // Then everything else
-      return 0;
+      // Then everything else, oldest first
+      return Integer.compare(requestA.getQueuedRequestId().getIndex(), requestB.getQueuedRequestId().getIndex());
     };
   }
 }
