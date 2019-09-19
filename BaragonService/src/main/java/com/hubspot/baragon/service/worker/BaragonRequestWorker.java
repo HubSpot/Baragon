@@ -258,6 +258,11 @@ public class BaragonRequestWorker implements Runnable {
     workerLastStartAt.set(System.currentTimeMillis());
 
     try {
+      int inProgress = agentManager.getInProgressRequests();
+      if (inProgress >= configuration.getMaxConcurrentApplyRequests()) {
+        LOG.info("Too many in-flight requests ({} >= {}), waiting for some to finish first", inProgress, configuration.getMaxConcurrentApplyRequests());
+        return;
+      }
       final List<QueuedRequestId> queuedRequestIds = requestManager.getQueuedRequestIds();
       int added = 0;
 
