@@ -124,12 +124,33 @@ public class AgentManager {
     Map<QueuedRequestWithState, InternalRequestStates> results = new HashMap<>();
 
     Map<String, List<BaragonRequestBatchItem>> requestsByGroup = new HashMap<>();
+    Map<String, Collection<BaragonAgentMetadata>> agentMetadataByGroup = new HashMap<>();
 
     for (QueuedRequestWithState queuedRequestWithState : queuedRequestsWithState) {
       final BaragonRequest request = queuedRequestWithState.getRequest();
-      final Optional<BaragonService> maybeOriginalService = stateDatastore.getService(request.getLoadBalancerService().getServiceId());
       final Set<String> loadBalancerGroupsToUpdate = Sets.newHashSet(request.getLoadBalancerService().getLoadBalancerGroups());
 
+      boolean okToSendToGroup = true;
+      for (String group : loadBalancerGroupsToUpdate) {
+        for (BaragonAgentMetadata agentMetadata : agentMetadataByGroup.computeIfAbsent(group, loadBalancerDatastore::getAgentMetadata)) {
+          int inFlight = agentResponseDatastore.getPendingRequestsCount(agentMetadata.getBaseAgentUri());
+          if (inFlight >= configuration.getMaxConcurrentRequestsPerAgent()) {
+            LOG.info("Too many concurrent requests for group {} ({} >= {}), waiting for some to complete before attempting request {}",
+                group, inFlight, configuration.getMaxConcurrentRequestsPerAgent(), queuedRequestWithState.getQueuedRequestId().getRequestId());
+            okToSendToGroup = false;
+            break;
+          }
+          if (!okToSendToGroup) {
+            break;
+          }
+        }
+      }
+
+      if (!okToSendToGroup) {
+        continue;
+      }
+
+      final Optional<BaragonService> maybeOriginalService = stateDatastore.getService(request.getLoadBalancerService().getServiceId());
       if (maybeOriginalService.isPresent()) {
         loadBalancerGroupsToUpdate.addAll(maybeOriginalService.get().getLoadBalancerGroups());
       }

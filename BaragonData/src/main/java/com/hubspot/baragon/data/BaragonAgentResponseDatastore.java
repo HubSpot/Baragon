@@ -4,6 +4,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.curator.framework.CuratorFramework;
 
@@ -29,9 +31,12 @@ public class BaragonAgentResponseDatastore extends AbstractDataStore {
   public static final String CREATE_AGENT_RESPONSE_FORMAT = AGENT_RESPONSES_FORMAT + "/%s-%s-";
   public static final String AGENT_RESPONSE_FORMAT = AGENT_RESPONSES_FORMAT + "/%s";
 
+  private final Map<String, AtomicInteger> pendingRequests;
+
   @Inject
   public BaragonAgentResponseDatastore(CuratorFramework curatorFramework, ObjectMapper objectMapper, ZooKeeperConfiguration zooKeeperConfiguration) {
     super(curatorFramework, objectMapper, zooKeeperConfiguration);
+    this.pendingRequests = new ConcurrentHashMap<>();
   }
 
   @Timed
@@ -64,12 +69,18 @@ public class BaragonAgentResponseDatastore extends AbstractDataStore {
     return getChildren(String.format(AGENT_RESPONSES_FORMAT, requestId, requestType, encodeUrl(baseUrl)));
   }
 
+  public int getPendingRequestsCount(String baseUrl) {
+    return pendingRequests.computeIfAbsent(baseUrl, (b) -> new AtomicInteger(0)).get();
+  }
+
   @Timed
   public void setPendingRequestStatus(String requestId, String baseUrl, boolean value) {
     if (value) {
+      pendingRequests.computeIfAbsent(baseUrl, (b) -> new AtomicInteger()).getAndIncrement();
       writeToZk(String.format(PENDING_REQUEST_FORMAT, requestId, encodeUrl(baseUrl)), System.currentTimeMillis());
     } else {
       deleteNode(String.format(PENDING_REQUEST_FORMAT, requestId, encodeUrl(baseUrl)));
+      pendingRequests.computeIfAbsent(baseUrl, (b) -> new AtomicInteger()).getAndDecrement();
     }
   }
 

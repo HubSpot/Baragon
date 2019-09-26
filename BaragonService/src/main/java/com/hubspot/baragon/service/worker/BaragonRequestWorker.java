@@ -262,12 +262,10 @@ public class BaragonRequestWorker implements Runnable {
       int added = 0;
 
       while (added < configuration.getWorkerConfiguration().getMaxRequestsPerPoll() && !queuedRequestIds.isEmpty()) {
-        Map<String, List<QueuedRequestId>> requestsGroupedByService = queuedRequestIds.stream().collect(Collectors.groupingBy(QueuedRequestId::getServiceId));
-
         ArrayList<QueuedRequestId> nonServiceChanges = new ArrayList<>();
         ArrayList<QueuedRequestId> serviceChanges = new ArrayList<>();
 
-        added = collectRequests(added, requestsGroupedByService, nonServiceChanges, serviceChanges);
+        added = collectRequests(added, queuedRequestIds, nonServiceChanges, serviceChanges);
 
         // Now take the list of non-service-change requests,
         // hydrate them with state,
@@ -427,27 +425,30 @@ public class BaragonRequestWorker implements Runnable {
   }
 
   private int collectRequests(int previouslyAdded,
-                              Map<String, List<QueuedRequestId>> requestsGroupedByService,
+                              List<QueuedRequestId> queuedRequestIds,
                               ArrayList<QueuedRequestId> nonServiceChanges,
                               ArrayList<QueuedRequestId> serviceChanges) {
     int added = previouslyAdded;
+    Set<String> boundaryServices = new HashSet<>();
 
-    for (Map.Entry<String, List<QueuedRequestId>> requestsForService : requestsGroupedByService.entrySet()) {
-      for (QueuedRequestId request : requestsForService.getValue()) {
-        if (added >= configuration.getWorkerConfiguration().getMaxRequestsPerPoll()) {
-          return added;
-        }
+    for (QueuedRequestId queuedRequestId : queuedRequestIds) {
+      if (added >= configuration.getWorkerConfiguration().getMaxRequestsPerPoll()) {
+        return added;
+      }
 
-        // Grab as many non-service-change BaragonRequests as we can.
-        if (requestManager.getRequest(request.getRequestId()).transform(someRequest -> !isBatchBoundary(someRequest)).or(false)) {
-          nonServiceChanges.add(request);
-          added++;
-        } else {
-          // Once we hit a BaragonRequest that specifies BaragonService changes, stop collecting requests for this service.
-          serviceChanges.add(request);
-          added++;
-          break;
-        }
+      if (boundaryServices.contains(queuedRequestId.getServiceId())) {
+        continue;
+      }
+
+      // Grab as many non-service-change BaragonRequests as we can.
+      if (requestManager.getRequest(queuedRequestId.getRequestId()).transform(someRequest -> !isBatchBoundary(someRequest)).or(false)) {
+        nonServiceChanges.add(queuedRequestId);
+        added++;
+      } else {
+        // Once we hit a BaragonRequest that specifies BaragonService changes, stop collecting requests for this service.
+        serviceChanges.add(queuedRequestId);
+        boundaryServices.add(queuedRequestId.getServiceId());
+        added++;
       }
     }
     return added;
@@ -497,8 +498,8 @@ public class BaragonRequestWorker implements Runnable {
         return 1;
       }
 
-      // Then everything else
-      return 0;
+      // Then everything else, oldest first
+      return Integer.compare(requestA.getQueuedRequestId().getIndex(), requestB.getQueuedRequestId().getIndex());
     };
   }
 }
