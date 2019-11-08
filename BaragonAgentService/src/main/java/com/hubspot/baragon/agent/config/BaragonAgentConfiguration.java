@@ -17,6 +17,7 @@ import com.google.common.base.Strings;
 import com.hubspot.baragon.config.AuthConfiguration;
 import com.hubspot.baragon.config.GraphiteConfiguration;
 import com.hubspot.baragon.config.HttpClientConfiguration;
+import com.hubspot.baragon.config.KubernetesConfiguration;
 import com.hubspot.baragon.config.ZooKeeperConfiguration;
 import com.hubspot.baragon.models.BaragonAgentGcloudMetadata;
 
@@ -135,6 +136,9 @@ public class BaragonAgentConfiguration extends Configuration {
 
   @JsonProperty
   private long expireResolveCacheAfterDays = 30;
+
+  @JsonProperty("kubernetes")
+  private KubernetesConfiguration kubernetesConfiguration = new KubernetesConfiguration();
 
   public HttpClientConfiguration getHttpClientConfiguration() {
     return httpClientConfiguration;
@@ -394,5 +398,13 @@ public class BaragonAgentConfiguration extends Configuration {
 
   public void setExpireResolveCacheAfterDays(long expireResolveCacheAfterDays) {
     this.expireResolveCacheAfterDays = expireResolveCacheAfterDays;
+  }
+
+  public KubernetesConfiguration getKubernetesConfiguration() {
+    return kubernetesConfiguration;
+  }
+
+  public void setKubernetesConfiguration(KubernetesConfiguration kubernetesConfiguration) {
+    this.kubernetesConfiguration = kubernetesConfiguration;
   }
 }

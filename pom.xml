@@ -5,7 +5,7 @@
   <parent>
     <groupId>com.hubspot</groupId>
     <artifactId>basepom</artifactId>
-    <version>25.4</version>
+    <version>25.5</version>
   </parent>
 
   <artifactId>Baragon</artifactId>
@@ -31,6 +31,7 @@
     <dep.commons-lang3.version>3.9</dep.commons-lang3.version>
     <dep.curator.version>4.2.0</dep.curator.version>
     <dep.dropwizard-metrics.version>4.0.5</dep.dropwizard-metrics.version>
+    <dep.fabric8.version>4.1.1</dep.fabric8.version>
     <dep.findbugs.jsr.version>3.0.2</dep.findbugs.jsr.version>
     <dep.google.clients.version>1.25.0</dep.google.clients.version>
     <dep.guava.version>25.0-jre</dep.guava.version>
@@ -234,6 +235,17 @@
         <groupId>io.dropwizard.metrics</groupId>
         <artifactId>metrics-graphite</artifactId>
         <version>${dep.dropwizard-metrics.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>io.fabric8</groupId>
+        <artifactId>kubernetes-client</artifactId>
+        <version>${dep.fabric8.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.fabric8</groupId>
+        <artifactId>kubernetes-model</artifactId>
+        <version>${dep.fabric8.version}</version>
       </dependency>
 
       <dependency>
