@@ -261,6 +261,7 @@ public class BaragonRequestWorker implements Runnable {
   @Override
   public void run() {
     lock.lock();
+    workerLastStartAt.set(System.currentTimeMillis());
     try {
       final List<QueuedRequestId> queuedRequestIds = requestManager.getQueuedRequestIds();
       int added = 0;
@@ -304,6 +305,9 @@ public class BaragonRequestWorker implements Runnable {
 
         // ...and repeat until we've processed up to the limit of requests
       }
+    } catch (Exception e) {
+      LOG.warn("Caught exception", e);
+      exceptionNotifier.notify(e, Collections.emptyMap());
     } finally {
       lock.unlock();
     }
