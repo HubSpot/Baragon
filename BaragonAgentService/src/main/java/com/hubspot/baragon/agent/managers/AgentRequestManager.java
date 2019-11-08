@@ -82,30 +82,28 @@ public class AgentRequestManager {
 
           requests.put(requestItem.getRequestId(), maybeRequest);
 
-          Optional<BaragonService> oldService = Optional.absent();
-
           if (maybeRequest.isPresent()) {
-            oldService = services.getOrDefault(maybeRequest.get().getLoadBalancerService().getServiceId(), getOldService(maybeRequest.get()));
-            services.put(maybeRequest.get().getLoadBalancerService().getServiceId(), oldService);
+            services.computeIfAbsent(maybeRequest.get().getLoadBalancerService().getServiceId(), (r) -> getOldService(maybeRequest.get()));
           }
-
-          return oldService;
+          return maybeRequest;
         })
         .filter(Optional::isPresent)
         .map(Optional::get)
-        .collect(Collectors.groupingBy(BaragonService::getServiceId, Collectors.counting()));
+        .collect(Collectors.groupingBy((r) -> r.getLoadBalancerService().getServiceId(), Collectors.counting()));
 
     LOG.debug("Requests in this batch by service: {}", numRequestsByService);
 
-    Map<String, Collection<UpstreamInfo>> existingUpstreamsForThisBatch = numRequestsByService.keySet().stream()
-        .collect(Collectors.toMap(Function.identity(), serviceId -> {
-          try {
-            return stateDatastore.getUpstreams(serviceId);
-          } catch (Exception e) {
-            LOG.warn("Unable to get upstream information for service {}", serviceId, e);
-            throw new RuntimeException("Unable to get upstream information for service {}", e);
-          }
-        }));
+    Map<String, Collection<UpstreamInfo>> existingUpstreamsForThisBatch = services.keySet().stream()
+        .collect(Collectors.toMap(
+            Function.identity(),
+            (serviceId) -> {
+              try {
+                return stateDatastore.getUpstreams(serviceId);
+              } catch (Exception e) {
+                LOG.warn("Unable to get upstream information for service {}", serviceId, e);
+                throw new RuntimeException("Unable to get upstream information for service {}", e);
+              }
+            }));
 
     List<AgentBatchResponseItem> responses = new ArrayList<>(batch.size());
     int i = 0;
@@ -243,8 +241,7 @@ public class AgentRequestManager {
     } else if (!request.getReplaceUpstreams().isEmpty()) {
       return new ServiceContext(request.getLoadBalancerService(), request.getReplaceUpstreams(), System.currentTimeMillis(), true);
     } else {
-      List<UpstreamInfo> upstreams = new ArrayList<>();
-      upstreams.addAll(request.getAddUpstreams());
+      List<UpstreamInfo> upstreams = new ArrayList<>(request.getAddUpstreams());
       for (UpstreamInfo existingUpstream : existingUpstreams) {
         boolean present = false;
         boolean toRemove = false;
