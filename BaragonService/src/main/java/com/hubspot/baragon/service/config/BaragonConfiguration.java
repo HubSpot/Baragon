@@ -108,6 +108,8 @@ public class BaragonConfiguration extends Configuration {
   @JsonProperty("kubernetes")
   private KubernetesConfiguration kubernetesConfiguration = new KubernetesConfiguration();
 
+  private int maxConcurrentRequestsPerAgent = 3;
+
   public ZooKeeperConfiguration getZooKeeperConfiguration() {
     return zooKeeperConfiguration;
   }
@@ -290,5 +292,13 @@ public class BaragonConfiguration extends Configuration {
 
   public void setKubernetesConfiguration(KubernetesConfiguration kubernetesConfiguration) {
     this.kubernetesConfiguration = kubernetesConfiguration;
+  }
+
+  public int getMaxConcurrentRequestsPerAgent() {
+    return maxConcurrentRequestsPerAgent;
+  }
+
+  public void setMaxConcurrentRequestsPerAgent(int maxConcurrentRequestsPerAgent) {
+    this.maxConcurrentRequestsPerAgent = maxConcurrentRequestsPerAgent;
   }
 }
