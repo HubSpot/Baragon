@@ -190,7 +190,7 @@ public class FilesystemConfigHelper {
       throw lte;
     }
 
-    LOG.debug("({}) Acquired agent lock, applying configs");
+    LOG.debug("({}) Acquired agent lock, applying configs", service.getServiceId());
 
     try {
       if (configsMatch(newConfigs, readConfigs(oldService))) {
