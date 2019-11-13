@@ -14,13 +14,13 @@ import com.hubspot.baragon.agent.config.BaragonAgentConfiguration;
 import com.hubspot.baragon.agent.managers.AgentRequestManager;
 import com.hubspot.baragon.config.KubernetesConfiguration;
 import com.hubspot.baragon.data.BaragonStateDatastore;
-import com.hubspot.baragon.kubernetes.KubernetesEndpointListener;
+import com.hubspot.baragon.kubernetes.KubernetesListener;
 import com.hubspot.baragon.models.BaragonRequest;
 import com.hubspot.baragon.models.BaragonService;
 import com.hubspot.baragon.models.RequestAction;
 import com.hubspot.baragon.models.UpstreamInfo;
 
-public class BaragonAgentKubernetesListener extends KubernetesEndpointListener {
+public class BaragonAgentKubernetesListener extends KubernetesListener {
   private static final Logger LOG = LoggerFactory.getLogger(BaragonAgentKubernetesListener.class);
 
   private final BaragonAgentConfiguration agentConfiguration;
@@ -37,20 +37,21 @@ public class BaragonAgentKubernetesListener extends KubernetesEndpointListener {
   }
 
   @Override
-  public void processDelete(BaragonService service) {
+  public void processServiceDelete(String serviceId, String upstreamGroup) {
+    // TODO - if upstreams remain in other groups, only delete the relevant upstreams
     BaragonRequest baragonRequest = createDeleteRequest(service);
     agentRequestManager.processRequest(
         baragonRequest.getLoadBalancerRequestId(),
         RequestAction.DELETE,
         baragonRequest,
         Optional.absent(),
-        Collections.singletonMap(service.getServiceId(), Collections.emptyList()),
+        Collections.singletonMap(serviceId, Collections.emptyList()),
         false,
         Optional.absent());
   }
 
   @Override
-  public void processUpdate(BaragonService updatedService, List<UpstreamInfo> activeUpstreams) {
+  public void processServiceUpdate(BaragonService updatedService) {
     if (!isRelevantUpdate(updatedService)) {
       LOG.debug("Not relevant update for agent's group/domains, skipping ({})", updatedService.getServiceId());
       LOG.trace("Skipped update {} - {}", updatedService, activeUpstreams);
@@ -59,7 +60,54 @@ public class BaragonAgentKubernetesListener extends KubernetesEndpointListener {
 
     Collection<UpstreamInfo> existingUpstreams = stateDatastore.getUpstreams(updatedService.getServiceId());
 
-    BaragonRequest baragonRequest = createBaragonRequest(updatedService, activeUpstreams, existingUpstreams);
+    BaragonRequest baragonRequest = createBaragonRequest(updatedService, existingUpstreams, existingUpstreams);
+
+    agentRequestManager.processRequest(
+        baragonRequest.getLoadBalancerRequestId(),
+        RequestAction.UPDATE,
+        baragonRequest,
+        Optional.absent(),
+        Collections.singletonMap(updatedService.getServiceId(), existingUpstreams),
+        false,
+        Optional.absent());
+  }
+
+  @Override
+  public void processUpstreamsUpdate(String serviceName, String upstreamGroup, List<UpstreamInfo> activeupstreams) {
+    // TODO - only replace upstreams of the specified group
+    if (!isRelevantUpdate(updatedService)) {
+      LOG.debug("Not relevant update for agent's group/domains, skipping ({})", updatedService.getServiceId());
+      LOG.trace("Skipped update {} - {}", updatedService, activeUpstreams);
+      return;
+    }
+
+    Collection<UpstreamInfo> existingUpstreams = stateDatastore.getUpstreams(updatedService.getServiceId());
+
+    BaragonRequest baragonRequest = createBaragonRequest(updatedService, existingUpstreams, existingUpstreams);
+
+    agentRequestManager.processRequest(
+        baragonRequest.getLoadBalancerRequestId(),
+        RequestAction.UPDATE,
+        baragonRequest,
+        Optional.absent(),
+        Collections.singletonMap(updatedService.getServiceId(), existingUpstreams),
+        false,
+        Optional.absent());
+  }
+
+  @Override
+  public void processEndpointsDelete(String serviceName, String upstreamGroup) {
+    // TODO - if upstreams remain in other groups, only delete the relevant upstreams
+    // if service exists, leave as a service with no upstreams
+    if (!isRelevantUpdate(updatedService)) {
+      LOG.debug("Not relevant update for agent's group/domains, skipping ({})", updatedService.getServiceId());
+      LOG.trace("Skipped update {} - {}", updatedService, activeUpstreams);
+      return;
+    }
+
+    Collection<UpstreamInfo> existingUpstreams = stateDatastore.getUpstreams(updatedService.getServiceId());
+
+    BaragonRequest baragonRequest = createBaragonRequest(updatedService, existingUpstreams, existingUpstreams);
 
     agentRequestManager.processRequest(
         baragonRequest.getLoadBalancerRequestId(),

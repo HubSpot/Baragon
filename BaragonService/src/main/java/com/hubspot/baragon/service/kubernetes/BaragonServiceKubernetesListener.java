@@ -14,14 +14,14 @@ import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import com.hubspot.baragon.config.KubernetesConfiguration;
 import com.hubspot.baragon.data.BaragonStateDatastore;
-import com.hubspot.baragon.kubernetes.KubernetesEndpointListener;
+import com.hubspot.baragon.kubernetes.KubernetesListener;
 import com.hubspot.baragon.models.BaragonRequest;
 import com.hubspot.baragon.models.BaragonService;
 import com.hubspot.baragon.models.UpstreamInfo;
 import com.hubspot.baragon.service.BaragonServiceModule;
 import com.hubspot.baragon.service.managers.RequestManager;
 
-public class BaragonServiceKubernetesListener extends KubernetesEndpointListener {
+public class BaragonServiceKubernetesListener extends KubernetesListener {
   private static final Logger LOG = LoggerFactory.getLogger(BaragonServiceKubernetesListener.class);
 
   private final RequestManager requestManager;
@@ -38,7 +38,8 @@ public class BaragonServiceKubernetesListener extends KubernetesEndpointListener
   }
 
   @Override
-  public void processDelete(BaragonService service) {
+  public void processServiceDelete(String serviceName, String upstreamGroup) {
+    // TODO - if upstreams remain in other groups, only delete the relevant upstreams
     lock.lock();
     try {
       BaragonRequest baragonRequest = createDeleteRequest(service);
@@ -51,7 +52,8 @@ public class BaragonServiceKubernetesListener extends KubernetesEndpointListener
   }
 
   @Override
-  public void processUpdate(BaragonService updatedService, List<UpstreamInfo> activeUpstreams) {
+  public void processServiceUpdate(BaragonService updatedService) {
+    // TODO
     lock.lock();
     try {
       Optional<BaragonService> existing = stateDatastore.getService(updatedService.getServiceId());
@@ -66,6 +68,17 @@ public class BaragonServiceKubernetesListener extends KubernetesEndpointListener
     } finally {
       lock.unlock();
     }
+  }
+
+  @Override
+  public void processUpstreamsUpdate(String serviceName, String upstreamGroup, List<UpstreamInfo> activeUpstreams) {
+    // only update the specified group
+  }
+
+  @Override
+  public void processEndpointsDelete(String serviceName, String upstreamGroup) {
+    // TODO - if upstreams remain in other groups, only delete the relevant upstreams
+    // if service exists, leave as a service with no upstreams
   }
 
   private boolean shouldUpdate(BaragonService updatedService, List<UpstreamInfo> newUpstreams, BaragonService existing) {

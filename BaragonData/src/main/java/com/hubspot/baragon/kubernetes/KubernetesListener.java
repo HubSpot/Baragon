@@ -15,19 +15,23 @@ import com.hubspot.baragon.models.BaragonService;
 import com.hubspot.baragon.models.RequestAction;
 import com.hubspot.baragon.models.UpstreamInfo;
 
-public abstract class KubernetesEndpointListener {
+public abstract class KubernetesListener {
   protected final BaragonStateDatastore stateDatastore;
   protected final KubernetesConfiguration kubernetesConfiguration;
 
-  public KubernetesEndpointListener(BaragonStateDatastore stateDatastore,
-                                    KubernetesConfiguration kubernetesConfiguration) {
+  public KubernetesListener(BaragonStateDatastore stateDatastore,
+                            KubernetesConfiguration kubernetesConfiguration) {
     this.stateDatastore = stateDatastore;
     this.kubernetesConfiguration = kubernetesConfiguration;
   }
 
-  public abstract void processUpdate(BaragonService updatedService, List<UpstreamInfo> activeUpstreams);
+  public abstract void processUpstreamsUpdate(String serviceName, String upstreamGroup, List<UpstreamInfo> activeUpstreams);
 
-  public abstract void processDelete(BaragonService service);
+  public abstract void processServiceUpdate(BaragonService updatedService);
+
+  public abstract void processEndpointsDelete(String serviceName, String upstreamGroup);
+
+  public abstract void processServiceDelete(String serviceName, String upstreamGroup);
 
   protected BaragonRequest createBaragonRequest(BaragonService updatedService, List<UpstreamInfo> activeUpstreams) {
     return createBaragonRequest(updatedService, activeUpstreams, stateDatastore.getUpstreams(updatedService.getServiceId()));
