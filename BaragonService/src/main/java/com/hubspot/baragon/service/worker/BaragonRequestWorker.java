@@ -264,14 +264,14 @@ public class BaragonRequestWorker implements Runnable {
           .filter(Optional::isPresent)
           .map(Optional::get)
           .collect(Collectors.toList());
-      final Set<String> servicesInFlight = queuedRequests.stream()
+      final Set<String> inProgressServices = queuedRequests.stream()
           .filter((q) -> q.getCurrentState().isInFlight())
           .map((q) -> q.getQueuedRequestId().getServiceId())
           .collect(Collectors.toSet());
       final Set<QueuedRequestWithState> removedForCurrentInFlightRequest = queuedRequests.stream()
-          .filter((q) -> servicesInFlight.contains(q.getQueuedRequestId().getServiceId()) && !q.getCurrentState().isInFlight())
+          .filter((q) -> inProgressServices.contains(q.getQueuedRequestId().getServiceId()) && !q.getCurrentState().isInFlight())
           .collect(Collectors.toSet());
-      LOG.info("Skipping services {} due to current in-flight updates", String.join(",", servicesInFlight));
+      LOG.info("Skipping services {} due to current in-flight updates", String.join(",", inProgressServices));
 
       queuedRequests.removeAll(removedForCurrentInFlightRequest);
 
@@ -284,7 +284,6 @@ public class BaragonRequestWorker implements Runnable {
         added = collectRequests(added, queuedRequests, nonServiceChanges, serviceChanges);
 
         // Now take the list of non-service-change requests,
-        // hydrate them with state,
         // and sort them such that the quicker noValidate / noReload requests come first.
         List<QueuedRequestWithState> hydratedNonServiceChanges = nonServiceChanges.stream()
             .map(someRequest -> new MaybeAdjustedRequest(someRequest, false))
