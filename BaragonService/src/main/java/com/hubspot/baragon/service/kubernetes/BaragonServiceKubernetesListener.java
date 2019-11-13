@@ -83,7 +83,7 @@ public class BaragonServiceKubernetesListener extends KubernetesListener {
 
   private boolean shouldUpdate(BaragonService updatedService, List<UpstreamInfo> newUpstreams, BaragonService existing) {
     List<UpstreamInfo> existingK8sUpstreams = stateDatastore.getUpstreams(updatedService.getServiceId()).stream()
-        .filter((u) -> kubernetesConfiguration.getUpstreamGroups().contains(u.getGroup()))
+        .filter((u) -> kubernetesConfiguration.getUpstreamGroups().contains(u.getGroup())) // TODO - reverse this to ignore specific groups
         .collect(Collectors.toList());
     return !updatedService.equals(existing) || !haveSameElements(newUpstreams, existingK8sUpstreams);
   }
