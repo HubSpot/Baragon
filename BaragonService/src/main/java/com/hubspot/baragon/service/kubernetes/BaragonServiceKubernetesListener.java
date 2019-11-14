@@ -1,5 +1,6 @@
 package com.hubspot.baragon.service.kubernetes;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -17,6 +18,7 @@ import com.hubspot.baragon.data.BaragonStateDatastore;
 import com.hubspot.baragon.kubernetes.KubernetesListener;
 import com.hubspot.baragon.models.BaragonRequest;
 import com.hubspot.baragon.models.BaragonService;
+import com.hubspot.baragon.models.RequestAction;
 import com.hubspot.baragon.models.UpstreamInfo;
 import com.hubspot.baragon.service.BaragonServiceModule;
 import com.hubspot.baragon.service.managers.RequestManager;
@@ -38,12 +40,10 @@ public class BaragonServiceKubernetesListener extends KubernetesListener {
   }
 
   @Override
-  public void processServiceDelete(String serviceName, String upstreamGroup) {
-    // TODO - if upstreams remain in other groups, only delete the relevant upstreams
+  public void processServiceDelete(String serviceId, String upstreamGroup) {
     lock.lock();
     try {
-      BaragonRequest baragonRequest = createDeleteRequest(service);
-      requestManager.commitRequest(baragonRequest);
+      processDelete(serviceId, upstreamGroup);
     } catch (Throwable t) {
       LOG.error("Could not commit update from kubernetes watcher", t);
     } finally {
@@ -71,23 +71,62 @@ public class BaragonServiceKubernetesListener extends KubernetesListener {
   }
 
   @Override
-  public void processUpstreamsUpdate(String serviceName, String upstreamGroup, List<UpstreamInfo> activeUpstreams) {
+  public void processUpstreamsUpdate(String serviceId, String upstreamGroup, List<UpstreamInfo> activeUpstreams) {
     // only update the specified group
   }
 
   @Override
-  public void processEndpointsDelete(String serviceName, String upstreamGroup) {
-    // TODO - if upstreams remain in other groups, only delete the relevant upstreams
-    // if service exists, leave as a service with no upstreams
+  public void processEndpointsDelete(String serviceId, String upstreamGroup) {
+    lock.lock();
+    try {
+      processDelete(serviceId, upstreamGroup);
+    } catch (Throwable t) {
+      LOG.error("Could not commit update from kubernetes watcher", t);
+    } finally {
+      lock.unlock();
+    }
   }
 
   private boolean shouldUpdate(BaragonService updatedService, List<UpstreamInfo> newUpstreams, BaragonService existing) {
     List<UpstreamInfo> existingK8sUpstreams = stateDatastore.getUpstreams(updatedService.getServiceId()).stream()
-        .filter((u) -> kubernetesConfiguration.getUpstreamGroups().contains(u.getGroup())) // TODO - reverse this to ignore specific groups
+        .filter((u) -> !kubernetesConfiguration.getIgnoreUpstreamGroups().contains(u.getGroup()))
         .collect(Collectors.toList());
     return !updatedService.equals(existing) || !haveSameElements(newUpstreams, existingK8sUpstreams);
   }
 
+  private void processDelete(String serviceId, String upstreamGroup) throws Exception {
+    Map<Boolean, List<UpstreamInfo>> partitionedUpstreams = stateDatastore.getUpstreams(serviceId)
+        .stream()
+        .collect(Collectors.partitioningBy((u) -> u.getGroup().equals(upstreamGroup)));
+    Optional<BaragonService> maybeService = stateDatastore.getService(serviceId);
+    if (partitionedUpstreams.get(false).isEmpty()) {
+      LOG.info("No remaining upstreams for {}, deleting", serviceId);
+      if (maybeService.isPresent()) {
+        BaragonRequest baragonRequest = createDeleteRequest(maybeService.get());
+        requestManager.commitRequest(baragonRequest);
+      } else {
+        LOG.warn("No service present for {} to process delete", serviceId);
+      }
+    } else if (maybeService.isPresent()) {
+      LOG.info("Received service delete, but upstreams in other groups remain, removing upstreams for group {} from {}", upstreamGroup, serviceId);
+      BaragonRequest request = new BaragonRequest(
+          String.format("k8s-delete-%d", System.nanoTime()),
+          maybeService.get(),
+          Collections.emptyList(),
+          partitionedUpstreams.get(true),
+          Collections.emptyList(),
+          Optional.absent(),
+          Optional.of(RequestAction.UPDATE),
+          false,
+          false,
+          false,
+          false
+      );
+      requestManager.commitRequest(request);
+    } else {
+      LOG.warn("No service present for {} to process endpoints delete", serviceId);
+    }
+  }
 
   private <T> boolean haveSameElements(final List<T> list1, final List<T> list2) {
     if (list1 == list2) {

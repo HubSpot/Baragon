@@ -89,7 +89,7 @@ public class KubernetesEndpointsWatcher extends BaragonKubernetesWatcher<Endpoin
     }
     Map<String, String> annotations = endpoints.getMetadata().getAnnotations();
     String upstreamGroup = annotations.getOrDefault(kubernetesConfiguration.getUpstreamGroupsAnnotation(), "default");
-    if (!kubernetesConfiguration.getUpstreamGroups().contains(upstreamGroup)) {
+    if (kubernetesConfiguration.getIgnoreUpstreamGroups().contains(upstreamGroup)) {
       LOG.warn("Upstream group not managed by baragon, skipping (endpoints: {})", endpoints);
       return;
     }
@@ -104,7 +104,7 @@ public class KubernetesEndpointsWatcher extends BaragonKubernetesWatcher<Endpoin
 
     Map<String, String> annotations = endpoints.getMetadata().getAnnotations();
     String upstreamGroup = annotations.getOrDefault(kubernetesConfiguration.getUpstreamGroupsAnnotation(), "default");
-    if (!kubernetesConfiguration.getUpstreamGroups().contains(upstreamGroup)) {
+    if (kubernetesConfiguration.getIgnoreUpstreamGroups().contains(upstreamGroup)) {
       LOG.warn("Upstream group not managed by baragon, skipping (endpoints: {})", endpoints);
       return;
     }

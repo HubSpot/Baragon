@@ -1,10 +1,6 @@
 package com.hubspot.baragon.kubernetes;
 
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 import com.google.common.base.Optional;
 import com.hubspot.baragon.config.KubernetesConfiguration;
@@ -33,10 +29,6 @@ public abstract class KubernetesListener {
 
   public abstract void processServiceDelete(String serviceName, String upstreamGroup);
 
-  protected BaragonRequest createBaragonRequest(BaragonService updatedService, List<UpstreamInfo> activeUpstreams) {
-    return createBaragonRequest(updatedService, activeUpstreams, stateDatastore.getUpstreams(updatedService.getServiceId()));
-  }
-
   protected BaragonRequest createDeleteRequest(BaragonService service) {
     String requestId = String.format("k8s-delete-%d", System.nanoTime());
     return new BaragonRequestBuilder()
@@ -44,40 +36,5 @@ public abstract class KubernetesListener {
         .setLoadBalancerRequestId(requestId)
         .setLoadBalancerService(service)
         .build();
-  }
-
-  protected BaragonRequest createBaragonRequest(BaragonService updatedService, List<UpstreamInfo> activeUpstreams, Collection<UpstreamInfo> existingUpstreams) {
-    Map<Boolean, List<UpstreamInfo>> partitionedUpstreams = existingUpstreams.stream()
-        .collect(Collectors.partitioningBy((u) -> kubernetesConfiguration.getUpstreamGroups().contains(u.getGroup())));
-
-    List<UpstreamInfo> nonK8sUpstreams = partitionedUpstreams.getOrDefault(false, Collections.emptyList());
-    List<UpstreamInfo> toRemove = partitionedUpstreams.getOrDefault(true, Collections.emptyList())
-        .stream()
-        .filter((u) -> !activeUpstreams.contains(u))
-        .collect(Collectors.toList());
-
-    BaragonService relevantService;
-    if (nonK8sUpstreams.isEmpty()) {
-      relevantService = updatedService;
-    } else {
-      // K8s integration supports a subset of features, take existing extra options if non-k8s is also present
-      relevantService = stateDatastore.getService(updatedService.getServiceId()).or(updatedService);
-    }
-
-    String requestId = String.format("k8s-%d", System.nanoTime());
-
-    return new BaragonRequest(
-        requestId,
-        relevantService,
-        activeUpstreams,
-        toRemove,
-        Collections.emptyList(),
-        Optional.absent(),
-        Optional.of(RequestAction.UPDATE),
-        false,
-        false,
-        false,
-        false
-    );
   }
 }
