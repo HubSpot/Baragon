@@ -271,7 +271,9 @@ public class BaragonRequestWorker implements Runnable {
       final Set<QueuedRequestWithState> removedForCurrentInFlightRequest = queuedRequests.stream()
           .filter((q) -> inProgressServices.contains(q.getQueuedRequestId().getServiceId()) && !q.getCurrentState().isInFlight())
           .collect(Collectors.toSet());
-      LOG.info("Skipping services {} due to current in-flight updates", String.join(",", inProgressServices));
+      if (!inProgressServices.isEmpty()) {
+        LOG.info("Skipping new updates for services {} due to current in-flight updates", String.join(",", inProgressServices));
+      }
 
       queuedRequests.removeAll(removedForCurrentInFlightRequest);
 
