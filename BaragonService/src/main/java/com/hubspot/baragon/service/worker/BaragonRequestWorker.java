@@ -311,6 +311,7 @@ public class BaragonRequestWorker implements Runnable {
             .filter((q) -> {
               if (inProgressServices.contains(q.getQueuedRequestId().getServiceId())) {
                 LOG.info("Skipping {} because {} already has an in progress request", q.getQueuedRequestId().getRequestId(), q.getQueuedRequestId().getServiceId());
+                nonServiceChanges.remove(q);
                 return false;
               }
               return true;
