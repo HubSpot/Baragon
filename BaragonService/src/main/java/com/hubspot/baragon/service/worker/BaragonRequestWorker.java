@@ -304,8 +304,17 @@ public class BaragonRequestWorker implements Runnable {
         LOG.debug("Processing {} BaragonRequests which don't modify a BaragonService", nonServiceChanges.size());
         handleResultStates(handleQueuedRequests(hydratedNonServiceChanges));
 
-        // Now send off the service change requests.
+        inProgressServices.addAll(hydratedNonServiceChanges.stream().map((q) -> q.getQueuedRequestId().getServiceId()).collect(Collectors.toSet()));
+
+        // Now send off the service change requests, after filtering for services already in flight
         List<QueuedRequestWithState> hydratedServiceChanges = serviceChanges.stream()
+            .filter((q) -> {
+              if (inProgressServices.contains(q.getQueuedRequestId().getServiceId())) {
+                LOG.info("Skipping {} because {} already has an in progress request", q.getQueuedRequestId().getRequestId(), q.getQueuedRequestId().getServiceId());
+                return false;
+              }
+              return true;
+            })
             .sorted(queuedRequestComparator())
             .collect(Collectors.toList());
 
