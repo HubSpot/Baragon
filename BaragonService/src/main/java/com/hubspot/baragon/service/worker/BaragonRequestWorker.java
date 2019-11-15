@@ -321,6 +321,7 @@ public class BaragonRequestWorker implements Runnable {
         LOG.debug("Processing {} BaragonRequests which don't modify a BaragonService", nonServiceChanges.size());
         handleResultStates(handleQueuedRequests(hydratedNonServiceChanges));
 
+        queuedRequests.removeAll(hydratedNonServiceChanges);
         inProgressServices.addAll(hydratedNonServiceChanges.stream().map((q) -> q.getQueuedRequestId().getServiceId()).collect(Collectors.toSet()));
 
         // Now send off the service change requests, after filtering for services already in flight
@@ -338,8 +339,8 @@ public class BaragonRequestWorker implements Runnable {
         LOG.debug("Processing {} BaragonRequests which modify a BaragonService", serviceChanges.size());
         handleResultStates(handleQueuedRequests(hydratedServiceChanges));
 
-        queuedRequests.removeAll(nonServiceChanges);
         queuedRequests.removeAll(hydratedServiceChanges);
+        inProgressServices.addAll(hydratedServiceChanges.stream().map((q) -> q.getQueuedRequestId().getServiceId()).collect(Collectors.toSet()));
 
         // ...and repeat until we've processed up to the limit of requests
       }
