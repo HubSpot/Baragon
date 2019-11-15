@@ -273,14 +273,22 @@ public class BaragonRequestWorker implements Runnable {
           .filter((q) -> q.getCurrentState().isInFlight())
           .map((q) -> q.getQueuedRequestId().getServiceId())
           .collect(Collectors.toSet());
+
       final Set<QueuedRequestWithState> removedForCurrentInFlightRequest = queuedRequests.stream()
           .filter((q) -> inProgressServices.contains(q.getQueuedRequestId().getServiceId()) && !q.getCurrentState().isInFlight())
           .collect(Collectors.toSet());
       if (!inProgressServices.isEmpty()) {
         LOG.info("Skipping new updates for services {} due to current in-flight updates", String.join(",", inProgressServices));
       }
-
       queuedRequests.removeAll(removedForCurrentInFlightRequest);
+
+      // First process results for any requests that were already in-flight
+      List<QueuedRequestWithState> inFlightRequests = queuedRequests.stream()
+          .filter((q) -> q.getCurrentState().isInFlight())
+          .collect(Collectors.toList());
+      LOG.debug("Processing {} BaragonRequests which are already in-flight", inFlightRequests.size());
+      handleResultStates(handleQueuedRequests(inFlightRequests));
+      queuedRequests.removeAll(inFlightRequests);
 
       int added = 0;
 
@@ -288,20 +296,20 @@ public class BaragonRequestWorker implements Runnable {
         ArrayList<QueuedRequestWithState> nonServiceChanges = new ArrayList<>();
         ArrayList<QueuedRequestWithState> serviceChanges = new ArrayList<>();
 
-        // First process results for any requests that were already in-flight
-        List<QueuedRequestWithState> inFlightRequests = queuedRequests.stream()
-            .filter((q) -> q.getCurrentState().isInFlight())
-            .collect(Collectors.toList());
-        LOG.debug("Processing {} BaragonRequests which are already in-flight", inFlightRequests.size());
-        handleResultStates(handleQueuedRequests(inFlightRequests));
-        queuedRequests.removeAll(inFlightRequests);
-
         // Build the batches of requests to be sent to agents
         added = collectRequests(added, queuedRequests, nonServiceChanges, serviceChanges);
 
         // Now take the list of non-service-change requests,
         // and sort them such that the quicker noValidate / noReload requests come first.
         List<QueuedRequestWithState> hydratedNonServiceChanges = nonServiceChanges.stream()
+            .filter((q) -> {
+              // Filter here as well since the Set has changed by the second run of the while loop
+              if (inProgressServices.contains(q.getQueuedRequestId().getServiceId())) {
+                LOG.info("Skipping {} because {} already has an in progress request", q.getQueuedRequestId().getRequestId(), q.getQueuedRequestId().getServiceId());
+                return false;
+              }
+              return true;
+            })
             .map(someRequest -> new MaybeAdjustedRequest(someRequest, false))
             .map(this::setNoValidateIfRequestRemovesUpstreamsOnly)
             .map(this::preResolveDNS)
