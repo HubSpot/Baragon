@@ -285,14 +285,14 @@ public class BaragonRequestWorker implements Runnable {
       handleResultStates(handleQueuedRequests(inFlightRequests));
       queuedRequests.removeAll(inFlightRequests);
 
-      int added = 0;
+      int added = inFlightRequests.size();
 
       while (added < configuration.getWorkerConfiguration().getMaxRequestsPerPoll() && !queuedRequests.isEmpty()) {
         ArrayList<QueuedRequestWithState> nonServiceChanges = new ArrayList<>();
         ArrayList<QueuedRequestWithState> serviceChanges = new ArrayList<>();
 
         // Build the batches of requests to be sent to agents
-        added = collectRequests(added, queuedRequests, nonServiceChanges, serviceChanges);
+        collectRequests(added, queuedRequests, nonServiceChanges, serviceChanges);
 
         // Now take the list of non-service-change requests,
         // and sort them such that the quicker noValidate / noReload requests come first.
@@ -312,6 +312,8 @@ public class BaragonRequestWorker implements Runnable {
             .sorted(queuedRequestComparator())
             .collect(Collectors.toList());
 
+        added += hydratedNonServiceChanges.size();
+
         // Then send them off.
         LOG.debug("Processing {} BaragonRequests which don't modify a BaragonService", nonServiceChanges.size());
         handleResultStates(handleQueuedRequests(hydratedNonServiceChanges));
@@ -330,6 +332,8 @@ public class BaragonRequestWorker implements Runnable {
             })
             .sorted(queuedRequestComparator())
             .collect(Collectors.toList());
+
+        added += hydratedServiceChanges.size();
 
         LOG.debug("Processing {} BaragonRequests which modify a BaragonService", serviceChanges.size());
         handleResultStates(handleQueuedRequests(hydratedServiceChanges));
@@ -463,7 +467,7 @@ public class BaragonRequestWorker implements Runnable {
     }
   }
 
-  private int collectRequests(int previouslyAdded,
+  private void collectRequests(int previouslyAdded,
                               List<QueuedRequestWithState> queuedRequests,
                               ArrayList<QueuedRequestWithState> nonServiceChanges,
                               ArrayList<QueuedRequestWithState> serviceChanges) {
@@ -472,7 +476,7 @@ public class BaragonRequestWorker implements Runnable {
 
     for (QueuedRequestWithState queuedRequest : queuedRequests) {
       if (added >= configuration.getWorkerConfiguration().getMaxRequestsPerPoll()) {
-        return added;
+        return;
       }
 
       if (boundaryServices.contains(queuedRequest.getQueuedRequestId().getServiceId())) {
@@ -490,7 +494,7 @@ public class BaragonRequestWorker implements Runnable {
         added++;
       }
     }
-    return added;
+    return;
   }
 
   private boolean isBatchBoundary(BaragonRequest baragonRequest) {
