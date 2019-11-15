@@ -1,6 +1,12 @@
 package com.hubspot.baragon.kubernetes;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Optional;
 import com.hubspot.baragon.config.KubernetesConfiguration;
@@ -12,6 +18,8 @@ import com.hubspot.baragon.models.RequestAction;
 import com.hubspot.baragon.models.UpstreamInfo;
 
 public abstract class KubernetesListener {
+  private static final Logger LOG = LoggerFactory.getLogger(KubernetesListener.class);
+
   protected final BaragonStateDatastore stateDatastore;
   protected final KubernetesConfiguration kubernetesConfiguration;
 

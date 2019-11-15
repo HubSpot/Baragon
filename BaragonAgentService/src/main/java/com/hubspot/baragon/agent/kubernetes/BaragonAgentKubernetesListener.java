@@ -89,7 +89,12 @@ public class BaragonAgentKubernetesListener extends KubernetesListener {
   @Override
   public void processUpstreamsUpdate(String serviceId, String upstreamGroup, List<UpstreamInfo> activeUpstreams) {
     Optional<BaragonService> maybeService = stateDatastore.getService(serviceId);
-    if (maybeService.isPresent() && !isRelevantUpdate(maybeService.get())) {
+    if (!maybeService.isPresent()) {
+      LOG.info("No service definition for {}, skipping update", serviceId);
+      LOG.trace("Skipped update {} - {}", serviceId, activeUpstreams);
+      return;
+    }
+    if (!isRelevantUpdate(maybeService.get())) {
       LOG.debug("Not relevant update for agent's group/domains, skipping ({})", serviceId);
       LOG.trace("Skipped update {} - {}", serviceId, activeUpstreams);
       return;

@@ -1,5 +1,7 @@
 package com.hubspot.baragon.service.kubernetes;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -53,16 +55,32 @@ public class BaragonServiceKubernetesListener extends KubernetesListener {
 
   @Override
   public void processServiceUpdate(BaragonService updatedService) {
-    // TODO
     lock.lock();
     try {
-      Optional<BaragonService> existing = stateDatastore.getService(updatedService.getServiceId());
-      if (existing.isPresent() && !shouldUpdate(updatedService, activeUpstreams, existing.get())) {
-        LOG.debug("No changes in service {}, skipping update from k8s watcher", updatedService.getServiceId());
-      }
+      Optional<BaragonService> existingService = stateDatastore.getService(updatedService.getServiceId());
+      List<UpstreamInfo> existingUpstreams = new ArrayList<>(stateDatastore.getUpstreams(updatedService.getServiceId()));
+      Map<Boolean, List<UpstreamInfo>> partitionedUpstreams = existingUpstreams.stream()
+          .collect(Collectors.partitioningBy((u) -> kubernetesConfiguration.getIgnoreUpstreamGroups().contains(u.getGroup())));
 
-      BaragonRequest baragonRequest = createBaragonRequest(updatedService, activeUpstreams);
-      requestManager.commitRequest(baragonRequest);
+      // K8s integration supports a subset of features, take existing extra options if non-k8s upstreams also present
+      if (existingService.isPresent() && !existingService.get().equals(updatedService) && partitionedUpstreams.get(true).isEmpty()) {
+        BaragonRequest baragonRequest = new BaragonRequest(
+            String.format("k8s-update-service-%d", System.nanoTime()),
+            updatedService,
+            Collections.emptyList(),
+            Collections.emptyList(),
+            Collections.emptyList(),
+            Optional.absent(),
+            Optional.of(RequestAction.UPDATE),
+            false,
+            false,
+            false,
+            false
+        );
+        requestManager.commitRequest(baragonRequest);
+      } else {
+        LOG.debug("No update to service {} (existing {}), skipping", updatedService, existingService);
+      }
     } catch (Throwable t) {
       LOG.error("Could not commit update from kubernetes watcher", t);
     } finally {
@@ -72,7 +90,53 @@ public class BaragonServiceKubernetesListener extends KubernetesListener {
 
   @Override
   public void processUpstreamsUpdate(String serviceId, String upstreamGroup, List<UpstreamInfo> activeUpstreams) {
-    // only update the specified group
+    lock.lock();
+    try {
+      Optional<BaragonService> maybeService = stateDatastore.getService(serviceId);
+      if (!maybeService.isPresent()) {
+        LOG.info("No service definition for {}, skipping update", serviceId);
+        LOG.trace("Skipped update {} - {}", serviceId, activeUpstreams);
+        return;
+      }
+
+      Collection<UpstreamInfo> existingUpstreams = stateDatastore.getUpstreams(serviceId);
+
+      List<UpstreamInfo> toRemove = existingUpstreams
+          .stream()
+          .filter((u) -> {
+            boolean groupMatches = u.getGroup().equals(upstreamGroup);
+            if (!groupMatches) {
+              return false;
+            }
+            for (UpstreamInfo active : activeUpstreams) {
+              if (UpstreamInfo.upstreamAndGroupMatches(u, active)) {
+                return false;
+              }
+            }
+            return true;
+          })
+          .collect(Collectors.toList());
+
+      BaragonRequest baragonRequest = new BaragonRequest(
+          String.format("k8s-update-uptreams-%d", System.nanoTime()),
+          maybeService.get(),
+          activeUpstreams,
+          toRemove,
+          Collections.emptyList(),
+          Optional.absent(),
+          Optional.of(RequestAction.UPDATE),
+          false,
+          false,
+          true,
+          false
+      );
+
+      requestManager.commitRequest(baragonRequest);
+    } catch (Throwable t) {
+      LOG.error("Could not commit update from kubernetes watcher", t);
+    } finally {
+      lock.unlock();
+    }
   }
 
   @Override
@@ -85,13 +149,6 @@ public class BaragonServiceKubernetesListener extends KubernetesListener {
     } finally {
       lock.unlock();
     }
-  }
-
-  private boolean shouldUpdate(BaragonService updatedService, List<UpstreamInfo> newUpstreams, BaragonService existing) {
-    List<UpstreamInfo> existingK8sUpstreams = stateDatastore.getUpstreams(updatedService.getServiceId()).stream()
-        .filter((u) -> !kubernetesConfiguration.getIgnoreUpstreamGroups().contains(u.getGroup()))
-        .collect(Collectors.toList());
-    return !updatedService.equals(existing) || !haveSameElements(newUpstreams, existingK8sUpstreams);
   }
 
   private void processDelete(String serviceId, String upstreamGroup) throws Exception {
