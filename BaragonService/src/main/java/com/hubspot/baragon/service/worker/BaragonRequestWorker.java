@@ -288,6 +288,15 @@ public class BaragonRequestWorker implements Runnable {
         ArrayList<QueuedRequestWithState> nonServiceChanges = new ArrayList<>();
         ArrayList<QueuedRequestWithState> serviceChanges = new ArrayList<>();
 
+        // First process results for any requests that were already in-flight
+        List<QueuedRequestWithState> inFlightRequests = queuedRequests.stream()
+            .filter((q) -> q.getCurrentState().isInFlight())
+            .collect(Collectors.toList());
+        LOG.debug("Processing {} BaragonRequests which are already in-flight", inFlightRequests.size());
+        handleResultStates(handleQueuedRequests(inFlightRequests));
+        queuedRequests.removeAll(inFlightRequests);
+
+        // Build the batches of requests to be sent to agents
         added = collectRequests(added, queuedRequests, nonServiceChanges, serviceChanges);
 
         // Now take the list of non-service-change requests,
