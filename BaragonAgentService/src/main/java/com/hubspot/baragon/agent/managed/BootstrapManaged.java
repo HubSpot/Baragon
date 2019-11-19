@@ -108,8 +108,10 @@ public class BootstrapManaged implements Managed {
     LOG.info("Starting config checker");
     configCheckerFuture = executorService.scheduleAtFixedRate(configChecker, 0, configuration.getConfigCheckIntervalSecs(), TimeUnit.SECONDS);
 
-    LOG.info("Starting state reconciliation checker");
-    stateCheckerFuture = executorService.scheduleAtFixedRate(internalStateChecker, configuration.getStateCheckIntervalSecs(), configuration.getStateCheckIntervalSecs(), TimeUnit.SECONDS);
+    if (configuration.isEnablePollingStateValidation()) {
+      LOG.info("Starting state reconciliation checker");
+      stateCheckerFuture = executorService.scheduleAtFixedRate(internalStateChecker, configuration.getStateCheckIntervalSecs(), configuration.getStateCheckIntervalSecs(), TimeUnit.SECONDS);
+    }
 
     lifecycleHelper.writeStateFileIfConfigured();
 

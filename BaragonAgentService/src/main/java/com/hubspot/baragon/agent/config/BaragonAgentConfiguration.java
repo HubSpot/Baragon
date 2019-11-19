@@ -140,7 +140,7 @@ public class BaragonAgentConfiguration extends Configuration {
   private long expireResolveCacheAfterDays = 30;
 
   @JsonProperty
-  private boolean enablePollingFileValidation = false;
+  private boolean enablePollingStateValidation = false;
 
   public HttpClientConfiguration getHttpClientConfiguration() {
     return httpClientConfiguration;
@@ -410,11 +410,11 @@ public class BaragonAgentConfiguration extends Configuration {
     this.expireResolveCacheAfterDays = expireResolveCacheAfterDays;
   }
 
-  public boolean isEnablePollingFileValidation() {
-    return enablePollingFileValidation;
+  public boolean isEnablePollingStateValidation() {
+    return enablePollingStateValidation;
   }
 
-  public void setEnablePollingFileValidation(boolean enablePollingFileValidation) {
-    this.enablePollingFileValidation = enablePollingFileValidation;
+  public void setEnablePollingStateValidation(boolean enablePollingStateValidation) {
+    this.enablePollingStateValidation = enablePollingStateValidation;
   }
 }
