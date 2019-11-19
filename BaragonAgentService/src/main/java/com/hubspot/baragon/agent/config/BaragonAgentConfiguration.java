@@ -103,6 +103,9 @@ public class BaragonAgentConfiguration extends Configuration {
   @JsonProperty("configCheckIntervalSecs")
   private int configCheckIntervalSecs = 60;
 
+  @JsonProperty("stateCheckIntervalSecs")
+  private int stateCheckIntervalSecs = 600;
+
   @JsonProperty("saveFailedConfigs")
   private boolean saveFailedConfigs = false;
 
@@ -135,6 +138,9 @@ public class BaragonAgentConfiguration extends Configuration {
 
   @JsonProperty
   private long expireResolveCacheAfterDays = 30;
+
+  @JsonProperty
+  private boolean enablePollingFileValidation = false;
 
   public HttpClientConfiguration getHttpClientConfiguration() {
     return httpClientConfiguration;
@@ -300,6 +306,14 @@ public class BaragonAgentConfiguration extends Configuration {
     this.configCheckIntervalSecs = configCheckIntervalSecs;
   }
 
+  public int getStateCheckIntervalSecs() {
+    return stateCheckIntervalSecs;
+  }
+
+  public void setStateCheckIntervalSecs(int stateCheckIntervalSecs) {
+    this.stateCheckIntervalSecs = stateCheckIntervalSecs;
+  }
+
   public boolean isSaveFailedConfigs() {
     return saveFailedConfigs;
   }
@@ -394,5 +408,13 @@ public class BaragonAgentConfiguration extends Configuration {
 
   public void setExpireResolveCacheAfterDays(long expireResolveCacheAfterDays) {
     this.expireResolveCacheAfterDays = expireResolveCacheAfterDays;
+  }
+
+  public boolean isEnablePollingFileValidation() {
+    return enablePollingFileValidation;
+  }
+
+  public void setEnablePollingFileValidation(boolean enablePollingFileValidation) {
+    this.enablePollingFileValidation = enablePollingFileValidation;
   }
 }
