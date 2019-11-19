@@ -109,7 +109,7 @@ public class BootstrapManaged implements Managed {
     configCheckerFuture = executorService.scheduleAtFixedRate(configChecker, 0, configuration.getConfigCheckIntervalSecs(), TimeUnit.SECONDS);
 
     LOG.info("Starting state reconciliation checker");
-    stateCheckerFuture = executorService.scheduleAtFixedRate(internalStateChecker, configuration.getStateCheckIntervalSecs(), configuration.getStateCheckIntervalSecs(), TimeUnit.SECONDS)
+    stateCheckerFuture = executorService.scheduleAtFixedRate(internalStateChecker, configuration.getStateCheckIntervalSecs(), configuration.getStateCheckIntervalSecs(), TimeUnit.SECONDS);
 
     lifecycleHelper.writeStateFileIfConfigured();
 
@@ -124,6 +124,9 @@ public class BootstrapManaged implements Managed {
     }
     if (configCheckerFuture != null) {
       configCheckerFuture.cancel(true);
+    }
+    if (stateCheckerFuture != null) {
+      stateCheckerFuture.cancel(true);
     }
   }
 }

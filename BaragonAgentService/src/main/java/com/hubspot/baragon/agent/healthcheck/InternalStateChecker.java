@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 import com.google.common.base.Optional;
@@ -42,7 +43,7 @@ public class InternalStateChecker implements Runnable {
       }
       Collection<UpstreamInfo> existingUpstreams = stateDatastore.getUpstreams(serviceId);
       BasicServiceContext datastoreContext = new BasicServiceContext(maybeService.get(), existingUpstreams);
-      if (!datastoreContext.equals(context)) {
+      if (!datastoreContext.equals(context) && System.currentTimeMillis() - context.getTimestamp() > TimeUnit.SECONDS.toMillis(60)) {
         invalidServiceMessages.add(String.format("Agent context for %s does not match baragon state (Agent: %s, Service: %s)", serviceId, context, datastoreContext));
       }
     });

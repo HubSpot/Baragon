@@ -12,12 +12,20 @@ import com.google.common.base.MoreObjects;
 public class BasicServiceContext {
   private final BaragonService service;
   private final Collection<UpstreamInfo> upstreams;
+  private final Long timestamp;
 
   @JsonCreator
   public BasicServiceContext(@JsonProperty("service") BaragonService service,
-                             @JsonProperty("upstreams") Collection<UpstreamInfo> upstreams) {
+                             @JsonProperty("upstreams") Collection<UpstreamInfo> upstreams,
+                             @JsonProperty("timestamp") Long timestamp) {
     this.service = service;
-    this.upstreams = MoreObjects.firstNonNull(upstreams, Collections.<UpstreamInfo>emptyList());
+    this.upstreams = MoreObjects.firstNonNull(upstreams, Collections.emptyList());
+    this.timestamp = timestamp;
+  }
+
+  public BasicServiceContext(@JsonProperty("service") BaragonService service,
+                             @JsonProperty("upstreams") Collection<UpstreamInfo> upstreams) {
+    this(service, upstreams, System.currentTimeMillis());
   }
 
   public BaragonService getService() {
@@ -26,6 +34,10 @@ public class BasicServiceContext {
 
   public Collection<UpstreamInfo> getUpstreams() {
     return upstreams;
+  }
+
+  public Long getTimestamp() {
+    return timestamp;
   }
 
   @Override
@@ -71,9 +83,10 @@ public class BasicServiceContext {
 
   @Override
   public String toString() {
-    return "ServiceContext [" +
+    return "BasicServiceContext{" +
         "service=" + service +
         ", upstreams=" + upstreams +
-        ']';
+        ", timestamp=" + timestamp +
+        '}';
   }
 }
