@@ -78,7 +78,7 @@ public class BaragonStateDatastore extends AbstractDataStore {
     return getChildren(String.format(SERVICE_FORMAT, serviceId));
   }
 
-  public Collection<UpstreamInfo> getUpstreams(String serviceId) throws Exception {
+  public Collection<UpstreamInfo> getUpstreams(String serviceId) {
     final Collection<String> upstreamNodes = getUpstreamNodes(serviceId);
     final Collection<UpstreamInfo> upstreams = new ArrayList<>(upstreamNodes.size());
     for (String node : upstreamNodes) {

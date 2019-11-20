@@ -1,8 +1,11 @@
 package com.hubspot.baragon.agent;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicReference;
@@ -63,6 +66,7 @@ import com.hubspot.baragon.data.BaragonLoadBalancerDatastore;
 import com.hubspot.baragon.models.BaragonAgentEc2Metadata;
 import com.hubspot.baragon.models.BaragonAgentMetadata;
 import com.hubspot.baragon.models.BaragonAgentState;
+import com.hubspot.baragon.models.BasicServiceContext;
 import com.hubspot.baragon.utils.JavaUtils;
 import com.hubspot.baragon.utils.UpstreamResolver;
 import com.hubspot.dropwizard.guicier.DropwizardAwareModule;
@@ -83,6 +87,8 @@ public class BaragonAgentServiceModule extends DropwizardAwareModule<BaragonAgen
   public static final String DEFAULT_TEMPLATE_NAME = "default";
   public static final String BARAGON_AGENT_HTTP_CLIENT = "baragon.agent.http.client";
   public static final String CONFIG_ERROR_MESSAGE = "baragon.agent.config.error.message";
+  public static final String LOCAL_STATE_ERROR_MESSAGE = "baragon.agent.local.state.error.message";
+  public static final String INTERNAL_STATE_CACHE = "baragon.agent.internal.state.cache";
 
   private static final Pattern FORMAT_PATTERN = Pattern.compile("[^%]%([+-]?\\d*.?\\d*)?[sdf]");
 
@@ -262,7 +268,14 @@ public class BaragonAgentServiceModule extends DropwizardAwareModule<BaragonAgen
   @Singleton
   @Named(CONFIG_ERROR_MESSAGE)
   public AtomicReference<Optional<String>> providesConfigErrorMessage() {
-    return new AtomicReference<>();
+    return new AtomicReference<>(Optional.absent());
+  }
+
+  @Provides
+  @Singleton
+  @Named(LOCAL_STATE_ERROR_MESSAGE)
+  public Set<String> providesLocalStateErrorMessage() {
+    return new HashSet<>();
   }
 
 
@@ -270,7 +283,7 @@ public class BaragonAgentServiceModule extends DropwizardAwareModule<BaragonAgen
   @Singleton
   @Named(AGENT_SCHEDULED_EXECUTOR)
   public ScheduledExecutorService providesScheduledExecutor() {
-    return Executors.newScheduledThreadPool(2);
+    return Executors.newScheduledThreadPool(3);
   }
 
   @Provides
@@ -314,5 +327,12 @@ public class BaragonAgentServiceModule extends DropwizardAwareModule<BaragonAgen
   @Singleton
   public UpstreamResolver provideUpstreamResolver(BaragonAgentConfiguration config) {
     return new UpstreamResolver(config.getMaxResolveCacheSize(), config.getExpireResolveCacheAfterDays());
+  }
+
+  @Provides
+  @Singleton
+  @Named(INTERNAL_STATE_CACHE)
+  public Map<String, BasicServiceContext> provideStateCache() {
+    return new ConcurrentHashMap<>();
   }
 }

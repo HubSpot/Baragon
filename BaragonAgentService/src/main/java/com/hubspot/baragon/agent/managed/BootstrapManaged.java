@@ -15,6 +15,7 @@ import com.google.inject.name.Named;
 import com.hubspot.baragon.agent.BaragonAgentServiceModule;
 import com.hubspot.baragon.agent.config.BaragonAgentConfiguration;
 import com.hubspot.baragon.agent.healthcheck.ConfigChecker;
+import com.hubspot.baragon.agent.healthcheck.InternalStateChecker;
 import com.hubspot.baragon.agent.listeners.ResyncListener;
 import com.hubspot.baragon.agent.workers.AgentHeartbeatWorker;
 import com.hubspot.baragon.data.BaragonKnownAgentsDatastore;
@@ -39,10 +40,12 @@ public class BootstrapManaged implements Managed {
   private final CuratorFramework curatorFramework;
   private final ResyncListener resyncListener;
   private final ConfigChecker configChecker;
+  private final InternalStateChecker internalStateChecker;
   private final AtomicReference<BaragonAgentState> agentState;
 
   private ScheduledFuture<?> requestWorkerFuture = null;
   private ScheduledFuture<?> configCheckerFuture = null;
+  private ScheduledFuture<?> stateCheckerFuture = null;
 
   @Inject
   public BootstrapManaged(BaragonKnownAgentsDatastore knownAgentsDatastore,
@@ -55,6 +58,7 @@ public class BootstrapManaged implements Managed {
                           ResyncListener resyncListener,
                           ConfigChecker configChecker,
                           AtomicReference<BaragonAgentState> agentState,
+                          InternalStateChecker internalStateChecker,
                           @Named(BaragonAgentServiceModule.AGENT_SCHEDULED_EXECUTOR) ScheduledExecutorService executorService,
                           @Named(BaragonAgentServiceModule.AGENT_LEADER_LATCH) LeaderLatch leaderLatch) {
     this.configuration = configuration;
@@ -68,6 +72,7 @@ public class BootstrapManaged implements Managed {
     this.agentHeartbeatWorker = agentHeartbeatWorker;
     this.lifecycleHelper = lifecycleHelper;
     this.configChecker = configChecker;
+    this.internalStateChecker = internalStateChecker;
     this.agentState = agentState;
   }
 
@@ -103,6 +108,11 @@ public class BootstrapManaged implements Managed {
     LOG.info("Starting config checker");
     configCheckerFuture = executorService.scheduleAtFixedRate(configChecker, 0, configuration.getConfigCheckIntervalSecs(), TimeUnit.SECONDS);
 
+    if (configuration.isEnablePollingStateValidation()) {
+      LOG.info("Starting state reconciliation checker");
+      stateCheckerFuture = executorService.scheduleAtFixedRate(internalStateChecker, configuration.getStateCheckIntervalSecs(), configuration.getStateCheckIntervalSecs(), TimeUnit.SECONDS);
+    }
+
     lifecycleHelper.writeStateFileIfConfigured();
 
     agentState.set(BaragonAgentState.ACCEPTING);
@@ -111,5 +121,14 @@ public class BootstrapManaged implements Managed {
   @Override
   public void stop() throws Exception {
     lifecycleHelper.shutdown();
+    if (requestWorkerFuture != null) {
+      requestWorkerFuture.cancel(true);
+    }
+    if (configCheckerFuture != null) {
+      configCheckerFuture.cancel(true);
+    }
+    if (stateCheckerFuture != null) {
+      stateCheckerFuture.cancel(true);
+    }
   }
 }
