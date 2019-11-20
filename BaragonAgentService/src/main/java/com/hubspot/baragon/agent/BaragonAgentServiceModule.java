@@ -29,7 +29,9 @@ import com.google.inject.Binder;
 import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.Singleton;
+import com.google.inject.TypeLiteral;
 import com.google.inject.name.Named;
+import com.google.inject.name.Names;
 import com.hubspot.baragon.BaragonDataModule;
 import com.hubspot.baragon.agent.config.BaragonAgentConfiguration;
 import com.hubspot.baragon.agent.config.LoadBalancerConfiguration;
@@ -127,6 +129,10 @@ public class BaragonAgentServiceModule extends DropwizardAwareModule<BaragonAgen
     binder.bind(FilesystemConfigHelper.class).in(Scopes.SINGLETON);
     binder.bind(AgentHeartbeatWorker.class).in(Scopes.SINGLETON);
     binder.bind(InternalStateChecker.class).in(Scopes.SINGLETON);
+
+    binder.bind(new TypeLiteral<Map<String, BasicServiceContext>>() {})
+        .annotatedWith(Names.named(INTERNAL_STATE_CACHE))
+        .toInstance(new ConcurrentHashMap<>());
 
 
     // Kubernetes
@@ -348,10 +354,5 @@ public class BaragonAgentServiceModule extends DropwizardAwareModule<BaragonAgen
   @Singleton
   public KubernetesConfiguration provideKubernetesConfig(BaragonAgentConfiguration config) {
     return config.getKubernetesConfiguration();
-  }
-
-  @Named(INTERNAL_STATE_CACHE)
-  public Map<String, BasicServiceContext> provideStateCache() {
-    return new ConcurrentHashMap<>();
   }
 }
