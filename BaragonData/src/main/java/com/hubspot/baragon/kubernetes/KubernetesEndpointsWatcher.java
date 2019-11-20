@@ -87,8 +87,8 @@ public class KubernetesEndpointsWatcher extends BaragonKubernetesWatcher<Endpoin
     if (serviceName == null) {
       return;
     }
-    Map<String, String> annotations = endpoints.getMetadata().getAnnotations();
-    String upstreamGroup = annotations.getOrDefault(kubernetesConfiguration.getUpstreamGroupsAnnotation(), "default");
+    Map<String, String> labels = endpoints.getMetadata().getLabels();
+    String upstreamGroup = labels.getOrDefault(kubernetesConfiguration.getUpstreamGroupsLabel(), "default");
     if (kubernetesConfiguration.getIgnoreUpstreamGroups().contains(upstreamGroup)) {
       LOG.warn("Upstream group not managed by baragon, skipping (endpoints: {})", endpoints);
       return;
@@ -102,14 +102,21 @@ public class KubernetesEndpointsWatcher extends BaragonKubernetesWatcher<Endpoin
       return;
     }
 
-    Map<String, String> annotations = endpoints.getMetadata().getAnnotations();
-    String upstreamGroup = annotations.getOrDefault(kubernetesConfiguration.getUpstreamGroupsAnnotation(), "default");
+    Map<String, String> labels = endpoints.getMetadata().getLabels();
+    String upstreamGroup = labels.getOrDefault(kubernetesConfiguration.getUpstreamGroupsLabel(), "default");
     if (kubernetesConfiguration.getIgnoreUpstreamGroups().contains(upstreamGroup)) {
       LOG.warn("Upstream group not managed by baragon, skipping (endpoints: {})", endpoints);
       return;
     }
 
-    String desiredProtocol = Optional.fromNullable(annotations.get(kubernetesConfiguration.getProtocolAnnotation())).or("HTTP");
+    // TODO - better handling of this from endpoint data itself instead of an annotation
+    Map<String, String> annotations = endpoints.getMetadata().getAnnotations();
+    String desiredProtocol;
+    if (annotations == null) {
+      desiredProtocol = "HTTP";
+    } else {
+      desiredProtocol = Optional.fromNullable(annotations.get(kubernetesConfiguration.getProtocolAnnotation())).or("HTTP");
+    }
     listener.processUpstreamsUpdate(serviceName, upstreamGroup, parseActiveUpstreams(endpoints, upstreamGroup, desiredProtocol));
   }
 
