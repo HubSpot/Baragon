@@ -53,6 +53,7 @@ import com.hubspot.baragon.models.BaragonAgentState;
 import com.hubspot.baragon.models.BaragonAuthKey;
 import com.hubspot.baragon.models.BaragonConfigFile;
 import com.hubspot.baragon.models.BaragonServiceState;
+import com.hubspot.baragon.models.BasicServiceContext;
 import com.hubspot.baragon.models.ServiceContext;
 import com.hubspot.baragon.models.TrafficSourceState;
 import com.hubspot.horizon.HttpRequest;
@@ -82,6 +83,7 @@ public class LifecycleHelper {
   private final LeaderLatch leaderLatch;
   private final ReentrantLock agentLock;
   private final long agentLockTimeoutMs;
+  private final Map<String, BasicServiceContext> internalStateCache;
   private final AtomicInteger bootstrapStateNodeVersion = new AtomicInteger(0);
 
   @Inject
@@ -97,7 +99,8 @@ public class LifecycleHelper {
                          @Named(BaragonAgentServiceModule.AGENT_SCHEDULED_EXECUTOR) ScheduledExecutorService executorService,
                          @Named(BaragonAgentServiceModule.AGENT_LEADER_LATCH) LeaderLatch leaderLatch,
                          @Named(BaragonAgentServiceModule.AGENT_LOCK) ReentrantLock agentLock,
-                         @Named(BaragonAgentServiceModule.AGENT_LOCK_TIMEOUT_MS) long agentLockTimeoutMs) {
+                         @Named(BaragonAgentServiceModule.AGENT_LOCK_TIMEOUT_MS) long agentLockTimeoutMs,
+                         @Named(BaragonAgentServiceModule.INTERNAL_STATE_CACHE) Map<String, BasicServiceContext> internalStateCache) {
     this.workerDatastore = workerDatastore;
     this.authDatastore = authDatastore;
     this.configuration = configuration;
@@ -111,6 +114,7 @@ public class LifecycleHelper {
     this.leaderLatch = leaderLatch;
     this.agentLock = agentLock;
     this.agentLockTimeoutMs = agentLockTimeoutMs;
+    this.internalStateCache = internalStateCache;
   }
 
   public void notifyService(String action) throws Exception {
@@ -221,32 +225,36 @@ public class LifecycleHelper {
       LOG.info("Going to apply {} services...", todo.size());
 
       try {
-        List<Optional<Pair<ServiceContext, Collection<BaragonConfigFile>>>> toApply = new ArrayList<>();
+        List<Pair<ServiceContext, Collection<BaragonConfigFile>>> toApply = new ArrayList<>();
         List<Future<Optional<Pair<ServiceContext, Collection<BaragonConfigFile>>>>> applied = executorService.invokeAll(todo);
         for (Future<Optional<Pair<ServiceContext, Collection<BaragonConfigFile>>>> serviceFuture : applied) {
           Optional<Pair<ServiceContext, Collection<BaragonConfigFile>>> maybeToApply = serviceFuture.get();
           if (maybeToApply.isPresent()) {
-            toApply.add(maybeToApply);
+            toApply.add(maybeToApply.get());
           }
         }
 
-        toApply.stream().forEach(item -> {
+        toApply.forEach(item -> {
           try {
-            configHelper.bootstrapApplyWrite(item.get().getKey(), item.get().getValue());
+            configHelper.bootstrapApplyWrite(item.getKey(), item.getValue());
           } catch (Exception e) {
-            LOG.error("Caught exception while applying write {} during bootstrap", item.get().getKey().getService().getServiceId(), e);
+            LOG.error("Caught exception while applying write {} during bootstrap", item.getKey().getService().getServiceId(), e);
           }
         });
 
         try {
           configHelper.bootstrapApplyCheck(toApply);
         } catch (Exception e) {
-          for (Optional<Pair<ServiceContext, Collection<BaragonConfigFile>>> item : toApply) {
-            configHelper.bootstrapApply(item.get().getKey(), item.get().getValue());
+          for (Pair<ServiceContext, Collection<BaragonConfigFile>> item : toApply) {
+            configHelper.bootstrapApply(item.getKey(), item.getValue());
           }
         }
 
         configHelper.reloadConfigs();
+        toApply.forEach((item) -> internalStateCache.put(
+            item.getKey().getService().getServiceId(),
+            new BasicServiceContext(item.getKey().getService(), item.getKey().getUpstreams()))
+        );
       } catch (Exception e) {
         LOG.error("Caught exception while applying and parsing configs", e);
         if (configuration.isExitOnStartupError()) {
@@ -260,13 +268,7 @@ public class LifecycleHelper {
     }
   }
 
-  private Collection<BaragonServiceState> getGlobalStateWithRetry() throws AgentServiceNotifyException {
-    Callable<Collection<BaragonServiceState>> callable = new Callable<Collection<BaragonServiceState>>() {
-      public Collection<BaragonServiceState> call() throws Exception {
-        return getGlobalState();
-      }
-    };
-
+  private Collection<BaragonServiceState> getGlobalStateWithRetry() {
     Retryer<Collection<BaragonServiceState>> retryer = RetryerBuilder.<Collection<BaragonServiceState>>newBuilder()
         .retryIfException()
         .withStopStrategy(StopStrategies.stopAfterAttempt(configuration.getMaxGetGloablStateAttempts()))
@@ -274,7 +276,7 @@ public class LifecycleHelper {
         .build();
 
     try {
-      return retryer.call(callable);
+      return retryer.call(this::getGlobalState);
     } catch (Exception e) {
       LOG.error("Could not get global state from Baragon Service");
       throw Throwables.propagate(e);

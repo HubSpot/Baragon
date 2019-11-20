@@ -33,6 +33,7 @@ import com.hubspot.baragon.models.BaragonAgentState;
 import com.hubspot.baragon.models.BaragonRequest;
 import com.hubspot.baragon.models.BaragonRequestBatchItem;
 import com.hubspot.baragon.models.BaragonService;
+import com.hubspot.baragon.models.BasicServiceContext;
 import com.hubspot.baragon.models.RequestAction;
 import com.hubspot.baragon.models.ServiceContext;
 import com.hubspot.baragon.models.UpstreamInfo;
@@ -49,17 +50,19 @@ public class AgentRequestManager {
   private final AtomicReference<BaragonAgentState> agentState;
   private final LoadBalancerConfiguration loadBalancerConfiguration;
   private final long agentLockTimeoutMs;
+  private final Map<String, BasicServiceContext> internalStateCache;
 
   @Inject
   public AgentRequestManager(BaragonStateDatastore stateDatastore,
-                        BaragonRequestDatastore requestDatastore,
-                        FilesystemConfigHelper configHelper,
-                        Optional<TestingConfiguration> maybeTestingConfiguration,
-                        LoadBalancerConfiguration loadBalancerConfiguration,
-                        Random random,
-                        AtomicReference<BaragonAgentState> agentState,
-                        @Named(BaragonAgentServiceModule.AGENT_MOST_RECENT_REQUEST_ID) AtomicReference<String> mostRecentRequestId,
-                        @Named(BaragonAgentServiceModule.AGENT_LOCK_TIMEOUT_MS) long agentLockTimeoutMs) {
+                             BaragonRequestDatastore requestDatastore,
+                             FilesystemConfigHelper configHelper,
+                             Optional<TestingConfiguration> maybeTestingConfiguration,
+                             LoadBalancerConfiguration loadBalancerConfiguration,
+                             Random random,
+                             AtomicReference<BaragonAgentState> agentState,
+                             @Named(BaragonAgentServiceModule.AGENT_MOST_RECENT_REQUEST_ID) AtomicReference<String> mostRecentRequestId,
+                             @Named(BaragonAgentServiceModule.AGENT_LOCK_TIMEOUT_MS) long agentLockTimeoutMs,
+                             @Named(BaragonAgentServiceModule.INTERNAL_STATE_CACHE) Map<String, BasicServiceContext> internalStateCache) {
     this.stateDatastore = stateDatastore;
     this.configHelper = configHelper;
     this.maybeTestingConfiguration = maybeTestingConfiguration;
@@ -69,6 +72,7 @@ public class AgentRequestManager {
     this.agentState = agentState;
     this.loadBalancerConfiguration = loadBalancerConfiguration;
     this.agentLockTimeoutMs = agentLockTimeoutMs;
+    this.internalStateCache = internalStateCache;
   }
 
   public List<AgentBatchResponseItem> processRequests(List<BaragonRequestBatchItem> batch) throws InterruptedException {
@@ -200,6 +204,7 @@ public class AgentRequestManager {
   private Response delete(BaragonRequest request, Optional<BaragonService> maybeOldService, boolean delayReload) throws Exception {
     configHelper.delete(request.getLoadBalancerService(), maybeOldService, request.isNoReload(), request.isNoValidate(), delayReload);
     mostRecentRequestId.set(request.getLoadBalancerRequestId());
+    internalStateCache.remove(request.getLoadBalancerService().getServiceId());
     return Response.ok().build();
   }
 
@@ -208,12 +213,14 @@ public class AgentRequestManager {
     triggerTesting();
     configHelper.apply(update, maybeOldService, true, request.isNoReload(), request.isNoValidate(), delayReload, batchItemNumber);
     mostRecentRequestId.set(request.getLoadBalancerRequestId());
+    internalStateCache.put(update.getService().getServiceId(), new BasicServiceContext(update.getService(), update.getUpstreams()));
     return Response.ok().build();
   }
 
   private Response revert(BaragonRequest request, Optional<BaragonService> maybeOldService, Collection<UpstreamInfo> existingUpstreams, boolean delayReload, Optional<Integer> batchItemNumber) throws Exception {
     final ServiceContext update;
-    if (movedOffLoadBalancer(maybeOldService)) {
+    boolean movedOffLbGroup = movedOffLoadBalancer(maybeOldService);
+    if (movedOffLbGroup) {
       update = new ServiceContext(request.getLoadBalancerService(), Collections.<UpstreamInfo>emptyList(), System.currentTimeMillis(), false);
     } else {
       update = new ServiceContext(maybeOldService.get(), existingUpstreams, System.currentTimeMillis(), true);
@@ -226,10 +233,17 @@ public class AgentRequestManager {
       configHelper.apply(update, Optional.<BaragonService>absent(), false, request.isNoReload(), request.isNoValidate(), delayReload, batchItemNumber);
     } catch (MissingTemplateException e) {
       if (serviceDidNotPreviouslyExist(maybeOldService)) {
+        internalStateCache.remove(request.getLoadBalancerService().getServiceId());
         return Response.ok().build();
       } else {
         throw e;
       }
+    }
+
+    if (movedOffLbGroup) {
+      internalStateCache.remove(request.getLoadBalancerService().getServiceId());
+    } else {
+      internalStateCache.put(update.getService().getServiceId(), new BasicServiceContext(update.getService(), update.getUpstreams()));
     }
 
     return Response.ok().build();

@@ -104,6 +104,9 @@ public class BaragonAgentConfiguration extends Configuration {
   @JsonProperty("configCheckIntervalSecs")
   private int configCheckIntervalSecs = 60;
 
+  @JsonProperty("stateCheckIntervalSecs")
+  private int stateCheckIntervalSecs = 600;
+
   @JsonProperty("saveFailedConfigs")
   private boolean saveFailedConfigs = false;
 
@@ -139,6 +142,9 @@ public class BaragonAgentConfiguration extends Configuration {
 
   @JsonProperty("kubernetes")
   private KubernetesConfiguration kubernetesConfiguration = new KubernetesConfiguration();
+
+  @JsonProperty
+  private boolean enablePollingStateValidation = false;
 
   public HttpClientConfiguration getHttpClientConfiguration() {
     return httpClientConfiguration;
@@ -304,6 +310,14 @@ public class BaragonAgentConfiguration extends Configuration {
     this.configCheckIntervalSecs = configCheckIntervalSecs;
   }
 
+  public int getStateCheckIntervalSecs() {
+    return stateCheckIntervalSecs;
+  }
+
+  public void setStateCheckIntervalSecs(int stateCheckIntervalSecs) {
+    this.stateCheckIntervalSecs = stateCheckIntervalSecs;
+  }
+
   public boolean isSaveFailedConfigs() {
     return saveFailedConfigs;
   }
@@ -406,5 +420,13 @@ public class BaragonAgentConfiguration extends Configuration {
 
   public void setKubernetesConfiguration(KubernetesConfiguration kubernetesConfiguration) {
     this.kubernetesConfiguration = kubernetesConfiguration;
+  }
+
+  public boolean isEnablePollingStateValidation() {
+    return enablePollingStateValidation;
+  }
+
+  public void setEnablePollingStateValidation(boolean enablePollingStateValidation) {
+    this.enablePollingStateValidation = enablePollingStateValidation;
   }
 }
