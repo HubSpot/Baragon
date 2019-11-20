@@ -35,6 +35,7 @@ public class InternalStateChecker implements Runnable {
   @Override
   public void run() {
     Set<String> invalidServiceMessages = new HashSet<>();
+    long now = System.currentTimeMillis();
     internalStateCache.forEach((serviceId, context) -> {
       Optional<BaragonService> maybeService = stateDatastore.getService(serviceId);
       if (!maybeService.isPresent()) {
@@ -43,7 +44,7 @@ public class InternalStateChecker implements Runnable {
       }
       Collection<UpstreamInfo> existingUpstreams = stateDatastore.getUpstreams(serviceId);
       BasicServiceContext datastoreContext = new BasicServiceContext(maybeService.get(), existingUpstreams);
-      if (!datastoreContext.equals(context) && System.currentTimeMillis() - context.getTimestamp() > TimeUnit.SECONDS.toMillis(60)) {
+      if (!datastoreContext.equals(context) && now - context.getTimestamp() > TimeUnit.SECONDS.toMillis(60)) {
         invalidServiceMessages.add(String.format("Agent context for %s does not match baragon state (Agent: %s, Service: %s)", serviceId, context, datastoreContext));
       }
     });
