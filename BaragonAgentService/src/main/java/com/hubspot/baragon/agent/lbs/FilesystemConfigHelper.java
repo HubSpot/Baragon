@@ -155,14 +155,14 @@ public class FilesystemConfigHelper {
     LOG.info("Writing finished for {}", service.getServiceId());
   }
 
-  public void bootstrapApplyCheck(List<Optional<Pair<ServiceContext, Collection<BaragonConfigFile>>>> applied) {
+  public void bootstrapApplyCheck(List<Pair<ServiceContext, Collection<BaragonConfigFile>>> applied) {
     LOG.info("Going to check the configs");
     try {
       adapter.checkConfigs();
     } catch (Exception e) {
       LOG.error("Caught exception while checking configs", e);
-      applied.stream().forEach(item -> {
-        final ServiceContext context = item.get().getKey();
+      applied.forEach(item -> {
+        final ServiceContext context = item.getKey();
         final BaragonService service = context.getService();
         saveAsFailed(service);
         LOG.info("Marked {}: as failed", service.getServiceId());
@@ -190,7 +190,7 @@ public class FilesystemConfigHelper {
       throw lte;
     }
 
-    LOG.debug("({}) Acquired agent lock, applying configs");
+    LOG.debug("({}) Acquired agent lock, applying configs", service.getServiceId());
 
     try {
       if (configsMatch(newConfigs, readConfigs(oldService))) {

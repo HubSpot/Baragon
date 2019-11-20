@@ -263,45 +263,88 @@ public class BaragonRequestWorker implements Runnable {
     lock.lock();
     workerLastStartAt.set(System.currentTimeMillis());
     try {
-      final List<QueuedRequestId> queuedRequestIds = requestManager.getQueuedRequestIds();
-      int added = 0;
+      final List<QueuedRequestWithState> queuedRequests = requestManager.getQueuedRequestIds()
+          .stream()
+          .map(this::hydrateQueuedRequestWithState)
+          .filter(Optional::isPresent)
+          .map(Optional::get)
+          .collect(Collectors.toList());
+      final Set<String> inProgressServices = queuedRequests.stream()
+          .filter((q) -> q.getCurrentState().isInFlight())
+          .map((q) -> q.getQueuedRequestId().getServiceId())
+          .collect(Collectors.toSet());
 
-      while (added < configuration.getWorkerConfiguration().getMaxRequestsPerPoll() && !queuedRequestIds.isEmpty()) {
-        ArrayList<QueuedRequestId> nonServiceChanges = new ArrayList<>();
-        ArrayList<QueuedRequestId> serviceChanges = new ArrayList<>();
+      final Set<QueuedRequestWithState> removedForCurrentInFlightRequest = queuedRequests.stream()
+          .filter((q) -> inProgressServices.contains(q.getQueuedRequestId().getServiceId()) && !q.getCurrentState().isInFlight())
+          .collect(Collectors.toSet());
+      if (!inProgressServices.isEmpty()) {
+        LOG.info("Skipping new updates for services {} due to current in-flight updates", String.join(",", inProgressServices));
+      }
+      queuedRequests.removeAll(removedForCurrentInFlightRequest);
 
-        added = collectRequests(added, queuedRequestIds, nonServiceChanges, serviceChanges);
+      // First process results for any requests that were already in-flight
+      List<QueuedRequestWithState> inFlightRequests = queuedRequests.stream()
+          .filter((q) -> q.getCurrentState().isInFlight())
+          .collect(Collectors.toList());
+      LOG.debug("Processing {} BaragonRequests which are already in-flight", inFlightRequests.size());
+      handleResultStates(handleQueuedRequests(inFlightRequests));
+      queuedRequests.removeAll(inFlightRequests);
+
+      int added = inFlightRequests.size();
+
+      while (added < configuration.getWorkerConfiguration().getMaxRequestsPerPoll() && !queuedRequests.isEmpty()) {
+        ArrayList<QueuedRequestWithState> nonServiceChanges = new ArrayList<>();
+        ArrayList<QueuedRequestWithState> serviceChanges = new ArrayList<>();
+
+        // Build the batches of requests to be sent to agents
+        collectRequests(added, queuedRequests, nonServiceChanges, serviceChanges);
 
         // Now take the list of non-service-change requests,
-        // hydrate them with state,
         // and sort them such that the quicker noValidate / noReload requests come first.
         List<QueuedRequestWithState> hydratedNonServiceChanges = nonServiceChanges.stream()
-            .map(this::hydrateQueuedRequestWithState)
-            .filter(Optional::isPresent)
-            .map(someRequest -> new MaybeAdjustedRequest(someRequest.get(), false))
+            .filter((q) -> {
+              // Filter here as well since the Set has changed by the second run of the while loop
+              if (inProgressServices.contains(q.getQueuedRequestId().getServiceId())) {
+                LOG.info("Skipping {} because {} already has an in progress request", q.getQueuedRequestId().getRequestId(), q.getQueuedRequestId().getServiceId());
+                return false;
+              }
+              return true;
+            })
+            .map(someRequest -> new MaybeAdjustedRequest(someRequest, false))
             .map(this::setNoValidateIfRequestRemovesUpstreamsOnly)
             .map(this::preResolveDNS)
             .map(this::saveAdjustedRequest)
             .sorted(queuedRequestComparator())
             .collect(Collectors.toList());
 
+        added += hydratedNonServiceChanges.size();
+
         // Then send them off.
         LOG.debug("Processing {} BaragonRequests which don't modify a BaragonService", nonServiceChanges.size());
         handleResultStates(handleQueuedRequests(hydratedNonServiceChanges));
 
-        // Now send off the service change requests.
+        queuedRequests.removeAll(nonServiceChanges);
+        inProgressServices.addAll(hydratedNonServiceChanges.stream().map((q) -> q.getQueuedRequestId().getServiceId()).collect(Collectors.toSet()));
+
+        // Now send off the service change requests, after filtering for services already in flight
         List<QueuedRequestWithState> hydratedServiceChanges = serviceChanges.stream()
-            .map(this::hydrateQueuedRequestWithState)
-            .filter(Optional::isPresent)
-            .map(Optional::get)
+            .filter((q) -> {
+              if (inProgressServices.contains(q.getQueuedRequestId().getServiceId())) {
+                LOG.info("Skipping {} because {} already has an in progress request", q.getQueuedRequestId().getRequestId(), q.getQueuedRequestId().getServiceId());
+                return false;
+              }
+              return true;
+            })
             .sorted(queuedRequestComparator())
             .collect(Collectors.toList());
+
+        added += hydratedServiceChanges.size();
 
         LOG.debug("Processing {} BaragonRequests which modify a BaragonService", serviceChanges.size());
         handleResultStates(handleQueuedRequests(hydratedServiceChanges));
 
-        queuedRequestIds.removeAll(nonServiceChanges);
-        queuedRequestIds.removeAll(serviceChanges);
+        queuedRequests.removeAll(serviceChanges);
+        inProgressServices.addAll(hydratedServiceChanges.stream().map((q) -> q.getQueuedRequestId().getServiceId()).collect(Collectors.toSet()));
 
         // ...and repeat until we've processed up to the limit of requests
       }
@@ -429,34 +472,34 @@ public class BaragonRequestWorker implements Runnable {
     }
   }
 
-  private int collectRequests(int previouslyAdded,
-                              List<QueuedRequestId> queuedRequestIds,
-                              ArrayList<QueuedRequestId> nonServiceChanges,
-                              ArrayList<QueuedRequestId> serviceChanges) {
+  private void collectRequests(int previouslyAdded,
+                              List<QueuedRequestWithState> queuedRequests,
+                              ArrayList<QueuedRequestWithState> nonServiceChanges,
+                              ArrayList<QueuedRequestWithState> serviceChanges) {
     int added = previouslyAdded;
     Set<String> boundaryServices = new HashSet<>();
 
-    for (QueuedRequestId queuedRequestId : queuedRequestIds) {
+    for (QueuedRequestWithState queuedRequest : queuedRequests) {
       if (added >= configuration.getWorkerConfiguration().getMaxRequestsPerPoll()) {
-        return added;
+        return;
       }
 
-      if (boundaryServices.contains(queuedRequestId.getServiceId())) {
+      if (boundaryServices.contains(queuedRequest.getQueuedRequestId().getServiceId())) {
         continue;
       }
 
       // Grab as many non-service-change BaragonRequests as we can.
-      if (requestManager.getRequest(queuedRequestId.getRequestId()).transform(someRequest -> !isBatchBoundary(someRequest)).or(false)) {
-        nonServiceChanges.add(queuedRequestId);
+      if (requestManager.getRequest(queuedRequest.getQueuedRequestId().getRequestId()).transform(someRequest -> !isBatchBoundary(someRequest)).or(false)) {
+        nonServiceChanges.add(queuedRequest);
         added++;
       } else {
         // Once we hit a BaragonRequest that specifies BaragonService changes, stop collecting requests for this service.
-        serviceChanges.add(queuedRequestId);
-        boundaryServices.add(queuedRequestId.getServiceId());
+        serviceChanges.add(queuedRequest);
+        boundaryServices.add(queuedRequest.getQueuedRequestId().getServiceId());
         added++;
       }
     }
-    return added;
+    return;
   }
 
   private boolean isBatchBoundary(BaragonRequest baragonRequest) {
