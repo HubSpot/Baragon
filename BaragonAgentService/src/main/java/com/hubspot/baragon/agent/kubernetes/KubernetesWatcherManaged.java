@@ -2,32 +2,38 @@ package com.hubspot.baragon.agent.kubernetes;
 
 import com.google.inject.Inject;
 import com.hubspot.baragon.config.KubernetesConfiguration;
-import com.hubspot.baragon.kubernetes.KubernetesWatcher;
+import com.hubspot.baragon.kubernetes.KubernetesEndpointsWatcher;
+import com.hubspot.baragon.kubernetes.KubernetesServiceWatcher;
 
 import io.dropwizard.lifecycle.Managed;
 
 public class KubernetesWatcherManaged implements Managed {
   private final KubernetesConfiguration kubernetesConfiguration;
-  private final KubernetesWatcher kubernetesWatcher;
+  private final KubernetesEndpointsWatcher kubernetesEndpointsWatcher;
+  private final KubernetesServiceWatcher kubernetesServiceWatcher;
 
   @Inject
   public KubernetesWatcherManaged(KubernetesConfiguration kubernetesConfiguration,
-                                  KubernetesWatcher kubernetesWatcher) {
+                                  KubernetesEndpointsWatcher kubernetesEndpointsWatcher,
+                                  KubernetesServiceWatcher kubernetesServiceWatcher) {
     this.kubernetesConfiguration = kubernetesConfiguration;
-    this.kubernetesWatcher = kubernetesWatcher;
+    this.kubernetesEndpointsWatcher = kubernetesEndpointsWatcher;
+    this.kubernetesServiceWatcher = kubernetesServiceWatcher;
   }
 
   @Override
   public void start() {
     if (kubernetesConfiguration.isEnabled()) {
-      kubernetesWatcher.createWatch(false);
+      kubernetesServiceWatcher.createWatch(false);
+      kubernetesEndpointsWatcher.createWatch(false);
     }
   }
 
   @Override
   public void stop() {
     if (kubernetesConfiguration.isEnabled()) {
-      kubernetesWatcher.close();
+      kubernetesServiceWatcher.close();
+      kubernetesEndpointsWatcher.close();
     }
   }
 }

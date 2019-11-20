@@ -22,7 +22,7 @@ public class KubernetesWatcherModule implements Module {
 
   @Override
   public void configure(Binder binder) {
-    binder.bind(KubernetesWatcher.class).in(Scopes.SINGLETON);
+    binder.bind(KubernetesEndpointsWatcher.class).in(Scopes.SINGLETON);
 
     Serialization.jsonMapper().registerModules(new GuavaModule(), new Jdk8Module());
     PatchUtils.patchMapper().registerModules(new GuavaModule(), new Jdk8Module());

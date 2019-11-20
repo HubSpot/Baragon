@@ -36,7 +36,7 @@ public class KubernetesConfiguration {
   private String protocolAnnotation = "baragon.hubspot.com/protocol";
 
   @NotEmpty
-  private List<String> upstreamGroups = ImmutableList.of("k8s");
+  private List<String> ignoreUpstreamGroups = ImmutableList.of();
 
   public boolean isEnabled() {
     return enabled;
@@ -166,16 +166,16 @@ public class KubernetesConfiguration {
     this.upstreamGroupsAnnotation = upstreamGroupsAnnotation;
   }
 
-  public List<String> getUpstreamGroups() {
-    return upstreamGroups;
+  public List<String> getIgnoreUpstreamGroups() {
+    return ignoreUpstreamGroups;
   }
 
-  public String[] getUpstreamGroupsAsArray() {
-    return (String[]) upstreamGroups.toArray();
+  public String[] getIgnoreUpstreamGroupsAsArray() {
+    return (String[]) ignoreUpstreamGroups.toArray();
   }
 
-  public void setUpstreamGroups(List<String> upstreamGroups) {
-    this.upstreamGroups = upstreamGroups;
+  public void setIgnoreUpstreamGroups(List<String> upstreamGroups) {
+    this.ignoreUpstreamGroups = upstreamGroups;
   }
 
   public String getLbGroupsAnnotation() {

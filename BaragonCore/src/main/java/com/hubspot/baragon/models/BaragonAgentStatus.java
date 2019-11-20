@@ -1,5 +1,6 @@
 package com.hubspot.baragon.models;
 
+import java.util.Objects;
 import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -72,6 +73,10 @@ public class BaragonAgentStatus {
     return agentState;
   }
 
+  public Set<String> getStateErrors() {
+    return stateErrors;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -80,61 +85,35 @@ public class BaragonAgentStatus {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-
     BaragonAgentStatus that = (BaragonAgentStatus) o;
-
-    if (leader != that.leader) {
-      return false;
-    }
-    if (validConfigs != that.validConfigs) {
-      return false;
-    }
-    if (!errorMessage.equals(that.errorMessage)) {
-      return false;
-    }
-    if (!group.equals(that.group)) {
-      return false;
-    }
-    if (mostRecentRequestId != null ? !mostRecentRequestId.equals(that.mostRecentRequestId) : that.mostRecentRequestId != null) {
-      return false;
-    }
-    if (!zookeeperState.equals(that.zookeeperState)) {
-      return false;
-    }
-    if (!agentInfo.equals(that.agentInfo)) {
-      return false;
-    }
-    if (!agentState.equals(that.agentState)) {
-      return false;
-    }
-
-    return true;
+    return validConfigs == that.validConfigs &&
+        leader == that.leader &&
+        Objects.equals(group, that.group) &&
+        Objects.equals(errorMessage, that.errorMessage) &&
+        Objects.equals(stateErrors, that.stateErrors) &&
+        Objects.equals(mostRecentRequestId, that.mostRecentRequestId) &&
+        Objects.equals(zookeeperState, that.zookeeperState) &&
+        Objects.equals(agentInfo, that.agentInfo) &&
+        agentState == that.agentState;
   }
 
   @Override
   public int hashCode() {
-    int result = group.hashCode();
-    result = 31 * result + (validConfigs ? 1 : 0);
-    result = 31 * result + errorMessage.hashCode();
-    result = 31 * result + (leader ? 1 : 0);
-    result = 31 * result + (mostRecentRequestId != null ? mostRecentRequestId.hashCode() : 0);
-    result = 31 * result + zookeeperState.hashCode();
-    result = 31 * result + agentInfo.hashCode();
-    result = 31 * result + agentState.hashCode();
-    return result;
+    return Objects.hash(group, validConfigs, errorMessage, stateErrors, leader, mostRecentRequestId, zookeeperState, agentInfo, agentState);
   }
 
   @Override
   public String toString() {
-    return "BaragonAgentStatus [" +
-        "group='" + group +
+    return "BaragonAgentStatus{" +
+        "group='" + group + '\'' +
         ", validConfigs=" + validConfigs +
         ", errorMessage=" + errorMessage +
+        ", stateErrors=" + stateErrors +
         ", leader=" + leader +
-        ", mostRecentRequestId='" + mostRecentRequestId +
-        ", zookeeperState='" + zookeeperState +
-        ", agentInfo='" + agentInfo +
+        ", mostRecentRequestId='" + mostRecentRequestId + '\'' +
+        ", zookeeperState='" + zookeeperState + '\'' +
+        ", agentInfo=" + agentInfo +
         ", agentState=" + agentState +
-        ']';
+        '}';
   }
 }

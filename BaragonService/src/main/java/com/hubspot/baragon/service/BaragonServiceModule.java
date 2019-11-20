@@ -41,7 +41,7 @@ import com.hubspot.baragon.config.KubernetesConfiguration;
 import com.hubspot.baragon.config.ZooKeeperConfiguration;
 import com.hubspot.baragon.data.BaragonConnectionStateListener;
 import com.hubspot.baragon.data.BaragonWorkerDatastore;
-import com.hubspot.baragon.kubernetes.KubernetesEndpointListener;
+import com.hubspot.baragon.kubernetes.KubernetesListener;
 import com.hubspot.baragon.kubernetes.KubernetesWatcherModule;
 import com.hubspot.baragon.service.config.BaragonConfiguration;
 import com.hubspot.baragon.service.config.BaragonServiceDWSettings;
@@ -148,7 +148,7 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
 
     // Kubernetes
     if (getConfiguration().getKubernetesConfiguration().isEnabled()) {
-      binder.bind(KubernetesEndpointListener.class).to(BaragonServiceKubernetesListener.class).in(Scopes.SINGLETON);
+      binder.bind(KubernetesListener.class).to(BaragonServiceKubernetesListener.class).in(Scopes.SINGLETON);
       latchBinder.addBinding().to(KubernetesWatchListener.class).in(Scopes.SINGLETON);
       binder.install(new KubernetesWatcherModule());
     }
