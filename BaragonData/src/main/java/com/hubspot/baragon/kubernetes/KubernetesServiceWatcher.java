@@ -70,7 +70,7 @@ public class KubernetesServiceWatcher extends BaragonKubernetesWatcher<Service> 
 
   @Override
   public void eventReceived(Action action, Service k8sService) {
-    LOG.info("Received {} update from k8s for {}", action, k8sService.getMetadata().getName());
+    LOG.info("Received {} update from k8s for {} ({})", action, k8sService.getMetadata().getName(), getServiceName(k8sService.getMetadata().getLabels()));
     switch (action) {
       case ADDED:
       case MODIFIED:
@@ -108,9 +108,18 @@ public class KubernetesServiceWatcher extends BaragonKubernetesWatcher<Service> 
   private void processUpdatedService(Service k8sService) {
     BaragonService service = buildBaragonService(k8sService);
     if (service == null) {
+      LOG.info("Could not build baragon service for {} from {}", getServiceName(k8sService.getMetadata().getLabels()), k8sService);
       return;
     }
     listener.processServiceUpdate(service);
+  }
+
+  private Optional<String> getServiceName(Map<String, String> labels) {
+    if (labels == null) {
+      return Optional.absent();
+    }
+
+    return Optional.fromNullable(labels.get(kubernetesConfiguration.getServiceNameLabel()));
   }
 
   private BaragonService buildBaragonService(Service k8sService) {
