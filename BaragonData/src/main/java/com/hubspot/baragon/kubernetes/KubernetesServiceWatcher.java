@@ -15,7 +15,6 @@ import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import com.hubspot.baragon.config.KubernetesConfiguration;
 import com.hubspot.baragon.data.BaragonAliasDatastore;
-import com.hubspot.baragon.data.BaragonStateDatastore;
 import com.hubspot.baragon.models.BaragonGroupAlias;
 import com.hubspot.baragon.models.BaragonService;
 
@@ -24,25 +23,22 @@ import io.fabric8.kubernetes.api.model.ServiceList;
 import io.fabric8.kubernetes.client.KubernetesClient;
 
 public class KubernetesServiceWatcher extends BaragonKubernetesWatcher<Service> {
-  private static final Logger LOG = LoggerFactory.getLogger(KubernetesEndpointsWatcher.class);
+  private static final Logger LOG = LoggerFactory.getLogger(KubernetesServiceWatcher.class);
 
   private final KubernetesListener listener;
   private final KubernetesConfiguration kubernetesConfiguration;
   private final BaragonAliasDatastore aliasDatastore;
-  private final BaragonStateDatastore stateDatastore;
   private final KubernetesClient kubernetesClient;
 
   @Inject
   public KubernetesServiceWatcher(KubernetesListener listener,
                                   KubernetesConfiguration kubernetesConfiguration,
                                   BaragonAliasDatastore aliasDatastore,
-                                  BaragonStateDatastore stateDatastore,
                                   @Named(KubernetesWatcherModule.BARAGON_KUBERNETES_CLIENT) KubernetesClient kubernetesClient) {
     super();
     this.listener = listener;
     this.kubernetesConfiguration = kubernetesConfiguration;
     this.aliasDatastore = aliasDatastore;
-    this.stateDatastore = stateDatastore;
     this.kubernetesClient = kubernetesClient;
   }
 
@@ -56,7 +52,7 @@ public class KubernetesServiceWatcher extends BaragonKubernetesWatcher<Service> 
 
     if (processInitialFetch) {
       try {
-        LOG.info("Got {} initial endpoints from k8s", list.getItems().size());
+        LOG.info("Got {} initial services from k8s", list.getItems().size());
         list.getItems()
             .forEach(this::processUpdatedService);
       } catch (Throwable t) {
