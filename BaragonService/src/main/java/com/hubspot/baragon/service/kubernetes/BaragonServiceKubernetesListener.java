@@ -3,7 +3,6 @@ package com.hubspot.baragon.service.kubernetes;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.locks.ReentrantLock;
@@ -64,7 +63,7 @@ public class BaragonServiceKubernetesListener extends KubernetesListener {
           .collect(Collectors.partitioningBy((u) -> kubernetesConfiguration.getIgnoreUpstreamGroups().contains(u.getGroup())));
 
       // K8s integration supports a subset of features, take existing extra options if non-k8s upstreams also present
-      if (existingService.isPresent() && !existingService.get().equals(updatedService) && partitionedUpstreams.get(true).isEmpty()) {
+      if (!existingService.isPresent() || (!existingService.get().equals(updatedService) && partitionedUpstreams.get(true).isEmpty())) {
         BaragonRequest baragonRequest = new BaragonRequest(
             String.format("k8s-update-service-%d", System.nanoTime()),
             updatedService,
@@ -185,43 +184,5 @@ public class BaragonServiceKubernetesListener extends KubernetesListener {
     } else {
       LOG.warn("No service present for {} to process endpoints delete", serviceId);
     }
-  }
-
-  private <T> boolean haveSameElements(final List<T> list1, final List<T> list2) {
-    if (list1 == list2) {
-      return true;
-    }
-
-    if (list1 == null || list2 == null || list1.size() != list2.size()) {
-      return false;
-    }
-
-    Map<T, Count> counts = new HashMap<>();
-
-    for (T item : list1) {
-      if (!counts.containsKey(item)){
-        counts.put(item, new Count());
-      }
-      counts.get(item).count += 1;
-    }
-
-    for (T item : list2) {
-      if (!counts.containsKey(item)) {
-        return false;
-      }
-      counts.get(item).count -= 1;
-    }
-
-    for (Map.Entry<T, Count> entry : counts.entrySet()) {
-      if (entry.getValue().count != 0) {
-        return false;
-      }
-    }
-
-    return true;
-  }
-
-  private static class Count {
-    int count = 0;
   }
 }
