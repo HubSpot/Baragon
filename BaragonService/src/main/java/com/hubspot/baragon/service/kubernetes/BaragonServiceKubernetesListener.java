@@ -57,6 +57,7 @@ public class BaragonServiceKubernetesListener extends KubernetesListener {
   public void processServiceUpdate(BaragonService updatedService) {
     lock.lock();
     try {
+      LOG.info("acquired lock for service update on {}", updatedService.getServiceId());
       Optional<BaragonService> existingService = stateDatastore.getService(updatedService.getServiceId());
       List<UpstreamInfo> existingUpstreams = new ArrayList<>(stateDatastore.getUpstreams(updatedService.getServiceId()));
       Map<Boolean, List<UpstreamInfo>> partitionedUpstreams = existingUpstreams.stream()
@@ -79,7 +80,7 @@ public class BaragonServiceKubernetesListener extends KubernetesListener {
         );
         requestManager.commitRequest(baragonRequest);
       } else {
-        LOG.debug("No update to service {} (existing {}), skipping", updatedService, existingService);
+        LOG.info("No update to service {} (existing {}), skipping", updatedService, existingService);
       }
     } catch (Throwable t) {
       LOG.error("Could not commit update from kubernetes watcher", t);
@@ -92,6 +93,7 @@ public class BaragonServiceKubernetesListener extends KubernetesListener {
   public void processUpstreamsUpdate(String serviceId, String upstreamGroup, List<UpstreamInfo> activeUpstreams) {
     lock.lock();
     try {
+      LOG.info("acquired lock for upstreams update on {}", serviceId);
       Optional<BaragonService> maybeService = stateDatastore.getService(serviceId);
       if (!maybeService.isPresent()) {
         LOG.info("No service definition for {}, skipping update", serviceId);

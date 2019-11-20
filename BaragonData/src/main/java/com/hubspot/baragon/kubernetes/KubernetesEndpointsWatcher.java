@@ -159,7 +159,7 @@ public class KubernetesEndpointsWatcher extends BaragonKubernetesWatcher<Endpoin
     // Return the first thing we can find if the desired protocol isn't available, log the issue
     if (subset.getPorts().size() > 0) {
       EndpointPort port = subset.getPorts().get(0);
-      LOG.warn("Could not find desired protocol ({}), using: ({}:{}:{})", protocol, port.getName(), port.getProtocol(), port.getPort());
+      LOG.debug("Could not find desired protocol ({}), using: ({}:{}:{})", protocol, port.getName(), port.getProtocol(), port.getPort());
       return port.getPort();
     }
     return null;
