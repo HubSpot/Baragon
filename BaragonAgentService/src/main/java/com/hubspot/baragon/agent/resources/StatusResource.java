@@ -1,6 +1,8 @@
 package com.hubspot.baragon.agent.resources;
 
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
 import javax.ws.rs.DefaultValue;
@@ -38,7 +40,7 @@ public class StatusResource {
   private final AtomicReference<ConnectionState> connectionState;
   private final BaragonAgentMetadata agentMetadata;
   private final AtomicReference<Optional<String>> errorMessage;
-  private final AtomicReference<Optional<String>> stateErrorMessage;
+  private final Set<String> stateErrors;
   private final AtomicReference<BaragonAgentState> agentState;
   private final Map<String, BasicServiceContext> internalStateCache;
 
@@ -51,7 +53,7 @@ public class StatusResource {
                         @Named(BaragonAgentServiceModule.AGENT_MOST_RECENT_REQUEST_ID) AtomicReference<String> mostRecentRequestId,
                         @Named(BaragonDataModule.BARAGON_ZK_CONNECTION_STATE) AtomicReference<ConnectionState> connectionState,
                         @Named(BaragonAgentServiceModule.CONFIG_ERROR_MESSAGE) AtomicReference<Optional<String>> errorMessage,
-                        @Named(BaragonAgentServiceModule.LOCAL_STATE_ERROR_MESSAGE) AtomicReference<Optional<String>> stateErrorMessage,
+                        @Named(BaragonAgentServiceModule.LOCAL_STATE_ERROR_MESSAGE) Set<String> stateErrors,
                         @Named(BaragonAgentServiceModule.INTERNAL_STATE_CACHE) Map<String, BasicServiceContext> internalStateCache) {
     this.adapter = adapter;
     this.loadBalancerConfiguration = loadBalancerConfiguration;
@@ -60,7 +62,7 @@ public class StatusResource {
     this.connectionState = connectionState;
     this.agentMetadata = agentMetadata;
     this.errorMessage = errorMessage;
-    this.stateErrorMessage = stateErrorMessage;
+    this.stateErrors = stateErrors;
     this.agentState = agentState;
     this.internalStateCache = internalStateCache;
   }
@@ -81,21 +83,18 @@ public class StatusResource {
 
     final String connectionStateString = currentConnectionState == null ? "UNKNOWN" : currentConnectionState.name();
 
-    Optional<String> errMessage = getErrorMessage();
-
-    return new BaragonAgentStatus(loadBalancerConfiguration.getName(), !errMessage.isPresent(), errMessage, leaderLatch.hasLeadership(), mostRecentRequestId.get(), connectionStateString, agentMetadata, agentState.get());
-  }
-
-  private Optional<String> getErrorMessage() {
     Optional<String> currentErrorMessage = errorMessage.get();
-    Optional<String> currentStateError = stateErrorMessage.get();
-    if (currentErrorMessage.isPresent() || currentStateError.isPresent()) {
-      return Optional.of(
-          String.format("State Error: %s, Config Error: %s", currentStateError.or(""), currentErrorMessage.or(""))
-      );
-    } else {
-      return Optional.absent();
-    }
+    Set<String> currentStateErrors = new HashSet<>(stateErrors);
+
+    return new BaragonAgentStatus(loadBalancerConfiguration.getName(),
+        !currentErrorMessage.isPresent() && stateErrors.isEmpty(),
+        currentErrorMessage,
+        leaderLatch.hasLeadership(),
+        mostRecentRequestId.get(),
+        connectionStateString,
+        agentMetadata,
+        agentState.get(),
+        currentStateErrors);
   }
 
   @GET

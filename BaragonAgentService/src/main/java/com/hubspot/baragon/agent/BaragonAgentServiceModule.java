@@ -1,8 +1,10 @@
 package com.hubspot.baragon.agent;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -272,8 +274,8 @@ public class BaragonAgentServiceModule extends DropwizardAwareModule<BaragonAgen
   @Provides
   @Singleton
   @Named(LOCAL_STATE_ERROR_MESSAGE)
-  public AtomicReference<Optional<String>> providesLocalStateErrorMessage() {
-    return new AtomicReference<>(Optional.absent());
+  public Set<String> providesLocalStateErrorMessage() {
+    return new HashSet<>();
   }
 
 

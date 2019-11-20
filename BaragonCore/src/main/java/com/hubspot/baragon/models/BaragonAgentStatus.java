@@ -1,5 +1,7 @@
 package com.hubspot.baragon.models;
 
+import java.util.Set;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -10,6 +12,7 @@ public class BaragonAgentStatus {
   private final String group;
   private final boolean validConfigs;
   private final Optional<String> errorMessage;
+  private final Set<String> stateErrors;
   private final boolean leader;
   private final String mostRecentRequestId;
   private final String zookeeperState;
@@ -24,7 +27,8 @@ public class BaragonAgentStatus {
                             @JsonProperty("mostRecentRequestId") String mostRecentRequestId,
                             @JsonProperty("zookeeperState") String zookeeperState,
                             @JsonProperty("agentInfo") BaragonAgentMetadata agentInfo,
-                            @JsonProperty("agentState") BaragonAgentState agentState) {
+                            @JsonProperty("agentState") BaragonAgentState agentState,
+                            @JsonProperty("stateErrors") Set<String> stateErrors) {
     this.group = group;
     this.validConfigs = validConfigs;
     this.errorMessage = errorMessage;
@@ -33,6 +37,7 @@ public class BaragonAgentStatus {
     this.zookeeperState = zookeeperState;
     this.agentInfo = agentInfo;
     this.agentState = agentState;
+    this.stateErrors = stateErrors;
   }
 
   public String getGroup() {

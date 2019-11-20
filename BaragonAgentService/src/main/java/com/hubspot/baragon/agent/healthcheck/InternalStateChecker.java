@@ -5,7 +5,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
@@ -21,15 +20,15 @@ import com.hubspot.baragon.models.UpstreamInfo;
 public class InternalStateChecker implements Runnable {
   private final BaragonStateDatastore stateDatastore;
   private final Map<String, BasicServiceContext> internalStateCache;
-  private final AtomicReference<Optional<String>> stateErrorMessage;
+  private final Set<String> stateErrors;
 
   @Inject
   public InternalStateChecker(BaragonStateDatastore stateDatastore,
                               @Named(BaragonAgentServiceModule.INTERNAL_STATE_CACHE) Map<String, BasicServiceContext> internalStateCache,
-                              @Named(BaragonAgentServiceModule.LOCAL_STATE_ERROR_MESSAGE) AtomicReference<Optional<String>> stateErrorMessage) {
+                              @Named(BaragonAgentServiceModule.LOCAL_STATE_ERROR_MESSAGE) Set<String> stateErrors) {
     this.stateDatastore = stateDatastore;
     this.internalStateCache = internalStateCache;
-    this.stateErrorMessage = stateErrorMessage;
+    this.stateErrors = stateErrors;
   }
 
   @Override
@@ -48,12 +47,9 @@ public class InternalStateChecker implements Runnable {
         invalidServiceMessages.add(String.format("Agent context for %s does not match baragon state (Agent: %s, Service: %s)", serviceId, context, datastoreContext));
       }
     });
-    if (invalidServiceMessages.isEmpty()) {
-      stateErrorMessage.set(Optional.absent());
-    } else {
-      stateErrorMessage.set(Optional.of(
-          String.join("\n", invalidServiceMessages)
-      ));
+    stateErrors.clear();
+    if (!invalidServiceMessages.isEmpty()) {
+      stateErrors.addAll(invalidServiceMessages);
     }
   }
 }
