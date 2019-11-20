@@ -44,6 +44,7 @@ import com.hubspot.baragon.agent.handlebars.PreferSameRackWeightingHelper;
 import com.hubspot.baragon.agent.handlebars.ResolveHostnameHelper;
 import com.hubspot.baragon.agent.handlebars.ToNginxVarHelper;
 import com.hubspot.baragon.agent.healthcheck.ConfigChecker;
+import com.hubspot.baragon.agent.healthcheck.InternalStateChecker;
 import com.hubspot.baragon.agent.healthcheck.LoadBalancerHealthcheck;
 import com.hubspot.baragon.agent.healthcheck.ZooKeeperHealthcheck;
 import com.hubspot.baragon.agent.lbs.FilesystemConfigHelper;
@@ -120,6 +121,7 @@ public class BaragonAgentServiceModule extends DropwizardAwareModule<BaragonAgen
     binder.bind(ServerProvider.class).in(Scopes.SINGLETON);
     binder.bind(FilesystemConfigHelper.class).in(Scopes.SINGLETON);
     binder.bind(AgentHeartbeatWorker.class).in(Scopes.SINGLETON);
+    binder.bind(InternalStateChecker.class).in(Scopes.SINGLETON);
 
     final ObjectMapper objectMapper = new ObjectMapper();
 
