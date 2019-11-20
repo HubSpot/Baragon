@@ -28,7 +28,7 @@ public class KubernetesConfiguration {
   private String basePathAnnotation = "baragon.hubspot.com/base-path";
   private Map<String, String> baragonLabelFilter = Collections.emptyMap();
   private String serviceNameLabel = "baragon.hubspot.com/service-name";
-  private String upstreamGroupsAnnotation = "baragon.hubspot.com/upstream-group";
+  private String upstreamGroupsLabel = "baragon.hubspot.com/upstream-group";
   private String lbGroupsAnnotation = "baragon.hubspot.com/lb-groups";
   private String domainsAnnotation = "baragon.hubspot.com/domains";
   private String ownersAnnotation = "baragon.hubspot.com/owners";
@@ -158,12 +158,12 @@ public class KubernetesConfiguration {
     this.serviceNameLabel = serviceNameLabel;
   }
 
-  public String getUpstreamGroupsAnnotation() {
-    return upstreamGroupsAnnotation;
+  public String getUpstreamGroupsLabel() {
+    return upstreamGroupsLabel;
   }
 
-  public void setUpstreamGroupsAnnotation(String upstreamGroupsAnnotation) {
-    this.upstreamGroupsAnnotation = upstreamGroupsAnnotation;
+  public void setUpstreamGroupsLabel(String upstreamGroupsLabel) {
+    this.upstreamGroupsLabel = upstreamGroupsLabel;
   }
 
   public List<String> getIgnoreUpstreamGroups() {

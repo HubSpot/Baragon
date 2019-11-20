@@ -96,8 +96,8 @@ public class KubernetesServiceWatcher extends BaragonKubernetesWatcher<Service> 
       LOG.warn("Could not get service name for endpoint update (service: {})", k8sService);
       return;
     }
-    Map<String, String> annotations = k8sService.getMetadata().getAnnotations();
-    String upstreamGroup = annotations.getOrDefault(kubernetesConfiguration.getUpstreamGroupsAnnotation(), "default");
+
+    String upstreamGroup = labels.getOrDefault(kubernetesConfiguration.getUpstreamGroupsLabel(), "default");
     if (kubernetesConfiguration.getIgnoreUpstreamGroups().contains(upstreamGroup)) {
       LOG.warn("Upstream group not managed by baragon, skipping (service: {})", k8sService);
       return;
