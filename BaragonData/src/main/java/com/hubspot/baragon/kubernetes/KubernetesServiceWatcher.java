@@ -1,6 +1,5 @@
 package com.hubspot.baragon.kubernetes;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -171,7 +170,7 @@ public class KubernetesServiceWatcher extends BaragonKubernetesWatcher<Service> 
       Optional<String> templateName = Optional.fromNullable(annotations.get(kubernetesConfiguration.getTemplateNameAnnotation()));
 
       Map<String, Object> customConfig = annotations.containsKey(kubernetesConfiguration.getCustomConfigAnnotation()) ?
-          readFromAnnotation(annotations.get(kubernetesConfiguration.getCustomConfigAnnotation())) :
+          objectMapper.readValue(annotations.get(kubernetesConfiguration.getCustomConfigAnnotation()), new TypeReference<Map<String, Object>>() {}) :
           Collections.emptyMap();
 
       String additionalPathsString = annotations.get(kubernetesConfiguration.getAdditionalPathsAnnotation());
@@ -195,14 +194,6 @@ public class KubernetesServiceWatcher extends BaragonKubernetesWatcher<Service> 
     } catch (Throwable t) {
       LOG.error("Unable to build BaragonService object from endpoint {}", k8sService.getMetadata().getName(), t);
       return null;
-    }
-  }
-
-  private Map<String, Object> readFromAnnotation(String annotation) {
-    try {
-      return objectMapper.readValue(annotation, new TypeReference<Map<String, Object>>() {});
-    } catch (IOException ioe) {
-      throw new RuntimeException(ioe);
     }
   }
 }
