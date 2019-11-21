@@ -129,6 +129,7 @@ public class BaragonAgentServiceModule extends DropwizardAwareModule<BaragonAgen
     binder.bind(FilesystemConfigHelper.class).in(Scopes.SINGLETON);
     binder.bind(AgentHeartbeatWorker.class).in(Scopes.SINGLETON);
     binder.bind(InternalStateChecker.class).in(Scopes.SINGLETON);
+    binder.bind(BaragonServiceLock.class).in(Scopes.SINGLETON);
 
     binder.bind(new TypeLiteral<Map<String, BasicServiceContext>>() {})
         .annotatedWith(Names.named(INTERNAL_STATE_CACHE))

@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -21,6 +22,7 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import com.hubspot.baragon.agent.BaragonAgentServiceModule;
+import com.hubspot.baragon.agent.BaragonServiceLock;
 import com.hubspot.baragon.agent.config.LoadBalancerConfiguration;
 import com.hubspot.baragon.agent.config.TestingConfiguration;
 import com.hubspot.baragon.agent.lbs.FilesystemConfigHelper;
@@ -48,6 +50,7 @@ public class AgentRequestManager {
   private final Optional<TestingConfiguration> maybeTestingConfiguration;
   private final Random random;
   private final AtomicReference<BaragonAgentState> agentState;
+  private final BaragonServiceLock serviceLock;
   private final LoadBalancerConfiguration loadBalancerConfiguration;
   private final long agentLockTimeoutMs;
   private final Map<String, BasicServiceContext> internalStateCache;
@@ -60,6 +63,7 @@ public class AgentRequestManager {
                              LoadBalancerConfiguration loadBalancerConfiguration,
                              Random random,
                              AtomicReference<BaragonAgentState> agentState,
+                             BaragonServiceLock serviceLock,
                              @Named(BaragonAgentServiceModule.AGENT_MOST_RECENT_REQUEST_ID) AtomicReference<String> mostRecentRequestId,
                              @Named(BaragonAgentServiceModule.AGENT_LOCK_TIMEOUT_MS) long agentLockTimeoutMs,
                              @Named(BaragonAgentServiceModule.INTERNAL_STATE_CACHE) Map<String, BasicServiceContext> internalStateCache) {
@@ -70,53 +74,64 @@ public class AgentRequestManager {
     this.mostRecentRequestId = mostRecentRequestId;
     this.random = random;
     this.agentState = agentState;
+    this.serviceLock = serviceLock;
     this.loadBalancerConfiguration = loadBalancerConfiguration;
     this.agentLockTimeoutMs = agentLockTimeoutMs;
     this.internalStateCache = internalStateCache;
   }
 
   public List<AgentBatchResponseItem> processRequests(List<BaragonRequestBatchItem> batch) throws InterruptedException {
-    Map<String, Optional<BaragonRequest>> requests = new HashMap<>();
-    Map<String, Optional<BaragonService>> services = new HashMap<>();
-
-    // Grab the existing upstreams at the start of this batch, and have apply() and revert() calls modify the list in-memory as we work through batch items
-    Map<String, Long> numRequestsByService = batch.stream()
-        .map(requestItem -> {
-          final Optional<BaragonRequest> maybeRequest = requestDatastore.getRequest(requestItem.getRequestId());
-
-          requests.put(requestItem.getRequestId(), maybeRequest);
-
-          if (maybeRequest.isPresent()) {
-            services.computeIfAbsent(maybeRequest.get().getLoadBalancerService().getServiceId(), (r) -> getOldService(maybeRequest.get()));
-          }
-          return maybeRequest;
-        })
+    Map<String, Optional<BaragonRequest>> requests = batch.stream()
+        .collect(Collectors.toMap(
+            BaragonRequestBatchItem::getRequestId,
+            (r) -> requestDatastore.getRequest(r.getRequestId())
+        ));
+    Set<String> serviceIds = requests.values()
+        .stream()
         .filter(Optional::isPresent)
         .map(Optional::get)
-        .collect(Collectors.groupingBy((r) -> r.getLoadBalancerService().getServiceId(), Collectors.counting()));
+        .map((r) -> r.getLoadBalancerService().getServiceId())
+        .collect(Collectors.toSet());
+    Map<String, Optional<BaragonService>> services = new HashMap<>();
+    // Grab the existing upstreams at the start of this batch, and have apply() and revert() calls modify the list in-memory as we work through batch items
+    return serviceLock.runWithServiceLocksAndReturn(() -> {
+          Map<String, Long> numRequestsByService = requests.values().stream()
+              .peek(maybeRequest -> {
+                if (maybeRequest.isPresent()) {
+                  services.computeIfAbsent(maybeRequest.get().getLoadBalancerService().getServiceId(), (r) -> getOldService(maybeRequest.get()));
+                }
+              })
+              .filter(Optional::isPresent)
+              .map(Optional::get)
+              .collect(Collectors.groupingBy((r) -> r.getLoadBalancerService().getServiceId(), Collectors.counting()));
 
-    LOG.debug("Requests in this batch by service: {}", numRequestsByService);
 
-    Map<String, Collection<UpstreamInfo>> existingUpstreamsForThisBatch = services.keySet().stream()
-        .collect(Collectors.toMap(
-            Function.identity(),
-            (serviceId) -> {
-              try {
-                return stateDatastore.getUpstreams(serviceId);
-              } catch (Exception e) {
-                LOG.warn("Unable to get upstream information for service {}", serviceId, e);
-                throw new RuntimeException("Unable to get upstream information for service {}", e);
-              }
-            }));
+          LOG.debug("Requests in this batch by service: {}", numRequestsByService);
 
-    List<AgentBatchResponseItem> responses = new ArrayList<>(batch.size());
-    int i = 0;
-    for (BaragonRequestBatchItem item : batch) {
-      boolean isLast = i == batch.size() - 1;
-      responses.add(getResponseItem(processRequest(item.getRequestId(), existingUpstreamsForThisBatch, services, requests, actionForBatchItem(item), !isLast, Optional.of(i)), item));
-      i++;
-    }
-    return responses;
+          Map<String, Collection<UpstreamInfo>> existingUpstreamsForThisBatch = services.keySet().stream()
+              .collect(Collectors.toMap(
+                  Function.identity(),
+                  (serviceId) -> {
+                    try {
+                      return stateDatastore.getUpstreams(serviceId);
+                    } catch (Exception e) {
+                      LOG.warn("Unable to get upstream information for service {}", serviceId, e);
+                      throw new RuntimeException("Unable to get upstream information for service {}", e);
+                    }
+                  }));
+
+          List<AgentBatchResponseItem> responses = new ArrayList<>(batch.size());
+          int i = 0;
+          for (BaragonRequestBatchItem item : batch) {
+            boolean isLast = i == batch.size() - 1;
+            responses.add(getResponseItem(processRequest(item.getRequestId(), existingUpstreamsForThisBatch, services, requests, actionForBatchItem(item), !isLast, Optional.of(i)), item));
+            i++;
+          }
+          return responses;
+        },
+        serviceIds,
+        "applyBatch");
+
   }
 
   private AgentBatchResponseItem getResponseItem(Response httpResponse, BaragonRequestBatchItem item) {

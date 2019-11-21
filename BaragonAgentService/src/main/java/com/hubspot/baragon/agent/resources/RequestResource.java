@@ -13,6 +13,7 @@ import javax.ws.rs.core.Response;
 
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
+import com.hubspot.baragon.agent.BaragonServiceLock;
 import com.hubspot.baragon.agent.managers.AgentRequestManager;
 import com.hubspot.baragon.data.BaragonRequestDatastore;
 import com.hubspot.baragon.data.BaragonStateDatastore;
@@ -27,22 +28,31 @@ public class RequestResource {
   private final AgentRequestManager agentRequestManager;
   private final BaragonRequestDatastore requestDatastore;
   private final BaragonStateDatastore stateDatastore;
+  private final BaragonServiceLock serviceLock;
 
   @Inject
-  public RequestResource(AgentRequestManager agentRequestManager, BaragonRequestDatastore requestDatastore, BaragonStateDatastore stateDatastore) {
+  public RequestResource(AgentRequestManager agentRequestManager,
+                         BaragonRequestDatastore requestDatastore,
+                         BaragonStateDatastore stateDatastore,
+                         BaragonServiceLock serviceLock) {
     this.agentRequestManager = agentRequestManager;
     this.requestDatastore = requestDatastore;
     this.stateDatastore = stateDatastore;
+    this.serviceLock = serviceLock;
   }
 
   @POST
   @Path("/literal")
-  public Response applyLiteral(@PathParam("requestId") String requestId, BaragonRequest baragonRequest) throws InterruptedException {
-    return agentRequestManager.processRequest(requestId, RequestAction.UPDATE, baragonRequest, Optional.absent(), Collections.emptyMap(), false, Optional.absent());
+  public Response applyLiteral(@PathParam("requestId") String requestId, BaragonRequest baragonRequest) {
+    return serviceLock.runWithServiceLockAndReturn(() ->
+        agentRequestManager.processRequest(requestId, RequestAction.UPDATE, baragonRequest, Optional.absent(), Collections.emptyMap(), false, Optional.absent()),
+        baragonRequest.getLoadBalancerService().getServiceId(),
+        "applyLiteral"
+    );
   }
 
   @POST
-  public Response apply(@PathParam("requestId") String requestId) throws Exception {
+  public Response apply(@PathParam("requestId") String requestId) {
     Optional<BaragonRequest> maybeRequest = requestDatastore.getRequest(requestId);
 
     if (!maybeRequest.isPresent()) {
@@ -50,18 +60,20 @@ public class RequestResource {
     }
 
     String serviceId = maybeRequest.get().getLoadBalancerService().getServiceId();
-
-    return agentRequestManager.processRequest(
-        requestId,
-        Collections.singletonMap(serviceId, stateDatastore.getUpstreams(serviceId)),
-        Collections.singletonMap(serviceId, stateDatastore.getService(serviceId)),
-        Collections.singletonMap(requestId, maybeRequest),
-        Optional.<RequestAction>absent(), false, Optional.<Integer>absent()
-    );
+    return serviceLock.runWithServiceLockAndReturn(() ->
+            agentRequestManager.processRequest(
+                requestId,
+                Collections.singletonMap(serviceId, stateDatastore.getUpstreams(serviceId)),
+                Collections.singletonMap(serviceId, stateDatastore.getService(serviceId)),
+                Collections.singletonMap(requestId, maybeRequest),
+                Optional.<RequestAction>absent(), false, Optional.<Integer>absent()
+            ),
+        serviceId,
+        "applySingle");
   }
 
   @DELETE
-  public Response revert(@PathParam("requestId") String requestId) throws Exception {
+  public Response revert(@PathParam("requestId") String requestId) {
     Optional<BaragonRequest> maybeRequest = requestDatastore.getRequest(requestId);
 
     if (!maybeRequest.isPresent()) {
@@ -70,13 +82,16 @@ public class RequestResource {
 
     String serviceId = maybeRequest.get().getLoadBalancerService().getServiceId();
 
-    return agentRequestManager.processRequest(
-        requestId,
-        Collections.singletonMap(serviceId, stateDatastore.getUpstreams(serviceId)),
-        Collections.singletonMap(serviceId, stateDatastore.getService(serviceId)),
-        Collections.singletonMap(requestId, maybeRequest),
-        Optional.of(RequestAction.REVERT), false, Optional.<Integer>absent()
-    );
+    return serviceLock.runWithServiceLockAndReturn(() ->
+            agentRequestManager.processRequest(
+                requestId,
+                Collections.singletonMap(serviceId, stateDatastore.getUpstreams(serviceId)),
+                Collections.singletonMap(serviceId, stateDatastore.getService(serviceId)),
+                Collections.singletonMap(requestId, maybeRequest),
+                Optional.of(RequestAction.REVERT), false, Optional.<Integer>absent()
+            ),
+        serviceId,
+        "revertSingle");
   }
 
 }
