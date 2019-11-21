@@ -109,14 +109,7 @@ public class KubernetesEndpointsWatcher extends BaragonKubernetesWatcher<Endpoin
       return;
     }
 
-    // TODO - better handling of this from endpoint data itself instead of an annotation
-    Map<String, String> annotations = endpoints.getMetadata().getAnnotations();
-    String desiredProtocol;
-    if (annotations == null) {
-      desiredProtocol = "HTTP";
-    } else {
-      desiredProtocol = Optional.fromNullable(annotations.get(kubernetesConfiguration.getProtocolAnnotation())).or("HTTP");
-    }
+    String desiredProtocol = Optional.fromNullable(labels.get(kubernetesConfiguration.getProtocolLabel())).or("HTTP");
     listener.processUpstreamsUpdate(serviceName, upstreamGroup, parseActiveUpstreams(endpoints, upstreamGroup, desiredProtocol));
   }
 
@@ -134,6 +127,7 @@ public class KubernetesEndpointsWatcher extends BaragonKubernetesWatcher<Endpoin
     return serviceName;
   }
 
+  // TODO - how should we handle which port to use when there are multiple? Name? Protocol?
   private List<UpstreamInfo> parseActiveUpstreams(Endpoints endpoints, String upstreamGroup, String protocol) {
     List<UpstreamInfo> upstreams = new ArrayList<>();
     for (EndpointSubset subset : endpoints.getSubsets()) {
