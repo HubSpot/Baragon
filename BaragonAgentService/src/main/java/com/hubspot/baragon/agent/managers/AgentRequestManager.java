@@ -213,7 +213,11 @@ public class AgentRequestManager {
     triggerTesting();
     configHelper.apply(update, maybeOldService, true, request.isNoReload(), request.isNoValidate(), delayReload, batchItemNumber);
     mostRecentRequestId.set(request.getLoadBalancerRequestId());
-    internalStateCache.put(update.getService().getServiceId(), new BasicServiceContext(update.getService(), update.getUpstreams()));
+    if (movedOffLoadBalancer(request)) {
+      internalStateCache.remove(update.getService().getServiceId());
+    } else {
+      internalStateCache.put(update.getService().getServiceId(), new BasicServiceContext(update.getService(), update.getUpstreams()));
+    }
     return Response.ok().build();
   }
 
