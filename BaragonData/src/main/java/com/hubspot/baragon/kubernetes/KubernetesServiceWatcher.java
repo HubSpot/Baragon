@@ -16,7 +16,7 @@ import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import com.hubspot.baragon.config.KubernetesConfiguration;
-import com.hubspot.baragon.data.BaragonAliasDatastore;
+import com.hubspot.baragon.managers.AliasManager;
 import com.hubspot.baragon.models.BaragonGroupAlias;
 import com.hubspot.baragon.models.BaragonService;
 
@@ -29,20 +29,20 @@ public class KubernetesServiceWatcher extends BaragonKubernetesWatcher<Service> 
 
   private final KubernetesListener listener;
   private final KubernetesConfiguration kubernetesConfiguration;
-  private final BaragonAliasDatastore aliasDatastore;
+  private final AliasManager aliasManager;
   private final ObjectMapper objectMapper;
   private final KubernetesClient kubernetesClient;
 
   @Inject
   public KubernetesServiceWatcher(KubernetesListener listener,
                                   KubernetesConfiguration kubernetesConfiguration,
-                                  BaragonAliasDatastore aliasDatastore,
+                                  AliasManager aliasManager,
                                   ObjectMapper objectMapper,
                                   @Named(KubernetesWatcherModule.BARAGON_KUBERNETES_CLIENT) KubernetesClient kubernetesClient) {
     super();
     this.listener = listener;
     this.kubernetesConfiguration = kubernetesConfiguration;
-    this.aliasDatastore = aliasDatastore;
+    this.aliasManager = aliasManager;
     this.objectMapper = objectMapper;
     this.kubernetesClient = kubernetesClient;
   }
@@ -158,7 +158,7 @@ public class KubernetesServiceWatcher extends BaragonKubernetesWatcher<Service> 
       }
       Optional<String> domainsString = Optional.fromNullable(annotations.get(kubernetesConfiguration.getDomainsAnnotation()));
       // non-aliased edgeCacheDomains not yet supported
-      BaragonGroupAlias groupsAndDomains = aliasDatastore.processAliases(
+      BaragonGroupAlias groupsAndDomains = aliasManager.processAliases(
           new HashSet<>(Arrays.asList(lbGroupsString.split(","))),
           domainsString.transform((d) -> new HashSet<>(Arrays.asList(d.split(",")))).or(new HashSet<>()),
           Collections.emptySet()
