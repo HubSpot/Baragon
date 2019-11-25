@@ -31,9 +31,11 @@ public class KubernetesConfiguration {
   private String upstreamGroupsLabel = "baragon.hubspot.com/upstream-group";
   private String lbGroupsAnnotation = "baragon.hubspot.com/lb-groups";
   private String domainsAnnotation = "baragon.hubspot.com/domains";
+  private String customConfigAnnotation = "baragon.hubspot.com/customConfig";
   private String ownersAnnotation = "baragon.hubspot.com/owners";
   private String templateNameAnnotation = "baragon.hubspot.com/template-name";
-  private String protocolAnnotation = "baragon.hubspot.com/protocol";
+  private String protocolLabel = "baragon.hubspot.com/desiredProtocol";
+  private String additionalPathsAnnotation = "baragon.hubspot.com/additionalPaths";
 
   @NotEmpty
   private List<String> ignoreUpstreamGroups = ImmutableList.of();
@@ -194,6 +196,14 @@ public class KubernetesConfiguration {
     this.domainsAnnotation = domainsAnnotation;
   }
 
+  public String getCustomConfigAnnotation() {
+    return customConfigAnnotation;
+  }
+
+  public void setCustomConfigAnnotation(String customConfigAnnotation) {
+    this.customConfigAnnotation = customConfigAnnotation;
+  }
+
   public String getOwnersAnnotation() {
     return ownersAnnotation;
   }
@@ -210,11 +220,19 @@ public class KubernetesConfiguration {
     this.templateNameAnnotation = templateNameAnnotation;
   }
 
-  public String getProtocolAnnotation() {
-    return protocolAnnotation;
+  public String getProtocolLabel() {
+    return protocolLabel;
   }
 
-  public void setProtocolAnnotation(String protocolAnnotation) {
-    this.protocolAnnotation = protocolAnnotation;
+  public void setProtocolLabel(String protocolLabel) {
+    this.protocolLabel = protocolLabel;
+  }
+
+  public String getAdditionalPathsAnnotation() {
+    return additionalPathsAnnotation;
+  }
+
+  public void setAdditionalPathsAnnotation(String additionalPathsAnnotation) {
+    this.additionalPathsAnnotation = additionalPathsAnnotation;
   }
 }

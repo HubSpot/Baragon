@@ -10,11 +10,13 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import com.hubspot.baragon.config.KubernetesConfiguration;
-import com.hubspot.baragon.data.BaragonAliasDatastore;
+import com.hubspot.baragon.managers.AliasManager;
 import com.hubspot.baragon.models.BaragonGroupAlias;
 import com.hubspot.baragon.models.BaragonService;
 
@@ -27,18 +29,21 @@ public class KubernetesServiceWatcher extends BaragonKubernetesWatcher<Service> 
 
   private final KubernetesListener listener;
   private final KubernetesConfiguration kubernetesConfiguration;
-  private final BaragonAliasDatastore aliasDatastore;
+  private final AliasManager aliasManager;
+  private final ObjectMapper objectMapper;
   private final KubernetesClient kubernetesClient;
 
   @Inject
   public KubernetesServiceWatcher(KubernetesListener listener,
                                   KubernetesConfiguration kubernetesConfiguration,
-                                  BaragonAliasDatastore aliasDatastore,
+                                  AliasManager aliasManager,
+                                  ObjectMapper objectMapper,
                                   @Named(KubernetesWatcherModule.BARAGON_KUBERNETES_CLIENT) KubernetesClient kubernetesClient) {
     super();
     this.listener = listener;
     this.kubernetesConfiguration = kubernetesConfiguration;
-    this.aliasDatastore = aliasDatastore;
+    this.aliasManager = aliasManager;
+    this.objectMapper = objectMapper;
     this.kubernetesClient = kubernetesClient;
   }
 
@@ -126,23 +131,23 @@ public class KubernetesServiceWatcher extends BaragonKubernetesWatcher<Service> 
     try {
       Map<String, String> labels = k8sService.getMetadata().getLabels();
       if (labels == null) {
-        LOG.warn("No labels present on endpoint {}", k8sService.getMetadata().getName());
+        LOG.warn("No labels present on service {}", k8sService.getMetadata().getName());
         return null;
       }
       String serviceName = labels.get(kubernetesConfiguration.getServiceNameLabel());
       if (serviceName == null) {
-        LOG.warn("Could not get service name for endpoint update (service: {})", k8sService);
+        LOG.warn("Could not get service name for service update (service: {})", k8sService);
         return null;
       }
 
       Map<String, String> annotations = k8sService.getMetadata().getAnnotations();
       if (annotations == null) {
-        LOG.warn("No annotations present on endpoint {}", k8sService.getMetadata().getName());
+        LOG.warn("No annotations present on service {}", k8sService.getMetadata().getName());
         return null;
       }
       String basePath = annotations.get(kubernetesConfiguration.getBasePathAnnotation());
       if (basePath == null) {
-        LOG.warn("Could not get base path for endpoint update ( service: {})", k8sService);
+        LOG.warn("Could not get base path for service update ( service: {})", k8sService);
         return null;
       }
 
@@ -153,7 +158,7 @@ public class KubernetesServiceWatcher extends BaragonKubernetesWatcher<Service> 
       }
       Optional<String> domainsString = Optional.fromNullable(annotations.get(kubernetesConfiguration.getDomainsAnnotation()));
       // non-aliased edgeCacheDomains not yet supported
-      BaragonGroupAlias groupsAndDomains = aliasDatastore.processAliases(
+      BaragonGroupAlias groupsAndDomains = aliasManager.processAliases(
           new HashSet<>(Arrays.asList(lbGroupsString.split(","))),
           domainsString.transform((d) -> new HashSet<>(Arrays.asList(d.split(",")))).or(new HashSet<>()),
           Collections.emptySet()
@@ -164,18 +169,27 @@ public class KubernetesServiceWatcher extends BaragonKubernetesWatcher<Service> 
 
       Optional<String> templateName = Optional.fromNullable(annotations.get(kubernetesConfiguration.getTemplateNameAnnotation()));
 
+      Map<String, Object> customConfig = annotations.containsKey(kubernetesConfiguration.getCustomConfigAnnotation()) ?
+          objectMapper.readValue(annotations.get(kubernetesConfiguration.getCustomConfigAnnotation()), new TypeReference<Map<String, Object>>() {}) :
+          Collections.emptyMap();
+
+      String additionalPathsString = annotations.get(kubernetesConfiguration.getAdditionalPathsAnnotation());
+      List<String> additionalPaths = additionalPathsString != null ?
+          Arrays.asList(additionalPathsString.split(",")) :
+          Collections.emptyList();
+
       return new BaragonService(
           serviceName,
           owners,
           basePath,
-          Collections.emptyList(), // TODO - additionalPaths not yet supported
+          additionalPaths,
           groupsAndDomains.getGroups(),
-          Collections.emptyMap(), // TODO - custom options not yet supported
+          customConfig,
           templateName,
           groupsAndDomains.getDomains(),
           Optional.absent(),
           groupsAndDomains.getEdgeCacheDomains(),
-          false // Always using IPs to start with
+          false // Always using IPs
       );
     } catch (Throwable t) {
       LOG.error("Unable to build BaragonService object from endpoint {}", k8sService.getMetadata().getName(), t);

@@ -3,6 +3,7 @@ package com.hubspot.baragon.agent.kubernetes;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -76,12 +77,15 @@ public class BaragonAgentKubernetesListener extends KubernetesListener {
         false
     );
 
+    Map<String, Collection<UpstreamInfo>> upstreamsForUpdate = new HashMap<>();
+    upstreamsForUpdate.put(updatedService.getServiceId(), existingUpstreams);
+
     agentRequestManager.processRequest(
         baragonRequest.getLoadBalancerRequestId(),
         RequestAction.UPDATE,
         baragonRequest,
         Optional.absent(),
-        Collections.singletonMap(updatedService.getServiceId(), existingUpstreams),
+        upstreamsForUpdate,
         false,
         Optional.absent());
   }
@@ -132,12 +136,15 @@ public class BaragonAgentKubernetesListener extends KubernetesListener {
         false
     );
 
+    Map<String, Collection<UpstreamInfo>> upstreamsForUpdate = new HashMap<>();
+    upstreamsForUpdate.put(serviceId, existingUpstreams);
+
     agentRequestManager.processRequest(
         baragonRequest.getLoadBalancerRequestId(),
         RequestAction.UPDATE,
         baragonRequest,
         Optional.absent(),
-        Collections.singletonMap(serviceId, existingUpstreams),
+        upstreamsForUpdate,
         false,
         Optional.absent());
   }
@@ -168,7 +175,7 @@ public class BaragonAgentKubernetesListener extends KubernetesListener {
             RequestAction.DELETE,
             baragonRequest,
             Optional.absent(),
-            Collections.singletonMap(serviceId, Collections.emptyList()),
+            new HashMap<>(),
             false,
             Optional.absent());
       } else {
@@ -189,12 +196,16 @@ public class BaragonAgentKubernetesListener extends KubernetesListener {
           false,
           false
       );
+
+      Map<String, Collection<UpstreamInfo>> upstreamsForUpdate = new HashMap<>();
+      upstreamsForUpdate.put(serviceId, partitionedUpstreams.get(false));
+
       agentRequestManager.processRequest(
           request.getLoadBalancerRequestId(),
           RequestAction.UPDATE,
           request,
           Optional.absent(),
-          Collections.singletonMap(serviceId, partitionedUpstreams.get(false)),
+          upstreamsForUpdate,
           false,
           Optional.absent());
     } else {
