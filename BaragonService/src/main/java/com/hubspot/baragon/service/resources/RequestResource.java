@@ -26,9 +26,9 @@ import org.slf4j.LoggerFactory;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import com.hubspot.baragon.auth.NoAuth;
-import com.hubspot.baragon.data.BaragonAliasDatastore;
 import com.hubspot.baragon.data.BaragonLoadBalancerDatastore;
 import com.hubspot.baragon.data.BaragonStateDatastore;
+import com.hubspot.baragon.managers.AliasManager;
 import com.hubspot.baragon.models.BaragonRequest;
 import com.hubspot.baragon.models.BaragonRequestBuilder;
 import com.hubspot.baragon.models.BaragonResponse;
@@ -48,16 +48,16 @@ public class RequestResource {
   private final BaragonStateDatastore stateDatastore;
   private final BaragonLoadBalancerDatastore loadBalancerDatastore;
   private final RequestManager manager;
-  private final BaragonAliasDatastore aliasDatastore;
+  private final AliasManager aliasManager;
 
   @Inject
   public RequestResource(BaragonStateDatastore stateDatastore,
                          RequestManager manager,
-                         BaragonAliasDatastore aliasDatastore,
+                         AliasManager aliasManager,
                          BaragonLoadBalancerDatastore loadBalancerDatastore) {
     this.stateDatastore = stateDatastore;
     this.manager = manager;
-    this.aliasDatastore = aliasDatastore;
+    this.aliasManager = aliasManager;
     this.loadBalancerDatastore = loadBalancerDatastore;
   }
 
@@ -71,7 +71,7 @@ public class RequestResource {
   @POST
   public BaragonResponse enqueueRequest(@Valid BaragonRequest request) {
     try {
-      BaragonRequest updatedForAliases = aliasDatastore.updateForAliases(request);
+      BaragonRequest updatedForAliases = aliasManager.updateForAliases(request);
       BaragonRequest updatedForDefaultDomains = loadBalancerDatastore.updateForDefaultDomains(updatedForAliases);
       LOG.info("Received request: {}", request);
       return manager.enqueueRequest(updatedForDefaultDomains);
