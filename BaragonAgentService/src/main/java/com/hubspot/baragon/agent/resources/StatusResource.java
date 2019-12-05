@@ -87,7 +87,7 @@ public class StatusResource {
     Set<String> currentStateErrors = new HashSet<>(stateErrors);
 
     return new BaragonAgentStatus(loadBalancerConfiguration.getName(),
-        !currentErrorMessage.isPresent() && stateErrors.isEmpty(),
+        !currentErrorMessage.isPresent(),
         currentErrorMessage,
         leaderLatch.hasLeadership(),
         mostRecentRequestId.get(),
