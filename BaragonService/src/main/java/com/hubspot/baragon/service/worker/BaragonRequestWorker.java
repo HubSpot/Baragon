@@ -265,7 +265,7 @@ public class BaragonRequestWorker implements Runnable {
           .map(Optional::get)
           .collect(Collectors.toList());
       final Set<String> inProgressServices = queuedRequests.stream()
-          .filter((q) -> q.getCurrentState().isInFlight())
+          .filter((q) -> q.getCurrentState().isInFlight() || hasInProgressAttempt(q))
           .map((q) -> q.getQueuedRequestId().getServiceId())
           .collect(Collectors.toSet());
 
@@ -349,6 +349,16 @@ public class BaragonRequestWorker implements Runnable {
     } finally {
       LOG.debug("Finished poller loop.");
     }
+  }
+
+  /*
+   * InternalRequestStates is not marked as in-progress so that new requests will fire. It can also be in this
+   * state when retry requests need to fire due to a failure to update a single agent. It should still be
+   * marked as in-progress in this case
+   */
+  private boolean hasInProgressAttempt(QueuedRequestWithState queuedRequestWithState) {
+    return queuedRequestWithState.getCurrentState() == InternalRequestStates.SEND_APPLY_REQUESTS &&
+        !agentManager.getAgentResponses(queuedRequestWithState.getQueuedRequestId().getRequestId()).isEmpty();
   }
 
   private static class MaybeAdjustedRequest {
