@@ -279,7 +279,7 @@ public class BaragonRequestWorker implements Runnable {
 
       // First process results for any requests that were already in-flight
       List<QueuedRequestWithState> inFlightRequests = queuedRequests.stream()
-          .filter((q) -> q.getCurrentState().isInFlight())
+          .filter((q) -> q.getCurrentState().isInFlight() || hasInProgressAttempt(q))
           .collect(Collectors.toList());
       LOG.debug("Processing {} BaragonRequests which are already in-flight", inFlightRequests.size());
       handleResultStates(handleQueuedRequests(inFlightRequests));
