@@ -269,23 +269,24 @@ public class BaragonRequestWorker implements Runnable {
           .filter(Optional::isPresent)
           .map(Optional::get)
           .collect(Collectors.toList());
-      final Set<String> inProgressServices = queuedRequests.stream()
+
+      List<QueuedRequestWithState> inFlightRequests = queuedRequests.stream()
           .filter((q) -> q.getCurrentState().isInFlight() || hasInProgressAttempt(q))
+          .collect(Collectors.toList());
+
+      final Set<String> inProgressServices = inFlightRequests.stream()
           .map((q) -> q.getQueuedRequestId().getServiceId())
           .collect(Collectors.toSet());
 
       final Set<QueuedRequestWithState> removedForCurrentInFlightRequest = queuedRequests.stream()
-          .filter((q) -> inProgressServices.contains(q.getQueuedRequestId().getServiceId()) && !q.getCurrentState().isInFlight())
+          .filter((q) -> inProgressServices.contains(q.getQueuedRequestId().getServiceId()) && !inFlightRequests.contains(q))
           .collect(Collectors.toSet());
-      if (!inProgressServices.isEmpty()) {
+      if (!inFlightRequests.isEmpty()) {
         LOG.info("Skipping new updates for services {} due to current in-flight updates", String.join(",", inProgressServices));
       }
       queuedRequests.removeAll(removedForCurrentInFlightRequest);
 
       // First process results for any requests that were already in-flight
-      List<QueuedRequestWithState> inFlightRequests = queuedRequests.stream()
-          .filter((q) -> q.getCurrentState().isInFlight())
-          .collect(Collectors.toList());
       LOG.debug("Processing {} BaragonRequests which are already in-flight", inFlightRequests.size());
       handleResultStates(handleQueuedRequests(inFlightRequests));
       queuedRequests.removeAll(inFlightRequests);
