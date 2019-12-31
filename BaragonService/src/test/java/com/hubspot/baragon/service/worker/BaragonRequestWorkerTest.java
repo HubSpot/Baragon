@@ -53,7 +53,7 @@ public class BaragonRequestWorkerTest extends BaragonServiceTestBase {
 
   @Test
   public void testFailedRetriedRequestsAreConsideredInFlight() {
-    
+
   }
 
   @Test
