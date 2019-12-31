@@ -220,11 +220,6 @@
       <scope>runtime</scope>
     </dependency>
     <dependency>
-      <groupId>name.falgout.jeffrey.testing.junit5</groupId>
-      <artifactId>guice-extension</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
       <groupId>org.apache.curator</groupId>
       <artifactId>curator-test</artifactId>
       <scope>test</scope>
