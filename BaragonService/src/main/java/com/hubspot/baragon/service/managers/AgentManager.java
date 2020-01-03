@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Optional;
 import com.google.common.base.Strings;
 import com.google.common.collect.Sets;
@@ -54,7 +55,7 @@ public class AgentManager {
 
   private final BaragonLoadBalancerDatastore loadBalancerDatastore;
   private final BaragonStateDatastore stateDatastore;
-  private final BaragonAgentResponseDatastore agentResponseDatastore;
+  protected final BaragonAgentResponseDatastore agentResponseDatastore;
   private final AsyncHttpClient asyncHttpClient;
   private final String baragonAgentRequestUriFormat;
   private final String baragonAgentBatchRequestUriFormat;
@@ -194,6 +195,11 @@ public class AgentManager {
     }
     batch.removeAll(doNotSend);
 
+    sendFilteredBatchRequests(baseUrl, batch);
+  }
+
+  @VisibleForTesting
+  void sendFilteredBatchRequests(String baseUrl, List<BaragonRequestBatchItem> batch) {
     final String url = String.format(baragonAgentBatchRequestUriFormat, baseUrl);
     final Set<String> handledRequestIds = Sets.newHashSet();
 
@@ -265,7 +271,8 @@ public class AgentManager {
     return true;
   }
 
-  private void sendIndividualRequest(final String baseUrl, final String requestId, final AgentRequestType requestType) {
+  @VisibleForTesting
+  void sendIndividualRequest(final String baseUrl, final String requestId, final AgentRequestType requestType) {
     if (!shouldSendRequest(baseUrl, requestId, requestType)) {
       return;
     }

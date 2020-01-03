@@ -96,6 +96,7 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
 
   public static final String GOOGLE_CLOUD_COMPUTE_SERVICE = "baragon.google.cloud.compute.service";
 
+
   @Override
   public void configure(Binder binder) {
     binder.install(new BaragonDataModule());

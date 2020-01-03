@@ -104,6 +104,10 @@
       <artifactId>async-http-client</artifactId>
     </dependency>
     <dependency>
+      <groupId>com.squarespace.jersey2-guice</groupId>
+      <artifactId>jersey2-guice-impl</artifactId>
+    </dependency>
+    <dependency>
       <groupId>io.dropwizard</groupId>
       <artifactId>dropwizard-assets</artifactId>
     </dependency>
@@ -218,11 +222,6 @@
       <groupId>org.glassfish.jaxb</groupId>
       <artifactId>jaxb-runtime</artifactId>
       <scope>runtime</scope>
-    </dependency>
-    <dependency>
-      <groupId>name.falgout.jeffrey.testing.junit5</groupId>
-      <artifactId>guice-extension</artifactId>
-      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.curator</groupId>
