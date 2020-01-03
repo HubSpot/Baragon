@@ -3,6 +3,7 @@ package com.hubspot.baragon.service;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -80,6 +81,10 @@ public class BaragonServiceTestBase {
   }
 
   protected static BaragonRequestBuilder createBaseRequest(String requestId, String serviceId, Set<String> lbGroups) {
+    return createBaseRequest(requestId, serviceId, lbGroups, Collections.emptyMap());
+  }
+
+  protected static BaragonRequestBuilder createBaseRequest(String requestId, String serviceId, Set<String> lbGroups, Map<String, Object> options) {
     return new BaragonRequestBuilder()
         .setLoadBalancerRequestId(requestId)
         .setLoadBalancerService(new BaragonService(
@@ -87,7 +92,7 @@ public class BaragonServiceTestBase {
             Collections.emptySet(),
             serviceId,
             lbGroups,
-            Collections.emptyMap()
+            options
         ))
         .setAddUpstreams(Collections.singletonList(new UpstreamInfo("localhost:8080", Optional.absent(), Optional.absent())))
         .setRemoveUpstreams(Collections.singletonList(new UpstreamInfo("localhost:8081", Optional.absent(), Optional.absent())))

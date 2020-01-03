@@ -11,9 +11,12 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import com.google.common.base.Optional;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.inject.Inject;
+import com.hubspot.baragon.models.AgentRequestType;
 import com.hubspot.baragon.models.BaragonRequestBuilder;
+import com.hubspot.baragon.models.InternalRequestStates;
 import com.hubspot.baragon.models.QueuedRequestId;
 import com.hubspot.baragon.models.QueuedRequestWithState;
 import com.hubspot.baragon.models.UpstreamInfo;
@@ -42,18 +45,47 @@ public class BaragonRequestWorkerTest extends BaragonServiceTestBase {
   }
 
   @Test
-  public void testServiceBatchBoundaryIsRespected() {
+  public void testServiceBatchBoundaryIsRespected() throws Exception {
+    String agentUrl = "http://agent2";
+    startAgent(agentUrl, TEST_LB_GROUP);
+    requestManager.enqueueRequest(createBaseRequest("request1", "service1", ImmutableSet.of(TEST_LB_GROUP)).build());
+    requestManager.enqueueRequest(createBaseRequest("request2", "service1", ImmutableSet.of(TEST_LB_GROUP), ImmutableMap.of("1", "2")).build());
 
+    requestWorker.run(); // move from pending -> send apply
+    requestWorker.run(); // actually send
+    Assertions.assertEquals(1, testAgentManager.getRecentBatches().get(agentUrl).size());
   }
 
   @Test
-  public void testInFlightRequestsAreRepected() {
+  public void testInFlightRequestsAreRespected() throws Exception {
+    String agentUrl = "http://agent2";
+    startAgent(agentUrl, TEST_LB_GROUP);
+    requestManager.enqueueRequest(createBaseRequest("request1", "service1", ImmutableSet.of(TEST_LB_GROUP)).build());
+    requestWorker.run(); // move from pending -> send apply
+    requestWorker.run(); // actually send
+    Assertions.assertEquals(1, testAgentManager.getRecentBatches().get(agentUrl).size());
 
+    requestManager.enqueueRequest(createBaseRequest("request2", "service1", ImmutableSet.of(TEST_LB_GROUP)).build());
+    Assertions.assertEquals(1, testAgentManager.getRecentBatches().get(agentUrl).size());
+    Assertions.assertEquals("request1", testAgentManager.getRecentBatches().get(agentUrl).get(0).getRequestId());
   }
 
   @Test
-  public void testFailedRetriedRequestsAreConsideredInFlight() {
+  public void testFailedRetriedRequestsAreConsideredInFlight() throws Exception {
+    String agentUrl = "http://agent2";
+    startAgent(agentUrl, TEST_LB_GROUP);
+    requestManager.enqueueRequest(createBaseRequest("request1", "service1", ImmutableSet.of(TEST_LB_GROUP)).build());
+    requestWorker.run(); // move from pending -> send apply
+    requestWorker.run(); // actually send
+    Assertions.assertEquals(1, testAgentManager.getRecentBatches().get(agentUrl).size());
+    testAgentManager.completeRequestWithFailure(agentUrl, agentUrl, "request1", AgentRequestType.APPLY);
+    requestWorker.run(); // see the failed response, move to retry
+    Assertions.assertEquals(InternalRequestStates.SEND_APPLY_REQUESTS, requestManager.getRequestState("request1").get());
 
+    // second request for same service should not send a request batch
+    requestManager.enqueueRequest(createBaseRequest("request2", "service1", ImmutableSet.of(TEST_LB_GROUP)).build());
+    Assertions.assertEquals(1, testAgentManager.getRecentBatches().get(agentUrl).size());
+    Assertions.assertEquals("request1", testAgentManager.getRecentBatches().get(agentUrl).get(0).getRequestId());
   }
 
   @Test
