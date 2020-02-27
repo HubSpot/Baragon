@@ -44,8 +44,6 @@ public class StateResource {
     CachedBaragonState state = stateCache.getState();
     String verisonString = Integer.toString(state.getVersion());
 
-    System.out.println(ifNoneMatch);
-
     if (ifNoneMatch != null && ifNoneMatch.equals(verisonString.trim())) {
       return Response.notModified()
           .header(HttpHeaders.ETAG, state.getVersion())
