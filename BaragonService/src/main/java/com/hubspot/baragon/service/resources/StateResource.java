@@ -30,9 +30,6 @@ public class StateResource {
   private final ServiceManager serviceManager;
   private final BaragonStateCache stateCache;
 
-  @HeaderParam(HttpHeaders.ACCEPT_ENCODING)
-  private String acceptEncoding;
-
   @Inject
   public StateResource(ServiceManager serviceManager, BaragonStateCache stateCache) {
     this.serviceManager = serviceManager;
@@ -42,8 +39,16 @@ public class StateResource {
   @GET
   @NoAuth
   @Timed
-  public Response getAllServices() {
+  public Response getAllServices(@HeaderParam(HttpHeaders.IF_NONE_MATCH) String ifNoneMatch,
+                                 @HeaderParam(HttpHeaders.ACCEPT_ENCODING) String acceptEncoding) {
     CachedBaragonState state = stateCache.getState();
+    String verisonString = Integer.toString(state.getVersion());
+
+    if (ifNoneMatch != null && ifNoneMatch.equals(verisonString.trim())) {
+      return Response.notModified()
+          .header(HttpHeaders.ETAG, state.getVersion())
+          .build();
+    }
 
     ResponseBuilder builder = Response.ok();
 
@@ -55,7 +60,10 @@ public class StateResource {
       entity = state.getUncompressed();
     }
 
-    return builder.entity(entity).build();
+    return builder
+        .entity(entity)
+        .header(HttpHeaders.ETAG, state.getVersion())
+        .build();
   }
 
   @GET
