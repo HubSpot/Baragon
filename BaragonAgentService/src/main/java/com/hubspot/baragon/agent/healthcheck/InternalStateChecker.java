@@ -1,6 +1,7 @@
 package com.hubspot.baragon.agent.healthcheck;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -68,7 +69,7 @@ public class InternalStateChecker implements Runnable {
   public void run() {
     Set<String> invalidServiceMessages = new HashSet<>();
     long now = System.currentTimeMillis();
-    internalStateCache.forEach((serviceId, context) -> {
+    new HashMap<>(internalStateCache).forEach((serviceId, context) -> {
       Optional<BaragonService> maybeService = stateDatastore.getService(serviceId);
       if (!maybeService.isPresent()) {
         invalidServiceMessages.add(String.format("%s no longer exists in state datastore, but exists in agent", serviceId));
@@ -104,6 +105,8 @@ public class InternalStateChecker implements Runnable {
               }
               try {
                 configHelper.bootstrapApply(maybeCheck.get().getKey(), maybeCheck.get().getValue());
+                BasicServiceContext newContext = new BasicServiceContext(maybeCheck.get().getKey().getService(), maybeCheck.get().getKey().getUpstreams());
+                internalStateCache.put(serviceId, newContext);
               } finally {
                 agentLock.unlock();
               }
