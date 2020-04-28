@@ -1,6 +1,5 @@
 language: java
 
-install: false
 script: mvn -B -q -DskipBaragonWebUI verify
 cache:
   directories:
