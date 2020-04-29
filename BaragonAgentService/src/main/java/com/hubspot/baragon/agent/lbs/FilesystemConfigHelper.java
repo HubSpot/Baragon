@@ -90,13 +90,17 @@ public class FilesystemConfigHelper {
     }
     LOG.debug("Acquired agent lock, reloading configs");
     try {
-      LOG.debug("Checking configs for reload");
-      adapter.checkConfigs();
-      LOG.debug("Reloading configs");
-      adapter.reloadConfigs();
+      checkAndReloadUnlocked();
     }  finally {
       agentLock.unlock();
     }
+  }
+
+  public void checkAndReloadUnlocked() throws Exception {
+    LOG.debug("Checking configs for reload");
+    adapter.checkConfigs();
+    LOG.debug("Reloading configs");
+    adapter.reloadConfigs();
   }
 
   public Optional<Collection<BaragonConfigFile>> configsToApply(ServiceContext context) throws MissingTemplateException {
@@ -347,17 +351,7 @@ public class FilesystemConfigHelper {
 
   private void backupConfigs(BaragonService service) {
     for (String filename : configGenerator.getConfigPathsForProject(service)) {
-      try {
-        File src = new File(filename);
-        if (!src.exists()) {
-          continue;
-        }
-        File dest = new File(filename + BACKUP_FILENAME_SUFFIX);
-        Files.move(src, dest);
-      } catch (IOException e) {
-        LOG.error("Failed to backup {]", filename, e);
-        throw new RuntimeException(String.format("Failed to backup %s", filename));
-      }
+      backupFile(filename);
     }
   }
 
@@ -367,6 +361,20 @@ public class FilesystemConfigHelper {
       if (!file.exists()) {
         continue;
       }
+    }
+  }
+
+  public void backupFile(String filename) {
+    try {
+      File src = new File(filename);
+      if (!src.exists()) {
+        return;
+      }
+      File dest = new File(filename + BACKUP_FILENAME_SUFFIX);
+      Files.move(src, dest);
+    } catch (IOException e) {
+      LOG.error("Failed to backup {}", filename, e);
+      throw new RuntimeException(String.format("Failed to backup %s", filename));
     }
   }
 
@@ -399,17 +407,25 @@ public class FilesystemConfigHelper {
 
   private void restoreConfigs(BaragonService service) {
     for (String filename : configGenerator.getConfigPathsForProject(service)) {
-      try {
-        File src = new File(filename + BACKUP_FILENAME_SUFFIX);
-        if (!src.exists()) {
-          continue;
-        }
-        File dest = new File(filename);
-        Files.copy(src, dest);
-      } catch (IOException e) {
-        LOG.error("Failed to restore {}", filename, e);
-        throw new RuntimeException(String.format("Failed to restore %s", filename));
-      }
+      restoreFile(filename);
     }
+  }
+
+  public void restoreFile(String filename) {
+    try {
+      File src = new File(filename + BACKUP_FILENAME_SUFFIX);
+      if (!src.exists()) {
+        return;
+      }
+      File dest = new File(filename);
+      Files.copy(src, dest);
+    } catch (IOException e) {
+      LOG.error("Failed to restore {}", filename, e);
+      throw new RuntimeException(String.format("Failed to restore %s", filename));
+    }
+  }
+
+  public boolean isBackupFile(String filename) {
+    return filename.endsWith(BACKUP_FILENAME_SUFFIX);
   }
 }
