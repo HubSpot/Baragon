@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardWatchEventKinds;
 import java.nio.file.WatchEvent;
 import java.nio.file.WatchKey;
@@ -165,7 +165,7 @@ public class DirectoryChangesListener {
           for (Path from : toCopy) {
             Path to = config.getDestinationAsPath().resolve(from.getFileName().toString());
             LOG.info("Copying {} to {}", from, to);
-            Files.copy(from, to);
+            Files.copy(from, to, StandardCopyOption.REPLACE_EXISTING);
           }
           LOG.info("Copied {} files to {}", toCopy.size(), config.getDestination());
           filesystemConfigHelper.checkAndReloadUnlocked();
