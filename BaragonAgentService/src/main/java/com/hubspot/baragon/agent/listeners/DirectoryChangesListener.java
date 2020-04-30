@@ -189,7 +189,7 @@ public class DirectoryChangesListener {
           }
           for (Path path : backedUpFiles) {
             LOG.info("Restoring file {}", path);
-            filesystemConfigHelper.restoreFile(path.getFileName().toString());
+            filesystemConfigHelper.restoreFile(path.toString());
           }
           LOG.info("Files in destination dir are now {}", getFilesInDirectory(config.getDestinationAsPath()));
           throw e;
