@@ -163,7 +163,8 @@ public class DirectoryChangesListener {
           LOG.info("Copying files from {} to {}", config.getSource(), config.getDestination());
           List<Path> toCopy = getFilesInDirectory(config.getSourceAsPath());
           for (Path from : toCopy) {
-            Path to = Paths.get(from.toAbsolutePath().toString().replace(config.getSource(), config.getDestination()));
+            Path to = config.getDestinationAsPath().resolve(from.getFileName().toString());
+            LOG.info("Copying {} to {}", from, to);
             Files.copy(from, to);
           }
           LOG.info("Copied {} files to {}", toCopy.size(), config.getDestination());
