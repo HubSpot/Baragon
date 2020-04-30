@@ -9,6 +9,7 @@ import java.nio.file.StandardWatchEventKinds;
 import java.nio.file.WatchEvent;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -153,11 +154,14 @@ public class DirectoryChangesListener {
         LOG.warn("Failed to acquire lock for reload");
         throw new LockTimeoutException("Timed out waiting to acquire lock for reload", agentLock);
       }
+      List<Path> backedUpFiles = new ArrayList<>();
+      List<Path> newCopiedFiles = new ArrayList<>();
       try {
         List<Path> destinationFiles = getFilesInDirectory(config.getDestinationAsPath());
         for (Path path : destinationFiles) {
           LOG.info("Backing up {}", path);
           filesystemConfigHelper.backupFile(path.toAbsolutePath().toString());
+          backedUpFiles.add(path);
         }
         LOG.info("Backed up {} files in {}", destinationFiles.size(), config.getDestination());
         LOG.info("Files in destination dir are now {}", getFilesInDirectory(config.getDestinationAsPath()));
@@ -168,6 +172,7 @@ public class DirectoryChangesListener {
             Path to = config.getDestinationAsPath().resolve(from.getFileName().toString());
             LOG.info("Copying {} to {}", from, to);
             Files.copy(from, to, StandardCopyOption.REPLACE_EXISTING);
+            newCopiedFiles.add(to);
           }
           LOG.info("Copied {} files to {}", toCopy.size(), config.getDestination());
           LOG.info("Files in destination dir are now {}", getFilesInDirectory(config.getDestinationAsPath()));
@@ -176,16 +181,16 @@ public class DirectoryChangesListener {
           fileCopyErrorMessage.set(null);
         } catch (Exception e) {
           fileCopyErrorMessage.set(e.getMessage());
-          List<Path> toCleanUp = getFilesInDirectory(config.getDestinationAsPath());
-          for (Path path : toCleanUp) {
-            Path absolute = path.toAbsolutePath();
-            if (!filesystemConfigHelper.isBackupFile(absolute.toString())) {
-              Files.delete(absolute);
-            } else {
-              filesystemConfigHelper.restoreFile(absolute.toString());
+          for (Path path : newCopiedFiles) {
+            if (Files.exists(path)) {
+              LOG.info("Deleting possibly invalid file {}", path);
+              Files.delete(path);
             }
           }
-          LOG.info("Cleaned up {} files in {} due to exception", toCleanUp.size(), config.getDestination());
+          for (Path path : backedUpFiles) {
+            LOG.info("Restoring file {}", path);
+            filesystemConfigHelper.restoreFile(path.getFileName().toString());
+          }
           LOG.info("Files in destination dir are now {}", getFilesInDirectory(config.getDestinationAsPath()));
           throw e;
         }
