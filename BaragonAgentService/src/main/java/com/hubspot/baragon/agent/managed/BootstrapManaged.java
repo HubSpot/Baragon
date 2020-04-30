@@ -16,6 +16,7 @@ import com.hubspot.baragon.agent.BaragonAgentServiceModule;
 import com.hubspot.baragon.agent.config.BaragonAgentConfiguration;
 import com.hubspot.baragon.agent.healthcheck.ConfigChecker;
 import com.hubspot.baragon.agent.healthcheck.InternalStateChecker;
+import com.hubspot.baragon.agent.listeners.DirectoryChangesListener;
 import com.hubspot.baragon.agent.listeners.ResyncListener;
 import com.hubspot.baragon.agent.workers.AgentHeartbeatWorker;
 import com.hubspot.baragon.data.BaragonKnownAgentsDatastore;
@@ -41,6 +42,7 @@ public class BootstrapManaged implements Managed {
   private final ResyncListener resyncListener;
   private final ConfigChecker configChecker;
   private final InternalStateChecker internalStateChecker;
+  private final DirectoryChangesListener directoryChangesListener;
   private final AtomicReference<BaragonAgentState> agentState;
 
   private ScheduledFuture<?> requestWorkerFuture = null;
@@ -59,6 +61,7 @@ public class BootstrapManaged implements Managed {
                           ConfigChecker configChecker,
                           AtomicReference<BaragonAgentState> agentState,
                           InternalStateChecker internalStateChecker,
+                          DirectoryChangesListener directoryChangesListener,
                           @Named(BaragonAgentServiceModule.AGENT_SCHEDULED_EXECUTOR) ScheduledExecutorService executorService,
                           @Named(BaragonAgentServiceModule.AGENT_LEADER_LATCH) LeaderLatch leaderLatch) {
     this.configuration = configuration;
@@ -73,6 +76,7 @@ public class BootstrapManaged implements Managed {
     this.lifecycleHelper = lifecycleHelper;
     this.configChecker = configChecker;
     this.internalStateChecker = internalStateChecker;
+    this.directoryChangesListener = directoryChangesListener;
     this.agentState = agentState;
   }
 
@@ -80,6 +84,9 @@ public class BootstrapManaged implements Managed {
 
   @Override
   public void start() throws Exception {
+    LOG.info("Updating watched files");
+    directoryChangesListener.start();
+
     LOG.info("Applying current configs...");
     lifecycleHelper.applyCurrentConfigs();
 
@@ -130,5 +137,6 @@ public class BootstrapManaged implements Managed {
     if (stateCheckerFuture != null) {
       stateCheckerFuture.cancel(true);
     }
+    directoryChangesListener.stop();
   }
 }

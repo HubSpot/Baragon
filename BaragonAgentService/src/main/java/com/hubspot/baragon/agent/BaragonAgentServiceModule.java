@@ -50,6 +50,7 @@ import com.hubspot.baragon.agent.healthcheck.ZooKeeperHealthcheck;
 import com.hubspot.baragon.agent.lbs.FilesystemConfigHelper;
 import com.hubspot.baragon.agent.lbs.LbConfigGenerator;
 import com.hubspot.baragon.agent.lbs.LocalLbAdapter;
+import com.hubspot.baragon.agent.listeners.DirectoryChangesListener;
 import com.hubspot.baragon.agent.listeners.ResyncListener;
 import com.hubspot.baragon.agent.managed.BaragonAgentGraphiteReporterManaged;
 import com.hubspot.baragon.agent.managed.BootstrapManaged;
@@ -122,6 +123,7 @@ public class BaragonAgentServiceModule extends DropwizardAwareModule<BaragonAgen
     binder.bind(FilesystemConfigHelper.class).in(Scopes.SINGLETON);
     binder.bind(AgentHeartbeatWorker.class).in(Scopes.SINGLETON);
     binder.bind(InternalStateChecker.class).in(Scopes.SINGLETON);
+    binder.bind(DirectoryChangesListener.class).in(Scopes.SINGLETON);
 
     final ObjectMapper objectMapper = new ObjectMapper();
 

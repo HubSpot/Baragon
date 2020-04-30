@@ -23,6 +23,7 @@ import com.hubspot.baragon.BaragonDataModule;
 import com.hubspot.baragon.agent.BaragonAgentServiceModule;
 import com.hubspot.baragon.agent.config.LoadBalancerConfiguration;
 import com.hubspot.baragon.agent.lbs.LocalLbAdapter;
+import com.hubspot.baragon.agent.listeners.DirectoryChangesListener;
 import com.hubspot.baragon.auth.NoAuth;
 import com.hubspot.baragon.exceptions.InvalidConfigException;
 import com.hubspot.baragon.models.BaragonAgentMetadata;
@@ -43,12 +44,14 @@ public class StatusResource {
   private final Set<String> stateErrors;
   private final AtomicReference<BaragonAgentState> agentState;
   private final Map<String, BasicServiceContext> internalStateCache;
+  private final DirectoryChangesListener directoryChangesListener;
 
   @Inject
   public StatusResource(LocalLbAdapter adapter,
                         LoadBalancerConfiguration loadBalancerConfiguration,
                         BaragonAgentMetadata agentMetadata,
                         AtomicReference<BaragonAgentState> agentState,
+                        DirectoryChangesListener directoryChangesListener,
                         @Named(BaragonAgentServiceModule.AGENT_LEADER_LATCH) LeaderLatch leaderLatch,
                         @Named(BaragonAgentServiceModule.AGENT_MOST_RECENT_REQUEST_ID) AtomicReference<String> mostRecentRequestId,
                         @Named(BaragonDataModule.BARAGON_ZK_CONNECTION_STATE) AtomicReference<ConnectionState> connectionState,
@@ -65,6 +68,7 @@ public class StatusResource {
     this.stateErrors = stateErrors;
     this.agentState = agentState;
     this.internalStateCache = internalStateCache;
+    this.directoryChangesListener = directoryChangesListener;
   }
 
   @GET
@@ -94,7 +98,8 @@ public class StatusResource {
         connectionStateString,
         agentMetadata,
         agentState.get(),
-        currentStateErrors);
+        currentStateErrors,
+        directoryChangesListener.getErrorMessage());
   }
 
   @GET
