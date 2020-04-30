@@ -156,9 +156,11 @@ public class DirectoryChangesListener {
       try {
         List<Path> destinationFiles = getFilesInDirectory(config.getDestinationAsPath());
         for (Path path : destinationFiles) {
+          LOG.info("Backing up {}", path);
           filesystemConfigHelper.backupFile(path.toAbsolutePath().toString());
         }
         LOG.info("Backed up {} files in {}", destinationFiles.size(), config.getDestination());
+        LOG.info("Files in destination dir are now {}", getFilesInDirectory(config.getDestinationAsPath()));
         try {
           LOG.info("Copying files from {} to {}", config.getSource(), config.getDestination());
           List<Path> toCopy = getFilesInDirectory(config.getSourceAsPath());
@@ -168,6 +170,7 @@ public class DirectoryChangesListener {
             Files.copy(from, to, StandardCopyOption.REPLACE_EXISTING);
           }
           LOG.info("Copied {} files to {}", toCopy.size(), config.getDestination());
+          LOG.info("Files in destination dir are now {}", getFilesInDirectory(config.getDestinationAsPath()));
           filesystemConfigHelper.checkAndReloadUnlocked();
           LOG.info("File copy succeeded for {}", config);
           fileCopyErrorMessage.set(null);
@@ -183,6 +186,7 @@ public class DirectoryChangesListener {
             }
           }
           LOG.info("Cleaned up {} files in {} due to exception", toCleanUp.size(), config.getDestination());
+          LOG.info("Files in destination dir are now {}", getFilesInDirectory(config.getDestinationAsPath()));
           throw e;
         }
       } finally {
