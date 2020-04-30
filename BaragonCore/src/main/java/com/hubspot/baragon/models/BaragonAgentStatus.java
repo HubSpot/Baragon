@@ -19,6 +19,7 @@ public class BaragonAgentStatus {
   private final String zookeeperState;
   private final BaragonAgentMetadata agentInfo;
   private final BaragonAgentState agentState;
+  private final Optional<String> directoryWatcherError;
 
   @JsonCreator
   public BaragonAgentStatus(@JsonProperty("group") String group,
@@ -29,7 +30,8 @@ public class BaragonAgentStatus {
                             @JsonProperty("zookeeperState") String zookeeperState,
                             @JsonProperty("agentInfo") BaragonAgentMetadata agentInfo,
                             @JsonProperty("agentState") BaragonAgentState agentState,
-                            @JsonProperty("stateErrors") Set<String> stateErrors) {
+                            @JsonProperty("stateErrors") Set<String> stateErrors,
+                            @JsonProperty("directoryWatcherError") Optional<String> directoryWatcherError) {
     this.group = group;
     this.validConfigs = validConfigs;
     this.errorMessage = errorMessage;
@@ -39,6 +41,7 @@ public class BaragonAgentStatus {
     this.agentInfo = agentInfo;
     this.agentState = agentState;
     this.stateErrors = stateErrors;
+    this.directoryWatcherError = directoryWatcherError;
   }
 
   public String getGroup() {
@@ -77,6 +80,10 @@ public class BaragonAgentStatus {
     return stateErrors;
   }
 
+  public Optional<String> getDirectoryWatcherError() {
+    return directoryWatcherError;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -88,6 +95,7 @@ public class BaragonAgentStatus {
     BaragonAgentStatus that = (BaragonAgentStatus) o;
     return validConfigs == that.validConfigs &&
         leader == that.leader &&
+        directoryWatcherError == that.directoryWatcherError &&
         Objects.equals(group, that.group) &&
         Objects.equals(errorMessage, that.errorMessage) &&
         Objects.equals(stateErrors, that.stateErrors) &&
@@ -99,7 +107,7 @@ public class BaragonAgentStatus {
 
   @Override
   public int hashCode() {
-    return Objects.hash(group, validConfigs, errorMessage, stateErrors, leader, mostRecentRequestId, zookeeperState, agentInfo, agentState);
+    return Objects.hash(group, validConfigs, errorMessage, stateErrors, leader, mostRecentRequestId, zookeeperState, agentInfo, agentState, directoryWatcherError);
   }
 
   @Override
@@ -114,6 +122,7 @@ public class BaragonAgentStatus {
         ", zookeeperState='" + zookeeperState + '\'' +
         ", agentInfo=" + agentInfo +
         ", agentState=" + agentState +
+        ", directoryWatcherError=" + directoryWatcherError +
         '}';
   }
 }

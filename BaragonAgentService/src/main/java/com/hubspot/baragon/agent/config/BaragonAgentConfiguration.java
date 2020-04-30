@@ -1,5 +1,6 @@
 package com.hubspot.baragon.agent.config;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -145,6 +146,9 @@ public class BaragonAgentConfiguration extends Configuration {
 
   @JsonProperty
   private boolean enablePollingStateValidation = false;
+
+  @JsonProperty("watchedDirectories")
+  private List<WatchedDirectoryConfig> watchedDirectories = new ArrayList<>();
 
   public HttpClientConfiguration getHttpClientConfiguration() {
     return httpClientConfiguration;
@@ -428,5 +432,13 @@ public class BaragonAgentConfiguration extends Configuration {
 
   public void setEnablePollingStateValidation(boolean enablePollingStateValidation) {
     this.enablePollingStateValidation = enablePollingStateValidation;
+  }
+
+  public List<WatchedDirectoryConfig> getWatchedDirectories() {
+    return watchedDirectories;
+  }
+
+  public void setWatchedDirectories(List<WatchedDirectoryConfig> watchedDirectories) {
+    this.watchedDirectories = watchedDirectories;
   }
 }
