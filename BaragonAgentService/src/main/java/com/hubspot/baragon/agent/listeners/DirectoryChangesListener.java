@@ -55,13 +55,13 @@ public class DirectoryChangesListener {
     this.filesystemConfigHelper = filesystemConfigHelper;
     this.agentLock = agentLock;
     this.fileCopyErrorMessage = new AtomicReference<>(null);
-    this.executorService = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("directory-watcher-%d").build());
+    this.executorService = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("directory-watcher-%d").build());
   }
 
   public void start() throws Exception {
     if (!configuration.getWatchedDirectories().isEmpty()) {
       for (WatchedDirectoryConfig config : configuration.getWatchedDirectories()) {
-        // initial setup
+        // initial setup, should throw an exception that blocks startup for invalid config
         handleFileChangeForDirectory(config);
       }
       future = executorService.submit(() -> this.watchDirectories(configuration.getWatchedDirectories()));
@@ -143,7 +143,7 @@ public class DirectoryChangesListener {
         List<Path> toCleanUp = getFilesInDirectory(config.getDestinationAsPath());
         for (Path path : toCleanUp) {
           Path absolute = path.toAbsolutePath();
-          if (filesystemConfigHelper.isBackupFile(absolute.toString())) {
+          if (!filesystemConfigHelper.isBackupFile(absolute.toString())) {
             Files.delete(absolute);
           } else {
             filesystemConfigHelper.restoreFile(absolute.toString());
