@@ -102,7 +102,7 @@ public class DirectoryChangesListener {
         for (WatchedDirectoryConfig d : directoryConfigs) {
           LOG.info("Watching directory {} to copy to {}", d.getSource(), d.getDestination());
           Path path = d.getSourceAsPath();
-          watchKeyToDirectory.put(path.register(watchService), d);
+          watchKeyToDirectory.put(path.register(watchService, StandardWatchEventKinds.ENTRY_CREATE, StandardWatchEventKinds.ENTRY_DELETE, StandardWatchEventKinds.ENTRY_MODIFY), d);
         }
         while (!Thread.interrupted()) {
           WatchKey key = watchService.take();
