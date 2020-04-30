@@ -39,6 +39,8 @@ import com.hubspot.baragon.agent.config.WatchedDirectoryConfig;
 import com.hubspot.baragon.agent.lbs.FilesystemConfigHelper;
 import com.hubspot.baragon.exceptions.LockTimeoutException;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 @Singleton
 public class DirectoryChangesListener {
   private static final Logger LOG = LoggerFactory.getLogger(DirectoryChangesListener.class);
@@ -92,7 +94,7 @@ public class DirectoryChangesListener {
     pendingUpdates.remove(config);
   }
 
-  @SuppressWarnings("RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE") // Bug in spotbugs for try-with-resources
+  @SuppressFBWarnings("RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE") // Bug in spotbugs for try-with-resources
   private void watchDirectories(List<WatchedDirectoryConfig> directoryConfigs) {
     while (!Thread.interrupted()) {
       try (WatchService watchService = FileSystems.getDefault().newWatchService()) {
@@ -190,7 +192,7 @@ public class DirectoryChangesListener {
     }
   }
 
-  @SuppressWarnings("RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE") // Bug in spotbugs for try-with-resources
+  @SuppressFBWarnings("RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE") // Bug in spotbugs for try-with-resources
   private List<Path> getFilesInDirectory(Path directory) throws IOException {
     try (Stream<Path> walk = Files.walk(directory)) {
       return walk.filter(Files::isRegularFile)
