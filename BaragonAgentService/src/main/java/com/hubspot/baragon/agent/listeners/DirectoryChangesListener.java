@@ -10,8 +10,12 @@ import java.nio.file.WatchEvent;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -44,6 +48,8 @@ public class DirectoryChangesListener {
   private final ReentrantLock agentLock;
   private final ExecutorService executorService;
   private final AtomicReference<String> fileCopyErrorMessage;
+  private final Timer timer;
+  private final Set<WatchedDirectoryConfig> pendingUpdates;
 
   private Future<?> future;
 
@@ -55,6 +61,8 @@ public class DirectoryChangesListener {
     this.filesystemConfigHelper = filesystemConfigHelper;
     this.agentLock = agentLock;
     this.fileCopyErrorMessage = new AtomicReference<>(null);
+    this.timer = new Timer();
+    this.pendingUpdates = new HashSet<>();
     this.executorService = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("directory-watcher-%d").build());
   }
 
@@ -72,7 +80,16 @@ public class DirectoryChangesListener {
     if (future != null) {
       future.cancel(true);
     }
+    timer.cancel();
     executorService.shutdown();
+  }
+
+  private synchronized boolean addPending(WatchedDirectoryConfig config) {
+    return pendingUpdates.add(config);
+  }
+
+  private synchronized void removePending(WatchedDirectoryConfig config) {
+    pendingUpdates.remove(config);
   }
 
   private void watchDirectories(List<WatchedDirectoryConfig> directoryConfigs) {
@@ -92,7 +109,18 @@ public class DirectoryChangesListener {
               return;
             }
             WatchedDirectoryConfig config = watchKeyToDirectory.get(key);
-            handleFileChangeForDirectory(config);
+            if (addPending(config)) {
+              timer.schedule(new TimerTask() {
+                @Override
+                public void run() {
+                  try {
+                    handleFileChangeForDirectory(config);
+                  } catch (Exception e) {
+                    LOG.error("Could not run file update for {}", config, e);
+                  }
+                }
+              }, 10000); // Small bit of delay to debounce in case multiple updates were made at once
+            }
           }
           boolean valid = key.reset();
           if (!valid) {
@@ -117,43 +145,47 @@ public class DirectoryChangesListener {
   }
 
   public void handleFileChangeForDirectory(WatchedDirectoryConfig config) throws Exception {
-    if (!agentLock.tryLock(45, TimeUnit.SECONDS)) {
-      LOG.warn("Failed to acquire lock for reload");
-      throw new LockTimeoutException("Timed out waiting to acquire lock for reload", agentLock);
-    }
     try {
-      List<Path> destinationFiles = getFilesInDirectory(config.getDestinationAsPath());
-      for (Path path : destinationFiles) {
-        filesystemConfigHelper.backupFile(path.toAbsolutePath().toString());
+      if (!agentLock.tryLock(45, TimeUnit.SECONDS)) {
+        LOG.warn("Failed to acquire lock for reload");
+        throw new LockTimeoutException("Timed out waiting to acquire lock for reload", agentLock);
       }
-      LOG.info("Backed up {} files in {}", destinationFiles.size(), config.getDestination());
       try {
-        LOG.info("Copying files from {} to {}", config.getSource(), config.getDestination());
-        List<Path> toCopy = getFilesInDirectory(config.getSourceAsPath());
-        for (Path from : toCopy) {
-          Path to = Paths.get(from.toAbsolutePath().toString().replace(config.getSource(), config.getDestination()));
-          Files.copy(from, to);
+        List<Path> destinationFiles = getFilesInDirectory(config.getDestinationAsPath());
+        for (Path path : destinationFiles) {
+          filesystemConfigHelper.backupFile(path.toAbsolutePath().toString());
         }
-        LOG.info("Copied {} files to {}", toCopy.size(), config.getDestination());
-        filesystemConfigHelper.checkAndReloadUnlocked();
-        LOG.info("File copy succeeded for {}", config);
-        fileCopyErrorMessage.set(null);
-      } catch (Exception e) {
-        fileCopyErrorMessage.set(e.getMessage());
-        List<Path> toCleanUp = getFilesInDirectory(config.getDestinationAsPath());
-        for (Path path : toCleanUp) {
-          Path absolute = path.toAbsolutePath();
-          if (!filesystemConfigHelper.isBackupFile(absolute.toString())) {
-            Files.delete(absolute);
-          } else {
-            filesystemConfigHelper.restoreFile(absolute.toString());
+        LOG.info("Backed up {} files in {}", destinationFiles.size(), config.getDestination());
+        try {
+          LOG.info("Copying files from {} to {}", config.getSource(), config.getDestination());
+          List<Path> toCopy = getFilesInDirectory(config.getSourceAsPath());
+          for (Path from : toCopy) {
+            Path to = Paths.get(from.toAbsolutePath().toString().replace(config.getSource(), config.getDestination()));
+            Files.copy(from, to);
           }
+          LOG.info("Copied {} files to {}", toCopy.size(), config.getDestination());
+          filesystemConfigHelper.checkAndReloadUnlocked();
+          LOG.info("File copy succeeded for {}", config);
+          fileCopyErrorMessage.set(null);
+        } catch (Exception e) {
+          fileCopyErrorMessage.set(e.getMessage());
+          List<Path> toCleanUp = getFilesInDirectory(config.getDestinationAsPath());
+          for (Path path : toCleanUp) {
+            Path absolute = path.toAbsolutePath();
+            if (!filesystemConfigHelper.isBackupFile(absolute.toString())) {
+              Files.delete(absolute);
+            } else {
+              filesystemConfigHelper.restoreFile(absolute.toString());
+            }
+          }
+          LOG.info("Cleaned up {} files in {} due to exception", toCleanUp.size(), config.getDestination());
+          throw e;
         }
-        LOG.info("Cleaned up {} files in {} due to exception", toCleanUp.size(), config.getDestination());
-        throw e;
+      } finally {
+        agentLock.unlock();
       }
     } finally {
-      agentLock.unlock();
+      removePending(config);
     }
   }
 

@@ -2,15 +2,13 @@ package com.hubspot.baragon.agent.config;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
-
-import com.google.common.base.Optional;
+import java.util.Objects;
 
 public class WatchedDirectoryConfig {
   private String source;
   private Path sourcePath = null;
   private String destination;
   private Path destinationPath;
-  private Optional<String> matcher;
 
   public String getSource() {
     return source;
@@ -38,11 +36,29 @@ public class WatchedDirectoryConfig {
     this.destinationPath = Paths.get(destination);
   }
 
-  public Optional<String> getMatcher() {
-    return matcher;
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    WatchedDirectoryConfig that = (WatchedDirectoryConfig) o;
+    return Objects.equals(source, that.source) &&
+        Objects.equals(destination, that.destination);
   }
 
-  public void setMatcher(Optional<String> matcher) {
-    this.matcher = matcher;
+  @Override
+  public int hashCode() {
+    return Objects.hash(source, destination);
+  }
+
+  @Override
+  public String toString() {
+    return "WatchedDirectoryConfig{" +
+        "source='" + source + '\'' +
+        ", destination='" + destination + '\'' +
+        '}';
   }
 }
