@@ -81,14 +81,14 @@ public class InternalStateChecker implements Runnable {
       }
       Collection<UpstreamInfo> existingUpstreams = stateDatastore.getUpstreams(serviceId);
       BasicServiceContext datastoreContext = new BasicServiceContext(maybeService.get(), existingUpstreams);
-      if (!datastoreContext.equals(context) && now - context.getTimestamp() > TimeUnit.SECONDS.toMillis(60)) {
-        invalidServiceMessages.add(getDiffMessage(context, datastoreContext));
+      if (!datastoreContext.equals(context) && now - context.getTimestamp() > TimeUnit.MINUTES.toMillis(2)) {
         if (requestDatastore.getQueuedRequestIds()
             .stream()
             .noneMatch((q) -> q.getServiceId().equals(serviceId))) {
           Optional<BaragonService> maybeUpdatedService = stateDatastore.getService(serviceId);
           if (!maybeUpdatedService.isPresent()) {
             LOG.warn("Service data no longer present, skipping auto-fix for {}", serviceId);
+            invalidServiceMessages.add(getDiffMessage(context, datastoreContext));
             return;
           }
           Optional<Pair<ServiceContext, Collection<BaragonConfigFile>>> maybeCheck = new BootstrapFileChecker(
@@ -111,8 +111,11 @@ public class InternalStateChecker implements Runnable {
                 agentLock.unlock();
               }
             } catch (Exception e) {
+              invalidServiceMessages.add(getDiffMessage(context, datastoreContext));
               LOG.error("Failed to auto-fix configs for {}", serviceId, e);
             }
+          } else {
+            invalidServiceMessages.add(getDiffMessage(context, datastoreContext));
           }
         }
       }
