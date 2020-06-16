@@ -114,8 +114,6 @@ public class InternalStateChecker implements Runnable {
               invalidServiceMessages.add(getDiffMessage(context, datastoreContext));
               LOG.error("Failed to auto-fix configs for {}", serviceId, e);
             }
-          } else {
-            invalidServiceMessages.add(getDiffMessage(context, datastoreContext));
           }
         }
       }
