@@ -10,6 +10,10 @@
 
   <artifactId>BaragonCore</artifactId>
 
+  <properties>
+    <allow.hubspot-standard-stack.dependencies>false</allow.hubspot-standard-stack.dependencies>
+  </properties>
+
   <dependencies>
     <dependency>
       <groupId>com.amazonaws</groupId>
