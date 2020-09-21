@@ -38,14 +38,16 @@ public class BaragonService<T extends BaragonConfiguration> extends Application<
     }
     final Iterable<? extends Module> additionalModules = checkNotNull(getGuiceModules(bootstrap), "getGuiceModules() returned null");
 
-    GuiceBundle<BaragonConfiguration> guiceBundle = GuiceBundle.defaultBuilder(BaragonConfiguration.class)
+    GuiceBundle.Builder<BaragonConfiguration> guiceBundleBuilder = GuiceBundle
+        .defaultBuilder(BaragonConfiguration.class)
         .modules(new BaragonServiceModule())
         .modules(new BaragonResourcesModule())
         .modules(getObjectMapperModule())
         .modules(additionalModules)
         .enableGuiceEnforcer(false)
-        .stage(getGuiceStage())
-        .build();
+        .stage(getGuiceStage());
+    modifyGuiceBundle(guiceBundleBuilder);
+    GuiceBundle<BaragonConfiguration> guiceBundle = guiceBundleBuilder.build();
 
     bootstrap.addBundle(new CorsBundle());
     bootstrap.addBundle(new BaragonAuthBundle());
@@ -80,6 +82,8 @@ public class BaragonService<T extends BaragonConfiguration> extends Application<
   @Override
   public void run(T configuration, Environment environment) throws Exception {
   }
+
+  public void modifyGuiceBundle(GuiceBundle.Builder<BaragonConfiguration> guiceBundleBuilder) {}
 
   public static void main(String[] args) throws Exception {
     new BaragonService<BaragonConfiguration>().run(args);
