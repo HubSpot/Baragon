@@ -3,6 +3,7 @@ package com.hubspot.baragon.data;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.curator.framework.CuratorFramework;
@@ -94,7 +95,7 @@ public class BaragonLoadBalancerDatastore extends AbstractDataStore {
       group = maybeGroup.get();
       group.addTrafficSource(source);
     } else {
-      group = new BaragonGroup(name, Optional.<String>absent(), Sets.newHashSet(source), null, Optional.<String>absent(), Collections.<String>emptySet());
+      group = new BaragonGroup(name, Optional.absent(), Sets.newHashSet(source), null, Optional.absent(), Collections.emptySet(), Collections.emptyMap());
     }
     writeToZk(String.format(LOAD_BALANCER_GROUP_FORMAT, name), group);
     return group;
@@ -111,7 +112,7 @@ public class BaragonLoadBalancerDatastore extends AbstractDataStore {
     }
   }
 
-  public void updateGroupInfo(String name, Optional<String> defaultDomain, Set<String> domains) {
+  public void updateGroupInfo(String name, Optional<String> defaultDomain, Set<String> domains, Map<String, Set<String>> domainAliases) {
     Optional<BaragonGroup> maybeGroup = getLoadBalancerGroup(name);
     BaragonGroup group;
     if (maybeGroup.isPresent()) {
@@ -119,7 +120,7 @@ public class BaragonLoadBalancerDatastore extends AbstractDataStore {
       group.setDefaultDomain(defaultDomain);
       group.setDomains(domains);
     } else {
-      group = new BaragonGroup(name, defaultDomain, Collections.<TrafficSource>emptySet(), null, defaultDomain, domains);
+      group = new BaragonGroup(name, defaultDomain, Collections.<TrafficSource>emptySet(), null, defaultDomain, domains, domainAliases);
     }
     writeToZk(String.format(LOAD_BALANCER_GROUP_FORMAT, name), group);
   }
