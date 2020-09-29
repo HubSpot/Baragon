@@ -119,6 +119,7 @@ public class BaragonLoadBalancerDatastore extends AbstractDataStore {
       group = maybeGroup.get();
       group.setDefaultDomain(defaultDomain);
       group.setDomains(domains);
+      group.setDomainAliases(domainAliases);
     } else {
       group = new BaragonGroup(name, defaultDomain, Collections.<TrafficSource>emptySet(), null, defaultDomain, domains, domainAliases);
     }
