@@ -1,6 +1,7 @@
 package com.hubspot.baragon.agent.config;
 
 import java.util.Collections;
+import java.util.Map;
 import java.util.Set;
 
 import javax.validation.constraints.Min;
@@ -34,6 +35,9 @@ public class LoadBalancerConfiguration {
 
   @NotNull
   private Set<String> domains = Collections.emptySet();
+
+  @NotNull
+  private Map<String, Set<String>> domainAliases = Collections.emptyMap();
 
   @NotNull
   @Min(1)
@@ -107,6 +111,14 @@ public class LoadBalancerConfiguration {
 
   public void setDomains(Set<String> domains) {
     this.domains = domains;
+  }
+
+  public Map<String, Set<String>> getDomainAliases() {
+    return domainAliases;
+  }
+
+  public void setDomainAliases(Map<String, Set<String>> domainAliases) {
+    this.domainAliases = domainAliases;
   }
 
   public int getMaxLbWorkerCount() {
