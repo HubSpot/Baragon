@@ -6,7 +6,7 @@ Three key components are needed for a working Baragon cluster:
 - A `BaragonAgentService` instance running on the same host as you load balancer program (nginx/haproxy/etc)
 
 #### Building JARs
-To get started, build the needed `BaragonService` and `BaragonAgentService` JARs by running 
+To get started, build the needed `BaragonService` and `BaragonAgentService` JARs by running
 ```bash
 mvn clean package
 ```
@@ -30,11 +30,11 @@ Alternatively you can provision your Baragon instances via chef using the cookbo
     - ex. set an auth key `-Ddw.auth.key=my-auth-key`
 
 ####Configuration Specifics
-An `auth` section and `masterAuthKey` must be provided in the configuration for Baragon Service to either disable auth for that instance, or enable auth and specify a key. 
+An `auth` section and `masterAuthKey` must be provided in the configuration for Baragon Service to either disable auth for that instance, or enable auth and specify a key.
 - If auth is enabled, then all requests to Baragon Service (Except to the `/ui` path) will need to container an `authkey` parameter with the valid key.
 - Requests to the `/auth` and related endpoints must use the `masterAuthKey` as the `authkey` param in the request
 
-The `worker` configuration section of the configuration does not need to be provided, but can be used ot tune the request worker or shut it off, creating a read-only instance. By default the request worker will be running. 
+The `worker` configuration section of the configuration does not need to be provided, but can be used ot tune the request worker or shut it off, creating a read-only instance. By default the request worker will be running.
 ***Note: if no request worker is running, the instance will be able to enqueue but not process requests
 
 The `ui` section of the configuration is also optional. By default the ui will be available at `/[contextPath]/ui` and will prompt you for an auth key in case one is needed to communicate with Baragon Service's API. By default the ui, will be in a read-only mode.
@@ -217,16 +217,19 @@ reload() {
 }
 ```
 This will include all configs in the conf.d folder when starting haproxy.
-Baragon configuration
+
+Baragon configuration for haproxy
 ```
 loadBalancerConfig:
   name: ${BARAGON_AGENT_GROUP}  # load balancer group name
   rootPath: /etc/haproxy # base path for writing load balancer configs goes here
   checkConfigCommand: "service haproxy checkconfig" # command for checking configs goes here
   reloadConfigCommand: "service haproxy restart" # command for reloading configs goes here
+
 #options.haproxy_port must be set as
 # loadBalancerOptions:  
 $    haproxy_port: someport
+
 templates:
   - filename: "conf.d/%s.cfg"
     template: |
