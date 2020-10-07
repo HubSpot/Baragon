@@ -259,7 +259,7 @@ templates:
         {{#if service.options.haproxy_mode}}
         mode service.options.haproxy_mode
         {{/if}}
-        {{#each upstreams}}  server healthz  {{upstream}} alpn h2 check # {{requestId}}
+        {{#each upstreams}}  server server{{@index}}  {{upstream}} alpn h2 check # {{requestId}}
         {{/each}}
       {{else}}
       #
