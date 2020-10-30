@@ -21,6 +21,8 @@ loadBalancerConfig:
   rootPath: /etc/nginx/conf.d
   checkConfigCommand: /usr/sbin/nginx -t
   reloadConfigCommand: /usr/sbin/nginx -s reload
+  catConfigCommand: cat /etc/nginx/nginx.conf
+
 
 deregisterOnGracefulShutdown: true
 
