@@ -330,7 +330,7 @@ public class FilesystemConfigHelper {
     }
   }
 
-  private Collection<BaragonConfigFile> readConfigs(BaragonService service) {
+  public Collection<BaragonConfigFile> readConfigs(BaragonService service) {
     final Collection<BaragonConfigFile> configs = new ArrayList<>();
 
     for (String filename : configGenerator.getConfigPathsForProject(service)) {

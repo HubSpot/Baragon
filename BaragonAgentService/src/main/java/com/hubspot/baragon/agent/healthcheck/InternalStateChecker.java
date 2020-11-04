@@ -105,7 +105,7 @@ public class InternalStateChecker implements Runnable {
               }
               try {
                 configHelper.bootstrapApply(maybeCheck.get().getKey(), maybeCheck.get().getValue());
-                BasicServiceContext newContext = new BasicServiceContext(maybeCheck.get().getKey().getService(), maybeCheck.get().getKey().getUpstreams());
+                BasicServiceContext newContext = new BasicServiceContext(maybeCheck.get().getKey().getService(), maybeCheck.get().getKey().getUpstreams(), configHelper.readConfigs(maybeCheck.get().getKey().getService()));
                 internalStateCache.put(serviceId, newContext);
               } finally {
                 agentLock.unlock();
