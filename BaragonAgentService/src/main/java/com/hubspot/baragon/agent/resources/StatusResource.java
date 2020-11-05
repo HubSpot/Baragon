@@ -102,6 +102,13 @@ public class StatusResource {
         directoryChangesListener.getErrorMessage());
   }
 
+  // for debugging, will remove
+  @GET
+  @Path("/internalStateCache")
+  public Map<String, BasicServiceContext> getInternalStateCache() {
+    return internalStateCache;
+  }
+
   @GET
   @Path("/{serviceId}")
   public Optional<BasicServiceContext> getServiceConfig(@PathParam("serviceId") String serviceId) {

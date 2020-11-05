@@ -7,6 +7,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
@@ -331,6 +332,8 @@ public class FilesystemConfigHelper {
   }
 
   public Collection<BaragonConfigFile> readConfigs(BaragonService service) {
+    LOG.info("Received a call for readConfigs() for BaragonService=: {}", service);
+
     final Collection<BaragonConfigFile> configs = new ArrayList<>();
 
     for (String filename : configGenerator.getConfigPathsForProject(service)) {
@@ -341,6 +344,7 @@ public class FilesystemConfigHelper {
 
       try {
         configs.add(new BaragonConfigFile(filename, Files.asCharSource(file, Charsets.UTF_8).read()));
+        LOG.info("Got this configContent: {}", configs.stream().collect(Collectors.toList()).get(configs.size() - 1).getContent());
       } catch (IOException e) {
         throw Throwables.propagate(e);
       }

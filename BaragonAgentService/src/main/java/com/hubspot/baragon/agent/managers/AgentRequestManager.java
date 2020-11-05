@@ -216,7 +216,7 @@ public class AgentRequestManager {
     if (movedOffLoadBalancer(request)) {
       internalStateCache.remove(update.getService().getServiceId());
     } else {
-      internalStateCache.put(update.getService().getServiceId(), new BasicServiceContext(update.getService(), update.getUpstreams()));
+      internalStateCache.put(update.getService().getServiceId(), new BasicServiceContext(update.getService(), update.getUpstreams(), configHelper.readConfigs(update.getService())));
     }
     return Response.ok().build();
   }
@@ -247,7 +247,7 @@ public class AgentRequestManager {
     if (movedOffLbGroup) {
       internalStateCache.remove(request.getLoadBalancerService().getServiceId());
     } else {
-      internalStateCache.put(update.getService().getServiceId(), new BasicServiceContext(update.getService(), update.getUpstreams()));
+      internalStateCache.put(update.getService().getServiceId(), new BasicServiceContext(update.getService(), update.getUpstreams(), configHelper.readConfigs(update.getService())));
     }
 
     return Response.ok().build();
