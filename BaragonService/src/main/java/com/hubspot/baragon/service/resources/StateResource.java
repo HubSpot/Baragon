@@ -74,6 +74,13 @@ public class StateResource {
   }
 
   @POST
+  @NoAuth
+  @Path("/{serviceId}/renderConfigs")
+  public BaragonResponse renderConfigs(@PathParam("serviceId") String serviceId) {
+    return serviceManager.enqueueRenderedConfigs(serviceId);
+  }
+
+  @POST
   @Path("/{serviceId}/reload")
   public BaragonResponse reloadConfigs(@PathParam("serviceId") String serviceId, @DefaultValue("false") @QueryParam("noValidate") boolean noValidate) {
     return serviceManager.enqueueReloadServiceConfigs(serviceId, noValidate);

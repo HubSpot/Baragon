@@ -1,12 +1,16 @@
 package com.hubspot.baragon.service.managers;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
@@ -52,6 +56,7 @@ import com.ning.http.client.Response;
 @Singleton
 public class AgentManager {
   private static final Logger LOG = LoggerFactory.getLogger(AgentManager.class);
+  private static final Random RANDOM = new Random();
 
   private final BaragonLoadBalancerDatastore loadBalancerDatastore;
   private final BaragonStateDatastore stateDatastore;
@@ -181,6 +186,28 @@ public class AgentManager {
     }
 
     return results;
+  }
+
+  public Optional<AgentResponse> synchronouslySendRenderConfigsRequest(String serviceId) throws Exception {
+    final Set<String> loadBalancerGroupsToUpdate = Sets.newHashSet();
+    final Optional<BaragonService> maybeOriginalService = stateDatastore.getService(serviceId);
+    if (maybeOriginalService.isPresent()) {
+      loadBalancerGroupsToUpdate.addAll(maybeOriginalService.get().getLoadBalancerGroups());
+    }
+    List<BaragonAgentMetadata> agents = getAgents(loadBalancerGroupsToUpdate).stream().collect(Collectors.toList());
+    BaragonAgentMetadata randomAgent = agents.get(RANDOM.nextInt(agents.size()));
+
+    final String baseUrl = randomAgent.getBaseAgentUri();
+    String id = UUID.randomUUID().toString();
+    sendIndividualRequest(baseUrl, id, AgentRequestType.APPLY);
+
+    // now wait
+    while (agentResponseDatastore.getPendingRequest(id, baseUrl).or(0L) > 0L){
+      Thread.sleep(1000);
+    }
+    List<String> ids = agentResponseDatastore.getAgentResponseIds(id, AgentRequestType.APPLY, baseUrl);
+    Optional<AgentResponse> response = agentResponseDatastore.getAgentResponse(id, AgentRequestType.APPLY, AgentResponseId.fromString(ids.get(0)), baseUrl);
+    return response;
   }
 
   private void sendBatchRequest(final String baseUrl, final List<BaragonRequestBatchItem> originalBatch) {
