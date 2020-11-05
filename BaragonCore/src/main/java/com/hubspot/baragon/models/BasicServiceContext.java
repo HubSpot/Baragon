@@ -12,29 +12,20 @@ import com.google.common.base.MoreObjects;
 public class BasicServiceContext {
   private final BaragonService service;
   private final Collection<UpstreamInfo> upstreams;
-  private final Collection<BaragonConfigFile> renderedConfigs;
   private final Long timestamp;
 
   @JsonCreator
   public BasicServiceContext(@JsonProperty("service") BaragonService service,
                              @JsonProperty("upstreams") Collection<UpstreamInfo> upstreams,
-                             @JsonProperty("renderedConfigs") Collection<BaragonConfigFile> renderedConfigs,
                              @JsonProperty("timestamp") Long timestamp) {
     this.service = service;
     this.upstreams = MoreObjects.firstNonNull(upstreams, Collections.emptyList());
-    this.renderedConfigs = renderedConfigs;
     this.timestamp = timestamp;
   }
 
   public BasicServiceContext(@JsonProperty("service") BaragonService service,
-                             @JsonProperty("upstreams") Collection<UpstreamInfo> upstreams,
-                             @JsonProperty("renderedConfigs") Collection<BaragonConfigFile> renderedConfigs) {
-    this(service, upstreams, renderedConfigs, System.currentTimeMillis());
-  }
-
-  public BasicServiceContext(@JsonProperty("service") BaragonService service,
                              @JsonProperty("upstreams") Collection<UpstreamInfo> upstreams) {
-    this(service, upstreams, Collections.EMPTY_LIST, System.currentTimeMillis());
+    this(service, upstreams, System.currentTimeMillis());
   }
 
   public BaragonService getService() {

@@ -332,7 +332,6 @@ public class FilesystemConfigHelper {
   }
 
   public Collection<BaragonConfigFile> readConfigs(BaragonService service) {
-    LOG.info("Received a call for readConfigs() for BaragonService=: {}", service);
 
     final Collection<BaragonConfigFile> configs = new ArrayList<>();
 
@@ -344,7 +343,6 @@ public class FilesystemConfigHelper {
 
       try {
         configs.add(new BaragonConfigFile(filename, Files.asCharSource(file, Charsets.UTF_8).read()));
-        LOG.info("Got this configContent: {}", configs.stream().collect(Collectors.toList()).get(configs.size() - 1).getContent());
       } catch (IOException e) {
         throw Throwables.propagate(e);
       }
