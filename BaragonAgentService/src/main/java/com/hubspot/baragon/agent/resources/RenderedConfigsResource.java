@@ -16,13 +16,13 @@ import com.hubspot.baragon.agent.managers.AgentRequestManager;
 
 @Path("/renderedConfigs")
 @Produces(MediaType.APPLICATION_JSON)
-public class RenderedConfigResource {
-  private static final Logger LOG = LoggerFactory.getLogger(RenderedConfigResource.class);
+public class RenderedConfigsResource {
+  private static final Logger LOG = LoggerFactory.getLogger(RenderedConfigsResource.class);
 
   private final AgentRequestManager agentRequestManager;
 
   @Inject
-  public RenderedConfigResource(
+  public RenderedConfigsResource(
       AgentRequestManager agentRequestManager) {
     this.agentRequestManager = agentRequestManager;
   }

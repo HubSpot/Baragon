@@ -1,7 +1,6 @@
 package com.hubspot.baragon.service.managers;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -9,8 +8,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
-import java.util.UUID;
-import java.util.stream.Collectors;
 
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
@@ -186,38 +183,6 @@ public class AgentManager {
     }
 
     return results;
-  }
-
-  public Optional<AgentResponse> synchronouslySendRenderConfigsRequest(String serviceId) throws Exception {
-    final Set<String> loadBalancers = Sets.newHashSet();
-    final Optional<BaragonService> maybeOriginalService = stateDatastore.getService(serviceId);
-    if (maybeOriginalService.isPresent()) {
-      loadBalancers.addAll(maybeOriginalService.get().getLoadBalancerGroups());
-    }
-
-    // get relevant agents, and select one
-    List<BaragonAgentMetadata> agents = getAgents(loadBalancers).stream().collect(Collectors.toList());
-    BaragonAgentMetadata randomAgent = agents.get(RANDOM.nextInt(agents.size()));
-    final String baseUrl = randomAgent.getBaseAgentUri();
-
-    // generate a random id to tie this request together
-    String id = UUID.randomUUID().toString();
-
-    // create a batch request
-    List<BaragonRequestBatchItem> items = new ArrayList<>();
-    items.add(new BaragonRequestBatchItem(id, Optional.of(RequestAction.GET_RENDERED_CONFIG), AgentRequestType.APPLY));
-    sendBatchRequest(baseUrl, items);
-
-    // now wait
-    while (agentResponseDatastore.getPendingRequest(id, baseUrl).or(0L) > 0L){
-      Thread.sleep(1000);
-    }
-
-    // grab the response id (called ids) because this is geared towards getting multiple responses
-    List<String> ids = agentResponseDatastore.getAgentResponseIds(id, AgentRequestType.APPLY, baseUrl);
-    LOG.info("ids={}", ids);
-    Optional<AgentResponse> response = agentResponseDatastore.getAgentResponse(id, AgentRequestType.APPLY, AgentResponseId.fromString(ids.get(0)), baseUrl);
-    return response;
   }
 
   private void sendBatchRequest(final String baseUrl, final List<BaragonRequestBatchItem> originalBatch) {
