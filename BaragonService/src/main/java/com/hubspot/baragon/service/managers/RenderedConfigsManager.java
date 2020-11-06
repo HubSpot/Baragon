@@ -20,6 +20,7 @@ import com.hubspot.baragon.exceptions.AgentServiceNotifyException;
 import com.hubspot.baragon.models.BaragonAgentMetadata;
 import com.hubspot.baragon.models.BaragonConfigFile;
 import com.hubspot.baragon.models.BaragonService;
+import com.hubspot.baragon.service.exceptions.BaragonWebException;
 import com.hubspot.horizon.HttpRequest;
 import com.hubspot.horizon.HttpResponse;
 import com.hubspot.horizon.ning.NingHttpClient;
@@ -48,9 +49,13 @@ public class RenderedConfigsManager {
     if (maybeOriginalService.isPresent()) {
       loadBalancers.addAll(maybeOriginalService.get().getLoadBalancerGroups());
     }
+    else {
+      throw new BaragonWebException(String.format("Service with id=%s could not be found", serviceId));
+    }
 
     // get relevant agents, and select one
     List<BaragonAgentMetadata> agents = agentManager.getAgents(loadBalancers).stream().collect(Collectors.toList());
+
     BaragonAgentMetadata randomAgent = agents.get(RANDOM.nextInt(agents.size()));
     final String baseUrl = randomAgent.getBaseAgentUri();
 
