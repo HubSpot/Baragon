@@ -189,23 +189,33 @@ public class AgentManager {
   }
 
   public Optional<AgentResponse> synchronouslySendRenderConfigsRequest(String serviceId) throws Exception {
-    final Set<String> loadBalancerGroupsToUpdate = Sets.newHashSet();
+    final Set<String> loadBalancers = Sets.newHashSet();
     final Optional<BaragonService> maybeOriginalService = stateDatastore.getService(serviceId);
     if (maybeOriginalService.isPresent()) {
-      loadBalancerGroupsToUpdate.addAll(maybeOriginalService.get().getLoadBalancerGroups());
+      loadBalancers.addAll(maybeOriginalService.get().getLoadBalancerGroups());
     }
-    List<BaragonAgentMetadata> agents = getAgents(loadBalancerGroupsToUpdate).stream().collect(Collectors.toList());
-    BaragonAgentMetadata randomAgent = agents.get(RANDOM.nextInt(agents.size()));
 
+    // get relevant agents, and select one
+    List<BaragonAgentMetadata> agents = getAgents(loadBalancers).stream().collect(Collectors.toList());
+    BaragonAgentMetadata randomAgent = agents.get(RANDOM.nextInt(agents.size()));
     final String baseUrl = randomAgent.getBaseAgentUri();
+
+    // generate a random id to tie this request together
     String id = UUID.randomUUID().toString();
-    sendIndividualRequest(baseUrl, id, AgentRequestType.APPLY);
+
+    // create a batch request
+    List<BaragonRequestBatchItem> items = new ArrayList<>();
+    items.add(new BaragonRequestBatchItem(id, Optional.of(RequestAction.GET_RENDERED_CONFIG), AgentRequestType.APPLY));
+    sendBatchRequest(baseUrl, items);
 
     // now wait
     while (agentResponseDatastore.getPendingRequest(id, baseUrl).or(0L) > 0L){
       Thread.sleep(1000);
     }
+
+    // grab the response id (called ids) because this is geared towards getting multiple responses
     List<String> ids = agentResponseDatastore.getAgentResponseIds(id, AgentRequestType.APPLY, baseUrl);
+    LOG.info("ids={}", ids);
     Optional<AgentResponse> response = agentResponseDatastore.getAgentResponse(id, AgentRequestType.APPLY, AgentResponseId.fromString(ids.get(0)), baseUrl);
     return response;
   }
@@ -246,12 +256,16 @@ public class AgentManager {
           }
           Set<AgentBatchResponseItem> responses = objectMapper.readValue(response.getResponseBody(), new TypeReference<Set<AgentBatchResponseItem>>(){});
           for (AgentBatchResponseItem agentResponse : responses) {
+            LOG.info("agentResponse={}", agentResponse);
             agentResponseDatastore.addAgentResponse(agentResponse.getRequestId(), agentResponse.getRequestType(), baseUrl, url, Optional.of(agentResponse.getStatusCode()), agentResponse.getMessage(), Optional.<String>absent());
             agentResponseDatastore.setPendingRequestStatus(agentResponse.getRequestId(), baseUrl, false);
             handledRequestIds.add(agentResponse.getRequestId());
           }
+          LOG.info("handledRequestIds={}", handledRequestIds);
           for (BaragonRequestBatchItem item : batch) {
+            LOG.info("item={}", item);
             if (!handledRequestIds.contains(item.getRequestId())) {
+              LOG.info("handledRequestIds doesn't contain item with id={}", item.getRequestId());
               agentResponseDatastore.addAgentResponse(item.getRequestId(), item.getRequestType(), baseUrl, url, Optional.<Integer> absent(), Optional.<String> absent(), Optional.of(String.format("No response in batch for request %s", item.getRequestId())));
               agentResponseDatastore.setPendingRequestStatus(item.getRequestId(), baseUrl, false);
             }

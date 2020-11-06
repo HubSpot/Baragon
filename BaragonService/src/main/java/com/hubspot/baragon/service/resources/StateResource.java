@@ -20,8 +20,11 @@ import com.google.inject.Inject;
 import com.hubspot.baragon.auth.NoAuth;
 import com.hubspot.baragon.cache.BaragonStateCache;
 import com.hubspot.baragon.cache.CachedBaragonState;
+import com.hubspot.baragon.models.AgentResponse;
 import com.hubspot.baragon.models.BaragonResponse;
 import com.hubspot.baragon.models.BaragonServiceState;
+import com.hubspot.baragon.service.managers.AgentManager;
+import com.hubspot.baragon.service.managers.RequestManager;
 import com.hubspot.baragon.service.managers.ServiceManager;
 
 @Path("/state")
@@ -29,11 +32,14 @@ import com.hubspot.baragon.service.managers.ServiceManager;
 public class StateResource {
   private final ServiceManager serviceManager;
   private final BaragonStateCache stateCache;
+  private final AgentManager agentManager;
+
 
   @Inject
-  public StateResource(ServiceManager serviceManager, BaragonStateCache stateCache) {
+  public StateResource(ServiceManager serviceManager, BaragonStateCache stateCache, AgentManager agentManager) {
     this.serviceManager = serviceManager;
     this.stateCache = stateCache;
+    this.agentManager = agentManager;
   }
 
   @GET
@@ -78,6 +84,13 @@ public class StateResource {
   @Path("/{serviceId}/renderConfigs")
   public BaragonResponse renderConfigs(@PathParam("serviceId") String serviceId) {
     return serviceManager.enqueueRenderedConfigs(serviceId);
+  }
+
+  @GET
+  @NoAuth
+  @Path("/{serviceId}/renderConfigs")
+  public Optional<AgentResponse> renderConfigsGET(@PathParam("serviceId") String serviceId) throws Exception {
+    return agentManager.synchronouslySendRenderConfigsRequest(serviceId);
   }
 
   @POST
