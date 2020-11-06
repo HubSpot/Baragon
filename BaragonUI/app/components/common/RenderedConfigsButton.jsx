@@ -67,7 +67,7 @@ class RenderedConfigsButton extends Component {
                 <Modal show={this.state.modalOpen} onHide={this.hideRenderedConfigs} bsSize="large">
           <Modal.Body>
             <div className="constrained-modal rendered-configs-modal">
-              <span>Hello World</span>
+
                 {this.props.renderedConfigs ? this.props.renderedConfigs.map(renderedConfig => {
                     return (
                         <div>
@@ -75,8 +75,7 @@ class RenderedConfigsButton extends Component {
                             <pre>{renderedConfig.content}</pre>
                         </div>
                     )
-                }) : ""}
-                <pre></pre>
+                }) : <span>Loading or no Rendered Configs could be found.</span>}
             </div>
           </Modal.Body>
           <Modal.Footer>
@@ -94,7 +93,6 @@ const mapStateToProps = (state, ownProps) => ({
 const mapDispatchToProps = (dispatch, ownProps) => ({
     fetchRenderedConfigs: () => dispatch(FetchRenderedConfigs
         .trigger(ownProps.serviceId))
-        .then(response => (ownProps.then && ownProps.then(response)))
 });
 
 export default connect(
