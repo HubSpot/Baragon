@@ -30,7 +30,7 @@ import {
   FetchBaragonServices,
   FetchService,
   DeleteService,
-  ReloadService,
+  ReloadService, FetchRenderedConfigs,
 } from '../../actions/api/services';
 
 import {
@@ -67,6 +67,7 @@ const service = buildKeyedApiActionReducer(FetchService, []);
 const deleteService = buildKeyedApiActionReducer(DeleteService, []);
 const reloadService = buildKeyedApiActionReducer(ReloadService, []);
 const requestHistory = buildKeyedApiActionReducer(FetchRequestHistory, []);
+const renderedConfigs = buildApiActionReducer(FetchRenderedConfigs, []);
 const requestResponse = buildKeyedApiActionReducer(FetchRequestResponse, {});
 const submitRequest = buildKeyedApiActionReducer(SubmitRequest, []);
 const elbs = buildApiActionReducer(FetchElbs, []);
@@ -96,6 +97,7 @@ export default combineReducers({
   knownAgents,
   services,
   service,
+  renderedConfigs,
   deleteService,
   reloadService,
   requestHistory,

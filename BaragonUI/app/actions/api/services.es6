@@ -14,6 +14,13 @@ export const FetchService = buildApiAction(
   (serviceId) => serviceId
 );
 
+export const FetchRenderedConfigs = buildApiAction(
+    'FETCH_RENDERED_CONFIGS',
+    (serviceId) => ({
+        url: `/renderedConfigs/${serviceId}`
+    }),
+);
+
 export const DeleteService = buildJsonApiAction(
   'DELETE_SERVICE',
   'DELETE',

@@ -4,6 +4,7 @@ import JSONButton from '../common/JSONButton';
 import ReloadServiceButton from '../common/modalButtons/ReloadServiceButton';
 import RemoveUpstreamsButton from '../common/modalButtons/RemoveUpstreamsButton';
 import DeleteServiceButton from '../common/modalButtons/DeleteServiceButton';
+import RenderedConfigsButton from "../common/RenderedConfigsButton";
 
 const showJSONButton = (serviceJson) => {
   return (
@@ -22,10 +23,12 @@ const ButtonContainer = ({editable, serviceJson, upstreams,
       </div>
     );
   }
-
   return (
     <div className="col-md-5 button-container">
       {showJSONButton(serviceJson)}
+      <RenderedConfigsButton overlay={true} serviceId={serviceJson.service.serviceId}>
+          <span className="btn btn-default">View Rendered Configs</span>
+      </RenderedConfigsButton>
       <ReloadServiceButton
         serviceId={serviceJson.service.serviceId}
         then={afterReload}
