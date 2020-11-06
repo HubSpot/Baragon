@@ -30,7 +30,6 @@ public class StateResource {
   private final ServiceManager serviceManager;
   private final BaragonStateCache stateCache;
 
-
   @Inject
   public StateResource(ServiceManager serviceManager, BaragonStateCache stateCache) {
     this.serviceManager = serviceManager;
