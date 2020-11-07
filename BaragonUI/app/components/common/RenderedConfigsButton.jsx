@@ -48,7 +48,6 @@ class RenderedConfigsButton extends Component {
     }
 
     render() {
-        console.log("TEWST inside RenderedconfigsButton.tsx, renderedConfigs=", this.props.renderedConfigs);
         const renderedConfigsToolTip = (
             <ToolTip id="view-rendered-configs-tooltip">
                 Rendered Configs
