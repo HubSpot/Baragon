@@ -14,7 +14,10 @@ class RenderedConfigsButton extends Component {
             PropTypes.arrayOf(PropTypes.node),
             PropTypes.node
         ]).isRequired,
-        renderedConfigs: PropTypes.arrayOf(PropTypes.object),
+        renderedConfigs: PropTypes.arrayOf(PropTypes.shape({
+            fullPath: PropTypes.string,
+            content: PropTypes.string,
+        })),
         showOverlay: PropTypes.bool,
         className: PropTypes.string,
         linkClassName: PropTypes.string,
