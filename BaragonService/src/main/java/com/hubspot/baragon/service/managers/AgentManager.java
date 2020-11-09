@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 
 import javax.ws.rs.core.HttpHeaders;
@@ -52,6 +53,7 @@ import com.ning.http.client.Response;
 @Singleton
 public class AgentManager {
   private static final Logger LOG = LoggerFactory.getLogger(AgentManager.class);
+  private static final Random RANDOM = new Random();
 
   private final BaragonLoadBalancerDatastore loadBalancerDatastore;
   private final BaragonStateDatastore stateDatastore;
@@ -219,12 +221,16 @@ public class AgentManager {
           }
           Set<AgentBatchResponseItem> responses = objectMapper.readValue(response.getResponseBody(), new TypeReference<Set<AgentBatchResponseItem>>(){});
           for (AgentBatchResponseItem agentResponse : responses) {
+            LOG.info("agentResponse={}", agentResponse);
             agentResponseDatastore.addAgentResponse(agentResponse.getRequestId(), agentResponse.getRequestType(), baseUrl, url, Optional.of(agentResponse.getStatusCode()), agentResponse.getMessage(), Optional.<String>absent());
             agentResponseDatastore.setPendingRequestStatus(agentResponse.getRequestId(), baseUrl, false);
             handledRequestIds.add(agentResponse.getRequestId());
           }
+          LOG.info("handledRequestIds={}", handledRequestIds);
           for (BaragonRequestBatchItem item : batch) {
+            LOG.info("item={}", item);
             if (!handledRequestIds.contains(item.getRequestId())) {
+              LOG.info("handledRequestIds doesn't contain item with id={}", item.getRequestId());
               agentResponseDatastore.addAgentResponse(item.getRequestId(), item.getRequestType(), baseUrl, url, Optional.<Integer> absent(), Optional.<String> absent(), Optional.of(String.format("No response in batch for request %s", item.getRequestId())));
               agentResponseDatastore.setPendingRequestStatus(item.getRequestId(), baseUrl, false);
             }

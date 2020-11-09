@@ -19,6 +19,7 @@ import org.apache.curator.retry.ExponentialBackoffRetry;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.elasticloadbalancing.AmazonElasticLoadBalancingClient;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.http.HttpTransport;
@@ -67,6 +68,7 @@ import com.hubspot.baragon.service.managed.BaragonGraphiteReporterManaged;
 import com.hubspot.baragon.service.managed.BaragonManaged;
 import com.hubspot.baragon.service.managers.AgentManager;
 import com.hubspot.baragon.service.managers.ElbManager;
+import com.hubspot.baragon.service.managers.RenderedConfigsManager;
 import com.hubspot.baragon.service.managers.RequestManager;
 import com.hubspot.baragon.service.managers.ServiceManager;
 import com.hubspot.baragon.service.managers.StatusManager;
@@ -77,6 +79,8 @@ import com.hubspot.baragon.service.worker.RequestPurgingWorker;
 import com.hubspot.baragon.utils.JavaUtils;
 import com.hubspot.baragon.utils.UpstreamResolver;
 import com.hubspot.dropwizard.guicier.DropwizardAwareModule;
+import com.hubspot.horizon.HttpConfig;
+import com.hubspot.horizon.ning.NingHttpClient;
 import com.ning.http.client.AsyncHttpClient;
 import com.ning.http.client.AsyncHttpClientConfig;
 
@@ -92,7 +96,8 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
   public static final String BARAGON_SERVICE_DW_CONFIG = "baragon.service.port";
   public static final String BARAGON_SERVICE_HOSTNAME = "baragon.service.hostname";
   public static final String BARAGON_SERVICE_LOCAL_HOSTNAME = "baragon.service.local.hostname";
-  public static final String BARAGON_SERVICE_HTTP_CLIENT = "baragon.service.http.client";
+  public static final String BARAGON_SERVICE_HTTP_CLIENT = "baragon.service.async.http.client";
+  public static final String BARAGON_SERVICE_SYNC_HTTP_CLIENT = "baragon.service.sync.http.client";
 
   public static final String BARAGON_MASTER_AUTH_KEY = "baragon.master.auth.key";
 
@@ -125,6 +130,7 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
     binder.bind(RequestManager.class).in(Scopes.SINGLETON);
     binder.bind(ServiceManager.class).in(Scopes.SINGLETON);
     binder.bind(StatusManager.class).in(Scopes.SINGLETON);
+    binder.bind(RenderedConfigsManager.class).in(Scopes.SINGLETON);
 
     binder.bind(GoogleCloudManager.class).in(Scopes.SINGLETON);
 
@@ -317,6 +323,22 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
 
     return new AsyncHttpClient(builder.build());
   }
+
+  @Provides
+  @Singleton
+  @Named(BARAGON_SERVICE_SYNC_HTTP_CLIENT)
+  public NingHttpClient providesApacheHttpClient(HttpClientConfiguration config, ObjectMapper objectMapper) {
+    HttpConfig.Builder configBuilder = HttpConfig.newBuilder()
+        .setRequestTimeoutSeconds(config.getRequestTimeoutInMs() / 1000)
+        .setUserAgent(config.getUserAgent())
+        .setConnectTimeoutSeconds(config.getConnectionTimeoutInMs() / 1000)
+        .setFollowRedirects(true)
+        .setMaxRetries(config.getMaxRequestRetry())
+        .setObjectMapper(objectMapper);
+
+    return new NingHttpClient(configBuilder.build());
+  }
+
 
   @Provides
   @Named(BARAGON_AWS_ELB_CLIENT_V1)
