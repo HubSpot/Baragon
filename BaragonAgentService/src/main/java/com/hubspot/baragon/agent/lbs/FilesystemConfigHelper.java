@@ -7,6 +7,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
@@ -330,7 +331,8 @@ public class FilesystemConfigHelper {
     }
   }
 
-  private Collection<BaragonConfigFile> readConfigs(BaragonService service) {
+  public Collection<BaragonConfigFile> readConfigs(BaragonService service) {
+
     final Collection<BaragonConfigFile> configs = new ArrayList<>();
 
     for (String filename : configGenerator.getConfigPathsForProject(service)) {

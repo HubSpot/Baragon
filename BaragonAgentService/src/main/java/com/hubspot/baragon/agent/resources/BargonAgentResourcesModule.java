@@ -9,5 +9,6 @@ public class BargonAgentResourcesModule extends AbstractModule {
     bind(MetricsResource.class);
     bind(RequestResource.class);
     bind(StatusResource.class);
+    bind(RenderedConfigsResource.class);
   }
 }
