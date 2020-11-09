@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.inject.Inject;
 import com.hubspot.baragon.agent.managers.AgentRequestManager;
+import com.hubspot.baragon.auth.NoAuth;
 
 @Path("/renderedConfigs")
 @Produces(MediaType.APPLICATION_JSON)
@@ -28,6 +29,7 @@ public class RenderedConfigsResource {
   }
 
   @GET
+  @NoAuth
   @Path("/{serviceId}")
   public Response getServiceId(@PathParam("serviceId") String serviceId) {
     LOG.info("Received request to view the renderedConfig of serviceId={}", serviceId);

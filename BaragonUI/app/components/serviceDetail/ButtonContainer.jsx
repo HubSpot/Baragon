@@ -14,21 +14,27 @@ const showJSONButton = (serviceJson) => {
   );
 };
 
+const showRenderedConfigsButton = (serviceId) => {
+    return (
+        <RenderedConfigsButton overlay={true} serviceId={serviceId}>
+            <span className="btn btn-default">View Rendered Configs</span>
+        </RenderedConfigsButton>
+    );
+};
 const ButtonContainer = ({editable, serviceJson, upstreams,
                           afterRemoveUpstreams, afterReload, afterDelete}) => {
   if (!editable) {
     return (
       <div className="col-md-5 button-container">
         {showJSONButton(serviceJson)}
+        {showRenderedConfigsButton(serviceJson.service.serviceId)}
       </div>
     );
   }
   return (
     <div className="col-md-5 button-container">
       {showJSONButton(serviceJson)}
-      <RenderedConfigsButton overlay={true} serviceId={serviceJson.service.serviceId}>
-          <span className="btn btn-default">View Rendered Configs</span>
-      </RenderedConfigsButton>
+      {showRenderedConfigsButton(serviceJson.service.serviceId)}
       <ReloadServiceButton
         serviceId={serviceJson.service.serviceId}
         then={afterReload}
