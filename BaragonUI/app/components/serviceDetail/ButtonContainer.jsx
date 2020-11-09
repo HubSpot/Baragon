@@ -35,7 +35,7 @@ const ButtonContainer = ({editable, serviceJson, upstreams,
     <div className="col-md-5 button-container">
       {showJSONButton(serviceJson)}
       {showRenderedConfigsButton(serviceJson.service.serviceId)}
-        <ReloadServiceButton
+      <ReloadServiceButton
         serviceId={serviceJson.service.serviceId}
         then={afterReload}
       >
