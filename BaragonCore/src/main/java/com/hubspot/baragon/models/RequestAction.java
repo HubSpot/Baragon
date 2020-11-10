@@ -4,5 +4,6 @@ public enum RequestAction {
   UPDATE,
   DELETE,
   RELOAD,
-  REVERT
+  REVERT,
+  GET_RENDERED_CONFIG
 }

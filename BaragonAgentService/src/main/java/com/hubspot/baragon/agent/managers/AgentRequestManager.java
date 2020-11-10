@@ -30,6 +30,7 @@ import com.hubspot.baragon.exceptions.LockTimeoutException;
 import com.hubspot.baragon.exceptions.MissingTemplateException;
 import com.hubspot.baragon.models.AgentBatchResponseItem;
 import com.hubspot.baragon.models.BaragonAgentState;
+import com.hubspot.baragon.models.BaragonConfigFile;
 import com.hubspot.baragon.models.BaragonRequest;
 import com.hubspot.baragon.models.BaragonRequestBatchItem;
 import com.hubspot.baragon.models.BaragonService;
@@ -174,6 +175,8 @@ public class AgentRequestManager {
           return delete(request, maybeOldService, delayReload);
         case RELOAD:
           return reload(request, delayReload);
+        case GET_RENDERED_CONFIG:
+          return getRenderedConfigs(request.getLoadBalancerService().getServiceId());
         case REVERT:
           serviceId = request.getLoadBalancerService().getServiceId();
           return revert(request, maybeOldService, existingUpstreams.computeIfAbsent(serviceId, (key) -> new ArrayList<>()), delayReload, batchItemNumber);
@@ -206,6 +209,20 @@ public class AgentRequestManager {
     mostRecentRequestId.set(request.getLoadBalancerRequestId());
     internalStateCache.remove(request.getLoadBalancerService().getServiceId());
     return Response.ok().build();
+  }
+
+  public Response getRenderedConfigs(String serviceId) {
+    Collection<BaragonConfigFile> result = Collections.EMPTY_LIST;
+    if (internalStateCache.containsKey(serviceId)){
+      result = configHelper.readConfigs(internalStateCache.get(serviceId).getService());
+    }
+    else {
+      Optional<BaragonService> maybeService = stateDatastore.getService(serviceId);
+      if (maybeService.isPresent()){
+        result = configHelper.readConfigs(maybeService.get());
+      }
+    }
+    return Response.ok(result).build();
   }
 
   private Response apply(BaragonRequest request, Optional<BaragonService> maybeOldService, Collection<UpstreamInfo> existingUpstreams, boolean delayReload, Optional<Integer> batchItemNumber) throws Exception {
