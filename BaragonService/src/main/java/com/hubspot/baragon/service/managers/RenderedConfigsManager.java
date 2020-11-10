@@ -29,7 +29,7 @@ public class RenderedConfigsManager {
 
   private static final Logger LOG = LoggerFactory.getLogger(RenderedConfigsManager.class);
   private static final Random RANDOM = new Random();
-  private static final TypeReference<List<BaragonConfigFile>> BARAGON_CONFIG_FILE_LIST_TYPE_REFERENCE =  new TypeReference<List<BaragonConfigFile>>(){};
+  private static final TypeReference<List<BaragonConfigFile>> BARAGON_CONFIG_FILE_LIST_TYPE_REFERENCE = new TypeReference<List<BaragonConfigFile>>(){};
 
   private final BaragonStateDatastore stateDatastore;
   private final AgentManager agentManager;
