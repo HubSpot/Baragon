@@ -3,6 +3,7 @@ package com.hubspot.baragon.agent.config;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
@@ -29,6 +30,10 @@ public class LoadBalancerConfiguration {
 
   @NotNull
   private String reloadConfigCommand;
+
+  private Optional<String> logRotateCommand = Optional.absent();
+
+  private long rotateIntervalMillis = TimeUnit.HOURS.toMillis(1);
 
   @Min(0)
   private int commandTimeoutMs = DEFAULT_COMMAND_TIMEOUT_MS;
@@ -143,5 +148,21 @@ public class LoadBalancerConfiguration {
 
   public void setLimitWorkerCount(boolean limitWorkerCount) {
     this.limitWorkerCount = limitWorkerCount;
+  }
+
+  public Optional<String> getLogRotateCommand() {
+    return logRotateCommand;
+  }
+
+  public void setLogRotateCommand(Optional<String> logRotateCommand) {
+    this.logRotateCommand = logRotateCommand;
+  }
+
+  public long getRotateIntervalMillis() {
+    return rotateIntervalMillis;
+  }
+
+  public void setRotateIntervalMillis(long rotateIntervalMillis) {
+    this.rotateIntervalMillis = rotateIntervalMillis;
   }
 }
