@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.exec.CommandLine;
 import org.apache.commons.exec.DefaultExecuteResultHandler;
@@ -33,6 +34,8 @@ import com.hubspot.baragon.exceptions.WorkerLimitReachedException;
 @Singleton
 public class LocalLbAdapter {
   private static final Logger LOG = LoggerFactory.getLogger(LocalLbAdapter.class);
+
+  private static final int LOGROTATE_TIMEOUT = (int) TimeUnit.MINUTES.toMillis(15);
 
   private final LoadBalancerConfiguration loadBalancerConfiguration;
   private final ExecutorService destroyProcessExecutor;
@@ -90,6 +93,15 @@ public class LocalLbAdapter {
     } catch (IOException ioe) {
       LOG.error("Could not get worker count from command {}", command, ioe);
       return Optional.absent();
+    }
+  }
+
+  public void triggerLogrotate() {
+    try {
+      int exitCode = executeWithTimeout(CommandLine.parse(loadBalancerConfiguration.getLogRotateCommand().get()), LOGROTATE_TIMEOUT);
+      LOG.info("Logrotate finished with exit code {}", exitCode);
+    } catch (Exception e) {
+      LOG.error("Could not run log rotation", e);
     }
   }
 

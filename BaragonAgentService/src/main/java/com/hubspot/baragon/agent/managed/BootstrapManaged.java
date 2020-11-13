@@ -16,6 +16,7 @@ import com.hubspot.baragon.agent.BaragonAgentServiceModule;
 import com.hubspot.baragon.agent.config.BaragonAgentConfiguration;
 import com.hubspot.baragon.agent.healthcheck.ConfigChecker;
 import com.hubspot.baragon.agent.healthcheck.InternalStateChecker;
+import com.hubspot.baragon.agent.lbs.LocalLbAdapter;
 import com.hubspot.baragon.agent.listeners.DirectoryChangesListener;
 import com.hubspot.baragon.agent.listeners.ResyncListener;
 import com.hubspot.baragon.agent.workers.AgentHeartbeatWorker;
@@ -43,6 +44,7 @@ public class BootstrapManaged implements Managed {
   private final ConfigChecker configChecker;
   private final InternalStateChecker internalStateChecker;
   private final DirectoryChangesListener directoryChangesListener;
+  private final LocalLbAdapter lbAdapter;
   private final AtomicReference<BaragonAgentState> agentState;
 
   private ScheduledFuture<?> requestWorkerFuture = null;
@@ -62,6 +64,7 @@ public class BootstrapManaged implements Managed {
                           AtomicReference<BaragonAgentState> agentState,
                           InternalStateChecker internalStateChecker,
                           DirectoryChangesListener directoryChangesListener,
+                          LocalLbAdapter lbAdapter,
                           @Named(BaragonAgentServiceModule.AGENT_SCHEDULED_EXECUTOR) ScheduledExecutorService executorService,
                           @Named(BaragonAgentServiceModule.AGENT_LEADER_LATCH) LeaderLatch leaderLatch) {
     this.configuration = configuration;
@@ -77,6 +80,7 @@ public class BootstrapManaged implements Managed {
     this.configChecker = configChecker;
     this.internalStateChecker = internalStateChecker;
     this.directoryChangesListener = directoryChangesListener;
+    this.lbAdapter = lbAdapter;
     this.agentState = agentState;
   }
 
@@ -121,6 +125,10 @@ public class BootstrapManaged implements Managed {
     }
 
     lifecycleHelper.writeStateFileIfConfigured();
+
+    if (configuration.getLoadBalancerConfiguration().getLogRotateCommand().isPresent()) {
+      executorService.scheduleAtFixedRate(lbAdapter::triggerLogrotate, configuration.getLoadBalancerConfiguration().getRotateIntervalMillis(), configuration.getLoadBalancerConfiguration().getRotateIntervalMillis(), TimeUnit.MILLISECONDS);
+    }
 
     agentState.set(BaragonAgentState.ACCEPTING);
   }

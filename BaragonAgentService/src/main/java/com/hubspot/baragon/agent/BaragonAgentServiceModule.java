@@ -287,7 +287,7 @@ public class BaragonAgentServiceModule extends DropwizardAwareModule<BaragonAgen
   @Singleton
   @Named(AGENT_SCHEDULED_EXECUTOR)
   public ScheduledExecutorService providesScheduledExecutor() {
-    return Executors.newScheduledThreadPool(3);
+    return Executors.newScheduledThreadPool(4);
   }
 
   @Provides
