@@ -225,6 +225,10 @@ public class AgentRequestManager {
     return Response.ok(result).build();
   }
 
+  public Response purgeCache(String serviceId) {
+    return Response.ok(String.format("Cache purged for %s", serviceId)).build();
+  }
+
   private Response apply(BaragonRequest request, Optional<BaragonService> maybeOldService, Collection<UpstreamInfo> existingUpstreams, boolean delayReload, Optional<Integer> batchItemNumber) throws Exception {
     final ServiceContext update = getApplyContext(request, existingUpstreams);
     triggerTesting();
