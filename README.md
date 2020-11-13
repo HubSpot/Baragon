@@ -90,3 +90,4 @@ Baragon comes with a UI for visualization and easier management of load balancer
 ## Baragon API Docs
 
 Full documentation on the Baragon Service API can be found [here](Docs/api.md)
+
