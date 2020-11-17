@@ -43,7 +43,7 @@ public class PurgeCacheManager {
     this.httpClient = httpClient;
   }
 
-  public List<HttpResponse> synchronouslyRequest(String serviceId) throws Exception {
+  public List<HttpResponse> synchronouslyRequestCachePurge(String serviceId) throws Exception {
     final Set<String> loadBalancers = Sets.newHashSet();
     final Optional<BaragonService> maybeOriginalService = stateDatastore.getService(serviceId);
     if (maybeOriginalService.isPresent()) {
