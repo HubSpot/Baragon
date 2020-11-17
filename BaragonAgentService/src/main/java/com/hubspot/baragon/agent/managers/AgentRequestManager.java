@@ -1,5 +1,7 @@
 package com.hubspot.baragon.agent.managers;
 
+import static com.hubspot.baragon.agent.BaragonAgentServiceModule.BARAGON_AGENT_HTTP_CLIENT;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -38,6 +40,10 @@ import com.hubspot.baragon.models.BasicServiceContext;
 import com.hubspot.baragon.models.RequestAction;
 import com.hubspot.baragon.models.ServiceContext;
 import com.hubspot.baragon.models.UpstreamInfo;
+import com.hubspot.horizon.HttpRequest;
+import com.hubspot.horizon.HttpRequest.Method;
+import com.hubspot.horizon.HttpResponse;
+import com.hubspot.horizon.ning.NingHttpClient;
 
 @Singleton
 public class AgentRequestManager {
@@ -52,6 +58,7 @@ public class AgentRequestManager {
   private final LoadBalancerConfiguration loadBalancerConfiguration;
   private final long agentLockTimeoutMs;
   private final Map<String, BasicServiceContext> internalStateCache;
+  private final NingHttpClient httpClient;
 
   @Inject
   public AgentRequestManager(BaragonStateDatastore stateDatastore,
@@ -63,7 +70,9 @@ public class AgentRequestManager {
                              AtomicReference<BaragonAgentState> agentState,
                              @Named(BaragonAgentServiceModule.AGENT_MOST_RECENT_REQUEST_ID) AtomicReference<String> mostRecentRequestId,
                              @Named(BaragonAgentServiceModule.AGENT_LOCK_TIMEOUT_MS) long agentLockTimeoutMs,
-                             @Named(BaragonAgentServiceModule.INTERNAL_STATE_CACHE) Map<String, BasicServiceContext> internalStateCache) {
+                             @Named(BaragonAgentServiceModule.INTERNAL_STATE_CACHE) Map<String, BasicServiceContext> internalStateCache,
+                             @Named(BARAGON_AGENT_HTTP_CLIENT) NingHttpClient httpClient
+  ) {
     this.stateDatastore = stateDatastore;
     this.configHelper = configHelper;
     this.maybeTestingConfiguration = maybeTestingConfiguration;
@@ -74,6 +83,7 @@ public class AgentRequestManager {
     this.loadBalancerConfiguration = loadBalancerConfiguration;
     this.agentLockTimeoutMs = agentLockTimeoutMs;
     this.internalStateCache = internalStateCache;
+    this.httpClient = httpClient;
   }
 
   public List<AgentBatchResponseItem> processRequests(List<BaragonRequestBatchItem> batch) throws InterruptedException {
@@ -226,7 +236,26 @@ public class AgentRequestManager {
   }
 
   public Response purgeCache(String serviceId) {
-    return Response.ok(String.format("Cache purged for %s", serviceId)).build();
+
+    Optional<BaragonService> maybeService;
+    if (internalStateCache.containsKey(serviceId)){
+      maybeService = Optional.of(internalStateCache.get(serviceId).getService());
+    }
+    else {
+      maybeService = stateDatastore.getService(serviceId);
+    }
+
+    if (!maybeService.isPresent()){
+      throw new RuntimeException(String.format("Could not find service with serviceId=%s", serviceId));
+    }
+
+
+    final HttpRequest.Builder builder = HttpRequest.newBuilder()
+        .setUrl("127.0.0.1/" + maybeService.get().getServiceBasePath() + serviceId)
+        .setMethod(Method.valueOf("PURGE"));
+
+    HttpResponse response = this.httpClient.execute(builder.build());
+    return Response.status(response.getStatusCode()).entity(response.getAsString()).build();
   }
 
   private Response apply(BaragonRequest request, Optional<BaragonService> maybeOldService, Collection<UpstreamInfo> existingUpstreams, boolean delayReload, Optional<Integer> batchItemNumber) throws Exception {
