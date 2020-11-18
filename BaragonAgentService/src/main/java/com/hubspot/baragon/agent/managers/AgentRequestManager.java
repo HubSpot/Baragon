@@ -237,6 +237,7 @@ public class AgentRequestManager {
 
   public Response purgeCache(String serviceId) {
 
+    LOG.info("received purge request for serviceId={}", serviceId);
     Optional<BaragonService> maybeService;
     if (internalStateCache.containsKey(serviceId)){
       maybeService = Optional.of(internalStateCache.get(serviceId).getService());
@@ -250,11 +251,14 @@ public class AgentRequestManager {
     }
 
 
+    String purgeUrl = String.format("http://127.0.0.1:8082/purge/%s",  maybeService.get().getServiceBasePath());
+    LOG.info("purgeUrl={}", purgeUrl);
     final HttpRequest.Builder builder = HttpRequest.newBuilder()
-        .setUrl("http://127.0.0.1/" + maybeService.get().getServiceBasePath() + serviceId)
+        .setUrl(purgeUrl)
         .setMethod(Method.GET);
 
     HttpResponse response = this.httpClient.execute(builder.build());
+    LOG.info("PURGE response={}", response.getAsString());
     return Response.status(response.getStatusCode()).entity(response.getAsString()).build();
   }
 
