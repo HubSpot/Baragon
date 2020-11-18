@@ -28,6 +28,6 @@ public class PurgeCacheResource {
   @NoAuth
   @Path("/{serviceId}")
   public List<HttpResponse> purgeCache(@PathParam("serviceId") String serviceId) throws Exception {
-    return purgeCacheManager.synchronouslyRequestCachePurge(serviceId);
+    return purgeCacheManager.synchronouslyPurgeCache(serviceId);
   }
 }

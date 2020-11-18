@@ -30,6 +30,14 @@ export const DeleteService = buildJsonApiAction(
   })
 );
 
+export const PurgeCache = buildJsonApiAction(
+    'PURGE_CACHE',
+    'POST',
+    (serviceId) => ({
+        url: `/purgeCache/${serviceId}`,
+    })
+);
+
 export const ReloadService = buildJsonApiAction(
   'RELOAD_SERVICE',
   'POST',

@@ -17,8 +17,8 @@ import com.google.inject.name.Named;
 import com.hubspot.baragon.data.BaragonStateDatastore;
 import com.hubspot.baragon.exceptions.AgentServiceNotifyException;
 import com.hubspot.baragon.models.BaragonAgentMetadata;
-import com.hubspot.baragon.models.BaragonConfigFile;
 import com.hubspot.baragon.models.BaragonService;
+import com.hubspot.baragon.service.config.BaragonConfiguration;
 import com.hubspot.baragon.service.exceptions.BaragonWebException;
 import com.hubspot.horizon.HttpRequest;
 import com.hubspot.horizon.HttpRequest.Method;
@@ -31,19 +31,22 @@ public class PurgeCacheManager {
 
   private final BaragonStateDatastore stateDatastore;
   private final AgentManager agentManager;
+  private final BaragonConfiguration baragonConfiguration;
   private final NingHttpClient httpClient;
 
 
   @Inject
   public PurgeCacheManager(BaragonStateDatastore stateDatastore,
-                                AgentManager agentManager,
-                                @Named(BARAGON_SERVICE_SYNC_HTTP_CLIENT) NingHttpClient httpClient){
+                           AgentManager agentManager,
+                           BaragonConfiguration baragonConfiguration,
+                           @Named(BARAGON_SERVICE_SYNC_HTTP_CLIENT) NingHttpClient httpClient){
     this.stateDatastore = stateDatastore;
     this.agentManager = agentManager;
+    this.baragonConfiguration = baragonConfiguration;
     this.httpClient = httpClient;
   }
 
-  public List<HttpResponse> synchronouslyRequestCachePurge(String serviceId) throws Exception {
+  public List<HttpResponse> synchronouslyPurgeCache(String serviceId) throws Exception {
     final Set<String> loadBalancers = Sets.newHashSet();
     final Optional<BaragonService> maybeOriginalService = stateDatastore.getService(serviceId);
     if (maybeOriginalService.isPresent()) {
@@ -55,9 +58,16 @@ public class PurgeCacheManager {
 
     List<BaragonAgentMetadata> agents = agentManager.getAgents(loadBalancers).stream().collect(Collectors.toList());
     List<HttpResponse> responses = new ArrayList<>();
+    // go around to each agent, and execute the purgeCache command
     for (BaragonAgentMetadata agent: agents){
       final HttpRequest.Builder builder = HttpRequest.newBuilder()
-          .setUrl(agent.getBaseAgentUri() + "/purgeCache/" + serviceId)
+          .setUrl(
+              String.format(
+                baragonConfiguration.getAgentPurgeCacheRequestUriFormat(),
+                agent.getBaseAgentUri(),
+                serviceId
+              )
+          )
           .setMethod(Method.POST);
 
       HttpResponse response = httpClient.execute(builder.build());
