@@ -251,7 +251,7 @@ public class AgentRequestManager {
     }
 
 
-    String purgeUrl = String.format("http://127.0.0.1:8082/purge/%s",  maybeService.get().getServiceBasePath());
+    String purgeUrl = String.format("http://127.0.0.1:8082/purge%s",  maybeService.get().getServiceBasePath());
     LOG.info("purgeUrl={}", purgeUrl);
     final HttpRequest.Builder builder = HttpRequest.newBuilder()
         .setUrl(purgeUrl)
