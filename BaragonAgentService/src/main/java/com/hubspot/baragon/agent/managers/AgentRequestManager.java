@@ -23,6 +23,7 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import com.hubspot.baragon.agent.BaragonAgentServiceModule;
+import com.hubspot.baragon.agent.config.BaragonAgentConfiguration;
 import com.hubspot.baragon.agent.config.LoadBalancerConfiguration;
 import com.hubspot.baragon.agent.config.TestingConfiguration;
 import com.hubspot.baragon.agent.lbs.FilesystemConfigHelper;
@@ -55,6 +56,7 @@ public class AgentRequestManager {
   private final Optional<TestingConfiguration> maybeTestingConfiguration;
   private final Random random;
   private final AtomicReference<BaragonAgentState> agentState;
+  private final BaragonAgentConfiguration baragonAgentConfiguration;
   private final LoadBalancerConfiguration loadBalancerConfiguration;
   private final long agentLockTimeoutMs;
   private final Map<String, BasicServiceContext> internalStateCache;
@@ -68,6 +70,7 @@ public class AgentRequestManager {
                              LoadBalancerConfiguration loadBalancerConfiguration,
                              Random random,
                              AtomicReference<BaragonAgentState> agentState,
+                             BaragonAgentConfiguration baragonAgentConfiguration,
                              @Named(BaragonAgentServiceModule.AGENT_MOST_RECENT_REQUEST_ID) AtomicReference<String> mostRecentRequestId,
                              @Named(BaragonAgentServiceModule.AGENT_LOCK_TIMEOUT_MS) long agentLockTimeoutMs,
                              @Named(BaragonAgentServiceModule.INTERNAL_STATE_CACHE) Map<String, BasicServiceContext> internalStateCache,
@@ -80,6 +83,7 @@ public class AgentRequestManager {
     this.mostRecentRequestId = mostRecentRequestId;
     this.random = random;
     this.agentState = agentState;
+    this.baragonAgentConfiguration = baragonAgentConfiguration;
     this.loadBalancerConfiguration = loadBalancerConfiguration;
     this.agentLockTimeoutMs = agentLockTimeoutMs;
     this.internalStateCache = internalStateCache;
@@ -235,9 +239,17 @@ public class AgentRequestManager {
     return Response.ok(result).build();
   }
 
-  public Response purgeCache(String serviceId) {
 
-    LOG.info("received purge request for serviceId={}", serviceId);
+  public static String getServiceBasePathWithoutLeadingSlash(String path){
+    if (path.startsWith("/")){
+      path = path.replaceFirst("/", "");
+    }
+    return path;
+  }
+
+  public Response purgeCache(String serviceId) {
+    LOG.info("purgeCache() called with serviceId={}", serviceId);
+
     Optional<BaragonService> maybeService;
     if (internalStateCache.containsKey(serviceId)){
       maybeService = Optional.of(internalStateCache.get(serviceId).getService());
@@ -246,19 +258,29 @@ public class AgentRequestManager {
       maybeService = stateDatastore.getService(serviceId);
     }
 
+    // 1. if no service exists, return an error response early
     if (!maybeService.isPresent()){
-      throw new RuntimeException(String.format("Could not find service with serviceId=%s", serviceId));
+      return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(String.format("Could not find service with serviceId=%s", serviceId)).build();
     }
 
+    // 2. remove a leading slash if it exists and generate the URI
+    String serviceBasePathWithoutLeadingSlash = getServiceBasePathWithoutLeadingSlash(
+        maybeService.get().getServiceBasePath()
+    );
+    String purgeCacheUri = String.format(
+        baragonAgentConfiguration.getPurgeCacheUriFormat(),
+        serviceBasePathWithoutLeadingSlash
+    );
+    LOG.info("purgeCache() uri={}", purgeCacheUri);
 
-    String purgeUrl = String.format("http://127.0.0.1:8082/purge%s*",  maybeService.get().getServiceBasePath());
-    LOG.info("purgeUrl={}", purgeUrl);
+    // 3. now build the request
     final HttpRequest.Builder builder = HttpRequest.newBuilder()
-        .setUrl(purgeUrl)
+        .setUrl(purgeCacheUri)
         .setMethod(Method.GET);
 
+    // 4. execute the request and send back a copy of the response to the caller
     HttpResponse response = this.httpClient.execute(builder.build());
-    LOG.info("PURGE response={}", response.getAsString());
+    LOG.info("purgeCache() response from loadbalancer={}", response.getAsString());
     return Response.status(response.getStatusCode()).entity(response.getAsString()).build();
   }
 
