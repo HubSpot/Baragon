@@ -191,6 +191,8 @@ public class AgentRequestManager {
           return reload(request, delayReload);
         case GET_RENDERED_CONFIG:
           return getRenderedConfigs(request.getLoadBalancerService().getServiceId());
+        case PURGE_CACHE:
+          return purgeCache(request.getLoadBalancerService().getServiceId());
         case REVERT:
           serviceId = request.getLoadBalancerService().getServiceId();
           return revert(request, maybeOldService, existingUpstreams.computeIfAbsent(serviceId, (key) -> new ArrayList<>()), delayReload, batchItemNumber);

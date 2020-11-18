@@ -10,7 +10,9 @@ import javax.ws.rs.core.MediaType;
 
 import com.google.inject.Inject;
 import com.hubspot.baragon.auth.NoAuth;
+import com.hubspot.baragon.models.BaragonResponse;
 import com.hubspot.baragon.service.managers.PurgeCacheManager;
+import com.hubspot.baragon.service.managers.ServiceManager;
 import com.hubspot.horizon.HttpResponse;
 
 @Path("/purgeCache")
@@ -18,10 +20,13 @@ import com.hubspot.horizon.HttpResponse;
 public class PurgeCacheResource {
 
   private final PurgeCacheManager purgeCacheManager;
+  private final ServiceManager serviceManager;
 
   @Inject
-  public PurgeCacheResource(PurgeCacheManager purgeCacheManager){
+  public PurgeCacheResource(PurgeCacheManager purgeCacheManager,
+                            ServiceManager serviceManager){
     this.purgeCacheManager = purgeCacheManager;
+    this.serviceManager = serviceManager;
   }
 
   @POST
@@ -29,5 +34,12 @@ public class PurgeCacheResource {
   @Path("/{serviceId}")
   public List<HttpResponse> purgeCache(@PathParam("serviceId") String serviceId) throws Exception {
     return purgeCacheManager.synchronouslyPurgeCache(serviceId);
+  }
+
+  @POST
+  @NoAuth
+  @Path("/async/{serviceId}")
+  public BaragonResponse purgeCacheAsync(@PathParam("serviceId") String serviceId) {
+    return serviceManager.enqueuePurgeCache(serviceId);
   }
 }
