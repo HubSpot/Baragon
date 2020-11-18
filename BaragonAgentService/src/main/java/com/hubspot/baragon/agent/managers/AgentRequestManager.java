@@ -252,7 +252,7 @@ public class AgentRequestManager {
 
     final HttpRequest.Builder builder = HttpRequest.newBuilder()
         .setUrl("127.0.0.1/" + maybeService.get().getServiceBasePath() + serviceId)
-        .setMethod(Method.valueOf("PURGE"));
+        .setMethod(Method.GET);
 
     HttpResponse response = this.httpClient.execute(builder.build());
     return Response.status(response.getStatusCode()).entity(response.getAsString()).build();
