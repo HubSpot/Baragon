@@ -1,5 +1,6 @@
 package com.hubspot.baragon.models;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -13,12 +14,15 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 
+import org.apache.commons.codec.digest.DigestUtils;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Optional;
 import com.google.common.collect.Sets;
+import com.google.common.hash.Hashing;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class BaragonService {
@@ -51,6 +55,8 @@ public class BaragonService {
 
   private final boolean preResolveUpstreamDNS;
 
+  private final String serviceIdHash;
+
   public BaragonService(@JsonProperty("serviceId") String serviceId,
                         @JsonProperty("owners") Collection<String> owners,
                         @JsonProperty("serviceBasePath") String serviceBasePath,
@@ -77,6 +83,7 @@ public class BaragonService {
     }
     this.edgeCacheDomains = edgeDomains;
     this.preResolveUpstreamDNS = preResolveUpstreamDNS;
+    this.serviceIdHash = DigestUtils.sha256Hex(serviceId);
   }
 
   public BaragonService(String serviceId, Collection<String> owners, String serviceBasePath, List<String> additionalPaths, Set<String> loadBalancerGroups, Map<String, Object> options,
@@ -179,6 +186,13 @@ public class BaragonService {
 
   public boolean isPreResolveUpstreamDNS() {
     return preResolveUpstreamDNS;
+  }
+
+  public String getServiceIdHash() {
+    if (serviceIdHash == null || serviceIdHash.equals("")){
+      return DigestUtils.sha256Hex(serviceId);
+    }
+    return serviceIdHash;
   }
 
   @JsonIgnore
