@@ -198,8 +198,8 @@ public class AgentRequestManager {
           return revert(request, maybeOldService, existingUpstreams.computeIfAbsent(serviceId, (key) -> new ArrayList<>()), delayReload, batchItemNumber);
         case UPDATE_AND_PURGE_CACHE:
           serviceId = request.getLoadBalancerService().getServiceId();
-          apply(request, maybeOldService, existingUpstreams.computeIfAbsent(serviceId, (key) -> new ArrayList<>()), delayReload, batchItemNumber);
           purgeCache(maybeOldService.or(request.getLoadBalancerService()).getServiceId());
+          return apply(request, maybeOldService, existingUpstreams.computeIfAbsent(serviceId, (key) -> new ArrayList<>()), delayReload, batchItemNumber);
         default:
           serviceId = request.getLoadBalancerService().getServiceId();
           return apply(request, maybeOldService, existingUpstreams.computeIfAbsent(serviceId, (key) -> new ArrayList<>()), delayReload, batchItemNumber);
