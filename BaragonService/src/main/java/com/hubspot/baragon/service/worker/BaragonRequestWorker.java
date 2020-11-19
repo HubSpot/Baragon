@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 import org.apache.zookeeper.KeeperException;
@@ -35,6 +36,7 @@ import com.hubspot.baragon.models.QueuedRequestId;
 import com.hubspot.baragon.models.QueuedRequestWithState;
 import com.hubspot.baragon.models.RequestAction;
 import com.hubspot.baragon.models.UpstreamInfo;
+import com.hubspot.baragon.service.BaragonServiceModule;
 import com.hubspot.baragon.service.config.BaragonConfiguration;
 import com.hubspot.baragon.service.edgecache.EdgeCache;
 import com.hubspot.baragon.service.exceptions.BaragonExceptionNotifier;
@@ -55,6 +57,7 @@ public class BaragonRequestWorker implements Runnable {
   private final BaragonConfiguration configuration;
   private final EdgeCache edgeCache;
   private final UpstreamResolver resolver;
+  private final ReentrantLock lock;
 
   @Inject
   public BaragonRequestWorker(AgentManager agentManager,
@@ -64,7 +67,8 @@ public class BaragonRequestWorker implements Runnable {
                               BaragonConfiguration configuration,
                               EdgeCache edgeCache,
                               UpstreamResolver resolver,
-                              @Named(BaragonDataModule.BARAGON_SERVICE_WORKER_LAST_START) AtomicLong workerLastStartAt) {
+                              @Named(BaragonDataModule.BARAGON_SERVICE_WORKER_LAST_START) AtomicLong workerLastStartAt,
+                              @Named(BaragonServiceModule.REQUEST_LOCK) ReentrantLock lock) {
     this.agentManager = agentManager;
     this.requestManager = requestManager;
     this.stateDatastore = stateDatastore;
@@ -73,6 +77,7 @@ public class BaragonRequestWorker implements Runnable {
     this.workerLastStartAt = workerLastStartAt;
     this.exceptionNotifier = exceptionNotifier;
     this.configuration = configuration;
+    this.lock = lock;
   }
 
   private String buildResponseString(Map<String, Collection<AgentResponse>> agentResponses, AgentRequestType requestType) {
@@ -255,8 +260,8 @@ public class BaragonRequestWorker implements Runnable {
 
   @Override
   public void run() {
+    lock.lock();
     workerLastStartAt.set(System.currentTimeMillis());
-
     try {
       final List<QueuedRequestWithState> queuedRequests = requestManager.getQueuedRequestIds()
           .stream()
@@ -348,7 +353,7 @@ public class BaragonRequestWorker implements Runnable {
       LOG.warn("Caught exception", e);
       exceptionNotifier.notify(e, Collections.emptyMap());
     } finally {
-      LOG.debug("Finished poller loop.");
+      lock.unlock();
     }
   }
 

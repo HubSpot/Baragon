@@ -33,6 +33,7 @@ const ButtonContainer = ({editable, serviceJson, upstreams,
       </div>
     );
   }
+
   return (
     <div className="col-md-5 button-container">
       {showJSONButton(serviceJson)}

@@ -29,7 +29,9 @@ import com.google.inject.Binder;
 import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.Singleton;
+import com.google.inject.TypeLiteral;
 import com.google.inject.name.Named;
+import com.google.inject.name.Names;
 import com.hubspot.baragon.BaragonDataModule;
 import com.hubspot.baragon.agent.config.BaragonAgentConfiguration;
 import com.hubspot.baragon.agent.config.LoadBalancerConfiguration;
@@ -47,6 +49,8 @@ import com.hubspot.baragon.agent.healthcheck.ConfigChecker;
 import com.hubspot.baragon.agent.healthcheck.InternalStateChecker;
 import com.hubspot.baragon.agent.healthcheck.LoadBalancerHealthcheck;
 import com.hubspot.baragon.agent.healthcheck.ZooKeeperHealthcheck;
+import com.hubspot.baragon.agent.kubernetes.BaragonAgentKubernetesListener;
+import com.hubspot.baragon.agent.kubernetes.KubernetesWatcherManaged;
 import com.hubspot.baragon.agent.lbs.FilesystemConfigHelper;
 import com.hubspot.baragon.agent.lbs.LbConfigGenerator;
 import com.hubspot.baragon.agent.lbs.LocalLbAdapter;
@@ -62,9 +66,12 @@ import com.hubspot.baragon.agent.resources.BargonAgentResourcesModule;
 import com.hubspot.baragon.agent.workers.AgentHeartbeatWorker;
 import com.hubspot.baragon.config.AuthConfiguration;
 import com.hubspot.baragon.config.HttpClientConfiguration;
+import com.hubspot.baragon.config.KubernetesConfiguration;
 import com.hubspot.baragon.config.ZooKeeperConfiguration;
 import com.hubspot.baragon.data.BaragonConnectionStateListener;
 import com.hubspot.baragon.data.BaragonLoadBalancerDatastore;
+import com.hubspot.baragon.kubernetes.KubernetesListener;
+import com.hubspot.baragon.kubernetes.KubernetesWatcherModule;
 import com.hubspot.baragon.models.BaragonAgentEc2Metadata;
 import com.hubspot.baragon.models.BaragonAgentMetadata;
 import com.hubspot.baragon.models.BaragonAgentState;
@@ -124,6 +131,18 @@ public class BaragonAgentServiceModule extends DropwizardAwareModule<BaragonAgen
     binder.bind(AgentHeartbeatWorker.class).in(Scopes.SINGLETON);
     binder.bind(InternalStateChecker.class).in(Scopes.SINGLETON);
     binder.bind(DirectoryChangesListener.class).in(Scopes.SINGLETON);
+
+    binder.bind(new TypeLiteral<Map<String, BasicServiceContext>>() {})
+        .annotatedWith(Names.named(INTERNAL_STATE_CACHE))
+        .toInstance(new ConcurrentHashMap<>());
+
+
+    // Kubernetes
+    if (getConfiguration().getKubernetesConfiguration().isEnabled()) {
+      binder.bind(KubernetesListener.class).to(BaragonAgentKubernetesListener.class).in(Scopes.SINGLETON);
+      binder.bind(KubernetesWatcherManaged.class).asEagerSingleton();
+      binder.install(new KubernetesWatcherModule());
+    }
 
     final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -335,8 +354,7 @@ public class BaragonAgentServiceModule extends DropwizardAwareModule<BaragonAgen
 
   @Provides
   @Singleton
-  @Named(INTERNAL_STATE_CACHE)
-  public Map<String, BasicServiceContext> provideStateCache() {
-    return new ConcurrentHashMap<>();
+  public KubernetesConfiguration provideKubernetesConfig(BaragonAgentConfiguration config) {
+    return config.getKubernetesConfiguration();
   }
 }
