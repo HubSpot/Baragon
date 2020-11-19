@@ -196,6 +196,10 @@ public class AgentRequestManager {
         case REVERT:
           serviceId = request.getLoadBalancerService().getServiceId();
           return revert(request, maybeOldService, existingUpstreams.computeIfAbsent(serviceId, (key) -> new ArrayList<>()), delayReload, batchItemNumber);
+        case UPDATE_AND_PURGE_CACHE:
+          serviceId = request.getLoadBalancerService().getServiceId();
+          apply(request, maybeOldService, existingUpstreams.computeIfAbsent(serviceId, (key) -> new ArrayList<>()), delayReload, batchItemNumber);
+          purgeCache(maybeOldService.or(request.getLoadBalancerService()).getServiceId());
         default:
           serviceId = request.getLoadBalancerService().getServiceId();
           return apply(request, maybeOldService, existingUpstreams.computeIfAbsent(serviceId, (key) -> new ArrayList<>()), delayReload, batchItemNumber);
@@ -278,12 +282,19 @@ public class AgentRequestManager {
     // 3. now build the request
     final HttpRequest.Builder builder = HttpRequest.newBuilder()
         .setUrl(purgeCacheUri)
-        .setMethod(Method.GET);
+        .setMethod(Method.POST);
 
     // 4. execute the request and send back a copy of the response to the caller
-    HttpResponse response = this.httpClient.execute(builder.build());
-    LOG.info("purgeCache() response from loadbalancer={}", response.getAsString());
-    return Response.status(response.getStatusCode()).entity(response.getAsString()).build();
+    try {
+      HttpResponse response = this.httpClient.execute(builder.build());
+      LOG.info("purgeCache() response from loadbalancer={}", response.getAsString());
+      return Response.status(response.getStatusCode()).entity(response.getAsString()).build();
+    }
+    catch (Exception e){
+      LOG.error("purgeCache() exception, but will not fail", e);
+      return Response.serverError().entity(e.getMessage()).build();
+    }
+
   }
 
   private Response apply(BaragonRequest request, Optional<BaragonService> maybeOldService, Collection<UpstreamInfo> existingUpstreams, boolean delayReload, Optional<Integer> batchItemNumber) throws Exception {
