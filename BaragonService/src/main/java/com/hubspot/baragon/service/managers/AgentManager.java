@@ -216,7 +216,7 @@ public class AgentManager {
           if (response.getStatusCode() >= 300) {
             LOG.error("Received invalid response from agent (status: {}, response: {})", response.getStatusCode(), response.getResponseBody());
             for (BaragonRequestBatchItem item : batch) {
-              agentResponseDatastore.addAgentResponse(item.getRequestId(), item.getRequestType(), baseUrl, url, Optional.<Integer> absent(), Optional.<String> absent(), Optional.of(String.format("Caught exception processing agent response %s", response)));
+              agentResponseDatastore.addAgentResponse(item.getRequestId(), item.getRequestType(), baseUrl, url, Optional.<Integer> absent(), Optional.<String> absent(), Optional.of(String.format("Caught exception processing agent response %s", response.getResponseBody())));
               agentResponseDatastore.setPendingRequestStatus(item.getRequestId(), baseUrl, false);
               handledRequestIds.add(item.getRequestId());
             }
