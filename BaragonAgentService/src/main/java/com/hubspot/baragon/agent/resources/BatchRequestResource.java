@@ -30,6 +30,7 @@ public class BatchRequestResource {
   @POST
   @Consumes(MediaType.APPLICATION_JSON)
   public List<AgentBatchResponseItem> apply(List<BaragonRequestBatchItem> batch) throws InterruptedException {
+    LOG.info("received batch={}", batch);
     return agentRequestManager.processRequests(batch);
   }
 }
