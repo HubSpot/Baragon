@@ -299,6 +299,7 @@ public class BaragonConfiguration extends Configuration {
 
   public void setAgentPurgeCacheRequestUriFormat(String agentPurgeCacheRequestUriFormat) {
     this.agentPurgeCacheRequestUriFormat = agentPurgeCacheRequestUriFormat;
+  }
 
   public KubernetesConfiguration getKubernetesConfiguration() {
     return kubernetesConfiguration;
