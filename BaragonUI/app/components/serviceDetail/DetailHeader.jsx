@@ -3,7 +3,7 @@ import React, { PropTypes } from 'react';
 import ButtonContainer from './ButtonContainer';
 
 const DetailHeader = ({id, basePath, editable, serviceJson, upstreams,
-                      afterRemoveUpstreams, afterReload, afterDelete}) => {
+                      afterRemoveUpstreams, afterReload, afterDelete, afterPurgeCache}) => {
   return (
     <div>
       <div className="col-md-5">
@@ -19,6 +19,7 @@ const DetailHeader = ({id, basePath, editable, serviceJson, upstreams,
         afterRemoveUpstreams={afterRemoveUpstreams}
         afterReload={afterReload}
         afterDelete={afterDelete}
+        afterPurgeCache={afterPurgeCache}
       />
     </div>
   );
@@ -33,6 +34,7 @@ DetailHeader.propTypes = {
   afterRemoveUpstreams: PropTypes.func,
   afterReload: PropTypes.func,
   afterDelete: PropTypes.func,
+    afterPurgeCache: PropTypes.func,
 };
 
 export default DetailHeader;

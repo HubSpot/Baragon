@@ -31,6 +31,7 @@ const ServiceDetail = ({service, requestHistory, editable, navigateToRequest, re
           editable={editable}
           afterRemoveUpstreams={navigateToRequest}
           afterReload={navigateToRequest}
+          afterPurgeCache={navigateToRequest}
           afterDelete={redirectToServicesList}
         />
       </div>

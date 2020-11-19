@@ -32,7 +32,7 @@ class PurgeCacheModal extends Component {
 }
 
 const mapDispatchToProps = (dispatch, ownProps) => ({
-    purgeCache: () => dispatch(PurgeCache.trigger(ownProps.serviceId))
+    purgeCache: () => dispatch(PurgeCache.trigger(ownProps.serviceId)).then(response => (ownProps.then && ownProps.then(response)))
 });
 
 export default connect(

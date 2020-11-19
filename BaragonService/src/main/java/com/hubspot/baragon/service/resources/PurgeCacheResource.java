@@ -31,14 +31,14 @@ public class PurgeCacheResource {
 
   @POST
   @NoAuth
-  @Path("/{serviceId}")
+  @Path("/sync/{serviceId}")
   public List<HttpResponse> purgeCache(@PathParam("serviceId") String serviceId) throws Exception {
     return purgeCacheManager.synchronouslyPurgeCache(serviceId);
   }
 
   @POST
   @NoAuth
-  @Path("/async/{serviceId}")
+  @Path("/{serviceId}")
   public BaragonResponse purgeCacheAsync(@PathParam("serviceId") String serviceId) {
     return serviceManager.enqueuePurgeCache(serviceId);
   }
