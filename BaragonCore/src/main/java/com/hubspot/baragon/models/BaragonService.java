@@ -14,8 +14,6 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 
-import org.apache.commons.codec.digest.DigestUtils;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -83,7 +81,9 @@ public class BaragonService {
     }
     this.edgeCacheDomains = edgeDomains;
     this.preResolveUpstreamDNS = preResolveUpstreamDNS;
-    this.serviceIdHash = DigestUtils.sha256Hex(serviceId);
+    this.serviceIdHash = Hashing.sha256()
+        .hashString(serviceId, StandardCharsets.UTF_8)
+        .toString();
   }
 
   public BaragonService(String serviceId, Collection<String> owners, String serviceBasePath, List<String> additionalPaths, Set<String> loadBalancerGroups, Map<String, Object> options,
@@ -190,7 +190,9 @@ public class BaragonService {
 
   public String getServiceIdHash() {
     if (serviceIdHash == null || serviceIdHash.equals("")){
-      return DigestUtils.sha256Hex(serviceId);
+      return Hashing.sha256()
+          .hashString(serviceId, StandardCharsets.UTF_8)
+          .toString();
     }
     return serviceIdHash;
   }
