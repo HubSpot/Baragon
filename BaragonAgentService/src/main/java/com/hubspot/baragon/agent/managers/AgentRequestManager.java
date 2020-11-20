@@ -269,13 +269,10 @@ public class AgentRequestManager {
       return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(String.format("Could not find service with serviceId=%s", serviceId)).build();
     }
 
-    // 2. remove a leading slash if it exists and generate the URI
-    String serviceBasePathWithoutLeadingSlash = getServiceBasePathWithoutLeadingSlash(
-        maybeService.get().getServiceBasePath()
-    );
+    // 2. insert the serviceId hash into the purge URI
     String purgeCacheUri = String.format(
         baragonAgentConfiguration.getPurgeCacheUriFormat(),
-        serviceBasePathWithoutLeadingSlash
+        maybeService.get().getServiceIdHash()
     );
     LOG.info("purgeCache() uri={}", purgeCacheUri);
 
