@@ -2,6 +2,7 @@ package com.hubspot.baragon.agent.managers;
 
 import static com.hubspot.baragon.agent.BaragonAgentServiceModule.BARAGON_AGENT_HTTP_CLIENT;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -19,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Optional;
+import com.google.common.hash.Hashing;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
@@ -272,7 +274,9 @@ public class AgentRequestManager {
     // 2. insert the serviceId hash into the purge URI
     String purgeCacheUri = String.format(
         baragonAgentConfiguration.getPurgeCacheUriFormat(),
-        maybeService.get().getServiceIdHash()
+        Hashing.sha256()
+            .hashString(maybeService.get().getServiceId(), StandardCharsets.UTF_8)
+            .toString()
     );
     LOG.info("purgeCache() uri={}", purgeCacheUri);
 
