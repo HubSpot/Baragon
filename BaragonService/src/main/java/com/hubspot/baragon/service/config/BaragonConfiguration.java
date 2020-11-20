@@ -62,6 +62,9 @@ public class BaragonConfiguration extends Configuration {
   @Valid
   private AuthConfiguration authConfiguration = new AuthConfiguration();
 
+  @JsonProperty("purgeCache")
+  private PurgeCacheConfiguration purgeCacheConfiguration;
+
   @JsonProperty("hostname")
   private String hostname;
 
@@ -176,6 +179,14 @@ public class BaragonConfiguration extends Configuration {
 
   public void setAuthConfiguration(AuthConfiguration authConfiguration) {
     this.authConfiguration = authConfiguration;
+  }
+
+  public PurgeCacheConfiguration getPurgeCacheConfiguration() {
+    return purgeCacheConfiguration;
+  }
+
+  public void setPurgeCacheConfiguration(PurgeCacheConfiguration purgeCacheConfiguration) {
+    this.purgeCacheConfiguration = purgeCacheConfiguration;
   }
 
   public String getMasterAuthKey() {
