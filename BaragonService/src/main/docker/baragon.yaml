@@ -18,7 +18,6 @@ history:
 purgeCache:
   enabledTemplates:
     - default
-  excludedServiceIds:
 
 zookeeper:
   quorum: localhost:2181

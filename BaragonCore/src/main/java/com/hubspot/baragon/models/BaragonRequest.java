@@ -36,7 +36,7 @@ public class BaragonRequest {
   @Deprecated
   private final Optional<String> replaceServiceId;
 
-  private final Optional<RequestAction> action;
+  private Optional<RequestAction> action;
 
   @Valid
   private final List<UpstreamInfo> replaceUpstreams;
@@ -137,6 +137,10 @@ public class BaragonRequest {
 
   public Optional<RequestAction> getAction() {
     return action;
+  }
+
+  public void setAction(Optional<RequestAction> action) {
+    this.action = action;
   }
 
   private List<UpstreamInfo> addRequestId(List<UpstreamInfo> upstreams, String requestId) {
