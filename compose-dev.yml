@@ -9,14 +9,14 @@ services:
     expose:
       - 2181
   service:
-    image: hubspot/baragonservice:0.5.0-SNAPSHOT
+    image: hubspot/baragonservice:0.10.0-SNAPSHOT
     network_mode: host
     environment:
       DOCKER_HOST:
       BARAGON_PORT: 8080
       BARAGON_UI_BASE: /baragon/v2
   agent1:
-    image: hubspot/baragonagent:0.5.0-SNAPSHOT
+    image: hubspot/baragonagent:0.10.0-SNAPSHOT
     network_mode: host
     environment:
       NGINX_PORT: 80
@@ -27,7 +27,7 @@ services:
       - ./docker/configs/1/proxy:/etc/nginx/conf.d/proxy
       - ./docker/configs/1/upstreams:/etc/nginx/conf.d/upstreams
   agent2:
-    image: hubspot/baragonagent:0.5.0-SNAPSHOT
+    image: hubspot/baragonagent:0.10.0-SNAPSHOT
     network_mode: host
     environment:
       NGINX_PORT: 81

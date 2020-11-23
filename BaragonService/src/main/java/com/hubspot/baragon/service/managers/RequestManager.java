@@ -244,13 +244,6 @@ public class RequestManager {
     }
 
     try {
-      if (request.getAction().isPresent() && request.getAction().get().equals(RequestAction.UPDATE)){
-        LOG.info("here, request={}", request);
-        if (configuration.getPurgeCacheConfiguration().serviceShouldPurgeCache(request.getLoadBalancerService())){
-          LOG.info("serviceId={} with RequestAction.UPDATE to be rewritten to UPDATE_AND_PURGE_CACHE");
-          request.setAction(Optional.of(RequestAction.UPDATE_AND_PURGE_CACHE));
-        }
-      }
       final QueuedRequestId queuedRequestId = requestDatastore.enqueueRequest(request, InternalRequestStates.PENDING);
 
       requestDatastore.setRequestMessage(request.getLoadBalancerRequestId(), String.format("Queued as %s", queuedRequestId));
