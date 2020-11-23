@@ -247,14 +247,6 @@ public class AgentRequestManager {
     return Response.ok(result).build();
   }
 
-
-  public static String getServiceBasePathWithoutLeadingSlash(String path){
-    if (path.startsWith("/")){
-      path = path.replaceFirst("/", "");
-    }
-    return path;
-  }
-
   public Response purgeCache(String serviceId) {
     LOG.info("purgeCache() called with serviceId={}", serviceId);
 
