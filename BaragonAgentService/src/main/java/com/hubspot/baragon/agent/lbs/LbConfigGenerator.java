@@ -58,6 +58,7 @@ public class LbConfigGenerator {
                 Hashing.sha256()
                 .hashString(snapshot.getService().getServiceId(), StandardCharsets.UTF_8)
                 .toString())
+            .combine("turnOffPurgeableCacheInTemplates", loadBalancerConfiguration.isTurnOffPurgeableCacheInTemplates())
             .build();
         try {
           template.getTemplate().apply(context, sw);

@@ -53,6 +53,8 @@ public class LoadBalancerConfiguration {
 
   private boolean limitWorkerCount = false;
 
+  private boolean turnOffPurgeableCacheInTemplates = false;
+
   public String getName() {
     return name;
   }
@@ -164,5 +166,13 @@ public class LoadBalancerConfiguration {
 
   public void setRotateIntervalMillis(long rotateIntervalMillis) {
     this.rotateIntervalMillis = rotateIntervalMillis;
+  }
+
+  public boolean isTurnOffPurgeableCacheInTemplates() {
+    return turnOffPurgeableCacheInTemplates;
+  }
+
+  public void setTurnOffPurgeableCacheInTemplates(boolean turnOffPurgeableCacheInTemplates) {
+    this.turnOffPurgeableCacheInTemplates = turnOffPurgeableCacheInTemplates;
   }
 }
