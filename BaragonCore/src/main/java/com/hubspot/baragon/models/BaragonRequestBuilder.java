@@ -17,6 +17,7 @@ public class BaragonRequestBuilder {
   private Boolean noReload = false;
   private Boolean upstreamUpdateOnly = false;
   private Boolean noDuplicateUpstreams = false;
+  private Boolean purgeCache = false;
 
   public BaragonRequestBuilder setLoadBalancerRequestId(String loadBalancerRequestId) {
     this.loadBalancerRequestId = loadBalancerRequestId;
@@ -68,7 +69,12 @@ public class BaragonRequestBuilder {
     return this;
   }
 
+  public BaragonRequestBuilder setPurgeCache(Boolean purgeCache) {
+    this.purgeCache = purgeCache;
+    return this;
+  }
+
   public BaragonRequest build() {
-    return new BaragonRequest(loadBalancerRequestId, loadBalancerService, addUpstreams, removeUpstreams, replaceUpstreams, replaceServiceId, action, noValidate, noReload, upstreamUpdateOnly, noDuplicateUpstreams);
+    return new BaragonRequest(loadBalancerRequestId, loadBalancerService, addUpstreams, removeUpstreams, replaceUpstreams, replaceServiceId, action, noValidate, noReload, upstreamUpdateOnly, noDuplicateUpstreams, purgeCache);
   }
 }

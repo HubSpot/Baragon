@@ -36,7 +36,7 @@ public class BaragonRequest {
   @Deprecated
   private final Optional<String> replaceServiceId;
 
-  private Optional<RequestAction> action;
+  private final Optional<RequestAction> action;
 
   @Valid
   private final List<UpstreamInfo> replaceUpstreams;
@@ -53,6 +53,9 @@ public class BaragonRequest {
   @NotNull
   private final boolean noDuplicateUpstreams;
 
+  @NotNull
+  private final boolean purgeCache;
+
   @JsonCreator
   public BaragonRequest(@JsonProperty("loadBalancerRequestId") String loadBalancerRequestId,
                         @JsonProperty("loadBalancerService") BaragonService loadBalancerService,
@@ -64,7 +67,8 @@ public class BaragonRequest {
                         @JsonProperty("noValidate") Boolean noValidate,
                         @JsonProperty("noReload") Boolean noReload,
                         @JsonProperty("upstreamUpdateOnly") Boolean upstreamUpdateOnly,
-                        @JsonProperty("noDuplicateUpstreams") Boolean noDuplicateUpstreams) {
+                        @JsonProperty("noDuplicateUpstreams") Boolean noDuplicateUpstreams,
+                        @JsonProperty("purgeCache") Boolean purgeCache) {
     this.loadBalancerRequestId = loadBalancerRequestId;
     this.loadBalancerService = loadBalancerService;
     this.addUpstreams = addRequestId(addUpstreams, loadBalancerRequestId);
@@ -76,31 +80,37 @@ public class BaragonRequest {
     this.noReload = MoreObjects.firstNonNull(noReload, false);
     this.upstreamUpdateOnly = MoreObjects.firstNonNull(upstreamUpdateOnly, false);
     this.noDuplicateUpstreams = MoreObjects.firstNonNull(noDuplicateUpstreams, false);
+    this.purgeCache = MoreObjects.firstNonNull(purgeCache, false);
+  }
+
+  public BaragonRequest(String loadBalancerRequestId, BaragonService loadBalancerService, List<UpstreamInfo> addUpstreams, List<UpstreamInfo> removeUpstreams, List<UpstreamInfo> replaceUpstreams,
+                        Optional<String> replaceServiceId, Optional<RequestAction> action, boolean noValidate, boolean noReload, boolean upstreamUpdateOnly, boolean purgeCache) {
+    this(loadBalancerRequestId, loadBalancerService, addUpstreams, removeUpstreams, replaceUpstreams, replaceServiceId, action, noValidate, noReload, upstreamUpdateOnly, false, purgeCache);
   }
 
   public BaragonRequest(String loadBalancerRequestId, BaragonService loadBalancerService, List<UpstreamInfo> addUpstreams, List<UpstreamInfo> removeUpstreams, List<UpstreamInfo> replaceUpstreams,
                         Optional<String> replaceServiceId, Optional<RequestAction> action, boolean noValidate, boolean noReload, boolean upstreamUpdateOnly) {
-    this(loadBalancerRequestId, loadBalancerService, addUpstreams, removeUpstreams, replaceUpstreams, replaceServiceId, action, noValidate, noReload, upstreamUpdateOnly, false);
+    this(loadBalancerRequestId, loadBalancerService, addUpstreams, removeUpstreams, replaceUpstreams, replaceServiceId, action, noValidate, noReload, upstreamUpdateOnly, false, false);
   }
 
   public BaragonRequest(String loadBalancerRequestId, BaragonService loadBalancerService, List<UpstreamInfo> addUpstreams, List<UpstreamInfo> removeUpstreams, List<UpstreamInfo> replaceUpstreams,
                         Optional<String> replaceServiceId, Optional<RequestAction> action, boolean noValidate, boolean noReload) {
-    this(loadBalancerRequestId, loadBalancerService, addUpstreams, removeUpstreams, replaceUpstreams, replaceServiceId, action, noValidate, noReload, false, false);
+    this(loadBalancerRequestId, loadBalancerService, addUpstreams, removeUpstreams, replaceUpstreams, replaceServiceId, action, noValidate, noReload, false, false, false);
   }
   public BaragonRequest(String loadBalancerRequestId, BaragonService loadBalancerService, List<UpstreamInfo> addUpstreams, List<UpstreamInfo> removeUpstreams, List<UpstreamInfo> replaceUpstreams, Optional<String> replaceServiceId, Optional<RequestAction> action, boolean noValidate) {
-    this(loadBalancerRequestId, loadBalancerService, addUpstreams, removeUpstreams, replaceUpstreams, replaceServiceId, action, noValidate, false, false, false);
+    this(loadBalancerRequestId, loadBalancerService, addUpstreams, removeUpstreams, replaceUpstreams, replaceServiceId, action, noValidate, false, false, false, false);
   }
 
   public BaragonRequest(String loadBalancerRequestId, BaragonService loadBalancerService, List<UpstreamInfo> addUpstreams, List<UpstreamInfo> removeUpstreams, List<UpstreamInfo> replaceUpstreams, Optional<String> replaceServiceId, Optional<RequestAction> action) {
-    this(loadBalancerRequestId, loadBalancerService, addUpstreams, removeUpstreams, replaceUpstreams, replaceServiceId, action, false, false, false, false);
+    this(loadBalancerRequestId, loadBalancerService, addUpstreams, removeUpstreams, replaceUpstreams, replaceServiceId, action, false, false, false, false, false);
   }
 
   public BaragonRequest(String loadBalancerRequestId, BaragonService loadBalancerService, List<UpstreamInfo> addUpstreams, List<UpstreamInfo> removeUpstreams, Optional<String> replaceServiceId) {
-    this(loadBalancerRequestId, loadBalancerService, addUpstreams, removeUpstreams, Collections.<UpstreamInfo>emptyList(), replaceServiceId, Optional.of(RequestAction.UPDATE), false, false, false, false);
+    this(loadBalancerRequestId, loadBalancerService, addUpstreams, removeUpstreams, Collections.<UpstreamInfo>emptyList(), replaceServiceId, Optional.of(RequestAction.UPDATE), false, false, false, false, false);
   }
 
   public BaragonRequest(String loadBalancerRequestId, BaragonService loadBalancerService, List<UpstreamInfo> addUpstreams, List<UpstreamInfo> removeUpstreams) {
-    this(loadBalancerRequestId, loadBalancerService, addUpstreams, removeUpstreams, Collections.<UpstreamInfo>emptyList(),Optional.<String>absent(), Optional.of(RequestAction.UPDATE), false, false, false, false);
+    this(loadBalancerRequestId, loadBalancerService, addUpstreams, removeUpstreams, Collections.<UpstreamInfo>emptyList(),Optional.<String>absent(), Optional.of(RequestAction.UPDATE), false, false, false, false, false);
   }
 
   public BaragonRequest withUpdatedGroups(BaragonGroupAlias updatedFromAlias) {
@@ -109,6 +119,10 @@ public class BaragonRequest {
 
   public BaragonRequest withUpdatedDomains(Set<String> domains) {
     return toBuilder().setLoadBalancerService(loadBalancerService.withDomains(domains)).build();
+  }
+
+  public BaragonRequest withUpdatedPurgeCache(boolean purgeCache){
+    return toBuilder().setPurgeCache(purgeCache).build();
   }
 
   public String getLoadBalancerRequestId() {
@@ -137,10 +151,6 @@ public class BaragonRequest {
 
   public Optional<RequestAction> getAction() {
     return action;
-  }
-
-  public void setAction(Optional<RequestAction> action) {
-    this.action = action;
   }
 
   private List<UpstreamInfo> addRequestId(List<UpstreamInfo> upstreams, String requestId) {
@@ -180,6 +190,10 @@ public class BaragonRequest {
     return noDuplicateUpstreams;
   }
 
+  public boolean isPurgeCache() {
+    return purgeCache;
+  }
+
   @Override
   public String toString() {
     return "BaragonRequest [" +
@@ -194,6 +208,7 @@ public class BaragonRequest {
         ", noReload=" + noReload +
         ", upstreamUpdateOnly=" + upstreamUpdateOnly +
         ", noDuplicateUpstreams=" + noDuplicateUpstreams +
+        ", purgeCache=" + purgeCache +
         ']';
   }
 
@@ -243,6 +258,10 @@ public class BaragonRequest {
       return false;
     }
 
+    if (!purgeCache == request.purgeCache) {
+      return false;
+    }
+
     return true;
   }
 
@@ -257,7 +276,8 @@ public class BaragonRequest {
         .setNoValidate(noValidate)
         .setNoReload(noReload)
         .setUpstreamUpdateOnly(upstreamUpdateOnly)
-        .setNoDuplicateUpstreams(noDuplicateUpstreams);
+        .setNoDuplicateUpstreams(noDuplicateUpstreams)
+        .setPurgeCache(purgeCache);
   }
 
   @Override

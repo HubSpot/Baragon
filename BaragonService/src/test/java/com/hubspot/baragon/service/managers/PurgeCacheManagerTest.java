@@ -75,28 +75,28 @@ class PurgeCacheManagerTest {
 
   @Test
   public void testPurgeCacheUpdate() {
-    // 1. serviceId is not excluded, and the template name is not eligible for the update to UPDATE_AND_PURGE_CACHE
+    // 1. serviceId is not excluded, and the template name is not eligible for the update to isPurgeCache=true
     // so nothing should change here
     BaragonRequest request = createRequest("madeUpServiceId", Optional.absent());
-    purgeCacheManager.updateForPurgeCache(request);
-    assertEquals(RequestAction.UPDATE, request.getAction().get());
+    request = purgeCacheManager.updateForPurgeCache(request);
+    assertEquals(false, request.isPurgeCache());
   }
 
   @Test
   public void testPurgeCacheUpdateWithIncludedGroup() {
-    // 2. static_routes is eligible for the update to UPDATE_AND_PURGE_CACHE, so test that it is updated
+    // 2. static_routes is eligible for the update to isPurgeCache=true, so test that it is updated
     BaragonRequest request = createRequest("madeUpServiceID", Optional.of("static_routes"));
-    purgeCacheManager.updateForPurgeCache(request);
-    assertEquals(RequestAction.UPDATE_AND_PURGE_CACHE, request.getAction().get());
+    request = purgeCacheManager.updateForPurgeCache(request);
+    assertEquals(true, request.isPurgeCache());
   }
 
   @Test
   public void testPurgeCacheUpdateWithIncludedGroupButExcludedServiceId() {
-    // 3. while static_routes is eligible for the update to UPdATE_AND_PURGE_CACHE, excludedServiceId is part of the
+    // 3. while static_routes is eligible for the update to isPurgeCache=true, excludedServiceId is part of the
     // excludedServiceIds list, so the action for this request should not be updated
     BaragonRequest request = createRequest("excludedServiceId", Optional.of("static_routes"));
-    purgeCacheManager.updateForPurgeCache(request);
-    assertEquals(RequestAction.UPDATE, request.getAction().get());
+    request = purgeCacheManager.updateForPurgeCache(request);
+    assertEquals(false, request.isPurgeCache());
   }
 
   @Test
@@ -109,11 +109,11 @@ class PurgeCacheManagerTest {
         BaragonConfiguration.class);
     purgeCacheManager = new PurgeCacheManager(baragonConfiguration);
 
-    // 4a. in the test above, this request was eligible for the update to UPDATE_AND_PURGE_CACHE, however, this
+    // 4a. in the test above, this request was not eligible for the update to isPurgeCache=true, however, this
     // new config doesn't have an excludedServiceIds block, so this request should be updated
     BaragonRequest request = createRequest("excludedServiceId", Optional.of("static_routes"));
-    purgeCacheManager.updateForPurgeCache(request);
-    assertEquals(RequestAction.UPDATE_AND_PURGE_CACHE, request.getAction().get());
+    request = purgeCacheManager.updateForPurgeCache(request);
+    assertEquals(true, request.isPurgeCache());
   }
 
 }

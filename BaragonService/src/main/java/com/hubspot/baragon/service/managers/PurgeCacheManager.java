@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import com.hubspot.baragon.models.BaragonRequest;
+import com.hubspot.baragon.models.BaragonService;
 import com.hubspot.baragon.models.RequestAction;
 import com.hubspot.baragon.service.config.BaragonConfiguration;
 
@@ -22,12 +23,21 @@ public class PurgeCacheManager {
 
   public BaragonRequest updateForPurgeCache(BaragonRequest request){
     if (request.getAction().isPresent() && request.getAction().get().equals(RequestAction.UPDATE)){
-      if (baragonConfiguration.getPurgeCacheConfiguration().serviceShouldPurgeCache(request.getLoadBalancerService())){
-        LOG.info("serviceId={} with RequestAction.UPDATE to be rewritten to UPDATE_AND_PURGE_CACHE", request.getLoadBalancerService().getServiceId());
-        request.setAction(Optional.of(RequestAction.UPDATE_AND_PURGE_CACHE));
+      if (serviceShouldPurgeCache(request.getLoadBalancerService())){
+        LOG.info("serviceId={} to be updated to set purgeCache=true", request.getLoadBalancerService().getServiceId());
+        return request.withUpdatedPurgeCache(true);
       }
     }
     return request;
+  }
+
+  public boolean serviceShouldPurgeCache(BaragonService service){
+    // 1. if the serviceId is on the exclude list, return false
+    if (baragonConfiguration.getPurgeCacheConfiguration().getExcludedServiceIds().contains(service.getServiceId())){
+      return false;
+    }
+    // 2. if the service's templateName is not in the enabledTemplates list, return false, otherwise return true
+    return baragonConfiguration.getPurgeCacheConfiguration().getEnabledTemplates().contains(service.getTemplateName().or(""));
   }
 
 }
