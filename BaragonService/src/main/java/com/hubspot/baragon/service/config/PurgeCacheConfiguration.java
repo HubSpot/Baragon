@@ -13,16 +13,13 @@ import com.hubspot.baragon.models.BaragonService;
 public class PurgeCacheConfiguration {
   @JsonProperty("enabledTemplates")
   @NotNull
-  private List<String> enabledTemplates;
+  private List<String> enabledTemplates = new ArrayList<>();
 
   @JsonProperty(value = "excludedServiceIds")
   @NotNull
-  private List<String> excludedServiceIds;
+  private List<String> excludedServiceIds = new ArrayList<>();
 
   public List<String> getEnabledTemplates() {
-    if (enabledTemplates == null) {
-      return new ArrayList<>();
-    }
     return enabledTemplates;
   }
 
@@ -31,9 +28,6 @@ public class PurgeCacheConfiguration {
   }
 
   public List<String> getExcludedServiceIds() {
-    if (excludedServiceIds == null) {
-      return new ArrayList<>();
-    }
     return excludedServiceIds;
   }
 
