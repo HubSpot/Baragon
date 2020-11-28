@@ -83,6 +83,20 @@ public class BaragonRequest {
     this.purgeCache = MoreObjects.firstNonNull(purgeCache, false);
   }
 
+  public BaragonRequest(String loadBalancerRequestId,
+                        BaragonService loadBalancerService,
+                        List<UpstreamInfo> addUpstreams,
+                        List<UpstreamInfo> removeUpstreams,
+                        List<UpstreamInfo> replaceUpstreams,
+                        Optional<String> replaceServiceId,
+                        Optional<RequestAction> action,
+                        Boolean noValidate,
+                        Boolean noReload,
+                        Boolean upstreamUpdateOnly,
+                        Boolean noDuplicateUpstreams) {
+    this(loadBalancerRequestId, loadBalancerService, addUpstreams, removeUpstreams, replaceUpstreams, replaceServiceId, action, noValidate, noReload, upstreamUpdateOnly, noDuplicateUpstreams, false);
+  }
+
   public BaragonRequest(String loadBalancerRequestId, BaragonService loadBalancerService, List<UpstreamInfo> addUpstreams, List<UpstreamInfo> removeUpstreams, List<UpstreamInfo> replaceUpstreams,
                         Optional<String> replaceServiceId, Optional<RequestAction> action, boolean noValidate, boolean noReload, boolean upstreamUpdateOnly, boolean purgeCache) {
     this(loadBalancerRequestId, loadBalancerService, addUpstreams, removeUpstreams, replaceUpstreams, replaceServiceId, action, noValidate, noReload, upstreamUpdateOnly, false, purgeCache);
