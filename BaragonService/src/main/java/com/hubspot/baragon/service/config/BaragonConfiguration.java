@@ -20,6 +20,7 @@ import io.dropwizard.Configuration;
 public class BaragonConfiguration extends Configuration {
   public static final String DEFAULT_AGENT_REQUEST_URI_FORMAT = "%s/request/%s";
   public static final String DEFAULT_AGENT_BATCH_REQUEST_URI_FORMAT = "%s/batch";
+  public static final String DEFAULT_AGENT_PURGE_CACHE_REQUEST_URI_FORMAT = "%s/purgeCache/%s";
 
   @JsonProperty("zookeeper")
   @NotNull
@@ -60,6 +61,9 @@ public class BaragonConfiguration extends Configuration {
   @NotNull
   @Valid
   private AuthConfiguration authConfiguration = new AuthConfiguration();
+
+  @JsonProperty("purgeCache")
+  private PurgeCacheConfiguration purgeCacheConfiguration;
 
   @JsonProperty("hostname")
   private String hostname;
@@ -103,6 +107,9 @@ public class BaragonConfiguration extends Configuration {
 
   @JsonProperty
   private long expireResolveCacheAfterDays = 30;
+
+  @JsonProperty("agentPurgeCacheRequestUriFormat")
+  private String agentPurgeCacheRequestUriFormat = DEFAULT_AGENT_PURGE_CACHE_REQUEST_URI_FORMAT;
 
   private int maxConcurrentRequestsPerAgent = 3;
 
@@ -172,6 +179,14 @@ public class BaragonConfiguration extends Configuration {
 
   public void setAuthConfiguration(AuthConfiguration authConfiguration) {
     this.authConfiguration = authConfiguration;
+  }
+
+  public PurgeCacheConfiguration getPurgeCacheConfiguration() {
+    return purgeCacheConfiguration;
+  }
+
+  public void setPurgeCacheConfiguration(PurgeCacheConfiguration purgeCacheConfiguration) {
+    this.purgeCacheConfiguration = purgeCacheConfiguration;
   }
 
   public String getMasterAuthKey() {
@@ -280,6 +295,14 @@ public class BaragonConfiguration extends Configuration {
 
   public void setExpireResolveCacheAfterDays(long expireResolveCacheAfterDays) {
     this.expireResolveCacheAfterDays = expireResolveCacheAfterDays;
+  }
+
+  public String getAgentPurgeCacheRequestUriFormat() {
+    return agentPurgeCacheRequestUriFormat;
+  }
+
+  public void setAgentPurgeCacheRequestUriFormat(String agentPurgeCacheRequestUriFormat) {
+    this.agentPurgeCacheRequestUriFormat = agentPurgeCacheRequestUriFormat;
   }
 
   public int getMaxConcurrentRequestsPerAgent() {

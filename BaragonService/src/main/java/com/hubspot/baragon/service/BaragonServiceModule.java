@@ -61,11 +61,13 @@ import com.hubspot.baragon.service.managed.BaragonGraphiteReporterManaged;
 import com.hubspot.baragon.service.managed.BaragonManaged;
 import com.hubspot.baragon.service.managers.AgentManager;
 import com.hubspot.baragon.service.managers.ElbManager;
+import com.hubspot.baragon.service.managers.PurgeCacheManager;
 import com.hubspot.baragon.service.managers.RenderedConfigsManager;
 import com.hubspot.baragon.service.managers.RequestManager;
 import com.hubspot.baragon.service.managers.ServiceManager;
 import com.hubspot.baragon.service.managers.StatusManager;
 import com.hubspot.baragon.service.resources.BaragonResourcesModule;
+import com.hubspot.baragon.service.resources.PurgeCacheResource;
 import com.hubspot.baragon.service.worker.BaragonElbSyncWorker;
 import com.hubspot.baragon.service.worker.BaragonRequestWorker;
 import com.hubspot.baragon.service.worker.RequestPurgingWorker;
@@ -123,6 +125,7 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
     binder.bind(ServiceManager.class).in(Scopes.SINGLETON);
     binder.bind(StatusManager.class).in(Scopes.SINGLETON);
     binder.bind(RenderedConfigsManager.class).in(Scopes.SINGLETON);
+    binder.bind(PurgeCacheManager.class).in(Scopes.SINGLETON);
 
     binder.bind(GoogleCloudManager.class).in(Scopes.SINGLETON);
 

@@ -1,0 +1,6 @@
+purgeCache:
+  enabledTemplates:
+    - static_routes
+    - static_routes_akamai
+  excludedServiceIds:
+    - excludedServiceId

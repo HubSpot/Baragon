@@ -36,6 +36,8 @@ import com.hubspot.baragon.models.BaragonService;
 import com.hubspot.baragon.models.BaragonServiceState;
 import com.hubspot.baragon.models.QueuedRequestId;
 import com.hubspot.baragon.models.UpstreamInfo;
+import com.hubspot.baragon.service.config.PurgeCacheConfiguration;
+import com.hubspot.baragon.service.managers.PurgeCacheManager;
 import com.hubspot.baragon.service.managers.RequestManager;
 import com.hubspot.baragon.service.worker.BaragonRequestWorker;
 
@@ -49,16 +51,19 @@ public class RequestResource {
   private final BaragonLoadBalancerDatastore loadBalancerDatastore;
   private final RequestManager manager;
   private final AliasManager aliasManager;
+  private final PurgeCacheManager purgeCacheManager;
 
   @Inject
   public RequestResource(BaragonStateDatastore stateDatastore,
                          RequestManager manager,
                          AliasManager aliasManager,
-                         BaragonLoadBalancerDatastore loadBalancerDatastore) {
+                         BaragonLoadBalancerDatastore loadBalancerDatastore,
+                         PurgeCacheManager purgeCacheManager) {
     this.stateDatastore = stateDatastore;
     this.manager = manager;
     this.aliasManager = aliasManager;
     this.loadBalancerDatastore = loadBalancerDatastore;
+    this.purgeCacheManager = purgeCacheManager;
   }
 
   @GET
@@ -73,8 +78,9 @@ public class RequestResource {
     try {
       BaragonRequest updatedForAliases = aliasManager.updateForAliases(request);
       BaragonRequest updatedForDefaultDomains = loadBalancerDatastore.updateForDefaultDomains(updatedForAliases);
+      BaragonRequest updatedForPurgeCache = purgeCacheManager.updateForPurgeCache(updatedForDefaultDomains);
       LOG.info("Received request: {}", request);
-      return manager.enqueueRequest(updatedForDefaultDomains);
+      return manager.enqueueRequest(updatedForPurgeCache);
     } catch (Exception e) {
       LOG.error("Caught exception for {}", request.getLoadBalancerRequestId(), e);
       return BaragonResponse.failure(request.getLoadBalancerRequestId(), e.getMessage());

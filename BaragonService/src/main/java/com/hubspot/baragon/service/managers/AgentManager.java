@@ -99,6 +99,9 @@ public class AgentManager {
         builder = asyncHttpClient.preparePost(url);
         break;
       case REVERT:
+      case PURGE_CACHE:
+        builder = asyncHttpClient.preparePost(url);
+        break;
       case CANCEL:
         builder = asyncHttpClient.prepareDelete(url);
         break;

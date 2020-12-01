@@ -5,5 +5,6 @@ public enum RequestAction {
   DELETE,
   RELOAD,
   REVERT,
-  GET_RENDERED_CONFIG
+  GET_RENDERED_CONFIG,
+  PURGE_CACHE
 }

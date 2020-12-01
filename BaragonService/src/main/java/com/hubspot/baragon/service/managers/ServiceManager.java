@@ -54,6 +54,20 @@ public class ServiceManager {
     }
   }
 
+  public BaragonResponse enqueuePurgeCache(String serviceId) {
+    String requestId = String.format("%s-%s-%s", serviceId, System.currentTimeMillis(), "PURGE_CACHE");
+    Optional<BaragonService> maybeService = stateDatastore.getService(serviceId);
+    if (maybeService.isPresent()) {
+      try {
+        return requestManager.enqueueRequest(buildPurgeCacheRequest(maybeService.get(), requestId));
+      } catch (Exception e) {
+        return BaragonResponse.failure(requestId, e.getMessage());
+      }
+    } else {
+      return BaragonResponse.serviceNotFound(requestId, serviceId);
+    }
+  }
+
   public BaragonResponse enqueueRemoveService(String serviceId, boolean noValidate, boolean noReload) {
     String requestId = String.format("%s-%s-%s", serviceId, System.currentTimeMillis(), "DELETE");
     Optional<BaragonService> maybeService = stateDatastore.getService(serviceId);
@@ -92,6 +106,19 @@ public class ServiceManager {
         .setReplaceUpstreams(empty)
         .setAction(Optional.of(RequestAction.RELOAD))
         .setNoValidate(noValidate)
+        .setNoReload(false)
+        .build();
+  }
+
+  private BaragonRequest buildPurgeCacheRequest(BaragonService service, String requestId) {
+    List<UpstreamInfo> empty = Collections.emptyList();
+    return new BaragonRequestBuilder().setLoadBalancerRequestId(requestId)
+        .setLoadBalancerService(service)
+        .setAddUpstreams(empty)
+        .setRemoveUpstreams(empty)
+        .setReplaceUpstreams(empty)
+        .setAction(Optional.of(RequestAction.PURGE_CACHE))
+        .setNoValidate(false)
         .setNoReload(false)
         .build();
   }

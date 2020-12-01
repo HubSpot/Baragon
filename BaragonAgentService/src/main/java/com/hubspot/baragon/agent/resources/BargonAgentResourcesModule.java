@@ -10,5 +10,6 @@ public class BargonAgentResourcesModule extends AbstractModule {
     bind(RequestResource.class);
     bind(StatusResource.class);
     bind(RenderedConfigsResource.class);
+    bind(PurgeCacheResource.class);
   }
 }

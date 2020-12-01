@@ -1,5 +1,8 @@
 package com.hubspot.baragon.agent.managers;
 
+import static com.hubspot.baragon.agent.BaragonAgentServiceModule.BARAGON_AGENT_HTTP_CLIENT;
+
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -17,10 +20,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Optional;
+import com.google.common.hash.Hashing;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import com.hubspot.baragon.agent.BaragonAgentServiceModule;
+import com.hubspot.baragon.agent.config.BaragonAgentConfiguration;
 import com.hubspot.baragon.agent.config.LoadBalancerConfiguration;
 import com.hubspot.baragon.agent.config.TestingConfiguration;
 import com.hubspot.baragon.agent.lbs.FilesystemConfigHelper;
@@ -38,6 +43,10 @@ import com.hubspot.baragon.models.BasicServiceContext;
 import com.hubspot.baragon.models.RequestAction;
 import com.hubspot.baragon.models.ServiceContext;
 import com.hubspot.baragon.models.UpstreamInfo;
+import com.hubspot.horizon.HttpRequest;
+import com.hubspot.horizon.HttpRequest.Method;
+import com.hubspot.horizon.HttpResponse;
+import com.hubspot.horizon.ning.NingHttpClient;
 
 @Singleton
 public class AgentRequestManager {
@@ -49,9 +58,11 @@ public class AgentRequestManager {
   private final Optional<TestingConfiguration> maybeTestingConfiguration;
   private final Random random;
   private final AtomicReference<BaragonAgentState> agentState;
+  private final BaragonAgentConfiguration baragonAgentConfiguration;
   private final LoadBalancerConfiguration loadBalancerConfiguration;
   private final long agentLockTimeoutMs;
   private final Map<String, BasicServiceContext> internalStateCache;
+  private final NingHttpClient httpClient;
 
   @Inject
   public AgentRequestManager(BaragonStateDatastore stateDatastore,
@@ -61,9 +72,12 @@ public class AgentRequestManager {
                              LoadBalancerConfiguration loadBalancerConfiguration,
                              Random random,
                              AtomicReference<BaragonAgentState> agentState,
+                             BaragonAgentConfiguration baragonAgentConfiguration,
                              @Named(BaragonAgentServiceModule.AGENT_MOST_RECENT_REQUEST_ID) AtomicReference<String> mostRecentRequestId,
                              @Named(BaragonAgentServiceModule.AGENT_LOCK_TIMEOUT_MS) long agentLockTimeoutMs,
-                             @Named(BaragonAgentServiceModule.INTERNAL_STATE_CACHE) Map<String, BasicServiceContext> internalStateCache) {
+                             @Named(BaragonAgentServiceModule.INTERNAL_STATE_CACHE) Map<String, BasicServiceContext> internalStateCache,
+                             @Named(BARAGON_AGENT_HTTP_CLIENT) NingHttpClient httpClient
+  ) {
     this.stateDatastore = stateDatastore;
     this.configHelper = configHelper;
     this.maybeTestingConfiguration = maybeTestingConfiguration;
@@ -71,9 +85,11 @@ public class AgentRequestManager {
     this.mostRecentRequestId = mostRecentRequestId;
     this.random = random;
     this.agentState = agentState;
+    this.baragonAgentConfiguration = baragonAgentConfiguration;
     this.loadBalancerConfiguration = loadBalancerConfiguration;
     this.agentLockTimeoutMs = agentLockTimeoutMs;
     this.internalStateCache = internalStateCache;
+    this.httpClient = httpClient;
   }
 
   public List<AgentBatchResponseItem> processRequests(List<BaragonRequestBatchItem> batch) throws InterruptedException {
@@ -177,12 +193,19 @@ public class AgentRequestManager {
           return reload(request, delayReload);
         case GET_RENDERED_CONFIG:
           return getRenderedConfigs(request.getLoadBalancerService().getServiceId());
+        case PURGE_CACHE:
+          return purgeCache(request.getLoadBalancerService().getServiceId());
         case REVERT:
           serviceId = request.getLoadBalancerService().getServiceId();
           return revert(request, maybeOldService, existingUpstreams.computeIfAbsent(serviceId, (key) -> new ArrayList<>()), delayReload, batchItemNumber);
         default:
           serviceId = request.getLoadBalancerService().getServiceId();
-          return apply(request, maybeOldService, existingUpstreams.computeIfAbsent(serviceId, (key) -> new ArrayList<>()), delayReload, batchItemNumber);
+          Response response = apply(request, maybeOldService, existingUpstreams.computeIfAbsent(serviceId, (key) -> new ArrayList<>()), delayReload, batchItemNumber);
+          if (request.isPurgeCache()){
+            purgeCache(maybeOldService.or(request.getLoadBalancerService()).getServiceId());
+          }
+          return response;
+
       }
     } catch (LockTimeoutException e) {
       LOG.error("Couldn't acquire agent lock for {} in {} ms", requestId, agentLockTimeoutMs, e);
@@ -223,6 +246,49 @@ public class AgentRequestManager {
       }
     }
     return Response.ok(result).build();
+  }
+
+  public Response purgeCache(String serviceId) {
+    LOG.info("purgeCache() called with serviceId={}", serviceId);
+
+    Optional<BaragonService> maybeService;
+    if (internalStateCache.containsKey(serviceId)){
+      maybeService = Optional.of(internalStateCache.get(serviceId).getService());
+    }
+    else {
+      maybeService = stateDatastore.getService(serviceId);
+    }
+
+    // 1. if no service exists, return an error response early
+    if (!maybeService.isPresent()){
+      return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(String.format("Could not find service with serviceId=%s", serviceId)).build();
+    }
+
+    // 2. insert the serviceId hash into the purge URI
+    String purgeCacheUri = String.format(
+        baragonAgentConfiguration.getPurgeCacheUriFormat(),
+        Hashing.sha256()
+            .hashString(maybeService.get().getServiceId(), StandardCharsets.UTF_8)
+            .toString()
+    );
+    LOG.info("purgeCache() uri={}", purgeCacheUri);
+
+    // 3. now build the request
+    final HttpRequest.Builder builder = HttpRequest.newBuilder()
+        .setUrl(purgeCacheUri)
+        .setMethod(Method.POST);
+
+    // 4. execute the request and send back a copy of the response to the caller
+    try {
+      HttpResponse response = this.httpClient.execute(builder.build());
+      LOG.info("purgeCache() response from loadbalancer={}", response.getAsString());
+      return Response.status(response.getStatusCode()).entity(response.getAsString()).build();
+    }
+    catch (Exception e){
+      LOG.error("purgeCache() exception, but will not fail", e);
+      return Response.serverError().entity(e.getMessage()).build();
+    }
+
   }
 
   private Response apply(BaragonRequest request, Optional<BaragonService> maybeOldService, Collection<UpstreamInfo> existingUpstreams, boolean delayReload, Optional<Integer> batchItemNumber) throws Exception {

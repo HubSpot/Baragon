@@ -146,6 +146,9 @@ public class BaragonAgentConfiguration extends Configuration {
   @JsonProperty("watchedDirectories")
   private List<WatchedDirectoryConfig> watchedDirectories = new ArrayList<>();
 
+  @JsonProperty("purgeCacheUriFormat")
+  private String purgeCacheUriFormat = "http://127.0.0.1:8082/purge/%s*";
+
   public HttpClientConfiguration getHttpClientConfiguration() {
     return httpClientConfiguration;
   }
@@ -428,5 +431,13 @@ public class BaragonAgentConfiguration extends Configuration {
 
   public void setWatchedDirectories(List<WatchedDirectoryConfig> watchedDirectories) {
     this.watchedDirectories = watchedDirectories;
+  }
+
+  public String getPurgeCacheUriFormat() {
+    return purgeCacheUriFormat;
+  }
+
+  public void setPurgeCacheUriFormat(String purgeCacheUriFormat) {
+    this.purgeCacheUriFormat = purgeCacheUriFormat;
   }
 }

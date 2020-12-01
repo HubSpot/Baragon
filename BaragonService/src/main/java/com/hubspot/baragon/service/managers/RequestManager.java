@@ -28,6 +28,7 @@ import com.hubspot.baragon.exceptions.InvalidUpstreamsException;
 import com.hubspot.baragon.exceptions.RequestAlreadyEnqueuedException;
 import com.hubspot.baragon.models.BaragonGroup;
 import com.hubspot.baragon.models.BaragonRequest;
+import com.hubspot.baragon.models.BaragonRequestBuilder;
 import com.hubspot.baragon.models.BaragonResponse;
 import com.hubspot.baragon.models.BaragonService;
 import com.hubspot.baragon.models.BaragonServiceState;
@@ -215,6 +216,7 @@ public class RequestManager {
 
   public BaragonResponse enqueueRequest(BaragonRequest request) throws RequestAlreadyEnqueuedException, InvalidRequestActionException, InvalidUpstreamsException {
     final Optional<BaragonResponse> maybePreexistingResponse = getResponse(request.getLoadBalancerService().getServiceId(), request.getLoadBalancerRequestId());
+
 
     if (maybePreexistingResponse.isPresent()) {
       Optional<BaragonRequest> maybePreexistingRequest = requestDatastore.getRequest(request.getLoadBalancerRequestId());

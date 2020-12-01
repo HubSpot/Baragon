@@ -14,6 +14,11 @@ history:
   purgeEveryHours: 1
   maxRequestsPerService: 5
 
+
+purgeCache:
+  enabledTemplates:
+    - default
+
 zookeeper:
   quorum: localhost:2181
   zkNamespace: baragon

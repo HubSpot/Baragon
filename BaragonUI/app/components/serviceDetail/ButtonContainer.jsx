@@ -5,6 +5,7 @@ import ReloadServiceButton from '../common/modalButtons/ReloadServiceButton';
 import RemoveUpstreamsButton from '../common/modalButtons/RemoveUpstreamsButton';
 import DeleteServiceButton from '../common/modalButtons/DeleteServiceButton';
 import RenderedConfigsButton from "../common/RenderedConfigsButton";
+import PurgeCacheButton from "../common/modalButtons/PurgeCacheButton";
 
 const showJSONButton = (serviceJson) => {
   return (
@@ -22,7 +23,8 @@ const showRenderedConfigsButton = (serviceId) => {
     );
 };
 const ButtonContainer = ({editable, serviceJson, upstreams,
-                          afterRemoveUpstreams, afterReload, afterDelete}) => {
+                          afterRemoveUpstreams, afterReload, afterDelete,
+                         afterPurgeCache}) => {
   if (!editable) {
     return (
       <div className="col-md-5 button-container">
@@ -41,6 +43,9 @@ const ButtonContainer = ({editable, serviceJson, upstreams,
       >
         <span className="btn btn-primary">Reload Configs</span>
       </ReloadServiceButton>
+        <PurgeCacheButton serviceId={serviceJson.service.serviceId} then={afterPurgeCache}>
+            <span className="btn btn-primary">Purge Cache</span>
+        </PurgeCacheButton>
       <RemoveUpstreamsButton
         loadBalancerService={serviceJson.service}
         upstreams={upstreams}

@@ -20,5 +20,6 @@ public class BaragonResourcesModule extends AbstractModule {
     bind(WorkerResource.class);
     bind(AliasesResource.class);
     bind(RenderedConfigsResource.class);
+    bind(PurgeCacheResource.class);
   }
 }

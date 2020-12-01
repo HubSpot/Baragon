@@ -1,6 +1,7 @@
 package com.hubspot.baragon.agent.lbs;
 
 import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -11,6 +12,7 @@ import java.util.Set;
 
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
+import com.google.common.hash.Hashing;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
@@ -50,7 +52,14 @@ public class LbConfigGenerator {
         final List<String> filenames = getFilenames(template, snapshot.getService());
 
         final StringWriter sw = new StringWriter();
-        final Context context = Context.newBuilder(snapshot).combine("agentProperties", agentMetadata).build();
+        final Context context = Context.newBuilder(snapshot)
+            .combine("agentProperties", agentMetadata)
+            .combine("serviceIdHash",
+                Hashing.sha256()
+                .hashString(snapshot.getService().getServiceId(), StandardCharsets.UTF_8)
+                .toString())
+            .combine("turnOffPurgeableCacheInTemplates", loadBalancerConfiguration.isTurnOffPurgeableCacheInTemplates())
+            .build();
         try {
           template.getTemplate().apply(context, sw);
         } catch (Exception e) {

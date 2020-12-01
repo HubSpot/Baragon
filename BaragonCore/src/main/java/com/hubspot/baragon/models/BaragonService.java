@@ -51,6 +51,7 @@ public class BaragonService {
 
   private final boolean preResolveUpstreamDNS;
 
+
   public BaragonService(@JsonProperty("serviceId") String serviceId,
                         @JsonProperty("owners") Collection<String> owners,
                         @JsonProperty("serviceBasePath") String serviceBasePath,
@@ -180,6 +181,7 @@ public class BaragonService {
   public boolean isPreResolveUpstreamDNS() {
     return preResolveUpstreamDNS;
   }
+
 
   @JsonIgnore
   public List<String> getAllPaths(Optional<String> defaultDomain) {
