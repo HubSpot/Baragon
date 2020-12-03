@@ -33,7 +33,9 @@ public class PurgeCacheManager {
 
   public boolean serviceShouldPurgeCache(BaragonService service){
     // 1. if the serviceId is on the exclude list, return false
-    if (baragonConfiguration.getPurgeCacheConfiguration().getExcludedServiceIds().contains(service.getServiceId())){
+    if (baragonConfiguration.getPurgeCacheConfiguration().getExcludedServiceIds().contains(
+        Optional.of(service.getServiceId()).or("")
+    )){
       return false;
     }
     // 2. if the service's templateName is not in the enabledTemplates list, return false, otherwise return true
