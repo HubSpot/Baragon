@@ -55,6 +55,9 @@ public class LoadBalancerConfiguration {
 
   private boolean turnOffPurgeableCacheInTemplates = false;
 
+  @NotNull
+  private Set<String> servicesToBlockFromPurgeableCache = Collections.emptySet();
+
   public String getName() {
     return name;
   }
@@ -174,5 +177,13 @@ public class LoadBalancerConfiguration {
 
   public void setTurnOffPurgeableCacheInTemplates(boolean turnOffPurgeableCacheInTemplates) {
     this.turnOffPurgeableCacheInTemplates = turnOffPurgeableCacheInTemplates;
+  }
+
+  public Set<String> getServicesToBlockFromPurgeableCache() {
+    return servicesToBlockFromPurgeableCache;
+  }
+
+  public void setServicesToBlockFromPurgeableCache(Set<String> servicesToBlockFromPurgeableCache) {
+    this.servicesToBlockFromPurgeableCache = servicesToBlockFromPurgeableCache;
   }
 }
