@@ -180,11 +180,11 @@ public class LoadBalancerConfiguration {
     this.turnOffPurgeableCacheInTemplates = turnOffPurgeableCacheInTemplates;
   }
 
-  public Set<String> getServicesToBlockFromPurgeableCache() {
+  public List<String> getServicesToBlockFromPurgeableCache() {
     return servicesToBlockFromPurgeableCache;
   }
 
-  public void setServicesToBlockFromPurgeableCache(Set<String> servicesToBlockFromPurgeableCache) {
+  public void setServicesToBlockFromPurgeableCache(List<String> servicesToBlockFromPurgeableCache) {
     this.servicesToBlockFromPurgeableCache = servicesToBlockFromPurgeableCache;
   }
 }
