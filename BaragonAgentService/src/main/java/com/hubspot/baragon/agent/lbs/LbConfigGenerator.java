@@ -58,7 +58,7 @@ public class LbConfigGenerator {
         final StringWriter sw = new StringWriter();
         final boolean turnOffPurgeableCacheInTemplates = loadBalancerConfiguration.isTurnOffPurgeableCacheInTemplates()
             || loadBalancerConfiguration.getServicesToBlockFromPurgeableCache().contains(snapshot.getService().getServiceId());
-        LOG.info("turnOffPurgeableCacheInTemplates={}, getServicesToBlockFromPurgeableCache()={}", turnOffPurgeableCacheInTemplates, loadBalancerConfiguration.getServicesToBlockFromPurgeableCache());
+        LOG.info("turnOffPurgeableCacheInTemplates={}, isTurnOffPurgeableCacheInTemplates()={}, getServicesToBlockFromPurgeableCache()={}", turnOffPurgeableCacheInTemplates, loadBalancerConfiguration.isTurnOffPurgeableCacheInTemplates(), loadBalancerConfiguration.getServicesToBlockFromPurgeableCache());
         final Context context = Context.newBuilder(snapshot)
             .combine("agentProperties", agentMetadata)
             .combine("serviceIdHash",
