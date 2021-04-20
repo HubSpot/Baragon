@@ -1,5 +1,6 @@
 package com.hubspot.baragon.agent.config;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -58,6 +59,7 @@ public class LoadBalancerConfiguration {
   private boolean turnOffPurgeableCacheInTemplates = false;
 
   @NotNull
+  @JsonProperty("servicesToBlockFromPurgeableCache")
   private List<String> servicesToBlockFromPurgeableCache = new ArrayList<>();
 
   public String getName() {
