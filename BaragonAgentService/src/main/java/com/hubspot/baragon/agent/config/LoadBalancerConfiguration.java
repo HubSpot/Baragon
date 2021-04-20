@@ -58,8 +58,6 @@ public class LoadBalancerConfiguration {
 
   private boolean turnOffPurgeableCacheInTemplates = false;
 
-  @NotNull
-  @JsonProperty("servicesToBlockFromPurgeableCache")
   private List<String> servicesToBlockFromPurgeableCache = new ArrayList<>();
 
   public String getName() {
