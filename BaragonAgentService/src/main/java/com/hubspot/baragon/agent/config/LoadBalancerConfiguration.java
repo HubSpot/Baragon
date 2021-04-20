@@ -1,6 +1,7 @@
 package com.hubspot.baragon.agent.config;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -56,7 +57,7 @@ public class LoadBalancerConfiguration {
   private boolean turnOffPurgeableCacheInTemplates = false;
 
   @NotNull
-  private Set<String> servicesToBlockFromPurgeableCache = Collections.emptySet();
+  private List<String> servicesToBlockFromPurgeableCache;
 
   public String getName() {
     return name;
