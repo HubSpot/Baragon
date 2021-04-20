@@ -52,13 +52,15 @@ public class LbConfigGenerator {
         final List<String> filenames = getFilenames(template, snapshot.getService());
 
         final StringWriter sw = new StringWriter();
+        final boolean turnOffPurgeableCacheInTemplates = loadBalancerConfiguration.isTurnOffPurgeableCacheInTemplates()
+            || loadBalancerConfiguration.getServicesToBlockFromPurgeableCache().contains(snapshot.getService().getServiceId());
         final Context context = Context.newBuilder(snapshot)
             .combine("agentProperties", agentMetadata)
             .combine("serviceIdHash",
                 Hashing.sha256()
                 .hashString(snapshot.getService().getServiceId(), StandardCharsets.UTF_8)
                 .toString())
-            .combine("turnOffPurgeableCacheInTemplates", loadBalancerConfiguration.isTurnOffPurgeableCacheInTemplates())
+            .combine("turnOffPurgeableCacheInTemplates", turnOffPurgeableCacheInTemplates)
             .build();
         try {
           template.getTemplate().apply(context, sw);
