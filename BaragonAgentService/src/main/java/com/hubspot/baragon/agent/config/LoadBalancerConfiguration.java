@@ -1,9 +1,6 @@
 package com.hubspot.baragon.agent.config;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -58,7 +55,8 @@ public class LoadBalancerConfiguration {
 
   private boolean turnOffPurgeableCacheInTemplates = false;
 
-  private List<String> servicesToBlockFromPurgeableCache = new ArrayList<>();
+  @NotNull
+  private Set<String> servicesToBlockFromPurgeableCache = Collections.emptySet();
 
   public String getName() {
     return name;
@@ -181,11 +179,11 @@ public class LoadBalancerConfiguration {
     this.turnOffPurgeableCacheInTemplates = turnOffPurgeableCacheInTemplates;
   }
 
-  public List<String> getServicesToBlockFromPurgeableCache() {
+  public Set<String> getServicesToBlockFromPurgeableCache() {
     return servicesToBlockFromPurgeableCache;
   }
 
-  public void setServicesToBlockFromPurgeableCache(List<String> servicesToBlockFromPurgeableCache) {
+  public void setServicesToBlockFromPurgeableCache(Set<String> servicesToBlockFromPurgeableCache) {
     this.servicesToBlockFromPurgeableCache = servicesToBlockFromPurgeableCache;
   }
 }
