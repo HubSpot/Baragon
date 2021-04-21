@@ -25,8 +25,6 @@ import com.hubspot.baragon.models.BaragonConfigFile;
 import com.hubspot.baragon.models.BaragonService;
 import com.hubspot.baragon.models.ServiceContext;
 import com.github.jknack.handlebars.Context;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @Singleton
 public class LbConfigGenerator {
