@@ -30,7 +30,6 @@ import org.slf4j.LoggerFactory;
 
 @Singleton
 public class LbConfigGenerator {
-  private static final Logger LOG = LoggerFactory.getLogger(LbConfigGenerator.class);
 
   private final LoadBalancerConfiguration loadBalancerConfiguration;
   private final Map<String, List<LbConfigTemplate>> templates;
@@ -58,7 +57,6 @@ public class LbConfigGenerator {
         final StringWriter sw = new StringWriter();
         final boolean turnOffPurgeableCacheInTemplates = loadBalancerConfiguration.isTurnOffPurgeableCacheInTemplates()
             || loadBalancerConfiguration.getServicesToBlockFromPurgeableCache().contains(snapshot.getService().getServiceId());
-        LOG.info("turnOffPurgeableCacheInTemplates={}, getServicesToBlockFromPurgeableCache()={}", turnOffPurgeableCacheInTemplates, loadBalancerConfiguration.getServicesToBlockFromPurgeableCache());
         final Context context = Context.newBuilder(snapshot)
             .combine("agentProperties", agentMetadata)
             .combine("serviceIdHash",
