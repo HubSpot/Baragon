@@ -12,6 +12,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import com.codahale.metrics.MetricRegistry;
 import org.apache.commons.exec.CommandLine;
 import org.apache.commons.exec.DefaultExecuteResultHandler;
 import org.apache.commons.exec.DefaultExecutor;
@@ -38,11 +39,13 @@ public class LocalLbAdapter {
   private static final int LOGROTATE_TIMEOUT = (int) TimeUnit.MINUTES.toMillis(15);
 
   private final LoadBalancerConfiguration loadBalancerConfiguration;
+  private final MetricRegistry metricRegistry;
   private final ExecutorService destroyProcessExecutor;
 
   @Inject
-  public LocalLbAdapter(LoadBalancerConfiguration loadBalancerConfiguration) {
+  public LocalLbAdapter(LoadBalancerConfiguration loadBalancerConfiguration, MetricRegistry metricRegistry) {
     this.loadBalancerConfiguration = loadBalancerConfiguration;
+    this.metricRegistry = metricRegistry;
     this.destroyProcessExecutor = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("lb-shell-process-kill-%d").build());
   }
 
@@ -129,6 +132,9 @@ public class LocalLbAdapter {
     }
     final long start = System.currentTimeMillis();
     final int exitCode = executeWithTimeout(CommandLine.parse(loadBalancerConfiguration.getReloadConfigCommand()), loadBalancerConfiguration.getCommandTimeoutMs());
+
+    metricRegistry.timer(LocalLbAdapter.class.getName() + ".reloadConfigs")
+            .update(System.currentTimeMillis() - start, TimeUnit.MILLISECONDS);
     LOG.info("Reloaded configs via '{}' in {}ms (exit code = {})", loadBalancerConfiguration.getReloadConfigCommand(), System.currentTimeMillis() - start, exitCode);
   }
 
