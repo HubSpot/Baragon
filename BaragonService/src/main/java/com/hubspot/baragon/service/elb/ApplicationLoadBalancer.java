@@ -635,6 +635,7 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
                                           Collection<BaragonAgentMetadata> agents,
                                           Collection<TargetDescription> targets) {
     Collection<TargetDescription> removableTargets = listRemovableTargets(trafficSource, baragonGroup, targets, agents);
+    LOG.info("removableTargets={}", removableTargets);
 
     for (TargetDescription removableTarget : removableTargets) {
       try {
@@ -643,6 +644,12 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
             && isLastHealthyInstance(removableTarget, targetGroup)) {
           LOG.info("Will not de-register target {} because it is last healthy instance in {}", removableTarget, targetGroup);
         } else {
+          LOG.info(
+              "Will run deregisterTargets because configuration.isPresent()={}, !configuration.get().isRemoveLastHealthyEnabled()={}, and isLastHealthyInstance(removableTarget, targetGroup={}",
+              configuration.isPresent(),
+              !configuration.get().isRemoveLastHealthyEnabled(),
+              isLastHealthyInstance(removableTarget, targetGroup)
+          );
           elbClient.deregisterTargets(new DeregisterTargetsRequest()
               .withTargetGroupArn(targetGroup.getTargetGroupArn())
               .withTargets(removableTarget));
