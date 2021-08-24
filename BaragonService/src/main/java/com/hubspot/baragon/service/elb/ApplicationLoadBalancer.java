@@ -635,7 +635,7 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
                                           Collection<BaragonAgentMetadata> agents,
                                           Collection<TargetDescription> targets) {
     Collection<TargetDescription> removableTargets = listRemovableTargets(trafficSource, baragonGroup, targets, agents);
-    LOG.info("removableTargets.size()={}", removableTargets.size());
+    LOG.info("removableTargets.size()={}, baragonGroup.minHealthyAgents={}", removableTargets.size(), baragonGroup.getMinHealthyAgents());
 
     Map<TargetDescription, TargetHealthDescription> targetToHealthDescriptionMap = getTargetToHealthDescriptionMap(targetGroup);
 
