@@ -645,7 +645,7 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
           LOG.info("Will not de-register target {} because it is last healthy instance in {}", removableTarget, targetGroup);
         } else {
           LOG.info(
-              "Will run deregisterTargets because configuration.isPresent()={}, !configuration.get().isRemoveLastHealthyEnabled()={}, and isLastHealthyInstance(removableTarget, targetGroup={}",
+              "Will run deregisterTargets because configuration.isPresent()={}, !configuration.get().isRemoveLastHealthyEnabled()={}, and isLastHealthyInstance(removableTarget, targetGroup)={}",
               configuration.isPresent(),
               !configuration.get().isRemoveLastHealthyEnabled(),
               isLastHealthyInstance(removableTarget, targetGroup)
