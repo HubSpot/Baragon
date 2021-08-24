@@ -679,13 +679,14 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
     }
   }
 
-  private Map<TargetDescription, TargetHealthDescription> getTargetToHealthDescriptionMap(TargetGroup targetGroup){
+  private Map<TargetDescription, TargetHealthDescription> getTargetToHealthDescriptionMap(TargetGroup targetGroup) {
     return elbClient
         .describeTargetHealth(
             new DescribeTargetHealthRequest()
                 .withTargetGroupArn(targetGroup.getTargetGroupArn())
         )
-        .getTargetHealthDescriptions().stream().collect(Collectors.toMap(TargetHealthDescription::getTarget, Function.identity()));
+        .getTargetHealthDescriptions().stream()
+        .collect(Collectors.toMap(TargetHealthDescription::getTarget, Function.identity()));
   }
 
   /**
@@ -744,11 +745,12 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
   }
 
   /**
-   * @param target      Target to check
+   * @param target                     Target to check
    * @param targetHealthDescriptionMap Target to HealthDescription map
    * @return if the given target is the last healthy target in the given target group
    */
-  private boolean isLastHealthyInstance(TargetDescription target, Map<TargetDescription, TargetHealthDescription> targetHealthDescriptionMap) {
+  private boolean isLastHealthyInstance(TargetDescription target,
+      Map<TargetDescription, TargetHealthDescription> targetHealthDescriptionMap) {
 
     boolean instanceIsHealthy = false;
     int healthyCount = 0;
