@@ -635,9 +635,10 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
                                           Collection<BaragonAgentMetadata> agents,
                                           Collection<TargetDescription> targets) {
     Collection<TargetDescription> removableTargets = listRemovableTargets(trafficSource, baragonGroup, targets, agents);
-    LOG.info("removableTargets={}", removableTargets);
+    LOG.info("removableTargets.size()={}", removableTargets.size());
 
     for (TargetDescription removableTarget : removableTargets) {
+      LOG.info("Processing removableTarget={}", removableTarget);
       try {
         if (configuration.isPresent()
             && !configuration.get().isRemoveLastHealthyEnabled()
