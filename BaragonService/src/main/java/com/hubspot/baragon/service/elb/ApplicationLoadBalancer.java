@@ -637,24 +637,29 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
     Collection<TargetDescription> removableTargets = listRemovableTargets(trafficSource, baragonGroup, targets, agents);
     LOG.info("removableTargets.size()={}", removableTargets.size());
 
+    Map<TargetDescription, TargetHealthDescription> targetToHealthDescriptionMap = getTargetToHealthDescriptionMap(targetGroup);
+
     for (TargetDescription removableTarget : removableTargets) {
       LOG.info("Processing removableTarget={}", removableTarget);
       try {
         if (configuration.isPresent()
             && !configuration.get().isRemoveLastHealthyEnabled()
-            && isLastHealthyInstance(removableTarget, targetGroup)) {
+            && isLastHealthyInstance(removableTarget, targetToHealthDescriptionMap)) {
           LOG.info("Will not de-register target {} because it is last healthy instance in {}", removableTarget, targetGroup);
         } else {
           LOG.info(
               "Will run deregisterTargets because configuration.isPresent()={}, !configuration.get().isRemoveLastHealthyEnabled()={}, and isLastHealthyInstance(removableTarget, targetGroup)={}",
               configuration.isPresent(),
               !configuration.get().isRemoveLastHealthyEnabled(),
-              isLastHealthyInstance(removableTarget, targetGroup)
+              isLastHealthyInstance(removableTarget, targetToHealthDescriptionMap)
           );
           elbClient.deregisterTargets(new DeregisterTargetsRequest()
               .withTargetGroupArn(targetGroup.getTargetGroupArn())
               .withTargets(removableTarget));
           LOG.info("De-registered target {} from target group {}", removableTarget, targetGroup);
+          // now if we get this far, remove the TargetGroup from the TargetToHealthDescriptionMap
+          // so that future iterations of this loop see that TargetGroup as removed
+          targetToHealthDescriptionMap.remove(removableTarget);
         }
       } catch (AmazonClientException acexn) {
         LOG.error("Could not de-register target {} from target group {} due to error",
@@ -663,6 +668,16 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
             .of("targetGroup", targetGroup.getTargetGroupName()));
       }
     }
+  }
+
+  private Map<TargetDescription, TargetHealthDescription> getTargetToHealthDescriptionMap(TargetGroup targetGroup) {
+    return elbClient
+        .describeTargetHealth(
+            new DescribeTargetHealthRequest()
+                .withTargetGroupArn(targetGroup.getTargetGroupArn())
+        )
+        .getTargetHealthDescriptions().stream()
+        .collect(Collectors.toMap(TargetHealthDescription::getTarget, Function.identity()));
   }
 
   /**
@@ -723,20 +738,15 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
   /**
    *
    * @param target Target to check
-   * @param targetGroup Group to check in
+   * @param getTargetToHealthDescriptionMap Map of TargetGroup to TargetHealthDescription to keep track of AWS's view of the world
    * @return if the given target is the last healthy target in the given target group
    */
-  private boolean isLastHealthyInstance(TargetDescription target, TargetGroup targetGroup) {
-    DescribeTargetHealthRequest targetHealthRequest = new DescribeTargetHealthRequest()
-        .withTargetGroupArn(targetGroup.getTargetGroupArn());
-    List<TargetHealthDescription> targetHealthDescriptions = elbClient
-        .describeTargetHealth(targetHealthRequest)
-        .getTargetHealthDescriptions();
+  private boolean isLastHealthyInstance(TargetDescription target, Map<TargetDescription, TargetHealthDescription> getTargetToHealthDescriptionMap) {
 
     boolean instanceIsHealthy = false;
     int healthyCount = 0;
 
-    for (TargetHealthDescription targetHealthDescription : targetHealthDescriptions) {
+    for (TargetHealthDescription targetHealthDescription : getTargetToHealthDescriptionMap.values()) {
       if (targetHealthDescription.getTargetHealth().getState()
           .equals(TargetHealthStateEnum.Healthy.toString())) {
         healthyCount += 1;
