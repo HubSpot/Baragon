@@ -644,14 +644,14 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
       try {
         if (configuration.isPresent()
             && !configuration.get().isRemoveLastHealthyEnabled()
-            && isLastHealthyInstance(removableTarget, targetToHealthDescriptionMap)) {
+            && isPartOfMinHealthyAgents(baragonGroup, removableTarget, targetToHealthDescriptionMap)) {
           LOG.info("Will not de-register target {} because it is last healthy instance in {}", removableTarget, targetGroup);
         } else {
           LOG.info(
               "Will run deregisterTargets because configuration.isPresent()={}, !configuration.get().isRemoveLastHealthyEnabled()={}, and isLastHealthyInstance(removableTarget, targetGroup)={}",
               configuration.isPresent(),
               !configuration.get().isRemoveLastHealthyEnabled(),
-              isLastHealthyInstance(removableTarget, targetToHealthDescriptionMap)
+              isPartOfMinHealthyAgents(baragonGroup, removableTarget, targetToHealthDescriptionMap)
           );
           elbClient.deregisterTargets(new DeregisterTargetsRequest()
               .withTargetGroupArn(targetGroup.getTargetGroupArn())
@@ -741,7 +741,7 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
    * @param getTargetToHealthDescriptionMap Map of TargetGroup to TargetHealthDescription to keep track of AWS's view of the world
    * @return if the given target is the last healthy target in the given target group
    */
-  private boolean isLastHealthyInstance(TargetDescription target, Map<TargetDescription, TargetHealthDescription> getTargetToHealthDescriptionMap) {
+  private boolean isPartOfMinHealthyAgents(BaragonGroup group, TargetDescription target, Map<TargetDescription, TargetHealthDescription> getTargetToHealthDescriptionMap) {
 
     boolean instanceIsHealthy = false;
     int healthyCount = 0;
@@ -756,7 +756,7 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
       }
     }
 
-    return instanceIsHealthy && healthyCount == 1;
+    return instanceIsHealthy && healthyCount == group.getMinHealthyAgents();
   }
 
   private void guaranteeHasAllSubnets(Collection<String> subnetIds, LoadBalancer loadBalancer) {

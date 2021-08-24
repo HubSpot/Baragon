@@ -23,6 +23,7 @@ public class BaragonGroup {
   private Optional<String> defaultDomain;
   private Set<String> domains;
   private Map<String, Set<String>> domainAliases;
+  private int minHealthyAgents;
 
   @JsonCreator
   public BaragonGroup(@JsonProperty("name") String name,
@@ -31,13 +32,15 @@ public class BaragonGroup {
                       @JsonProperty("sources") Set<String> sources,
                       @JsonProperty("defaultDomain") Optional<String> defaultDomain,
                       @JsonProperty("domains") Set<String> domains,
-                      @JsonProperty("domainAliases") Map<String, Set<String>> domainAliases) {
+                      @JsonProperty("domainAliases") Map<String, Set<String>> domainAliases,
+                      @JsonProperty(value = "minHealthyAgents", defaultValue = "1") int minHealthyAgents) {
     this.name = name;
     this.domain = domain;
     this.defaultDomain = defaultDomain;
     this.domains = MoreObjects.firstNonNull(domains, Collections.emptySet());
     this.domainAliases = MoreObjects.firstNonNull(domainAliases, Collections.emptyMap());
     this.sources = Collections.emptySet();
+    this.minHealthyAgents = minHealthyAgents;
 
     if (trafficSources == null && sources != null) {
       this.trafficSources = sources.stream()
@@ -110,6 +113,14 @@ public class BaragonGroup {
     this.domainAliases = domainAliases;
   }
 
+  public void setMinHealthyAgents(int minHealthyAgents) {
+    this.minHealthyAgents = minHealthyAgents;
+  }
+
+  public int getMinHealthyAgents() {
+    return this.minHealthyAgents;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -125,12 +136,13 @@ public class BaragonGroup {
         Objects.equals(sources, that.sources) &&
         Objects.equals(defaultDomain, that.defaultDomain) &&
         Objects.equals(domains, that.domains) &&
+        Objects.equals(minHealthyAgents, that.minHealthyAgents) &&
         Objects.equals(domainAliases, that.domainAliases);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, domain, trafficSources, sources, defaultDomain, domains, domainAliases);
+    return Objects.hash(name, domain, trafficSources, sources, defaultDomain, domains, domainAliases, minHealthyAgents);
   }
 
   @Override
@@ -143,6 +155,7 @@ public class BaragonGroup {
         ", defaultDomain=" + defaultDomain +
         ", domains=" + domains +
         ", domainAliases=" + domainAliases +
+        ", minHealthyAgents=" + minHealthyAgents +
         '}';
   }
 }
