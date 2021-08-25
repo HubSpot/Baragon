@@ -104,7 +104,7 @@ public class BootstrapManaged implements Managed {
       }
 
       LOG.info("Updating BaragonGroup information...");
-      loadBalancerDatastore.updateGroupInfo(configuration.getLoadBalancerConfiguration().getName(), configuration.getLoadBalancerConfiguration().getDefaultDomain(), configuration.getLoadBalancerConfiguration().getDomains(), configuration.getLoadBalancerConfiguration().getDomainAliases());
+      loadBalancerDatastore.updateGroupInfo(configuration.getLoadBalancerConfiguration().getName(), configuration.getLoadBalancerConfiguration().getDefaultDomain(), configuration.getLoadBalancerConfiguration().getDomains(), configuration.getLoadBalancerConfiguration().getDomainAliases(), configuration.getLoadBalancerConfiguration().getMinHealthyAgents());
 
       LOG.info("Adding to known-agents...");
       knownAgentsDatastore.addKnownAgent(configuration.getLoadBalancerConfiguration().getName(), BaragonKnownAgentMetadata.fromAgentMetadata(baragonAgentMetadata, System.currentTimeMillis()));

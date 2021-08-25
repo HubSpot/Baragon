@@ -56,6 +56,10 @@ public class LoadBalancerConfiguration {
   private boolean turnOffPurgeableCacheInTemplates = false;
 
   @NotNull
+  @Min(1)
+  private int minHealthyAgents = 1;
+
+  @NotNull
   private Set<String> servicesToBlockFromPurgeableCache = Collections.emptySet();
 
   public String getName() {
@@ -185,5 +189,13 @@ public class LoadBalancerConfiguration {
 
   public void setServicesToBlockFromPurgeableCache(Set<String> servicesToBlockFromPurgeableCache) {
     this.servicesToBlockFromPurgeableCache = servicesToBlockFromPurgeableCache;
+  }
+
+  public int getMinHealthyAgents() {
+    return minHealthyAgents;
+  }
+
+  public void setMinHealthyAgents(int minHealthyAgents) {
+    this.minHealthyAgents = minHealthyAgents;
   }
 }

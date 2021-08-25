@@ -112,7 +112,7 @@ public class BaragonLoadBalancerDatastore extends AbstractDataStore {
     }
   }
 
-  public void updateGroupInfo(String name, Optional<String> defaultDomain, Set<String> domains, Map<String, Set<String>> domainAliases) {
+  public void updateGroupInfo(String name, Optional<String> defaultDomain, Set<String> domains, Map<String, Set<String>> domainAliases, Integer minHealthyAgents) {
     Optional<BaragonGroup> maybeGroup = getLoadBalancerGroup(name);
     BaragonGroup group;
     if (maybeGroup.isPresent()) {
@@ -120,6 +120,7 @@ public class BaragonLoadBalancerDatastore extends AbstractDataStore {
       group.setDefaultDomain(defaultDomain);
       group.setDomains(domains);
       group.setDomainAliases(domainAliases);
+      group.setMinHealthyAgents(minHealthyAgents);
     } else {
       group = new BaragonGroup(name, defaultDomain, Collections.<TrafficSource>emptySet(), null, defaultDomain, domains, domainAliases, 1);
     }
