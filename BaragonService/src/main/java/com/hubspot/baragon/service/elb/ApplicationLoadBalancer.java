@@ -645,7 +645,7 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
         if (configuration.isPresent()
             && !configuration.get().isRemoveLastHealthyEnabled()
             && isPartOfMinHealthyAgents(baragonGroup, removableTarget, targetToHealthDescriptionMap)) {
-          LOG.info("Will not de-register target {} because it is last healthy instance in {}", removableTarget, targetGroup);
+          LOG.info("Will not de-register target {} because isPartOfMinHealthyAgents=true in {}", removableTarget, targetGroup);
         } else {
           LOG.info(
               "Will run deregisterTargets because configuration.isPresent()={}, !configuration.get().isRemoveLastHealthyEnabled()={}, and isPartOfMinHealthyAgents={}",
