@@ -23,7 +23,7 @@ public class BaragonGroup {
   private Optional<String> defaultDomain;
   private Set<String> domains;
   private Map<String, Set<String>> domainAliases;
-  private int minHealthyAgents;
+  private Integer minHealthyAgents;
 
   @JsonCreator
   public BaragonGroup(@JsonProperty("name") String name,
@@ -33,7 +33,7 @@ public class BaragonGroup {
                       @JsonProperty("defaultDomain") Optional<String> defaultDomain,
                       @JsonProperty("domains") Set<String> domains,
                       @JsonProperty("domainAliases") Map<String, Set<String>> domainAliases,
-                      @JsonProperty(value = "minHealthyAgents", defaultValue = "1") int minHealthyAgents) {
+                      @JsonProperty(value = "minHealthyAgents", defaultValue = "1") Integer minHealthyAgents) {
     this.name = name;
     this.domain = domain;
     this.defaultDomain = defaultDomain;
@@ -117,8 +117,8 @@ public class BaragonGroup {
     this.minHealthyAgents = minHealthyAgents;
   }
 
-  public int getMinHealthyAgents() {
-    return this.minHealthyAgents;
+  public Integer getMinHealthyAgents() {
+    return minHealthyAgents == null ? 1 : this.minHealthyAgents;
   }
 
   @Override
@@ -155,7 +155,7 @@ public class BaragonGroup {
         ", defaultDomain=" + defaultDomain +
         ", domains=" + domains +
         ", domainAliases=" + domainAliases +
-        ", minHealthyAgents=" + minHealthyAgents +
+        ", minHealthyAgents=" + getMinHealthyAgents() +
         '}';
   }
 }
