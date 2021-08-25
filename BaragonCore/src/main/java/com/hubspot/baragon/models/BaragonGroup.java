@@ -113,12 +113,12 @@ public class BaragonGroup {
     this.domainAliases = domainAliases;
   }
 
-  public void setMinHealthyAgents(int minHealthyAgents) {
+  public void setMinHealthyAgents(Integer minHealthyAgents) {
     this.minHealthyAgents = minHealthyAgents;
   }
 
   public Integer getMinHealthyAgents() {
-    return minHealthyAgents == null ? 1 : this.minHealthyAgents;
+    return this.minHealthyAgents == null ? Integer.valueOf(1) : this.minHealthyAgents;
   }
 
   @Override
