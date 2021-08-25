@@ -648,7 +648,7 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
           LOG.info("Will not de-register target {} because it is last healthy instance in {}", removableTarget, targetGroup);
         } else {
           LOG.info(
-              "Will run deregisterTargets because configuration.isPresent()={}, !configuration.get().isRemoveLastHealthyEnabled()={}, and isPartOfMinHealthyAgents(baragonGroup, removableTarget, targetToHealthDescriptionMap)={}",
+              "Will run deregisterTargets because configuration.isPresent()={}, !configuration.get().isRemoveLastHealthyEnabled()={}, and isPartOfMinHealthyAgents={}",
               configuration.isPresent(),
               !configuration.get().isRemoveLastHealthyEnabled(),
               isPartOfMinHealthyAgents(baragonGroup, removableTarget, targetToHealthDescriptionMap)
@@ -756,7 +756,7 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
       }
     }
 
-    return instanceIsHealthy && healthyCount == Math.max(1, group.getMinHealthyAgents());
+    return instanceIsHealthy && healthyCount <= Math.max(1, group.getMinHealthyAgents());
   }
 
   private void guaranteeHasAllSubnets(Collection<String> subnetIds, LoadBalancer loadBalancer) {
