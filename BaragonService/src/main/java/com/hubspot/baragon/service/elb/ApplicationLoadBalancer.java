@@ -642,10 +642,13 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
     for (TargetDescription removableTarget : removableTargets) {
       LOG.info("Processing removableTarget={}", removableTarget);
       try {
-        if (configuration.isPresent()
+        // basically, if isRemoveLastHealthyEnabled == false && isPartOfMinHealthyAgents() == true
+        // then we should NOT de-register the target as it is unsafe to do so
+        boolean shouldNotDeRegisterTarget = configuration.isPresent()
             && !configuration.get().isRemoveLastHealthyEnabled()
-            && isPartOfMinHealthyAgents(baragonGroup, removableTarget, targetToHealthDescriptionMap)) {
-          LOG.info("Will not de-register target {} because isPartOfMinHealthyAgents=true in {}", removableTarget, targetGroup);
+            && isPartOfMinHealthyAgents(baragonGroup, removableTarget, targetToHealthDescriptionMap);
+        if (shouldNotDeRegisterTarget) {
+          LOG.info("Will not de-register target {} because configuration.get().isRemoveLastHealthyEnabled()==false isPartOfMinHealthyAgents=true in {}", removableTarget, targetGroup);
         } else {
           LOG.info(
               "Will run deregisterTargets because configuration.isPresent()={}, !configuration.get().isRemoveLastHealthyEnabled()={}, and isPartOfMinHealthyAgents={}",
