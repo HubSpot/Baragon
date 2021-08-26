@@ -635,26 +635,34 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
                                           Collection<BaragonAgentMetadata> agents,
                                           Collection<TargetDescription> targets) {
     Collection<TargetDescription> removableTargets = listRemovableTargets(trafficSource, baragonGroup, targets, agents);
-    LOG.info("removableTargets.size()={}", removableTargets.size());
+    LOG.info("removableTargets.size()={}, baragonGroup.minHealthyAgents={}", removableTargets.size(), baragonGroup.getMinHealthyAgents());
+
+    Map<TargetDescription, TargetHealthDescription> targetToHealthDescriptionMap = getTargetToHealthDescriptionMap(targetGroup);
 
     for (TargetDescription removableTarget : removableTargets) {
       LOG.info("Processing removableTarget={}", removableTarget);
       try {
-        if (configuration.isPresent()
+        // basically, if isRemoveLastHealthyEnabled == false && isPartOfMinHealthyAgents() == true
+        // then we should NOT de-register the target as it is unsafe to do so
+        boolean shouldNotDeRegisterTarget = configuration.isPresent()
             && !configuration.get().isRemoveLastHealthyEnabled()
-            && isLastHealthyInstance(removableTarget, targetGroup)) {
-          LOG.info("Will not de-register target {} because it is last healthy instance in {}", removableTarget, targetGroup);
+            && isPartOfMinHealthyAgents(baragonGroup, removableTarget, targetToHealthDescriptionMap);
+        if (shouldNotDeRegisterTarget) {
+          LOG.info("Will not de-register target {} because configuration.get().isRemoveLastHealthyEnabled()==false isPartOfMinHealthyAgents=true in {}", removableTarget, targetGroup);
         } else {
           LOG.info(
-              "Will run deregisterTargets because configuration.isPresent()={}, !configuration.get().isRemoveLastHealthyEnabled()={}, and isLastHealthyInstance(removableTarget, targetGroup)={}",
+              "Will run deregisterTargets because configuration.isPresent()={}, !configuration.get().isRemoveLastHealthyEnabled()={}, and isPartOfMinHealthyAgents={}",
               configuration.isPresent(),
               !configuration.get().isRemoveLastHealthyEnabled(),
-              isLastHealthyInstance(removableTarget, targetGroup)
+              isPartOfMinHealthyAgents(baragonGroup, removableTarget, targetToHealthDescriptionMap)
           );
           elbClient.deregisterTargets(new DeregisterTargetsRequest()
               .withTargetGroupArn(targetGroup.getTargetGroupArn())
               .withTargets(removableTarget));
           LOG.info("De-registered target {} from target group {}", removableTarget, targetGroup);
+          // now if we get this far, remove the TargetGroup from the TargetToHealthDescriptionMap
+          // so that future iterations of this loop see that TargetGroup as removed
+          targetToHealthDescriptionMap.remove(removableTarget);
         }
       } catch (AmazonClientException acexn) {
         LOG.error("Could not de-register target {} from target group {} due to error",
@@ -663,6 +671,16 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
             .of("targetGroup", targetGroup.getTargetGroupName()));
       }
     }
+  }
+
+  private Map<TargetDescription, TargetHealthDescription> getTargetToHealthDescriptionMap(TargetGroup targetGroup) {
+    return elbClient
+        .describeTargetHealth(
+            new DescribeTargetHealthRequest()
+                .withTargetGroupArn(targetGroup.getTargetGroupArn())
+        )
+        .getTargetHealthDescriptions().stream()
+        .collect(Collectors.toMap(TargetHealthDescription::getTarget, Function.identity()));
   }
 
   /**
@@ -723,20 +741,15 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
   /**
    *
    * @param target Target to check
-   * @param targetGroup Group to check in
+   * @param getTargetToHealthDescriptionMap Map of TargetGroup to TargetHealthDescription to keep track of AWS's view of the world
    * @return if the given target is the last healthy target in the given target group
    */
-  private boolean isLastHealthyInstance(TargetDescription target, TargetGroup targetGroup) {
-    DescribeTargetHealthRequest targetHealthRequest = new DescribeTargetHealthRequest()
-        .withTargetGroupArn(targetGroup.getTargetGroupArn());
-    List<TargetHealthDescription> targetHealthDescriptions = elbClient
-        .describeTargetHealth(targetHealthRequest)
-        .getTargetHealthDescriptions();
+  private boolean isPartOfMinHealthyAgents(BaragonGroup group, TargetDescription target, Map<TargetDescription, TargetHealthDescription> getTargetToHealthDescriptionMap) {
 
     boolean instanceIsHealthy = false;
     int healthyCount = 0;
 
-    for (TargetHealthDescription targetHealthDescription : targetHealthDescriptions) {
+    for (TargetHealthDescription targetHealthDescription : getTargetToHealthDescriptionMap.values()) {
       if (targetHealthDescription.getTargetHealth().getState()
           .equals(TargetHealthStateEnum.Healthy.toString())) {
         healthyCount += 1;
@@ -746,7 +759,7 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
       }
     }
 
-    return instanceIsHealthy && healthyCount == 1;
+    return instanceIsHealthy && healthyCount <= Math.max(1, group.getMinHealthyAgents());
   }
 
   private void guaranteeHasAllSubnets(Collection<String> subnetIds, LoadBalancer loadBalancer) {
