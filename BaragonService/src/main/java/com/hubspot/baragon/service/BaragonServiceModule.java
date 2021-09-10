@@ -1,9 +1,13 @@
 package com.hubspot.baragon.service;
 
+import com.amazonaws.ClientConfigurationFactory;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
+import com.amazonaws.retry.RetryPolicy;
+import com.amazonaws.retry.RetryPolicy.BackoffStrategy;
+import com.amazonaws.retry.v2.RetryOnExceptionsCondition;
 import com.amazonaws.services.elasticloadbalancing.AmazonElasticLoadBalancing;
 import com.amazonaws.services.elasticloadbalancing.AmazonElasticLoadBalancingClient;
 import com.amazonaws.services.elasticloadbalancing.AmazonElasticLoadBalancingClientBuilder;
@@ -76,7 +80,9 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicLong;
@@ -86,6 +92,7 @@ import org.apache.curator.framework.recipes.leader.LeaderLatch;
 import org.apache.curator.retry.ExponentialBackoffRetry;
 
 public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfiguration> {
+
   public static final String BARAGON_SERVICE_SCHEDULED_EXECUTOR = "baragon.service.scheduledExecutor";
 
   public static final String BARAGON_SERVICE_DW_CONFIG = "baragon.service.port";
@@ -265,7 +272,8 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
 
       return addr.getHostName();
     } catch (UnknownHostException e) {
-      throw new RuntimeException("No local hostname found, unable to start without functioning local networking (or configured hostname)", e);
+      throw new RuntimeException(
+          "No local hostname found, unable to start without functioning local networking (or configured hostname)", e);
     }
   }
 
@@ -273,9 +281,9 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
   @Singleton
   @Named(BaragonDataModule.BARAGON_SERVICE_LEADER_LATCH)
   public LeaderLatch providesServiceLeaderLatch(BaragonConfiguration config,
-                                                BaragonWorkerDatastore datastore,
-                                                @Named(BARAGON_SERVICE_DW_CONFIG) BaragonServiceDWSettings dwConfig,
-                                                @Named(BARAGON_SERVICE_HOSTNAME) String hostname) {
+      BaragonWorkerDatastore datastore,
+      @Named(BARAGON_SERVICE_DW_CONFIG) BaragonServiceDWSettings dwConfig,
+      @Named(BARAGON_SERVICE_HOSTNAME) String hostname) {
     final String baseUri = String.format("http://%s:%s%s", hostname, dwConfig.getPort(), dwConfig.getContextPath());
 
     return datastore.createLeaderLatch(baseUri);
@@ -290,9 +298,10 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
   @Provides
   @Named(BARAGON_URI_BASE)
   String getBaragonUriBase(final BaragonConfiguration configuration,
-                           @Named(BARAGON_SERVICE_DW_CONFIG) BaragonServiceDWSettings dwSettings) {
+      @Named(BARAGON_SERVICE_DW_CONFIG) BaragonServiceDWSettings dwSettings) {
     final String baragonUiPrefix = configuration.getUiConfiguration().getBaseUrl().or(dwSettings.getContextPath());
-    return (baragonUiPrefix.endsWith("/")) ?  baragonUiPrefix.substring(0, baragonUiPrefix.length() - 1) : baragonUiPrefix;
+    return (baragonUiPrefix.endsWith("/")) ? baragonUiPrefix.substring(0, baragonUiPrefix.length() - 1)
+        : baragonUiPrefix;
   }
 
   @Provides
@@ -330,10 +339,12 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
   @Named(BARAGON_AWS_ELB_CLIENT_V1)
   public AmazonElasticLoadBalancing providesAwsElbClientV1(Optional<ElbConfiguration> configuration) {
     AmazonElasticLoadBalancing elbClient;
-    if (configuration.isPresent() && configuration.get().getAwsAccessKeyId() != null && configuration.get().getAwsAccessKeySecret() != null) {
+    if (configuration.isPresent() && configuration.get().getAwsAccessKeyId() != null
+        && configuration.get().getAwsAccessKeySecret() != null) {
       elbClient = AmazonElasticLoadBalancingClientBuilder.standard().withCredentials(
           new AWSStaticCredentialsProvider(
-              new BasicAWSCredentials(configuration.get().getAwsAccessKeyId(), configuration.get().getAwsAccessKeySecret())
+              new BasicAWSCredentials(configuration.get().getAwsAccessKeyId(),
+                  configuration.get().getAwsAccessKeySecret())
           )
       ).build();
     } else {
@@ -372,7 +383,8 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
           new ByteArrayInputStream(config.getGoogleCloudConfiguration().getGoogleCredentials().getBytes("UTF-8"))
       );
     } else {
-      throw new RuntimeException("Must specify googleCloudCredentials or googleCloudCredentialsFile when using google cloud api");
+      throw new RuntimeException(
+          "Must specify googleCloudCredentials or googleCloudCredentialsFile when using google cloud api");
     }
 
     if (credential.createScopedRequired()) {
@@ -387,14 +399,25 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
 
   @Provides
   @Named(BARAGON_AWS_ELB_CLIENT_V2)
-  public com.amazonaws.services.elasticloadbalancingv2.AmazonElasticLoadBalancing providesAwsElbClientV2(Optional<ElbConfiguration> configuration) {
+  public com.amazonaws.services.elasticloadbalancingv2.AmazonElasticLoadBalancing providesAwsElbClientV2(
+      Optional<ElbConfiguration> configuration) {
     com.amazonaws.services.elasticloadbalancingv2.AmazonElasticLoadBalancing elbClient;
-    if (configuration.isPresent() && configuration.get().getAwsAccessKeyId() != null && configuration.get().getAwsAccessKeySecret() != null) {
-      elbClient = com.amazonaws.services.elasticloadbalancingv2.AmazonElasticLoadBalancingClientBuilder.standard().withCredentials(
-          new AWSStaticCredentialsProvider(
-              new BasicAWSCredentials(configuration.get().getAwsAccessKeyId(), configuration.get().getAwsAccessKeySecret())
-          )
-      ).build();
+    if (configuration.isPresent() && configuration.get().getAwsAccessKeyId() != null
+        && configuration.get().getAwsAccessKeySecret() != null) {
+      List<Class<? extends Exception>> exceptions = new ArrayList<>();
+      exceptions.add(Exception.class);
+      elbClient = com.amazonaws.services.elasticloadbalancingv2.AmazonElasticLoadBalancingClientBuilder.standard()
+          .withCredentials(
+              new AWSStaticCredentialsProvider(
+                  new BasicAWSCredentials(configuration.get().getAwsAccessKeyId(),
+                      configuration.get().getAwsAccessKeySecret())
+              )
+          ).withClientConfiguration(
+              new ClientConfigurationFactory().getConfig().withMaxErrorRetry(5).withRetryPolicy(new RetryPolicy(
+                  (RetryPolicy.RetryCondition) new RetryOnExceptionsCondition(exceptions), BackoffStrategy.NO_DELAY, 5,
+                  true
+              ))
+          ).build();
     } else {
       elbClient = new com.amazonaws.services.elasticloadbalancingv2.AmazonElasticLoadBalancingClient();
     }
@@ -411,14 +434,15 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
 
   @Singleton
   @Provides
-  public CuratorFramework provideCurator(ZooKeeperConfiguration config, BaragonConnectionStateListener connectionStateListener) {
+  public CuratorFramework provideCurator(ZooKeeperConfiguration config,
+      BaragonConnectionStateListener connectionStateListener) {
     CuratorFramework client = CuratorFrameworkFactory.builder()
-      .connectString(config.getQuorum())
-      .sessionTimeoutMs(config.getSessionTimeoutMillis())
-      .connectionTimeoutMs(config.getConnectTimeoutMillis())
-      .retryPolicy(new ExponentialBackoffRetry(config.getRetryBaseSleepTimeMilliseconds(), config.getRetryMaxTries()))
-      .defaultData(new byte[0])
-      .build();
+        .connectString(config.getQuorum())
+        .sessionTimeoutMs(config.getSessionTimeoutMillis())
+        .connectionTimeoutMs(config.getConnectTimeoutMillis())
+        .retryPolicy(new ExponentialBackoffRetry(config.getRetryBaseSleepTimeMilliseconds(), config.getRetryMaxTries()))
+        .defaultData(new byte[0])
+        .build();
 
     client.getConnectionStateListenable().addListener(connectionStateListener);
 
