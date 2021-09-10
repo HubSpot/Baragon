@@ -1,5 +1,9 @@
 package com.hubspot.baragon.service;
 
+import com.amazonaws.auth.AWSStaticCredentialsProvider;
+import com.amazonaws.regions.Region;
+import com.amazonaws.services.elasticloadbalancing.AmazonElasticLoadBalancing;
+import com.amazonaws.services.elasticloadbalancing.AmazonElasticLoadBalancingClientBuilder;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -328,10 +332,14 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
 
   @Provides
   @Named(BARAGON_AWS_ELB_CLIENT_V1)
-  public AmazonElasticLoadBalancingClient providesAwsElbClientV1(Optional<ElbConfiguration> configuration) {
-    AmazonElasticLoadBalancingClient elbClient;
+  public AmazonElasticLoadBalancing providesAwsElbClientV1(Optional<ElbConfiguration> configuration) {
+    AmazonElasticLoadBalancing elbClient;
     if (configuration.isPresent() && configuration.get().getAwsAccessKeyId() != null && configuration.get().getAwsAccessKeySecret() != null) {
-      elbClient = new AmazonElasticLoadBalancingClient(new BasicAWSCredentials(configuration.get().getAwsAccessKeyId(), configuration.get().getAwsAccessKeySecret()));
+      elbClient = AmazonElasticLoadBalancingClientBuilder.standard().withCredentials(
+          new AWSStaticCredentialsProvider(
+              new BasicAWSCredentials(configuration.get().getAwsAccessKeyId(), configuration.get().getAwsAccessKeySecret())
+          )
+      ).build();
     } else {
       elbClient = new AmazonElasticLoadBalancingClient();
     }
@@ -340,7 +348,7 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
       elbClient.setEndpoint(configuration.get().getAwsEndpoint().get());
     }
     if (configuration.isPresent() && configuration.get().getAwsRegion().isPresent()) {
-      elbClient.configureRegion(Regions.fromName(configuration.get().getAwsRegion().get()));
+      elbClient.setRegion(Region.getRegion(Regions.fromName(configuration.get().getAwsRegion().get())));
     }
 
     return elbClient;
@@ -383,10 +391,14 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
 
   @Provides
   @Named(BARAGON_AWS_ELB_CLIENT_V2)
-  public com.amazonaws.services.elasticloadbalancingv2.AmazonElasticLoadBalancingClient providesAwsElbClientV2(Optional<ElbConfiguration> configuration) {
-    com.amazonaws.services.elasticloadbalancingv2.AmazonElasticLoadBalancingClient elbClient;
+  public com.amazonaws.services.elasticloadbalancingv2.AmazonElasticLoadBalancing providesAwsElbClientV2(Optional<ElbConfiguration> configuration) {
+    com.amazonaws.services.elasticloadbalancingv2.AmazonElasticLoadBalancing elbClient;
     if (configuration.isPresent() && configuration.get().getAwsAccessKeyId() != null && configuration.get().getAwsAccessKeySecret() != null) {
-      elbClient = new com.amazonaws.services.elasticloadbalancingv2.AmazonElasticLoadBalancingClient(new BasicAWSCredentials(configuration.get().getAwsAccessKeyId(), configuration.get().getAwsAccessKeySecret()));
+      elbClient = com.amazonaws.services.elasticloadbalancingv2.AmazonElasticLoadBalancingClientBuilder.standard().withCredentials(
+          new AWSStaticCredentialsProvider(
+              new BasicAWSCredentials(configuration.get().getAwsAccessKeyId(), configuration.get().getAwsAccessKeySecret())
+          )
+      ).build();
     } else {
       elbClient = new com.amazonaws.services.elasticloadbalancingv2.AmazonElasticLoadBalancingClient();
     }
@@ -395,7 +407,7 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
       elbClient.setEndpoint(configuration.get().getAwsEndpoint().get());
     }
     if (configuration.isPresent() && configuration.get().getAwsRegion().isPresent()) {
-      elbClient.configureRegion(Regions.fromName(configuration.get().getAwsRegion().get()));
+      elbClient.setRegion(Region.getRegion(Regions.fromName(configuration.get().getAwsRegion().get())));
     }
 
     return elbClient;
