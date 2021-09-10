@@ -58,8 +58,7 @@ public class AgentCheckinResource {
         response = new AgentCheckInResponse(TrafficSourceState.DONE, Optional.absent(), 0L);
       }
     } catch (Exception e) {
-      LOG.error("" 
-          + "Could not register agent startup", e);
+      LOG.error("Could not register agent startup", e);
       response = new AgentCheckInResponse(TrafficSourceState.ERROR, Optional.of(e.getMessage()), 0L);
     }
     return response;
