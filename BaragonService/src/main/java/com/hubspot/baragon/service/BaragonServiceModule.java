@@ -358,7 +358,7 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
       ).withClientConfiguration(
           new ClientConfigurationFactory().getConfig().withRetryPolicy(new RetryPolicy(
               RETRY_CONDITION,
-              backoffStrategy, 5, false
+              backoffStrategy, configuration.get().getAwsElbClientRetries(), false
           ))
       ).withRegion(Regions.fromName(configuration.get().getAwsRegion().get())).build();
     } else {
@@ -410,15 +410,19 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
 
   @Provides
   public AWSStaticCredentialsProvider providesAwsStaticCredentialsProvider(Optional<ElbConfiguration> configuration) {
-      return new AWSStaticCredentialsProvider(
+    return new AWSStaticCredentialsProvider(
         new BasicAWSCredentials(configuration.get().getAwsAccessKeyId(),
             configuration.get().getAwsAccessKeySecret())
     );
   }
 
   @Provides
-  public BackoffStrategy providesBackoffStrategy(){
-    return new ExponentialBackoffStrategy(5000, 100000);
+  public BackoffStrategy providesBackoffStrategy(
+      Optional<ElbConfiguration> configuration
+  ) {
+    return new ExponentialBackoffStrategy(
+        configuration.or(new ElbConfiguration()).getAwsElbClientBackoffBaseDelayMilliseconds(),
+        configuration.or(new ElbConfiguration()).getAwsElbClientBackoffMaxBackoffMilliseconds());
   }
 
   @Provides
@@ -438,7 +442,7 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
               new ClientConfigurationFactory().getConfig().withRetryPolicy(new RetryPolicy(
                   RETRY_CONDITION,
                   backoffStrategy
-                  , 5, false
+                  , configuration.get().getAwsElbClientRetries(), false
               ))
           ).withRegion(Regions.fromName(configuration.get().getAwsRegion().get())).build();
     } else {
