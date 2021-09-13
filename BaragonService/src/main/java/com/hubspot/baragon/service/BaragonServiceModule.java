@@ -1,12 +1,14 @@
 package com.hubspot.baragon.service;
 
+import com.amazonaws.AmazonClientException;
+import com.amazonaws.AmazonWebServiceRequest;
 import com.amazonaws.ClientConfigurationFactory;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.retry.PredefinedBackoffStrategies.ExponentialBackoffStrategy;
-import com.amazonaws.retry.PredefinedRetryPolicies;
 import com.amazonaws.retry.RetryPolicy;
+import com.amazonaws.retry.RetryPolicy.RetryCondition;
 import com.amazonaws.services.elasticloadbalancing.AmazonElasticLoadBalancing;
 import com.amazonaws.services.elasticloadbalancing.AmazonElasticLoadBalancingClient;
 import com.amazonaws.services.elasticloadbalancing.AmazonElasticLoadBalancingClientBuilder;
@@ -87,8 +89,13 @@ import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.framework.recipes.leader.LeaderLatch;
 import org.apache.curator.retry.ExponentialBackoffRetry;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfiguration> {
+
+  private static final Logger LOG = LoggerFactory.getLogger(BaragonServiceModule.class);
+
 
   public static final String BARAGON_SERVICE_SCHEDULED_EXECUTOR = "baragon.service.scheduledExecutor";
 
@@ -408,7 +415,14 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
               )
           ).withClientConfiguration(
               new ClientConfigurationFactory().getConfig().withRetryPolicy(new RetryPolicy(
-                  new PredefinedRetryPolicies.SDKDefaultRetryCondition(),
+                  new RetryCondition() {
+                    @Override
+                    public boolean shouldRetry(AmazonWebServiceRequest amazonWebServiceRequest, AmazonClientException e,
+                        int i) {
+                      LOG.info("e={}, isRetryable={}, i={}", e.getMessage(), e.isRetryable(), i);
+                      return true;
+                    }
+                  },
                   new ExponentialBackoffStrategy(100, 10000), 5, false
               ))
           ).withRegion(Regions.fromName(configuration.get().getAwsRegion().get())).build();
