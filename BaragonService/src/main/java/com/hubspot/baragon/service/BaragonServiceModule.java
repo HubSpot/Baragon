@@ -3,7 +3,6 @@ package com.hubspot.baragon.service;
 import com.amazonaws.ClientConfigurationFactory;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.retry.PredefinedBackoffStrategies.ExponentialBackoffStrategy;
 import com.amazonaws.retry.PredefinedRetryPolicies;
@@ -151,6 +150,15 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
     latchBinder.addBinding().to(RequestWorkerListener.class).in(Scopes.SINGLETON);
     latchBinder.addBinding().to(ElbSyncWorkerListener.class).in(Scopes.SINGLETON);
     latchBinder.addBinding().to(RequestPurgingListener.class).in(Scopes.SINGLETON);
+
+    // Kubernetes
+    if (getConfiguration().getKubernetesConfiguration().isEnabled()) {
+      binder.bind(KubernetesListener.class).to(BaragonServiceKubernetesListener.class).in(Scopes.SINGLETON);
+      latchBinder.addBinding().to(KubernetesWatchListener.class).in(Scopes.SINGLETON);
+      binder.install(new KubernetesWatcherModule());
+    }
+
+    binder.bind(ReentrantLock.class).annotatedWith(Names.named(REQUEST_LOCK)).toInstance(new ReentrantLock());
   }
 
   @Provides
@@ -338,22 +346,20 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
   public AmazonElasticLoadBalancing providesAwsElbClientV1(Optional<ElbConfiguration> configuration) {
     AmazonElasticLoadBalancing elbClient;
     if (configuration.isPresent() && configuration.get().getAwsAccessKeyId() != null
-        && configuration.get().getAwsAccessKeySecret() != null) {
+        && configuration.get().getAwsAccessKeySecret() != null
+        && configuration.get().getAwsRegion().isPresent()) {
       elbClient = AmazonElasticLoadBalancingClientBuilder.standard().withCredentials(
           new AWSStaticCredentialsProvider(
               new BasicAWSCredentials(configuration.get().getAwsAccessKeyId(),
                   configuration.get().getAwsAccessKeySecret())
           )
-      ).build();
+      ).withRegion(Regions.fromName(configuration.get().getAwsRegion().get())).build();
     } else {
       elbClient = new AmazonElasticLoadBalancingClient();
     }
 
     if (configuration.isPresent() && configuration.get().getAwsEndpoint().isPresent()) {
       elbClient.setEndpoint(configuration.get().getAwsEndpoint().get());
-    }
-    if (configuration.isPresent() && configuration.get().getAwsRegion().isPresent()) {
-      elbClient.setRegion(Region.getRegion(Regions.fromName(configuration.get().getAwsRegion().get())));
     }
 
     return elbClient;
@@ -401,7 +407,8 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
       Optional<ElbConfiguration> configuration) {
     com.amazonaws.services.elasticloadbalancingv2.AmazonElasticLoadBalancing elbClient;
     if (configuration.isPresent() && configuration.get().getAwsAccessKeyId() != null
-        && configuration.get().getAwsAccessKeySecret() != null) {
+        && configuration.get().getAwsAccessKeySecret() != null
+        && configuration.get().getAwsRegion().isPresent()) {
       elbClient = com.amazonaws.services.elasticloadbalancingv2.AmazonElasticLoadBalancingClientBuilder.standard()
           .withCredentials(
               new AWSStaticCredentialsProvider(
@@ -413,16 +420,13 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
                   new PredefinedRetryPolicies.SDKDefaultRetryCondition(),
                   new ExponentialBackoffStrategy(100, 10000), 5, false
               ))
-          ).build();
+          ).withRegion(Regions.fromName(configuration.get().getAwsRegion().get())).build();
     } else {
       elbClient = new com.amazonaws.services.elasticloadbalancingv2.AmazonElasticLoadBalancingClient();
     }
 
     if (configuration.isPresent() && configuration.get().getAwsEndpoint().isPresent()) {
       elbClient.setEndpoint(configuration.get().getAwsEndpoint().get());
-    }
-    if (configuration.isPresent() && configuration.get().getAwsRegion().isPresent()) {
-      elbClient.setRegion(Region.getRegion(Regions.fromName(configuration.get().getAwsRegion().get())));
     }
 
     return elbClient;
