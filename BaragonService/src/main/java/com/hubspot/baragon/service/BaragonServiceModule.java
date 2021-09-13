@@ -1,13 +1,14 @@
 package com.hubspot.baragon.service;
 
+import com.amazonaws.AmazonClientException;
+import com.amazonaws.AmazonWebServiceRequest;
 import com.amazonaws.ClientConfigurationFactory;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
+import com.amazonaws.retry.PredefinedBackoffStrategies.ExponentialBackoffStrategy;
 import com.amazonaws.retry.RetryPolicy;
-import com.amazonaws.retry.RetryPolicy.BackoffStrategy;
-import com.amazonaws.retry.v2.RetryOnExceptionsCondition;
 import com.amazonaws.services.elasticloadbalancing.AmazonElasticLoadBalancing;
 import com.amazonaws.services.elasticloadbalancing.AmazonElasticLoadBalancingClient;
 import com.amazonaws.services.elasticloadbalancing.AmazonElasticLoadBalancingClientBuilder;
@@ -80,9 +81,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicLong;
@@ -404,8 +403,6 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
     com.amazonaws.services.elasticloadbalancingv2.AmazonElasticLoadBalancing elbClient;
     if (configuration.isPresent() && configuration.get().getAwsAccessKeyId() != null
         && configuration.get().getAwsAccessKeySecret() != null) {
-      List<Class<? extends Exception>> exceptions = new ArrayList<>();
-      exceptions.add(Exception.class);
       elbClient = com.amazonaws.services.elasticloadbalancingv2.AmazonElasticLoadBalancingClientBuilder.standard()
           .withCredentials(
               new AWSStaticCredentialsProvider(
@@ -414,7 +411,12 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
               )
           ).withClientConfiguration(
               new ClientConfigurationFactory().getConfig().withMaxErrorRetry(5).withRetryPolicy(new RetryPolicy(
-                  (RetryPolicy.RetryCondition) new RetryOnExceptionsCondition(exceptions), BackoffStrategy.NO_DELAY, 5,
+                  new RetryPolicy.RetryCondition() {
+                    public boolean shouldRetry(AmazonWebServiceRequest originalRequest, AmazonClientException exception, int retriesAttempted) {
+                      return retriesAttempted < 5;
+                    }
+                  },
+                  new ExponentialBackoffStrategy(0, 5000), 5,
                   true
               ))
           ).build();
