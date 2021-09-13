@@ -351,6 +351,18 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
               new BasicAWSCredentials(configuration.get().getAwsAccessKeyId(),
                   configuration.get().getAwsAccessKeySecret())
           )
+      ).withClientConfiguration(
+          new ClientConfigurationFactory().getConfig().withRetryPolicy(new RetryPolicy(
+              new RetryCondition() {
+                @Override
+                public boolean shouldRetry(AmazonWebServiceRequest amazonWebServiceRequest, AmazonClientException e,
+                    int i) {
+                  LOG.info("e={}, isRetryable={}, i={}", e.getMessage(), e.isRetryable(), i);
+                  return true;
+                }
+              },
+              new ExponentialBackoffStrategy(5000, 100000), 5, false
+          ))
       ).withRegion(Regions.fromName(configuration.get().getAwsRegion().get())).build();
     } else {
       elbClient = new AmazonElasticLoadBalancingClient();
@@ -423,7 +435,7 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
                       return true;
                     }
                   },
-                  new ExponentialBackoffStrategy(100, 10000), 5, false
+                  new ExponentialBackoffStrategy(5000, 100000), 5, false
               ))
           ).withRegion(Regions.fromName(configuration.get().getAwsRegion().get())).build();
     } else {
