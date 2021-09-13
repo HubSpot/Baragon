@@ -1,13 +1,12 @@
 package com.hubspot.baragon.service;
 
-import com.amazonaws.AmazonClientException;
-import com.amazonaws.AmazonWebServiceRequest;
 import com.amazonaws.ClientConfigurationFactory;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.retry.PredefinedBackoffStrategies.ExponentialBackoffStrategy;
 import com.amazonaws.retry.RetryPolicy;
+import com.amazonaws.retry.RetryPolicy.BackoffStrategy;
 import com.amazonaws.retry.RetryPolicy.RetryCondition;
 import com.amazonaws.services.elasticloadbalancing.AmazonElasticLoadBalancing;
 import com.amazonaws.services.elasticloadbalancing.AmazonElasticLoadBalancingClient;
@@ -113,6 +112,12 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
   public static final String BARAGON_AWS_ELB_CLIENT_V2 = "baragon.aws.elb.client.v2";
 
   public static final String GOOGLE_CLOUD_COMPUTE_SERVICE = "baragon.google.cloud.compute.service";
+
+  private static final RetryCondition RETRY_CONDITION =
+      (amazonWebServiceRequest, e, i) -> {
+        LOG.debug("e={}, isRetryable={}, i={}", e.getMessage(), e.isRetryable(), i);
+        return e.isRetryable();
+      };
 
 
   @Override
@@ -341,27 +346,19 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
 
   @Provides
   @Named(BARAGON_AWS_ELB_CLIENT_V1)
-  public AmazonElasticLoadBalancing providesAwsElbClientV1(Optional<ElbConfiguration> configuration) {
+  public AmazonElasticLoadBalancing providesAwsElbClientV1(Optional<ElbConfiguration> configuration,
+      AWSStaticCredentialsProvider awsStaticCredentialsProvider,
+      BackoffStrategy backoffStrategy) {
     AmazonElasticLoadBalancing elbClient;
     if (configuration.isPresent() && configuration.get().getAwsAccessKeyId() != null
         && configuration.get().getAwsAccessKeySecret() != null
         && configuration.get().getAwsRegion().isPresent()) {
       elbClient = AmazonElasticLoadBalancingClientBuilder.standard().withCredentials(
-          new AWSStaticCredentialsProvider(
-              new BasicAWSCredentials(configuration.get().getAwsAccessKeyId(),
-                  configuration.get().getAwsAccessKeySecret())
-          )
+          awsStaticCredentialsProvider
       ).withClientConfiguration(
           new ClientConfigurationFactory().getConfig().withRetryPolicy(new RetryPolicy(
-              new RetryCondition() {
-                @Override
-                public boolean shouldRetry(AmazonWebServiceRequest amazonWebServiceRequest, AmazonClientException e,
-                    int i) {
-                  LOG.info("e={}, isRetryable={}, i={}", e.getMessage(), e.isRetryable(), i);
-                  return true;
-                }
-              },
-              new ExponentialBackoffStrategy(5000, 100000), 5, false
+              RETRY_CONDITION,
+              backoffStrategy, 5, false
           ))
       ).withRegion(Regions.fromName(configuration.get().getAwsRegion().get())).build();
     } else {
@@ -412,30 +409,36 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
   }
 
   @Provides
+  public AWSStaticCredentialsProvider providesAwsStaticCredentialsProvider(Optional<ElbConfiguration> configuration) {
+      return new AWSStaticCredentialsProvider(
+        new BasicAWSCredentials(configuration.get().getAwsAccessKeyId(),
+            configuration.get().getAwsAccessKeySecret())
+    );
+  }
+
+  @Provides
+  public BackoffStrategy providesBackoffStrategy(){
+    return new ExponentialBackoffStrategy(5000, 100000);
+  }
+
+  @Provides
   @Named(BARAGON_AWS_ELB_CLIENT_V2)
   public com.amazonaws.services.elasticloadbalancingv2.AmazonElasticLoadBalancing providesAwsElbClientV2(
-      Optional<ElbConfiguration> configuration) {
+      Optional<ElbConfiguration> configuration,
+      AWSStaticCredentialsProvider awsStaticCredentialsProvider,
+      BackoffStrategy backoffStrategy) {
     com.amazonaws.services.elasticloadbalancingv2.AmazonElasticLoadBalancing elbClient;
     if (configuration.isPresent() && configuration.get().getAwsAccessKeyId() != null
         && configuration.get().getAwsAccessKeySecret() != null
         && configuration.get().getAwsRegion().isPresent()) {
       elbClient = com.amazonaws.services.elasticloadbalancingv2.AmazonElasticLoadBalancingClientBuilder.standard()
           .withCredentials(
-              new AWSStaticCredentialsProvider(
-                  new BasicAWSCredentials(configuration.get().getAwsAccessKeyId(),
-                      configuration.get().getAwsAccessKeySecret())
-              )
+              awsStaticCredentialsProvider
           ).withClientConfiguration(
               new ClientConfigurationFactory().getConfig().withRetryPolicy(new RetryPolicy(
-                  new RetryCondition() {
-                    @Override
-                    public boolean shouldRetry(AmazonWebServiceRequest amazonWebServiceRequest, AmazonClientException e,
-                        int i) {
-                      LOG.info("e={}, isRetryable={}, i={}", e.getMessage(), e.isRetryable(), i);
-                      return true;
-                    }
-                  },
-                  new ExponentialBackoffStrategy(5000, 100000), 5, false
+                  RETRY_CONDITION,
+                  backoffStrategy
+                  , 5, false
               ))
           ).withRegion(Regions.fromName(configuration.get().getAwsRegion().get())).build();
     } else {
