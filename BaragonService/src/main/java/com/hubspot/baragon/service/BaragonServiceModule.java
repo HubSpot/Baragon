@@ -25,7 +25,6 @@ import com.google.inject.Scopes;
 import com.google.inject.Singleton;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Named;
-import com.google.inject.name.Names;
 import com.hubspot.baragon.BaragonDataModule;
 import com.hubspot.baragon.config.AuthConfiguration;
 import com.hubspot.baragon.config.HttpClientConfiguration;
@@ -84,7 +83,6 @@ import java.util.Collections;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.locks.ReentrantLock;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.framework.recipes.leader.LeaderLatch;
@@ -152,15 +150,6 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
     latchBinder.addBinding().to(RequestWorkerListener.class).in(Scopes.SINGLETON);
     latchBinder.addBinding().to(ElbSyncWorkerListener.class).in(Scopes.SINGLETON);
     latchBinder.addBinding().to(RequestPurgingListener.class).in(Scopes.SINGLETON);
-
-    // Kubernetes
-    if (getConfiguration().getKubernetesConfiguration().isEnabled()) {
-      binder.bind(KubernetesListener.class).to(BaragonServiceKubernetesListener.class).in(Scopes.SINGLETON);
-      latchBinder.addBinding().to(KubernetesWatchListener.class).in(Scopes.SINGLETON);
-      binder.install(new KubernetesWatcherModule());
-    }
-
-    binder.bind(ReentrantLock.class).annotatedWith(Names.named(REQUEST_LOCK)).toInstance(new ReentrantLock());
   }
 
   @Provides
