@@ -1,13 +1,12 @@
 package com.hubspot.baragon.service;
 
-import com.amazonaws.AmazonClientException;
-import com.amazonaws.AmazonWebServiceRequest;
 import com.amazonaws.ClientConfigurationFactory;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.retry.PredefinedBackoffStrategies.ExponentialBackoffStrategy;
+import com.amazonaws.retry.PredefinedRetryPolicies;
 import com.amazonaws.retry.RetryPolicy;
 import com.amazonaws.services.elasticloadbalancing.AmazonElasticLoadBalancing;
 import com.amazonaws.services.elasticloadbalancing.AmazonElasticLoadBalancingClient;
@@ -410,14 +409,9 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
                       configuration.get().getAwsAccessKeySecret())
               )
           ).withClientConfiguration(
-              new ClientConfigurationFactory().getConfig().withMaxErrorRetry(5).withRetryPolicy(new RetryPolicy(
-                  new RetryPolicy.RetryCondition() {
-                    public boolean shouldRetry(AmazonWebServiceRequest originalRequest, AmazonClientException exception, int retriesAttempted) {
-                      return retriesAttempted < 5;
-                    }
-                  },
-                  new ExponentialBackoffStrategy(0, 5000), 5,
-                  true
+              new ClientConfigurationFactory().getConfig().withRetryPolicy(new RetryPolicy(
+                  new PredefinedRetryPolicies.SDKDefaultRetryCondition(),
+                  new ExponentialBackoffStrategy(100, 10000), 5, false
               ))
           ).build();
     } else {
