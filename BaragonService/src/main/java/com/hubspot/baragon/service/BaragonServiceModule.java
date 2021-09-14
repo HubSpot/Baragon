@@ -345,6 +345,7 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
 
 
   @Provides
+  @Singleton
   @Named(BARAGON_AWS_ELB_CLIENT_V1)
   public AmazonElasticLoadBalancing providesAwsElbClientV1(Optional<ElbConfiguration> configuration,
       AWSStaticCredentialsProvider awsStaticCredentialsProvider,
@@ -409,6 +410,7 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
   }
 
   @Provides
+  @Singleton
   public AWSStaticCredentialsProvider providesAwsStaticCredentialsProvider(Optional<ElbConfiguration> configuration) {
     return new AWSStaticCredentialsProvider(
         new BasicAWSCredentials(configuration.get().getAwsAccessKeyId(),
@@ -417,6 +419,7 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
   }
 
   @Provides
+  @Singleton
   public BackoffStrategy providesBackoffStrategy(
       Optional<ElbConfiguration> configuration
   ) {
@@ -426,6 +429,7 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
   }
 
   @Provides
+  @Singleton
   @Named(BARAGON_AWS_ELB_CLIENT_V2)
   public com.amazonaws.services.elasticloadbalancingv2.AmazonElasticLoadBalancing providesAwsElbClientV2(
       Optional<ElbConfiguration> configuration,
