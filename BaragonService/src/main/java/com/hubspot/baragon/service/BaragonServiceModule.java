@@ -1,23 +1,15 @@
 package com.hubspot.baragon.service;
 
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.util.Collections;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.atomic.AtomicLong;
-
-import org.apache.curator.framework.CuratorFramework;
-import org.apache.curator.framework.CuratorFrameworkFactory;
-import org.apache.curator.framework.recipes.leader.LeaderLatch;
-import org.apache.curator.retry.ExponentialBackoffRetry;
-
+import com.amazonaws.ClientConfigurationFactory;
+import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.regions.Regions;
+import com.amazonaws.retry.PredefinedBackoffStrategies.ExponentialBackoffStrategy;
+import com.amazonaws.retry.RetryPolicy;
+import com.amazonaws.retry.RetryPolicy.RetryCondition;
+import com.amazonaws.services.elasticloadbalancing.AmazonElasticLoadBalancing;
 import com.amazonaws.services.elasticloadbalancing.AmazonElasticLoadBalancingClient;
+import com.amazonaws.services.elasticloadbalancing.AmazonElasticLoadBalancingClientBuilder;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
@@ -67,7 +59,6 @@ import com.hubspot.baragon.service.managers.RequestManager;
 import com.hubspot.baragon.service.managers.ServiceManager;
 import com.hubspot.baragon.service.managers.StatusManager;
 import com.hubspot.baragon.service.resources.BaragonResourcesModule;
-import com.hubspot.baragon.service.resources.PurgeCacheResource;
 import com.hubspot.baragon.service.worker.BaragonElbSyncWorker;
 import com.hubspot.baragon.service.worker.BaragonRequestWorker;
 import com.hubspot.baragon.service.worker.RequestPurgingWorker;
@@ -78,14 +69,32 @@ import com.hubspot.horizon.HttpConfig;
 import com.hubspot.horizon.ning.NingHttpClient;
 import com.ning.http.client.AsyncHttpClient;
 import com.ning.http.client.AsyncHttpClientConfig;
-
 import io.dropwizard.jetty.ConnectorFactory;
 import io.dropwizard.jetty.HttpConnectorFactory;
 import io.dropwizard.jetty.HttpsConnectorFactory;
 import io.dropwizard.server.DefaultServerFactory;
 import io.dropwizard.server.SimpleServerFactory;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.Collections;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.atomic.AtomicLong;
+import org.apache.curator.framework.CuratorFramework;
+import org.apache.curator.framework.CuratorFrameworkFactory;
+import org.apache.curator.framework.recipes.leader.LeaderLatch;
+import org.apache.curator.retry.ExponentialBackoffRetry;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfiguration> {
+
+  private static final Logger LOG = LoggerFactory.getLogger(BaragonServiceModule.class);
+
+
   public static final String BARAGON_SERVICE_SCHEDULED_EXECUTOR = "baragon.service.scheduledExecutor";
 
   public static final String BARAGON_SERVICE_DW_CONFIG = "baragon.service.port";
@@ -102,6 +111,12 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
   public static final String BARAGON_AWS_ELB_CLIENT_V2 = "baragon.aws.elb.client.v2";
 
   public static final String GOOGLE_CLOUD_COMPUTE_SERVICE = "baragon.google.cloud.compute.service";
+
+  private static final RetryCondition RETRY_CONDITION =
+      (amazonWebServiceRequest, e, i) -> {
+        LOG.debug("e={}, isRetryable={}, i={}", e.getMessage(), e.isRetryable(), i);
+        return e.isRetryable();
+      };
 
 
   @Override
@@ -265,7 +280,8 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
 
       return addr.getHostName();
     } catch (UnknownHostException e) {
-      throw new RuntimeException("No local hostname found, unable to start without functioning local networking (or configured hostname)", e);
+      throw new RuntimeException(
+          "No local hostname found, unable to start without functioning local networking (or configured hostname)", e);
     }
   }
 
@@ -273,9 +289,9 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
   @Singleton
   @Named(BaragonDataModule.BARAGON_SERVICE_LEADER_LATCH)
   public LeaderLatch providesServiceLeaderLatch(BaragonConfiguration config,
-                                                BaragonWorkerDatastore datastore,
-                                                @Named(BARAGON_SERVICE_DW_CONFIG) BaragonServiceDWSettings dwConfig,
-                                                @Named(BARAGON_SERVICE_HOSTNAME) String hostname) {
+      BaragonWorkerDatastore datastore,
+      @Named(BARAGON_SERVICE_DW_CONFIG) BaragonServiceDWSettings dwConfig,
+      @Named(BARAGON_SERVICE_HOSTNAME) String hostname) {
     final String baseUri = String.format("http://%s:%s%s", hostname, dwConfig.getPort(), dwConfig.getContextPath());
 
     return datastore.createLeaderLatch(baseUri);
@@ -290,9 +306,10 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
   @Provides
   @Named(BARAGON_URI_BASE)
   String getBaragonUriBase(final BaragonConfiguration configuration,
-                           @Named(BARAGON_SERVICE_DW_CONFIG) BaragonServiceDWSettings dwSettings) {
+      @Named(BARAGON_SERVICE_DW_CONFIG) BaragonServiceDWSettings dwSettings) {
     final String baragonUiPrefix = configuration.getUiConfiguration().getBaseUrl().or(dwSettings.getContextPath());
-    return (baragonUiPrefix.endsWith("/")) ?  baragonUiPrefix.substring(0, baragonUiPrefix.length() - 1) : baragonUiPrefix;
+    return (baragonUiPrefix.endsWith("/")) ? baragonUiPrefix.substring(0, baragonUiPrefix.length() - 1)
+        : baragonUiPrefix;
   }
 
   @Provides
@@ -327,20 +344,34 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
 
 
   @Provides
+  @Singleton
   @Named(BARAGON_AWS_ELB_CLIENT_V1)
-  public AmazonElasticLoadBalancingClient providesAwsElbClientV1(Optional<ElbConfiguration> configuration) {
-    AmazonElasticLoadBalancingClient elbClient;
-    if (configuration.isPresent() && configuration.get().getAwsAccessKeyId() != null && configuration.get().getAwsAccessKeySecret() != null) {
-      elbClient = new AmazonElasticLoadBalancingClient(new BasicAWSCredentials(configuration.get().getAwsAccessKeyId(), configuration.get().getAwsAccessKeySecret()));
+  public AmazonElasticLoadBalancing providesAwsElbClientV1(Optional<ElbConfiguration> configuration) {
+    AmazonElasticLoadBalancing elbClient;
+    if (configuration.isPresent() && configuration.get().getAwsAccessKeyId() != null
+        && configuration.get().getAwsAccessKeySecret() != null
+        && configuration.get().getAwsRegion().isPresent()) {
+      elbClient = AmazonElasticLoadBalancingClientBuilder.standard().withCredentials(
+          new AWSStaticCredentialsProvider(
+              new BasicAWSCredentials(configuration.get().getAwsAccessKeyId(),
+                  configuration.get().getAwsAccessKeySecret())
+          )
+      ).withClientConfiguration(
+          new ClientConfigurationFactory().getConfig().withRetryPolicy(new RetryPolicy(
+              RETRY_CONDITION,
+              new ExponentialBackoffStrategy(
+                  configuration.or(new ElbConfiguration()).getAwsElbClientBackoffBaseDelayMilliseconds(),
+                  configuration.or(new ElbConfiguration()).getAwsElbClientBackoffMaxBackoffMilliseconds()
+              ),
+              configuration.get().getAwsElbClientRetries(), false
+          ))
+      ).withRegion(Regions.fromName(configuration.get().getAwsRegion().get())).build();
     } else {
       elbClient = new AmazonElasticLoadBalancingClient();
     }
 
     if (configuration.isPresent() && configuration.get().getAwsEndpoint().isPresent()) {
       elbClient.setEndpoint(configuration.get().getAwsEndpoint().get());
-    }
-    if (configuration.isPresent() && configuration.get().getAwsRegion().isPresent()) {
-      elbClient.configureRegion(Regions.fromName(configuration.get().getAwsRegion().get()));
     }
 
     return elbClient;
@@ -368,7 +399,8 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
           new ByteArrayInputStream(config.getGoogleCloudConfiguration().getGoogleCredentials().getBytes("UTF-8"))
       );
     } else {
-      throw new RuntimeException("Must specify googleCloudCredentials or googleCloudCredentialsFile when using google cloud api");
+      throw new RuntimeException(
+          "Must specify googleCloudCredentials or googleCloudCredentialsFile when using google cloud api");
     }
 
     if (credential.createScopedRequired()) {
@@ -382,11 +414,30 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
   }
 
   @Provides
+  @Singleton
   @Named(BARAGON_AWS_ELB_CLIENT_V2)
-  public com.amazonaws.services.elasticloadbalancingv2.AmazonElasticLoadBalancingClient providesAwsElbClientV2(Optional<ElbConfiguration> configuration) {
-    com.amazonaws.services.elasticloadbalancingv2.AmazonElasticLoadBalancingClient elbClient;
-    if (configuration.isPresent() && configuration.get().getAwsAccessKeyId() != null && configuration.get().getAwsAccessKeySecret() != null) {
-      elbClient = new com.amazonaws.services.elasticloadbalancingv2.AmazonElasticLoadBalancingClient(new BasicAWSCredentials(configuration.get().getAwsAccessKeyId(), configuration.get().getAwsAccessKeySecret()));
+  public com.amazonaws.services.elasticloadbalancingv2.AmazonElasticLoadBalancing providesAwsElbClientV2(
+      Optional<ElbConfiguration> configuration) {
+    com.amazonaws.services.elasticloadbalancingv2.AmazonElasticLoadBalancing elbClient;
+    if (configuration.isPresent() && configuration.get().getAwsAccessKeyId() != null
+        && configuration.get().getAwsAccessKeySecret() != null
+        && configuration.get().getAwsRegion().isPresent()) {
+      elbClient = com.amazonaws.services.elasticloadbalancingv2.AmazonElasticLoadBalancingClientBuilder.standard()
+          .withCredentials(
+              new AWSStaticCredentialsProvider(
+                  new BasicAWSCredentials(configuration.get().getAwsAccessKeyId(),
+                      configuration.get().getAwsAccessKeySecret())
+              )
+          ).withClientConfiguration(
+              new ClientConfigurationFactory().getConfig().withRetryPolicy(new RetryPolicy(
+                  RETRY_CONDITION,
+                  new ExponentialBackoffStrategy(
+                      configuration.or(new ElbConfiguration()).getAwsElbClientBackoffBaseDelayMilliseconds(),
+                      configuration.or(new ElbConfiguration()).getAwsElbClientBackoffMaxBackoffMilliseconds()
+                  ),
+                  configuration.get().getAwsElbClientRetries(), false
+              ))
+          ).withRegion(Regions.fromName(configuration.get().getAwsRegion().get())).build();
     } else {
       elbClient = new com.amazonaws.services.elasticloadbalancingv2.AmazonElasticLoadBalancingClient();
     }
@@ -394,23 +445,21 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
     if (configuration.isPresent() && configuration.get().getAwsEndpoint().isPresent()) {
       elbClient.setEndpoint(configuration.get().getAwsEndpoint().get());
     }
-    if (configuration.isPresent() && configuration.get().getAwsRegion().isPresent()) {
-      elbClient.configureRegion(Regions.fromName(configuration.get().getAwsRegion().get()));
-    }
 
     return elbClient;
   }
 
   @Singleton
   @Provides
-  public CuratorFramework provideCurator(ZooKeeperConfiguration config, BaragonConnectionStateListener connectionStateListener) {
+  public CuratorFramework provideCurator(ZooKeeperConfiguration config,
+      BaragonConnectionStateListener connectionStateListener) {
     CuratorFramework client = CuratorFrameworkFactory.builder()
-      .connectString(config.getQuorum())
-      .sessionTimeoutMs(config.getSessionTimeoutMillis())
-      .connectionTimeoutMs(config.getConnectTimeoutMillis())
-      .retryPolicy(new ExponentialBackoffRetry(config.getRetryBaseSleepTimeMilliseconds(), config.getRetryMaxTries()))
-      .defaultData(new byte[0])
-      .build();
+        .connectString(config.getQuorum())
+        .sessionTimeoutMs(config.getSessionTimeoutMillis())
+        .connectionTimeoutMs(config.getConnectTimeoutMillis())
+        .retryPolicy(new ExponentialBackoffRetry(config.getRetryBaseSleepTimeMilliseconds(), config.getRetryMaxTries()))
+        .defaultData(new byte[0])
+        .build();
 
     client.getConnectionStateListenable().addListener(connectionStateListener);
 

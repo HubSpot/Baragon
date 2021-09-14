@@ -1,5 +1,6 @@
 package com.hubspot.baragon.service.elb;
 
+import com.amazonaws.services.elasticloadbalancingv2.AmazonElasticLoadBalancing;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -87,14 +88,15 @@ public class ApplicationLoadBalancer extends ElasticLoadBalancer {
 
   private static final Logger LOG = LoggerFactory.getLogger(ApplicationLoadBalancer.class);
   private static final String DEREGISTRATION_DELAY_ATTR = "deregistration_delay.timeout_seconds";
-  private final AmazonElasticLoadBalancingClient elbClient;
+  private final AmazonElasticLoadBalancing elbClient;
 
   @Inject
   public ApplicationLoadBalancer(Optional<ElbConfiguration> configuration,
                                  BaragonExceptionNotifier exceptionNotifier,
                                  BaragonLoadBalancerDatastore loadBalancerDatastore,
                                  BaragonKnownAgentsDatastore knownAgentsDatastore,
-                                 @Named(BaragonServiceModule.BARAGON_AWS_ELB_CLIENT_V2) AmazonElasticLoadBalancingClient elbClient) {
+                                 @Named(BaragonServiceModule.BARAGON_AWS_ELB_CLIENT_V2)
+                                     AmazonElasticLoadBalancing elbClient) {
     super(configuration, exceptionNotifier, loadBalancerDatastore, knownAgentsDatastore);
     this.elbClient = elbClient;
   }

@@ -1,5 +1,6 @@
 package com.hubspot.baragon.service.resources;
 
+import com.amazonaws.services.elasticloadbalancing.AmazonElasticLoadBalancing;
 import java.util.Arrays;
 import java.util.List;
 
@@ -37,11 +38,11 @@ import com.hubspot.baragon.service.exceptions.BaragonWebException;
 @Path("/elbs")
 @Produces(MediaType.APPLICATION_JSON)
 public class ElbResource {
-  private final AmazonElasticLoadBalancingClient elbClient;
+  private final AmazonElasticLoadBalancing elbClient;
   private final Optional<ElbConfiguration> config;
 
   @Inject
-  public ElbResource(@Named(BaragonServiceModule.BARAGON_AWS_ELB_CLIENT_V1) AmazonElasticLoadBalancingClient elbClient,
+  public ElbResource(@Named(BaragonServiceModule.BARAGON_AWS_ELB_CLIENT_V1) AmazonElasticLoadBalancing elbClient,
                      Optional<ElbConfiguration> config) {
     this.elbClient = elbClient;
     this.config = config;

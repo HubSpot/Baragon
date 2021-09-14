@@ -1,15 +1,7 @@
 package com.hubspot.baragon.service.elb;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.amazonaws.AmazonClientException;
-import com.amazonaws.services.elasticloadbalancing.AmazonElasticLoadBalancingClient;
+import com.amazonaws.services.elasticloadbalancing.AmazonElasticLoadBalancing;
 import com.amazonaws.services.elasticloadbalancing.model.AttachLoadBalancerToSubnetsRequest;
 import com.amazonaws.services.elasticloadbalancing.model.DeregisterInstancesFromLoadBalancerRequest;
 import com.amazonaws.services.elasticloadbalancing.model.DescribeInstanceHealthRequest;
@@ -37,17 +29,23 @@ import com.hubspot.baragon.models.TrafficSourceType;
 import com.hubspot.baragon.service.BaragonServiceModule;
 import com.hubspot.baragon.service.config.ElbConfiguration;
 import com.hubspot.baragon.service.exceptions.BaragonExceptionNotifier;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ClassicLoadBalancer extends ElasticLoadBalancer {
   private static final Logger LOG = LoggerFactory.getLogger(ClassicLoadBalancer.class);
-  private final AmazonElasticLoadBalancingClient elbClient;
+  private final AmazonElasticLoadBalancing elbClient;
 
   @Inject
   public ClassicLoadBalancer(Optional<ElbConfiguration> configuration,
                              BaragonExceptionNotifier exceptionNotifier,
                              BaragonLoadBalancerDatastore loadBalancerDatastore,
                              BaragonKnownAgentsDatastore knownAgentsDatastore,
-                             @Named(BaragonServiceModule.BARAGON_AWS_ELB_CLIENT_V1) AmazonElasticLoadBalancingClient elbClient) {
+                             @Named(BaragonServiceModule.BARAGON_AWS_ELB_CLIENT_V1) AmazonElasticLoadBalancing elbClient) {
     super(configuration, exceptionNotifier, loadBalancerDatastore, knownAgentsDatastore);
     this.elbClient = elbClient;
   }

@@ -50,6 +50,15 @@ public class ElbConfiguration {
   @JsonProperty("awsEndpoint")
   private Optional<String> awsEndpoint = Optional.absent();
 
+  @JsonProperty("awsElbClientRetries")
+  private int awsElbClientRetries = 5;
+
+  @JsonProperty("awsElbClientBackoffBaseDelayMilliseconds")
+  private int awsElbClientBackoffBaseDelayMilliseconds = 1000;
+
+  @JsonProperty("awsElbClientBackoffMaxBackoffMilliseconds")
+  private int awsElbClientBackoffMaxBackoffMilliseconds = 30000;
+
   private long defaultCheckInWaitTimeMs = 5000;
 
   public boolean isEnabled() {
@@ -162,5 +171,29 @@ public class ElbConfiguration {
 
   public void setDefaultCheckInWaitTimeMs(long defaultCheckInWaitTimeMs) {
     this.defaultCheckInWaitTimeMs = defaultCheckInWaitTimeMs;
+  }
+
+  public int getAwsElbClientRetries() {
+    return awsElbClientRetries;
+  }
+
+  public void setAwsElbClientRetries(int awsElbClientRetries) {
+    this.awsElbClientRetries = awsElbClientRetries;
+  }
+
+  public int getAwsElbClientBackoffBaseDelayMilliseconds() {
+    return awsElbClientBackoffBaseDelayMilliseconds;
+  }
+
+  public void setAwsElbClientBackoffBaseDelayMilliseconds(int awsElbClientBackoffBaseDelayMilliseconds) {
+    this.awsElbClientBackoffBaseDelayMilliseconds = awsElbClientBackoffBaseDelayMilliseconds;
+  }
+
+  public int getAwsElbClientBackoffMaxBackoffMilliseconds() {
+    return awsElbClientBackoffMaxBackoffMilliseconds;
+  }
+
+  public void setAwsElbClientBackoffMaxBackoffMilliseconds(int awsElbClientBackoffMaxBackoffMilliseconds) {
+    this.awsElbClientBackoffMaxBackoffMilliseconds = awsElbClientBackoffMaxBackoffMilliseconds;
   }
 }
