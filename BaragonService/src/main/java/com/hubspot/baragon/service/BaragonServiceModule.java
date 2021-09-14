@@ -6,7 +6,6 @@ import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.retry.PredefinedBackoffStrategies.ExponentialBackoffStrategy;
 import com.amazonaws.retry.RetryPolicy;
-import com.amazonaws.retry.RetryPolicy.BackoffStrategy;
 import com.amazonaws.retry.RetryPolicy.RetryCondition;
 import com.amazonaws.services.elasticloadbalancing.AmazonElasticLoadBalancing;
 import com.amazonaws.services.elasticloadbalancing.AmazonElasticLoadBalancingClient;
@@ -347,19 +346,24 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
   @Provides
   @Singleton
   @Named(BARAGON_AWS_ELB_CLIENT_V1)
-  public AmazonElasticLoadBalancing providesAwsElbClientV1(Optional<ElbConfiguration> configuration,
-      AWSStaticCredentialsProvider awsStaticCredentialsProvider,
-      BackoffStrategy backoffStrategy) {
+  public AmazonElasticLoadBalancing providesAwsElbClientV1(Optional<ElbConfiguration> configuration) {
     AmazonElasticLoadBalancing elbClient;
     if (configuration.isPresent() && configuration.get().getAwsAccessKeyId() != null
         && configuration.get().getAwsAccessKeySecret() != null
         && configuration.get().getAwsRegion().isPresent()) {
       elbClient = AmazonElasticLoadBalancingClientBuilder.standard().withCredentials(
-          awsStaticCredentialsProvider
+          new AWSStaticCredentialsProvider(
+              new BasicAWSCredentials(configuration.get().getAwsAccessKeyId(),
+                  configuration.get().getAwsAccessKeySecret())
+          )
       ).withClientConfiguration(
           new ClientConfigurationFactory().getConfig().withRetryPolicy(new RetryPolicy(
               RETRY_CONDITION,
-              backoffStrategy, configuration.get().getAwsElbClientRetries(), false
+              new ExponentialBackoffStrategy(
+                  configuration.or(new ElbConfiguration()).getAwsElbClientBackoffBaseDelayMilliseconds(),
+                  configuration.or(new ElbConfiguration()).getAwsElbClientBackoffMaxBackoffMilliseconds()
+              ),
+              configuration.get().getAwsElbClientRetries(), false
           ))
       ).withRegion(Regions.fromName(configuration.get().getAwsRegion().get())).build();
     } else {
@@ -411,42 +415,27 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
 
   @Provides
   @Singleton
-  public AWSStaticCredentialsProvider providesAwsStaticCredentialsProvider(Optional<ElbConfiguration> configuration) {
-    return new AWSStaticCredentialsProvider(
-        new BasicAWSCredentials(configuration.get().getAwsAccessKeyId(),
-            configuration.get().getAwsAccessKeySecret())
-    );
-  }
-
-  @Provides
-  @Singleton
-  public BackoffStrategy providesBackoffStrategy(
-      Optional<ElbConfiguration> configuration
-  ) {
-    return new ExponentialBackoffStrategy(
-        configuration.or(new ElbConfiguration()).getAwsElbClientBackoffBaseDelayMilliseconds(),
-        configuration.or(new ElbConfiguration()).getAwsElbClientBackoffMaxBackoffMilliseconds());
-  }
-
-  @Provides
-  @Singleton
   @Named(BARAGON_AWS_ELB_CLIENT_V2)
   public com.amazonaws.services.elasticloadbalancingv2.AmazonElasticLoadBalancing providesAwsElbClientV2(
-      Optional<ElbConfiguration> configuration,
-      AWSStaticCredentialsProvider awsStaticCredentialsProvider,
-      BackoffStrategy backoffStrategy) {
+      Optional<ElbConfiguration> configuration) {
     com.amazonaws.services.elasticloadbalancingv2.AmazonElasticLoadBalancing elbClient;
     if (configuration.isPresent() && configuration.get().getAwsAccessKeyId() != null
         && configuration.get().getAwsAccessKeySecret() != null
         && configuration.get().getAwsRegion().isPresent()) {
       elbClient = com.amazonaws.services.elasticloadbalancingv2.AmazonElasticLoadBalancingClientBuilder.standard()
           .withCredentials(
-              awsStaticCredentialsProvider
+              new AWSStaticCredentialsProvider(
+                  new BasicAWSCredentials(configuration.get().getAwsAccessKeyId(),
+                      configuration.get().getAwsAccessKeySecret())
+              )
           ).withClientConfiguration(
               new ClientConfigurationFactory().getConfig().withRetryPolicy(new RetryPolicy(
                   RETRY_CONDITION,
-                  backoffStrategy
-                  , configuration.get().getAwsElbClientRetries(), false
+                  new ExponentialBackoffStrategy(
+                      configuration.or(new ElbConfiguration()).getAwsElbClientBackoffBaseDelayMilliseconds(),
+                      configuration.or(new ElbConfiguration()).getAwsElbClientBackoffMaxBackoffMilliseconds()
+                  ),
+                  configuration.get().getAwsElbClientRetries(), false
               ))
           ).withRegion(Regions.fromName(configuration.get().getAwsRegion().get())).build();
     } else {
