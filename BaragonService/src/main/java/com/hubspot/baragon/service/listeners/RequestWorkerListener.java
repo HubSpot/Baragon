@@ -1,16 +1,14 @@
 package com.hubspot.baragon.service.listeners;
 
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
-
-import javax.inject.Named;
-
 import com.google.inject.Inject;
 import com.hubspot.baragon.migrations.ZkDataMigrationRunner;
 import com.hubspot.baragon.service.BaragonServiceModule;
 import com.hubspot.baragon.service.config.BaragonConfiguration;
 import com.hubspot.baragon.service.worker.BaragonRequestWorker;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+import javax.inject.Named;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,10 +23,14 @@ public class RequestWorkerListener extends AbstractLatchListener {
   private ScheduledFuture<?> requestWorkerFuture = null;
 
   @Inject
-  public RequestWorkerListener(@Named(BaragonServiceModule.BARAGON_SERVICE_SCHEDULED_EXECUTOR) ScheduledExecutorService executorService,
-                               BaragonConfiguration config,
-                               BaragonRequestWorker requestWorker,
-                               ZkDataMigrationRunner migrationRunner) {
+  public RequestWorkerListener(
+    @Named(
+      BaragonServiceModule.BARAGON_SERVICE_SCHEDULED_EXECUTOR
+    ) ScheduledExecutorService executorService,
+    BaragonConfiguration config,
+    BaragonRequestWorker requestWorker,
+    ZkDataMigrationRunner migrationRunner
+  ) {
     this.executorService = executorService;
     this.config = config;
     this.requestWorker = requestWorker;
@@ -37,7 +39,9 @@ public class RequestWorkerListener extends AbstractLatchListener {
 
   @Override
   public void isLeader() {
-    LOG.info("We are the leader! Checking for zk migrations before starting RequestWorker...");
+    LOG.info(
+      "We are the leader! Checking for zk migrations before starting RequestWorker..."
+    );
 
     migrationRunner.checkMigrations();
 
@@ -47,7 +51,13 @@ public class RequestWorkerListener extends AbstractLatchListener {
       requestWorkerFuture.cancel(false);
     }
 
-    requestWorkerFuture = executorService.scheduleAtFixedRate(requestWorker, config.getWorkerConfiguration().getInitialDelayMs(), config.getWorkerConfiguration().getIntervalMs(), TimeUnit.MILLISECONDS);
+    requestWorkerFuture =
+      executorService.scheduleAtFixedRate(
+        requestWorker,
+        config.getWorkerConfiguration().getInitialDelayMs(),
+        config.getWorkerConfiguration().getIntervalMs(),
+        TimeUnit.MILLISECONDS
+      );
   }
 
   @Override

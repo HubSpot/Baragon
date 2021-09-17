@@ -1,15 +1,6 @@
 package com.hubspot.baragon.agent.lbs;
 
-import java.io.StringWriter;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
+import com.github.jknack.handlebars.Context;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.hash.Hashing;
@@ -24,27 +15,42 @@ import com.hubspot.baragon.models.BaragonAgentMetadata;
 import com.hubspot.baragon.models.BaragonConfigFile;
 import com.hubspot.baragon.models.BaragonService;
 import com.hubspot.baragon.models.ServiceContext;
-import com.github.jknack.handlebars.Context;
+import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @Singleton
 public class LbConfigGenerator {
-
   private final LoadBalancerConfiguration loadBalancerConfiguration;
   private final Map<String, List<LbConfigTemplate>> templates;
   private final BaragonAgentMetadata agentMetadata;
 
   @Inject
-  public LbConfigGenerator(LoadBalancerConfiguration loadBalancerConfiguration,
-                           BaragonAgentMetadata agentMetadata,
-                           @Named(BaragonAgentServiceModule.AGENT_TEMPLATES) Map<String, List<LbConfigTemplate>> templates) {
+  public LbConfigGenerator(
+    LoadBalancerConfiguration loadBalancerConfiguration,
+    BaragonAgentMetadata agentMetadata,
+    @Named(
+      BaragonAgentServiceModule.AGENT_TEMPLATES
+    ) Map<String, List<LbConfigTemplate>> templates
+  ) {
     this.loadBalancerConfiguration = loadBalancerConfiguration;
     this.agentMetadata = agentMetadata;
     this.templates = templates;
   }
 
-  public Collection<BaragonConfigFile> generateConfigsForProject(ServiceContext snapshot) throws MissingTemplateException {
+  public Collection<BaragonConfigFile> generateConfigsForProject(ServiceContext snapshot)
+    throws MissingTemplateException {
     final Collection<BaragonConfigFile> files = Lists.newArrayList();
-    String templateName = snapshot.getService().getTemplateName().or(BaragonAgentServiceModule.DEFAULT_TEMPLATE_NAME);
+    String templateName = snapshot
+      .getService()
+      .getTemplateName()
+      .or(BaragonAgentServiceModule.DEFAULT_TEMPLATE_NAME);
 
     List<LbConfigTemplate> matchingTemplates = templates.get(templateName);
 
@@ -53,16 +59,23 @@ public class LbConfigGenerator {
         final List<String> filenames = getFilenames(template, snapshot.getService());
 
         final StringWriter sw = new StringWriter();
-        final boolean turnOffPurgeableCacheInTemplates = loadBalancerConfiguration.isTurnOffPurgeableCacheInTemplates()
-            || loadBalancerConfiguration.getServicesToBlockFromPurgeableCache().contains(snapshot.getService().getServiceId());
-        final Context context = Context.newBuilder(snapshot)
-            .combine("agentProperties", agentMetadata)
-            .combine("serviceIdHash",
-                Hashing.sha256()
-                .hashString(snapshot.getService().getServiceId(), StandardCharsets.UTF_8)
-                .toString())
-            .combine("turnOffPurgeableCacheInTemplates", turnOffPurgeableCacheInTemplates)
-            .build();
+        final boolean turnOffPurgeableCacheInTemplates =
+          loadBalancerConfiguration.isTurnOffPurgeableCacheInTemplates() ||
+          loadBalancerConfiguration
+            .getServicesToBlockFromPurgeableCache()
+            .contains(snapshot.getService().getServiceId());
+        final Context context = Context
+          .newBuilder(snapshot)
+          .combine("agentProperties", agentMetadata)
+          .combine(
+            "serviceIdHash",
+            Hashing
+              .sha256()
+              .hashString(snapshot.getService().getServiceId(), StandardCharsets.UTF_8)
+              .toString()
+          )
+          .combine("turnOffPurgeableCacheInTemplates", turnOffPurgeableCacheInTemplates)
+          .build();
         try {
           template.getTemplate().apply(context, sw);
         } catch (Exception e) {
@@ -70,11 +83,21 @@ public class LbConfigGenerator {
         }
 
         for (String filename : filenames) {
-          files.add(new BaragonConfigFile(String.format("%s/%s", loadBalancerConfiguration.getRootPath(), filename), sw.toString()));
+          files.add(
+            new BaragonConfigFile(
+              String.format("%s/%s", loadBalancerConfiguration.getRootPath(), filename),
+              sw.toString()
+            )
+          );
         }
       }
     } else {
-      throw new MissingTemplateException(String.format("MissingTemplateException : Template %s could not be found", templateName));
+      throw new MissingTemplateException(
+        String.format(
+          "MissingTemplateException : Template %s could not be found",
+          templateName
+        )
+      );
     }
 
     return files;
@@ -82,11 +105,13 @@ public class LbConfigGenerator {
 
   public Set<String> getConfigPathsForProject(BaragonService service) {
     final Set<String> paths = new HashSet<>();
-    for (Map.Entry<String,List<LbConfigTemplate>> entry : templates.entrySet()) {
+    for (Map.Entry<String, List<LbConfigTemplate>> entry : templates.entrySet()) {
       for (LbConfigTemplate template : entry.getValue()) {
         final List<String> filenames = getFilenames(template, service);
         for (String filename : filenames) {
-          paths.add(String.format("%s/%s", loadBalancerConfiguration.getRootPath(), filename));
+          paths.add(
+            String.format("%s/%s", loadBalancerConfiguration.getRootPath(), filename)
+          );
         }
       }
     }
@@ -98,34 +123,65 @@ public class LbConfigGenerator {
       case NONE:
         return Collections.singletonList(template.getFilename());
       case SERVICE:
-        return Collections.singletonList(String.format(template.getFilename(), service.getServiceId()));
+        return Collections.singletonList(
+          String.format(template.getFilename(), service.getServiceId())
+        );
       case DOMAIN_SERVICE:
       default:
         List<String> filenames = new ArrayList<>();
-        if (!service.getDomains().isEmpty() && (!loadBalancerConfiguration.getDomains().isEmpty() || loadBalancerConfiguration.getDefaultDomain().isPresent())) {
+        if (
+          !service.getDomains().isEmpty() &&
+          (
+            !loadBalancerConfiguration.getDomains().isEmpty() ||
+            loadBalancerConfiguration.getDefaultDomain().isPresent()
+          )
+        ) {
           for (String domain : service.getDomains()) {
             if (isDomainServed(domain)) {
-              filenames.add(String.format(template.getFilename(), domain, service.getServiceId()));
+              filenames.add(
+                String.format(template.getFilename(), domain, service.getServiceId())
+              );
             }
           }
           if (filenames.isEmpty()) {
             if (loadBalancerConfiguration.getDefaultDomain().isPresent()) {
-              filenames.add(String.format(template.getFilename(), loadBalancerConfiguration.getDefaultDomain().get(), service.getServiceId()));
+              filenames.add(
+                String.format(
+                  template.getFilename(),
+                  loadBalancerConfiguration.getDefaultDomain().get(),
+                  service.getServiceId()
+                )
+              );
             } else {
-              throw new IllegalStateException("No domain served for template file that requires domain");
+              throw new IllegalStateException(
+                "No domain served for template file that requires domain"
+              );
             }
           }
-        } else if (loadBalancerConfiguration.getDefaultDomain().isPresent()){
-          filenames.add(String.format(template.getFilename(), loadBalancerConfiguration.getDefaultDomain().get(), service.getServiceId()));
+        } else if (loadBalancerConfiguration.getDefaultDomain().isPresent()) {
+          filenames.add(
+            String.format(
+              template.getFilename(),
+              loadBalancerConfiguration.getDefaultDomain().get(),
+              service.getServiceId()
+            )
+          );
         } else {
-          throw new IllegalStateException("No domain present for template file that requires domain");
+          throw new IllegalStateException(
+            "No domain present for template file that requires domain"
+          );
         }
         return filenames;
     }
   }
 
   private boolean isDomainServed(String domain) {
-    return loadBalancerConfiguration.getDomains().contains(domain) || (loadBalancerConfiguration.getDefaultDomain().isPresent() && domain.equals(loadBalancerConfiguration.getDefaultDomain().get()));
+    return (
+      loadBalancerConfiguration.getDomains().contains(domain) ||
+      (
+        loadBalancerConfiguration.getDefaultDomain().isPresent() &&
+        domain.equals(loadBalancerConfiguration.getDefaultDomain().get())
+      )
+    );
   }
-
 }

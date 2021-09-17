@@ -14,14 +14,14 @@ public enum InternalRequestStates {
   CANCELLED_CHECK_REVERT_RESPONSES(false, true),
   CANCELLED(false, false),
   FAILED_CANCEL_FAILED(false, false),
-  COMPLETED_POST_APPLY_FAILED(false, false),;
+  COMPLETED_POST_APPLY_FAILED(false, false);
 
   private final boolean requireAgentRequest;
   private final boolean inFlight;
 
   InternalRequestStates(boolean requireAgentRequest, boolean inFlight) {
-     this.requireAgentRequest = requireAgentRequest;
-     this.inFlight = inFlight;
+    this.requireAgentRequest = requireAgentRequest;
+    this.inFlight = inFlight;
   }
 
   public boolean isRequireAgentRequest() {

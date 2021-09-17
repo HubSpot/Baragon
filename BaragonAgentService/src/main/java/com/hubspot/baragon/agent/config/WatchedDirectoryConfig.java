@@ -45,8 +45,9 @@ public class WatchedDirectoryConfig {
       return false;
     }
     WatchedDirectoryConfig that = (WatchedDirectoryConfig) o;
-    return Objects.equals(source, that.source) &&
-        Objects.equals(destination, that.destination);
+    return (
+      Objects.equals(source, that.source) && Objects.equals(destination, that.destination)
+    );
   }
 
   @Override
@@ -56,9 +57,15 @@ public class WatchedDirectoryConfig {
 
   @Override
   public String toString() {
-    return "WatchedDirectoryConfig{" +
-        "source='" + source + '\'' +
-        ", destination='" + destination + '\'' +
-        '}';
+    return (
+      "WatchedDirectoryConfig{" +
+      "source='" +
+      source +
+      '\'' +
+      ", destination='" +
+      destination +
+      '\'' +
+      '}'
+    );
   }
 }

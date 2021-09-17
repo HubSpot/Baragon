@@ -5,7 +5,6 @@ import com.google.common.base.Optional;
 import com.google.common.base.Strings;
 
 public class AuthConfiguration {
-
   @JsonProperty("key")
   private String key;
 

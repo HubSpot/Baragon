@@ -6,9 +6,8 @@ import com.google.common.base.Optional;
 import com.google.common.base.Strings;
 import org.hibernate.validator.constraints.NotEmpty;
 
-@JsonIgnoreProperties( ignoreUnknown = true )
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class UIConfiguration {
-
   @NotEmpty
   @JsonProperty
   private String title = "Baragon";
@@ -31,5 +30,4 @@ public class UIConfiguration {
   public void setBaseUrl(String baseUrl) {
     this.baseUrl = baseUrl;
   }
-
 }

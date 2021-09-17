@@ -1,13 +1,12 @@
 package com.hubspot.baragon.service.worker;
 
-import java.util.concurrent.atomic.AtomicLong;
-
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import com.hubspot.baragon.BaragonDataModule;
 import com.hubspot.baragon.service.exceptions.BaragonExceptionNotifier;
 import com.hubspot.baragon.service.managers.ElbManager;
+import java.util.concurrent.atomic.AtomicLong;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,9 +19,11 @@ public class BaragonElbSyncWorker implements Runnable {
   private final AtomicLong workerLastStartAt;
 
   @Inject
-  public BaragonElbSyncWorker(ElbManager elbManager,
-                              BaragonExceptionNotifier exceptionNotifier,
-                              @Named(BaragonDataModule.BARAGON_ELB_WORKER_LAST_START) AtomicLong workerLastStartAt) {
+  public BaragonElbSyncWorker(
+    ElbManager elbManager,
+    BaragonExceptionNotifier exceptionNotifier,
+    @Named(BaragonDataModule.BARAGON_ELB_WORKER_LAST_START) AtomicLong workerLastStartAt
+  ) {
     this.elbManager = elbManager;
     this.exceptionNotifier = exceptionNotifier;
     this.workerLastStartAt = workerLastStartAt;
@@ -39,6 +40,4 @@ public class BaragonElbSyncWorker implements Runnable {
       exceptionNotifier.notify(e, null);
     }
   }
-
-
 }

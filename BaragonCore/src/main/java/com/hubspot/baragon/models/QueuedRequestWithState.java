@@ -11,9 +11,11 @@ public class QueuedRequestWithState {
   private final InternalRequestStates currentState;
 
   @JsonCreator
-  public QueuedRequestWithState(@JsonProperty("queuedRequestId") QueuedRequestId queuedRequestId,
-                                @JsonProperty("request") BaragonRequest request,
-                                @JsonProperty("currentState") InternalRequestStates currentState) {
+  public QueuedRequestWithState(
+    @JsonProperty("queuedRequestId") QueuedRequestId queuedRequestId,
+    @JsonProperty("request") BaragonRequest request,
+    @JsonProperty("currentState") InternalRequestStates currentState
+  ) {
     this.queuedRequestId = queuedRequestId;
     this.request = request;
     this.currentState = currentState;
@@ -40,9 +42,11 @@ public class QueuedRequestWithState {
       return false;
     }
     QueuedRequestWithState that = (QueuedRequestWithState) o;
-    return Objects.equal(queuedRequestId, that.queuedRequestId) &&
+    return (
+      Objects.equal(queuedRequestId, that.queuedRequestId) &&
       Objects.equal(request, that.request) &&
-      currentState == that.currentState;
+      currentState == that.currentState
+    );
   }
 
   @Override
@@ -52,7 +56,8 @@ public class QueuedRequestWithState {
 
   @Override
   public String toString() {
-    return MoreObjects.toStringHelper(this)
+    return MoreObjects
+      .toStringHelper(this)
       .add("queuedRequestId", queuedRequestId)
       .add("request", request)
       .add("currentState", currentState)

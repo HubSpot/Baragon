@@ -1,7 +1,13 @@
 package com.hubspot.baragon.service.resources;
 
+import com.google.common.base.Optional;
+import com.google.inject.Inject;
+import com.google.inject.name.Named;
+import com.hubspot.baragon.auth.NoAuth;
+import com.hubspot.baragon.data.BaragonAuthDatastore;
+import com.hubspot.baragon.models.BaragonAuthKey;
+import com.hubspot.baragon.service.BaragonServiceModule;
 import java.util.Collection;
-
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -15,14 +21,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
-import com.google.common.base.Optional;
-import com.google.inject.Inject;
-import com.google.inject.name.Named;
-import com.hubspot.baragon.auth.NoAuth;
-import com.hubspot.baragon.data.BaragonAuthDatastore;
-import com.hubspot.baragon.models.BaragonAuthKey;
-import com.hubspot.baragon.service.BaragonServiceModule;
-
 @Path("/auth")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -31,17 +29,17 @@ public class AuthResource {
   private final String masterAuthKey;
 
   @Inject
-  public AuthResource(BaragonAuthDatastore datastore,
-                      @Named(BaragonServiceModule.BARAGON_MASTER_AUTH_KEY) String masterAuthKey) {
+  public AuthResource(
+    BaragonAuthDatastore datastore,
+    @Named(BaragonServiceModule.BARAGON_MASTER_AUTH_KEY) String masterAuthKey
+  ) {
     this.datastore = datastore;
     this.masterAuthKey = masterAuthKey;
   }
 
   @GET
   @Path("/key/verify")
-  public void verifyKey() {
-
-  }
+  public void verifyKey() {}
 
   @GET
   @NoAuth
@@ -57,7 +55,10 @@ public class AuthResource {
   @DELETE
   @NoAuth
   @Path("/keys/{key}")
-  public Optional<BaragonAuthKey> expireKey(@PathParam("key") String key, @QueryParam("authkey") String queryAuthKey) {
+  public Optional<BaragonAuthKey> expireKey(
+    @PathParam("key") String key,
+    @QueryParam("authkey") String queryAuthKey
+  ) {
     if (!masterAuthKey.equals(queryAuthKey)) {
       throw new WebApplicationException(Response.status(Status.FORBIDDEN).build());
     }

@@ -9,5 +9,4 @@ public class CloudflareClientException extends Exception {
   public CloudflareClientException(String message) {
     super(message);
   }
-
 }

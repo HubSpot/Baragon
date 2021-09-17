@@ -1,9 +1,8 @@
 package com.hubspot.baragon.models;
 
+import com.google.common.base.Optional;
 import java.util.Collections;
 import java.util.List;
-
-import com.google.common.base.Optional;
 
 public class BaragonRequestBuilder {
   private String loadBalancerRequestId;
@@ -24,7 +23,9 @@ public class BaragonRequestBuilder {
     return this;
   }
 
-  public BaragonRequestBuilder setLoadBalancerService(BaragonService loadBalancerService) {
+  public BaragonRequestBuilder setLoadBalancerService(
+    BaragonService loadBalancerService
+  ) {
     this.loadBalancerService = loadBalancerService;
     return this;
   }
@@ -75,6 +76,19 @@ public class BaragonRequestBuilder {
   }
 
   public BaragonRequest build() {
-    return new BaragonRequest(loadBalancerRequestId, loadBalancerService, addUpstreams, removeUpstreams, replaceUpstreams, replaceServiceId, action, noValidate, noReload, upstreamUpdateOnly, noDuplicateUpstreams, purgeCache);
+    return new BaragonRequest(
+      loadBalancerRequestId,
+      loadBalancerService,
+      addUpstreams,
+      removeUpstreams,
+      replaceUpstreams,
+      replaceServiceId,
+      action,
+      noValidate,
+      noReload,
+      upstreamUpdateOnly,
+      noDuplicateUpstreams,
+      purgeCache
+    );
   }
 }

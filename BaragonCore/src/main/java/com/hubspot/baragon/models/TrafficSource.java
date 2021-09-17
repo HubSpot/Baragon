@@ -1,12 +1,10 @@
 package com.hubspot.baragon.models;
 
-import java.util.Objects;
-
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.Objects;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 
 public class TrafficSource {
   @Size(min = 1)
@@ -27,7 +25,11 @@ public class TrafficSource {
   }
 
   @JsonCreator
-  public TrafficSource(@JsonProperty("name") String name, @JsonProperty("type") TrafficSourceType type, @JsonProperty("registerBy") RegisterBy registerBy) {
+  public TrafficSource(
+    @JsonProperty("name") String name,
+    @JsonProperty("type") TrafficSourceType type,
+    @JsonProperty("registerBy") RegisterBy registerBy
+  ) {
     this.name = name;
     this.type = type;
     this.registerBy = registerBy == null ? RegisterBy.INSTANCE_ID : registerBy;
@@ -52,9 +54,11 @@ public class TrafficSource {
     }
     if (obj instanceof TrafficSource) {
       final TrafficSource that = (TrafficSource) obj;
-      return Objects.equals(this.name, that.name) &&
-          Objects.equals(this.type, that.type) &&
-          Objects.equals(this.registerBy, that.registerBy);
+      return (
+        Objects.equals(this.name, that.name) &&
+        Objects.equals(this.type, that.type) &&
+        Objects.equals(this.registerBy, that.registerBy)
+      );
     }
     return false;
   }
@@ -66,10 +70,16 @@ public class TrafficSource {
 
   @Override
   public String toString() {
-    return "TrafficSource{" +
-        "name='" + name + '\'' +
-        ", type=" + type +
-        ", registerBy=" + registerBy +
-        '}';
+    return (
+      "TrafficSource{" +
+      "name='" +
+      name +
+      '\'' +
+      ", type=" +
+      type +
+      ", registerBy=" +
+      registerBy +
+      '}'
+    );
   }
 }

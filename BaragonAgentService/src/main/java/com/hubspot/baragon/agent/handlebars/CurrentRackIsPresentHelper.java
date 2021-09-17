@@ -1,12 +1,11 @@
 package com.hubspot.baragon.agent.handlebars;
 
-import java.io.IOException;
-import java.util.Collection;
-
 import com.github.jknack.handlebars.Helper;
 import com.github.jknack.handlebars.Options;
 import com.google.common.base.Optional;
 import com.hubspot.baragon.models.UpstreamInfo;
+import java.io.IOException;
+import java.util.Collection;
 
 public class CurrentRackIsPresentHelper implements Helper<Collection<UpstreamInfo>> {
   public static final String NAME = "currentRackIsPresent";
@@ -18,7 +17,8 @@ public class CurrentRackIsPresentHelper implements Helper<Collection<UpstreamInf
   }
 
   @Override
-  public CharSequence apply(Collection<UpstreamInfo> upstreams, Options options) throws IOException {
+  public CharSequence apply(Collection<UpstreamInfo> upstreams, Options options)
+    throws IOException {
     if (!currentRackId.isPresent()) {
       return options.fn();
     }
@@ -28,7 +28,14 @@ public class CurrentRackIsPresentHelper implements Helper<Collection<UpstreamInf
     }
 
     for (UpstreamInfo upstreamInfo : upstreams) {
-      if (upstreamInfo.getRackId().isPresent() && upstreamInfo.getRackId().get().toLowerCase().equals(currentRackId.get().toLowerCase())) {
+      if (
+        upstreamInfo.getRackId().isPresent() &&
+        upstreamInfo
+          .getRackId()
+          .get()
+          .toLowerCase()
+          .equals(currentRackId.get().toLowerCase())
+      ) {
         return options.fn();
       }
     }

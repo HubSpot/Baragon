@@ -5,13 +5,16 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Objects;
 
-@JsonIgnoreProperties( ignoreUnknown = true )
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class CloudflareError {
   private final Integer code;
   private final String message;
 
   @JsonCreator
-  public CloudflareError(@JsonProperty("code") Integer code, @JsonProperty("message") String message) {
+  public CloudflareError(
+    @JsonProperty("code") Integer code,
+    @JsonProperty("message") String message
+  ) {
     this.code = code;
     this.message = message;
   }
@@ -33,8 +36,7 @@ public class CloudflareError {
       return false;
     }
     CloudflareError that = (CloudflareError) o;
-    return Objects.equal(code, that.code) &&
-        Objects.equal(message, that.message);
+    return Objects.equal(code, that.code) && Objects.equal(message, that.message);
   }
 
   @Override
@@ -44,9 +46,6 @@ public class CloudflareError {
 
   @Override
   public String toString() {
-    return "CloudflareError{" +
-        "code=" + code +
-        ", message='" + message + '\'' +
-        '}';
+    return "CloudflareError{" + "code=" + code + ", message='" + message + '\'' + '}';
   }
 }

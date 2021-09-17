@@ -1,8 +1,5 @@
 package com.hubspot.baragon.service.gcloud;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.google.api.services.compute.Compute;
 import com.google.api.services.compute.model.BackendServiceGroupHealth;
 import com.google.api.services.compute.model.HealthStatus;
@@ -17,6 +14,8 @@ import com.hubspot.baragon.models.TrafficSourceState;
 import com.hubspot.baragon.service.BaragonServiceModule;
 import com.hubspot.baragon.service.config.BaragonConfiguration;
 import com.hubspot.baragon.service.config.GoogleCloudConfiguration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class GoogleCloudManager {
   private static final Logger LOG = LoggerFactory.getLogger(GoogleCloudManager.class);
@@ -26,8 +25,10 @@ public class GoogleCloudManager {
   private final GoogleCloudConfiguration googleCloudConfiguration;
 
   @Inject
-  public GoogleCloudManager(BaragonConfiguration configuration,
-                            @Named(BaragonServiceModule.GOOGLE_CLOUD_COMPUTE_SERVICE) Optional<Compute> compute)  {
+  public GoogleCloudManager(
+    BaragonConfiguration configuration,
+    @Named(BaragonServiceModule.GOOGLE_CLOUD_COMPUTE_SERVICE) Optional<Compute> compute
+  ) {
     this.compute = compute.orNull();
     this.googleCloudConfiguration = configuration.getGoogleCloudConfiguration();
   }
@@ -52,13 +53,27 @@ public class GoogleCloudManager {
     BaragonAgentGcloudMetadata gcloudMetadata = agent.getGcloud().get();
 
     try {
-      ResourceGroupReference resourceGroupRef = new ResourceGroupReference().setGroup(gcloudMetadata.getResourceGroup());
+      ResourceGroupReference resourceGroupRef = new ResourceGroupReference()
+      .setGroup(gcloudMetadata.getResourceGroup());
       BackendServiceGroupHealth healthResponse;
       if (gcloudMetadata.getRegion().isPresent()) {
-        Compute.RegionBackendServices.GetHealth healthRequest = compute.regionBackendServices().getHealth(gcloudMetadata.getProject(), gcloudMetadata.getRegion().get(), gcloudMetadata.getBackendService(), resourceGroupRef);
+        Compute.RegionBackendServices.GetHealth healthRequest = compute
+          .regionBackendServices()
+          .getHealth(
+            gcloudMetadata.getProject(),
+            gcloudMetadata.getRegion().get(),
+            gcloudMetadata.getBackendService(),
+            resourceGroupRef
+          );
         healthResponse = healthRequest.execute();
       } else {
-        Compute.BackendServices.GetHealth globalHealthRequest = compute.backendServices().getHealth(gcloudMetadata.getProject(), gcloudMetadata.getBackendService(), resourceGroupRef);
+        Compute.BackendServices.GetHealth globalHealthRequest = compute
+          .backendServices()
+          .getHealth(
+            gcloudMetadata.getProject(),
+            gcloudMetadata.getBackendService(),
+            resourceGroupRef
+          );
         healthResponse = globalHealthRequest.execute();
       }
 
@@ -68,28 +83,60 @@ public class GoogleCloudManager {
           if (instance.endsWith(gcloudMetadata.getInstanceName())) {
             if (healthStatus.getHealthState().equals(HEALTHY_STATE)) {
               if (startup) {
-                return new AgentCheckInResponse(TrafficSourceState.DONE, Optional.absent(), 0);
+                return new AgentCheckInResponse(
+                  TrafficSourceState.DONE,
+                  Optional.absent(),
+                  0
+                );
               } else {
-                return new AgentCheckInResponse(TrafficSourceState.PENDING, Optional.absent(), 5000L);
+                return new AgentCheckInResponse(
+                  TrafficSourceState.PENDING,
+                  Optional.absent(),
+                  5000L
+                );
               }
             } else {
               if (startup) {
-                return new AgentCheckInResponse(TrafficSourceState.PENDING, Optional.absent(), 5000L);
+                return new AgentCheckInResponse(
+                  TrafficSourceState.PENDING,
+                  Optional.absent(),
+                  5000L
+                );
               } else {
-                return new AgentCheckInResponse(TrafficSourceState.DONE, Optional.absent(), 0);
+                return new AgentCheckInResponse(
+                  TrafficSourceState.DONE,
+                  Optional.absent(),
+                  0
+                );
               }
             }
           }
         }
-        LOG.warn("Agent {} not found in instance list for backend service {}", gcloudMetadata.getInstanceName(), gcloudMetadata.getBackendService());
-        return new AgentCheckInResponse(TrafficSourceState.DONE, Optional.absent(), googleCloudConfiguration.getDefaultCheckInWaitTimeMs());
+        LOG.warn(
+          "Agent {} not found in instance list for backend service {}",
+          gcloudMetadata.getInstanceName(),
+          gcloudMetadata.getBackendService()
+        );
+        return new AgentCheckInResponse(
+          TrafficSourceState.DONE,
+          Optional.absent(),
+          googleCloudConfiguration.getDefaultCheckInWaitTimeMs()
+        );
       } else {
         LOG.warn("No response from gcloud for group {}", resourceGroupRef);
-        return new AgentCheckInResponse(TrafficSourceState.DONE, Optional.absent(), googleCloudConfiguration.getDefaultCheckInWaitTimeMs());
+        return new AgentCheckInResponse(
+          TrafficSourceState.DONE,
+          Optional.absent(),
+          googleCloudConfiguration.getDefaultCheckInWaitTimeMs()
+        );
       }
     } catch (Throwable t) {
       LOG.error("Exception while checking agent health", t);
-      return new AgentCheckInResponse(TrafficSourceState.ERROR, Optional.of(t.getMessage()), googleCloudConfiguration.getDefaultCheckInWaitTimeMs());
+      return new AgentCheckInResponse(
+        TrafficSourceState.ERROR,
+        Optional.of(t.getMessage()),
+        googleCloudConfiguration.getDefaultCheckInWaitTimeMs()
+      );
     }
   }
 }

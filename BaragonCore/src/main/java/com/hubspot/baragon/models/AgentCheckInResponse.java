@@ -10,9 +10,11 @@ public class AgentCheckInResponse {
   private final long waitTime;
 
   @JsonCreator
-  public AgentCheckInResponse(@JsonProperty("state") TrafficSourceState state,
-                              @JsonProperty("exceptionMessage") Optional<String> exceptionMessage,
-                              @JsonProperty("waitTime") long waitTime) {
+  public AgentCheckInResponse(
+    @JsonProperty("state") TrafficSourceState state,
+    @JsonProperty("exceptionMessage") Optional<String> exceptionMessage,
+    @JsonProperty("waitTime") long waitTime
+  ) {
     this.state = state;
     this.exceptionMessage = exceptionMessage;
     this.waitTime = waitTime;
@@ -44,7 +46,11 @@ public class AgentCheckInResponse {
     if (waitTime != that.waitTime) {
       return false;
     }
-    if (exceptionMessage != null ? !exceptionMessage.equals(that.exceptionMessage) : that.exceptionMessage != null) {
+    if (
+      exceptionMessage != null
+        ? !exceptionMessage.equals(that.exceptionMessage)
+        : that.exceptionMessage != null
+    ) {
       return false;
     }
     return state == that.state;
@@ -60,10 +66,15 @@ public class AgentCheckInResponse {
 
   @Override
   public String toString() {
-    return "AgentCheckInResponse{" +
-        "exceptionMessage=" + exceptionMessage +
-        ", state=" + state +
-        ", waitTime=" + waitTime +
-        '}';
+    return (
+      "AgentCheckInResponse{" +
+      "exceptionMessage=" +
+      exceptionMessage +
+      ", state=" +
+      state +
+      ", waitTime=" +
+      waitTime +
+      '}'
+    );
   }
 }

@@ -11,7 +11,10 @@ public class AgentRequestId {
   public static AgentRequestId fromString(String value) {
     final String[] splits = value.split("\\-", 2);
 
-    return new AgentRequestId(AgentRequestType.valueOf(splits[0]), new String(BaseEncoding.base64Url().decode(splits[1]), Charsets.UTF_8));
+    return new AgentRequestId(
+      AgentRequestType.valueOf(splits[0]),
+      new String(BaseEncoding.base64Url().decode(splits[1]), Charsets.UTF_8)
+    );
   }
 
   private AgentRequestId(AgentRequestType type, String baseUrl) {
@@ -57,9 +60,10 @@ public class AgentRequestId {
 
   @Override
   public String toString() {
-    return MoreObjects.toStringHelper(this)
-        .add("type", type)
-        .add("baseUrl", baseUrl)
-        .toString();
+    return MoreObjects
+      .toStringHelper(this)
+      .add("type", type)
+      .add("baseUrl", baseUrl)
+      .toString();
   }
 }

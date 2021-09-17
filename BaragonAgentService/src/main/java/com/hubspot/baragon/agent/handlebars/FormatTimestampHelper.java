@@ -1,11 +1,10 @@
 package com.hubspot.baragon.agent.handlebars;
 
+import com.github.jknack.handlebars.Helper;
+import com.github.jknack.handlebars.Options;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
-
-import com.github.jknack.handlebars.Helper;
-import com.github.jknack.handlebars.Options;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,8 +27,14 @@ public class FormatTimestampHelper implements Helper<Number> {
     String dateFormatString;
     try {
       dateFormatString = options.param(0, defaultFormatString);
-    } catch (ClassCastException cce) {  // phorce.
-      LOG.warn(String.format("Date format %s isn't subclass of String, using default: %s", options.param(0), defaultFormatString));
+    } catch (ClassCastException cce) { // phorce.
+      LOG.warn(
+        String.format(
+          "Date format %s isn't subclass of String, using default: %s",
+          options.param(0),
+          defaultFormatString
+        )
+      );
       dateFormatString = defaultFormatString;
     }
 

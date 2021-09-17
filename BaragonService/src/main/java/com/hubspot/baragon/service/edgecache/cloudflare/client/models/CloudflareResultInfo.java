@@ -14,11 +14,13 @@ public class CloudflareResultInfo {
   private final Integer totalPages;
 
   @JsonCreator
-  public CloudflareResultInfo(@JsonProperty("page") Integer page,
-                              @JsonProperty("per_page") Integer perPage,
-                              @JsonProperty("count") Integer count,
-                              @JsonProperty("total_count") Integer totalCount,
-                              @JsonProperty("total_pages") Integer totalPages) {
+  public CloudflareResultInfo(
+    @JsonProperty("page") Integer page,
+    @JsonProperty("per_page") Integer perPage,
+    @JsonProperty("count") Integer count,
+    @JsonProperty("total_count") Integer totalCount,
+    @JsonProperty("total_pages") Integer totalPages
+  ) {
     this.page = page;
     this.perPage = perPage;
     this.count = count;
@@ -55,11 +57,13 @@ public class CloudflareResultInfo {
       return false;
     }
     CloudflareResultInfo that = (CloudflareResultInfo) o;
-    return Objects.equal(page, that.page) &&
-        Objects.equal(perPage, that.perPage) &&
-        Objects.equal(count, that.count) &&
-        Objects.equal(totalCount, that.totalCount) &&
-        Objects.equal(totalPages, that.totalPages);
+    return (
+      Objects.equal(page, that.page) &&
+      Objects.equal(perPage, that.perPage) &&
+      Objects.equal(count, that.count) &&
+      Objects.equal(totalCount, that.totalCount) &&
+      Objects.equal(totalPages, that.totalPages)
+    );
   }
 
   @Override
@@ -69,12 +73,19 @@ public class CloudflareResultInfo {
 
   @Override
   public String toString() {
-    return "CloudflareResultInfo{" +
-        "page=" + page +
-        ", perPage=" + perPage +
-        ", count=" + count +
-        ", totalCount=" + totalCount +
-        ", totalPages=" + totalPages +
-        '}';
+    return (
+      "CloudflareResultInfo{" +
+      "page=" +
+      page +
+      ", perPage=" +
+      perPage +
+      ", count=" +
+      count +
+      ", totalCount=" +
+      totalCount +
+      ", totalPages=" +
+      totalPages +
+      '}'
+    );
   }
 }

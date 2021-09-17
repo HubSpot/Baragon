@@ -1,15 +1,14 @@
 package com.hubspot.baragon.models;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.MoreObjects;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Map;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ServiceContext {
@@ -21,13 +20,16 @@ public class ServiceContext {
   private final boolean rootPath;
 
   @JsonCreator
-  public ServiceContext(@JsonProperty("service") BaragonService service,
-                        @JsonProperty("upstreams") Collection<UpstreamInfo> upstreams,
-                        @JsonProperty("timestamp") Long timestamp,
-                        @JsonProperty("present") boolean present) {
+  public ServiceContext(
+    @JsonProperty("service") BaragonService service,
+    @JsonProperty("upstreams") Collection<UpstreamInfo> upstreams,
+    @JsonProperty("timestamp") Long timestamp,
+    @JsonProperty("present") boolean present
+  ) {
     this.service = service;
     this.timestamp = timestamp;
-    this.upstreams = MoreObjects.firstNonNull(upstreams, Collections.<UpstreamInfo>emptyList());
+    this.upstreams =
+      MoreObjects.firstNonNull(upstreams, Collections.<UpstreamInfo>emptyList());
     this.present = present;
     this.rootPath = service.getServiceBasePath().equals("/");
 
@@ -108,12 +110,19 @@ public class ServiceContext {
 
   @Override
   public String toString() {
-    return "ServiceContext [" +
-        "service=" + service +
-        ", upstreams=" + upstreams +
-        ", timestamp=" + timestamp +
-        ", present=" + present +
-        ", rootPath=" + rootPath +
-        ']';
+    return (
+      "ServiceContext [" +
+      "service=" +
+      service +
+      ", upstreams=" +
+      upstreams +
+      ", timestamp=" +
+      timestamp +
+      ", present=" +
+      present +
+      ", rootPath=" +
+      rootPath +
+      ']'
+    );
   }
 }

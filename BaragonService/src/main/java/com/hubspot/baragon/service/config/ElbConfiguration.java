@@ -1,11 +1,10 @@
 package com.hubspot.baragon.service.config;
 
-import javax.validation.constraints.Min;
-import javax.validation.constraints.NotNull;
-
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Optional;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotNull;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ElbConfiguration {
@@ -185,15 +184,21 @@ public class ElbConfiguration {
     return awsElbClientBackoffBaseDelayMilliseconds;
   }
 
-  public void setAwsElbClientBackoffBaseDelayMilliseconds(int awsElbClientBackoffBaseDelayMilliseconds) {
-    this.awsElbClientBackoffBaseDelayMilliseconds = awsElbClientBackoffBaseDelayMilliseconds;
+  public void setAwsElbClientBackoffBaseDelayMilliseconds(
+    int awsElbClientBackoffBaseDelayMilliseconds
+  ) {
+    this.awsElbClientBackoffBaseDelayMilliseconds =
+      awsElbClientBackoffBaseDelayMilliseconds;
   }
 
   public int getAwsElbClientBackoffMaxBackoffMilliseconds() {
     return awsElbClientBackoffMaxBackoffMilliseconds;
   }
 
-  public void setAwsElbClientBackoffMaxBackoffMilliseconds(int awsElbClientBackoffMaxBackoffMilliseconds) {
-    this.awsElbClientBackoffMaxBackoffMilliseconds = awsElbClientBackoffMaxBackoffMilliseconds;
+  public void setAwsElbClientBackoffMaxBackoffMilliseconds(
+    int awsElbClientBackoffMaxBackoffMilliseconds
+  ) {
+    this.awsElbClientBackoffMaxBackoffMilliseconds =
+      awsElbClientBackoffMaxBackoffMilliseconds;
   }
 }

@@ -1,12 +1,5 @@
 package com.hubspot.baragon.service.edgecache.cloudflare;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.google.inject.Inject;
 import com.hubspot.baragon.models.BaragonRequest;
 import com.hubspot.baragon.service.config.EdgeCacheConfiguration;
@@ -15,6 +8,11 @@ import com.hubspot.baragon.service.edgecache.cloudflare.client.CloudflareClient;
 import com.hubspot.baragon.service.edgecache.cloudflare.client.CloudflareClientException;
 import com.hubspot.baragon.service.edgecache.cloudflare.client.models.CloudflareDnsRecord;
 import com.hubspot.baragon.service.edgecache.cloudflare.client.models.CloudflareZone;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * An implementation of a proxying edge cache backed by Cloudflare.
@@ -38,7 +36,10 @@ public class CloudflareEdgeCache implements EdgeCache {
   private final EdgeCacheConfiguration edgeCacheConfiguration;
 
   @Inject
-  public CloudflareEdgeCache(CloudflareClient cf, EdgeCacheConfiguration edgeCacheConfiguration) {
+  public CloudflareEdgeCache(
+    CloudflareClient cf,
+    EdgeCacheConfiguration edgeCacheConfiguration
+  ) {
     this.cf = cf;
     this.edgeCacheConfiguration = edgeCacheConfiguration;
   }
@@ -58,54 +59,77 @@ public class CloudflareEdgeCache implements EdgeCache {
         List<CloudflareZone> matchingZones = getCloudflareZone(edgeCacheDNS);
 
         if (matchingZones == null || matchingZones.isEmpty()) {
-          LOG.warn("`edgeCacheDNS` was defined on the request, but no matching Cloudflare Zone was found!");
+          LOG.warn(
+            "`edgeCacheDNS` was defined on the request, but no matching Cloudflare Zone was found!"
+          );
           return false;
         }
 
         for (CloudflareZone matchingZone : matchingZones) {
           String zoneId = matchingZone.getId();
-          Optional<CloudflareDnsRecord> matchingDnsRecord = getCloudflareDnsRecord(edgeCacheDNS, zoneId);
+          Optional<CloudflareDnsRecord> matchingDnsRecord = getCloudflareDnsRecord(
+            edgeCacheDNS,
+            zoneId
+          );
 
           if (!matchingDnsRecord.isPresent()) {
-            LOG.warn("`edgeCacheDNS` was defined on the request, but no matching Cloudflare DNS Record was found!");
+            LOG.warn(
+              "`edgeCacheDNS` was defined on the request, but no matching Cloudflare DNS Record was found!"
+            );
             return false;
           }
 
           if (!matchingDnsRecord.get().isProxied()) {
-            LOG.warn("`edgeCacheDNS` was defined on the request, but {} is not a proxied DNS record!", edgeCacheDNS);
+            LOG.warn(
+              "`edgeCacheDNS` was defined on the request, but {} is not a proxied DNS record!",
+              edgeCacheDNS
+            );
             return false;
           }
 
           String cacheTag = String.format(
-              edgeCacheConfiguration.getIntegrationSettings().get("cacheTagFormat"),
-              request.getLoadBalancerService().getServiceId()
+            edgeCacheConfiguration.getIntegrationSettings().get("cacheTagFormat"),
+            request.getLoadBalancerService().getServiceId()
           );
 
-          LOG.debug("Sending cache purge request against {} for {} to Cloudflare...", matchingDnsRecord.get().getName(), cacheTag);
+          LOG.debug(
+            "Sending cache purge request against {} for {} to Cloudflare...",
+            matchingDnsRecord.get().getName(),
+            cacheTag
+          );
 
-          allSucceeded = cf.purgeEdgeCache(zoneId, Collections.singletonList(cacheTag)) && allSucceeded;
+          allSucceeded =
+            cf.purgeEdgeCache(zoneId, Collections.singletonList(cacheTag)) &&
+            allSucceeded;
         }
       }
       return allSucceeded;
-
     } catch (Throwable t) {
       LOG.error("Unable to invalidate Cloudflare cache for request {}", request, t);
       return false;
     }
   }
 
-  private Optional<CloudflareDnsRecord> getCloudflareDnsRecord(String edgeCacheDNS, String zoneId) throws CloudflareClientException {
+  private Optional<CloudflareDnsRecord> getCloudflareDnsRecord(
+    String edgeCacheDNS,
+    String zoneId
+  )
+    throws CloudflareClientException {
     return Optional.ofNullable(cf.getDnsRecord(zoneId, edgeCacheDNS));
   }
 
-  private List<CloudflareZone> getCloudflareZone(String edgeCacheDNS) throws CloudflareClientException {
+  private List<CloudflareZone> getCloudflareZone(String edgeCacheDNS)
+    throws CloudflareClientException {
     String baseDomain = getBaseDomain(edgeCacheDNS);
     return cf.getZone(baseDomain);
   }
 
   private String getBaseDomain(String dns) {
     String[] domainTokens = dns.split("\\.");
-    return String.format("%s.%s", domainTokens[domainTokens.length - 2], domainTokens[domainTokens.length - 1]);
+    return String.format(
+      "%s.%s",
+      domainTokens[domainTokens.length - 2],
+      domainTokens[domainTokens.length - 1]
+    );
   }
-
 }

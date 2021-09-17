@@ -6,7 +6,11 @@ public class RequestAlreadyEnqueuedException extends Exception {
   private final String requestId;
   private final BaragonResponse response;
 
-  public RequestAlreadyEnqueuedException(String requestId, BaragonResponse response, String message) {
+  public RequestAlreadyEnqueuedException(
+    String requestId,
+    BaragonResponse response,
+    String message
+  ) {
     super(message);
     this.requestId = requestId;
     this.response = response;

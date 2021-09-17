@@ -2,7 +2,6 @@ package com.hubspot.baragon.client;
 
 @SuppressWarnings("serial")
 public class BaragonClientException extends RuntimeException {
-
   private int statusCode;
 
   public BaragonClientException() {

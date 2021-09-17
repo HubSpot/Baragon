@@ -1,15 +1,14 @@
 package com.hubspot.baragon.models;
 
-import java.util.List;
-import java.util.Objects;
-
 import com.amazonaws.util.EC2MetadataUtils;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Optional;
+import java.util.List;
+import java.util.Objects;
 
-@JsonIgnoreProperties( ignoreUnknown = true )
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class BaragonAgentEc2Metadata {
   private final Optional<String> instanceId;
   private final Optional<String> availabilityZone;
@@ -18,11 +17,13 @@ public class BaragonAgentEc2Metadata {
   private final Optional<String> privateIp;
 
   @JsonCreator
-  public BaragonAgentEc2Metadata(@JsonProperty("instanceId") Optional<String> instanceId,
-                                 @JsonProperty("availabilityZone") Optional<String> availabilityZone,
-                                 @JsonProperty("subnetId") Optional<String> subnetId,
-                                 @JsonProperty("vpcId") Optional<String> vpcId,
-                                 @JsonProperty("privateIp") Optional<String> privateIp) {
+  public BaragonAgentEc2Metadata(
+    @JsonProperty("instanceId") Optional<String> instanceId,
+    @JsonProperty("availabilityZone") Optional<String> availabilityZone,
+    @JsonProperty("subnetId") Optional<String> subnetId,
+    @JsonProperty("vpcId") Optional<String> vpcId,
+    @JsonProperty("privateIp") Optional<String> privateIp
+  ) {
     this.instanceId = instanceId;
     this.availabilityZone = availabilityZone;
     this.subnetId = subnetId;
@@ -30,13 +31,17 @@ public class BaragonAgentEc2Metadata {
     this.privateIp = privateIp;
   }
 
-  public static BaragonAgentEc2Metadata fromEnvironment(Optional<String> privateipOverride, boolean skipPrivateIp) {
+  public static BaragonAgentEc2Metadata fromEnvironment(
+    Optional<String> privateipOverride,
+    boolean skipPrivateIp
+  ) {
     return new BaragonAgentEc2Metadata(
       findInstanceId(),
       findAvailabilityZone(),
       findSubnet(),
       findVpc(),
-      skipPrivateIp ? Optional.absent() : privateipOverride.or(findPrivateIp()));
+      skipPrivateIp ? Optional.absent() : privateipOverride.or(findPrivateIp())
+    );
   }
 
   public static Optional<String> findInstanceId() {
@@ -120,11 +125,13 @@ public class BaragonAgentEc2Metadata {
     }
     if (obj instanceof BaragonAgentEc2Metadata) {
       final BaragonAgentEc2Metadata that = (BaragonAgentEc2Metadata) obj;
-      return Objects.equals(this.instanceId, that.instanceId) &&
-          Objects.equals(this.availabilityZone, that.availabilityZone) &&
-          Objects.equals(this.subnetId, that.subnetId) &&
-          Objects.equals(this.vpcId, that.vpcId) &&
-          Objects.equals(this.privateIp, that.privateIp);
+      return (
+        Objects.equals(this.instanceId, that.instanceId) &&
+        Objects.equals(this.availabilityZone, that.availabilityZone) &&
+        Objects.equals(this.subnetId, that.subnetId) &&
+        Objects.equals(this.vpcId, that.vpcId) &&
+        Objects.equals(this.privateIp, that.privateIp)
+      );
     }
     return false;
   }
@@ -136,12 +143,19 @@ public class BaragonAgentEc2Metadata {
 
   @Override
   public String toString() {
-    return "BaragonAgentEc2Metadata{" +
-        "instanceId=" + instanceId +
-        ", availabilityZone=" + availabilityZone +
-        ", subnetId=" + subnetId +
-        ", vpcId=" + vpcId +
-        ", privateIp=" + privateIp +
-        '}';
+    return (
+      "BaragonAgentEc2Metadata{" +
+      "instanceId=" +
+      instanceId +
+      ", availabilityZone=" +
+      availabilityZone +
+      ", subnetId=" +
+      subnetId +
+      ", vpcId=" +
+      vpcId +
+      ", privateIp=" +
+      privateIp +
+      '}'
+    );
   }
 }

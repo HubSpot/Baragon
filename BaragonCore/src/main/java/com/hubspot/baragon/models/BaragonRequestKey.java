@@ -52,9 +52,14 @@ public class BaragonRequestKey implements Comparable<BaragonRequestKey> {
 
   @Override
   public String toString() {
-    return "BaragonRequestKey{" +
-      "requestId='" + requestId + '\'' +
-      ", updatedAt=" + updatedAt +
-      '}';
+    return (
+      "BaragonRequestKey{" +
+      "requestId='" +
+      requestId +
+      '\'' +
+      ", updatedAt=" +
+      updatedAt +
+      '}'
+    );
   }
 }

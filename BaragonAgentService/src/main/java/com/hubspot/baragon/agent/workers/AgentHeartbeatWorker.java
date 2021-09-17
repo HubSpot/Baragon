@@ -11,9 +11,11 @@ public class AgentHeartbeatWorker implements Runnable {
   private final LoadBalancerConfiguration loadBalancerConfiguration;
 
   @Inject
-  public AgentHeartbeatWorker(BaragonKnownAgentsDatastore knownAgentsDatastore,
-                              BaragonAgentMetadata baragonAgentMetadata,
-                              LoadBalancerConfiguration loadBalancerConfiguration) {
+  public AgentHeartbeatWorker(
+    BaragonKnownAgentsDatastore knownAgentsDatastore,
+    BaragonAgentMetadata baragonAgentMetadata,
+    LoadBalancerConfiguration loadBalancerConfiguration
+  ) {
     this.knownAgentsDatastore = knownAgentsDatastore;
     this.baragonAgentMetadata = baragonAgentMetadata;
     this.loadBalancerConfiguration = loadBalancerConfiguration;
@@ -21,6 +23,10 @@ public class AgentHeartbeatWorker implements Runnable {
 
   @Override
   public void run() {
-    knownAgentsDatastore.updateKnownAgentLastSeenAt(loadBalancerConfiguration.getName(), baragonAgentMetadata.getAgentId(), System.currentTimeMillis());
+    knownAgentsDatastore.updateKnownAgentLastSeenAt(
+      loadBalancerConfiguration.getName(),
+      baragonAgentMetadata.getAgentId(),
+      System.currentTimeMillis()
+    );
   }
 }

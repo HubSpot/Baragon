@@ -12,9 +12,11 @@ public class BaragonRequestBatchItem {
   private final AgentRequestType requestType;
 
   @JsonCreator
-  public BaragonRequestBatchItem(@JsonProperty("requestId") String requestId,
-                                 @JsonProperty("requestAction") Optional<RequestAction> requestAction,
-                                 @JsonProperty("requestType") AgentRequestType requestType) {
+  public BaragonRequestBatchItem(
+    @JsonProperty("requestId") String requestId,
+    @JsonProperty("requestAction") Optional<RequestAction> requestAction,
+    @JsonProperty("requestType") AgentRequestType requestType
+  ) {
     this.requestId = requestId;
     this.requestAction = requestAction;
     this.requestType = requestType;
@@ -41,9 +43,11 @@ public class BaragonRequestBatchItem {
       return false;
     }
     BaragonRequestBatchItem that = (BaragonRequestBatchItem) o;
-    return Objects.equal(requestId, that.requestId) &&
+    return (
+      Objects.equal(requestId, that.requestId) &&
       Objects.equal(requestAction, that.requestAction) &&
-      requestType == that.requestType;
+      requestType == that.requestType
+    );
   }
 
   @Override
@@ -53,7 +57,8 @@ public class BaragonRequestBatchItem {
 
   @Override
   public String toString() {
-    return MoreObjects.toStringHelper(this)
+    return MoreObjects
+      .toStringHelper(this)
       .add("requestId", requestId)
       .add("requestAction", requestAction)
       .add("requestType", requestType)

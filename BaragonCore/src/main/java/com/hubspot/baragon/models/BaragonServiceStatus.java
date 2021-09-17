@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-@JsonIgnoreProperties( ignoreUnknown = true )
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class BaragonServiceStatus {
   private final boolean leader;
   private final int pendingRequestCount;
@@ -14,12 +14,14 @@ public class BaragonServiceStatus {
   private final long oldestPendingRequest;
 
   @JsonCreator
-  public BaragonServiceStatus(@JsonProperty("leader") boolean leader,
-                              @JsonProperty("pendingRequestCount") int pendingRequestCount,
-                              @JsonProperty("workerLagMs") long workerLagMs,
-                              @JsonProperty("elbWorkerLagMs") long elbWorkerLagMs,
-                              @JsonProperty("zookeeperState") String zookeeperState,
-                              @JsonProperty("oldestPendingRequest") Long oldestPendingRequest) {
+  public BaragonServiceStatus(
+    @JsonProperty("leader") boolean leader,
+    @JsonProperty("pendingRequestCount") int pendingRequestCount,
+    @JsonProperty("workerLagMs") long workerLagMs,
+    @JsonProperty("elbWorkerLagMs") long elbWorkerLagMs,
+    @JsonProperty("zookeeperState") String zookeeperState,
+    @JsonProperty("oldestPendingRequest") Long oldestPendingRequest
+  ) {
     this.leader = leader;
     this.pendingRequestCount = pendingRequestCount;
     this.workerLagMs = workerLagMs;
@@ -78,7 +80,9 @@ public class BaragonServiceStatus {
     if (oldestPendingRequest != that.oldestPendingRequest) {
       return false;
     }
-    return zookeeperState != null ? zookeeperState.equals(that.zookeeperState) : that.zookeeperState == null;
+    return zookeeperState != null
+      ? zookeeperState.equals(that.zookeeperState)
+      : that.zookeeperState == null;
   }
 
   @Override
@@ -94,13 +98,22 @@ public class BaragonServiceStatus {
 
   @Override
   public String toString() {
-    return "BaragonServiceStatus{" +
-        "leader=" + leader +
-        ", pendingRequestCount=" + pendingRequestCount +
-        ", workerLagMs=" + workerLagMs +
-        ", elbWorkerLagMs=" + elbWorkerLagMs +
-        ", zookeeperState='" + zookeeperState + '\'' +
-        ", oldestPendingRequest=" + oldestPendingRequest +
-        '}';
+    return (
+      "BaragonServiceStatus{" +
+      "leader=" +
+      leader +
+      ", pendingRequestCount=" +
+      pendingRequestCount +
+      ", workerLagMs=" +
+      workerLagMs +
+      ", elbWorkerLagMs=" +
+      elbWorkerLagMs +
+      ", zookeeperState='" +
+      zookeeperState +
+      '\'' +
+      ", oldestPendingRequest=" +
+      oldestPendingRequest +
+      '}'
+    );
   }
 }

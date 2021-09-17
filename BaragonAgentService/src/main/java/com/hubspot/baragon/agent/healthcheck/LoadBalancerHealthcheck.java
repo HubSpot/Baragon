@@ -1,16 +1,17 @@
 package com.hubspot.baragon.agent.healthcheck;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.codahale.metrics.health.HealthCheck;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.hubspot.baragon.agent.lbs.LocalLbAdapter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Singleton
 public class LoadBalancerHealthcheck extends HealthCheck {
-  private static final Logger LOG = LoggerFactory.getLogger(LoadBalancerHealthcheck.class);
+  private static final Logger LOG = LoggerFactory.getLogger(
+    LoadBalancerHealthcheck.class
+  );
 
   private final LocalLbAdapter adapter;
 

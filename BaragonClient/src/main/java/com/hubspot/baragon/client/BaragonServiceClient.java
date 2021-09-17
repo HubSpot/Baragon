@@ -2,18 +2,6 @@ package com.hubspot.baragon.client;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.stream.Collectors;
-
-import javax.inject.Provider;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
@@ -32,22 +20,37 @@ import com.hubspot.horizon.HttpClient;
 import com.hubspot.horizon.HttpRequest;
 import com.hubspot.horizon.HttpRequest.Method;
 import com.hubspot.horizon.HttpResponse;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.stream.Collectors;
+import javax.inject.Provider;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class BaragonServiceClient {
-
   private static final Logger LOG = LoggerFactory.getLogger(BaragonServiceClient.class);
 
   private static final String WORKERS_FORMAT = "%s/workers";
 
   private static final String LOAD_BALANCER_FORMAT = "%s/load-balancer";
-  private static final String LOAD_BALANCER_BASE_PATH_FORMAT = LOAD_BALANCER_FORMAT + "/%s/base-path";
-  private static final String LOAD_BALANCER_ALL_BASE_PATHS_FORMAT = LOAD_BALANCER_BASE_PATH_FORMAT + "/all";
-  private static final String LOAD_BALANCER_AGENTS_FORMAT = LOAD_BALANCER_FORMAT + "/%s/agents";
-  private static final String LOAD_BALANCER_KNOWN_AGENTS_FORMAT = LOAD_BALANCER_FORMAT + "/%s/known-agents";
-  private static final String LOAD_BALANCER_DELETE_KNOWN_AGENT_FORMAT = LOAD_BALANCER_KNOWN_AGENTS_FORMAT + "/%s";
+  private static final String LOAD_BALANCER_BASE_PATH_FORMAT =
+    LOAD_BALANCER_FORMAT + "/%s/base-path";
+  private static final String LOAD_BALANCER_ALL_BASE_PATHS_FORMAT =
+    LOAD_BALANCER_BASE_PATH_FORMAT + "/all";
+  private static final String LOAD_BALANCER_AGENTS_FORMAT =
+    LOAD_BALANCER_FORMAT + "/%s/agents";
+  private static final String LOAD_BALANCER_KNOWN_AGENTS_FORMAT =
+    LOAD_BALANCER_FORMAT + "/%s/known-agents";
+  private static final String LOAD_BALANCER_DELETE_KNOWN_AGENT_FORMAT =
+    LOAD_BALANCER_KNOWN_AGENTS_FORMAT + "/%s";
   private static final String LOAD_BALANCER_GROUP_FORMAT = LOAD_BALANCER_FORMAT + "/%s";
-  private static final String ALL_LOAD_BALANCER_GROUPS_FORMAT = LOAD_BALANCER_FORMAT + "/all";
-  private static final String LOAD_BALANCER_TRAFFIC_SOURCE_FORMAT = LOAD_BALANCER_GROUP_FORMAT + "/sources";
+  private static final String ALL_LOAD_BALANCER_GROUPS_FORMAT =
+    LOAD_BALANCER_FORMAT + "/all";
+  private static final String LOAD_BALANCER_TRAFFIC_SOURCE_FORMAT =
+    LOAD_BALANCER_GROUP_FORMAT + "/sources";
 
   private static final String REQUEST_FORMAT = "%s/request";
   private static final String REQUEST_ID_FORMAT = REQUEST_FORMAT + "/%s";
@@ -74,15 +77,31 @@ public class BaragonServiceClient {
 
   private final HttpClient httpClient;
 
-  public BaragonServiceClient(String contextPath, HttpClient httpClient, List<String> hosts, Optional<String> authkey) {
+  public BaragonServiceClient(
+    String contextPath,
+    HttpClient httpClient,
+    List<String> hosts,
+    Optional<String> authkey
+  ) {
     this(
-        httpClient,
-        ProviderUtils.of(ImmutableList.copyOf(hosts.stream().map((h) -> String.format("%s/%s", h, contextPath)).collect(Collectors.toList()))),
-        ProviderUtils.of(authkey)
+      httpClient,
+      ProviderUtils.of(
+        ImmutableList.copyOf(
+          hosts
+            .stream()
+            .map(h -> String.format("%s/%s", h, contextPath))
+            .collect(Collectors.toList())
+        )
+      ),
+      ProviderUtils.of(authkey)
     );
   }
 
-  public BaragonServiceClient(HttpClient httpClient, Provider<List<String>> baseUrlProvider, Provider<Optional<String>> authkeyProvider) {
+  public BaragonServiceClient(
+    HttpClient httpClient,
+    Provider<List<String>> baseUrlProvider,
+    Provider<Optional<String>> authkeyProvider
+  ) {
     this.httpClient = httpClient;
     this.baseUrlProvider = baseUrlProvider;
     this.authkeyProvider = authkeyProvider;
@@ -142,14 +161,29 @@ public class BaragonServiceClient {
       LOG.warn("Unable to read uri", e);
     }
 
-    throw new BaragonClientException(String.format("Failed '%s' action on Baragon (%s) - code: %s, %s", type, uri, response.getStatusCode(), body), response.getStatusCode());
+    throw new BaragonClientException(
+      String.format(
+        "Failed '%s' action on Baragon (%s) - code: %s, %s",
+        type,
+        uri,
+        response.getStatusCode(),
+        body
+      ),
+      response.getStatusCode()
+    );
   }
 
   private <T> Optional<T> getSingle(String uri, String type, String id, Class<T> clazz) {
     return getSingle(uri, type, id, clazz, null);
   }
 
-  private <T> Optional<T> getSingle(String uri, String type, String id, Class<T> clazz, Map<String, String> queryParams) {
+  private <T> Optional<T> getSingle(
+    String uri,
+    String type,
+    String id,
+    Class<T> clazz,
+    Map<String, String> queryParams
+  ) {
     checkNotNull(id, String.format("Provide a %s id", type));
     LOG.debug("Getting {} {} from {}", type, id, uri);
     final long start = System.currentTimeMillis();
@@ -165,7 +199,11 @@ public class BaragonServiceClient {
     return Optional.fromNullable(response.getAs(clazz));
   }
 
-  private <T> Collection<T> getCollection(String uri, String type, TypeReference<Collection<T>> typeReference) {
+  private <T> Collection<T> getCollection(
+    String uri,
+    String type,
+    TypeReference<Collection<T>> typeReference
+  ) {
     LOG.debug("Getting all {} from {}", type, uri);
     final long start = System.currentTimeMillis();
 
@@ -180,11 +218,22 @@ public class BaragonServiceClient {
     return response.getAs(typeReference);
   }
 
-  private <T> void delete(String uri, String type, String id, Map<String, String> queryParams) {
+  private <T> void delete(
+    String uri,
+    String type,
+    String id,
+    Map<String, String> queryParams
+  ) {
     delete(uri, type, id, queryParams, Optional.<Class<T>>absent());
   }
 
-  private <T> Optional<T> delete(String uri, String type, String id, Map<String, String> queryParams, Optional<Class<T>> clazz) {
+  private <T> Optional<T> delete(
+    String uri,
+    String type,
+    String id,
+    Map<String, String> queryParams,
+    Optional<Class<T>> clazz
+  ) {
     LOG.debug("Deleting {} {} from {}", type, id, uri);
     final long start = System.currentTimeMillis();
     HttpRequest.Builder request = buildRequest(uri, queryParams).setMethod(Method.DELETE);
@@ -196,7 +245,12 @@ public class BaragonServiceClient {
     }
 
     checkResponse(type, response);
-    LOG.debug("Deleted {} ({}) from Baragon in %sms", type, id, System.currentTimeMillis() - start);
+    LOG.debug(
+      "Deleted {} ({}) from Baragon in %sms",
+      type,
+      id,
+      System.currentTimeMillis() - start
+    );
 
     if (clazz.isPresent()) {
       return Optional.of(response.getAs(clazz.get()));
@@ -205,11 +259,22 @@ public class BaragonServiceClient {
     return Optional.absent();
   }
 
-  private <T> Optional<T> post(String uri, String type, Optional<?> body, Optional<Class<T>> clazz) {
+  private <T> Optional<T> post(
+    String uri,
+    String type,
+    Optional<?> body,
+    Optional<Class<T>> clazz
+  ) {
     return post(uri, type, body, clazz, Collections.<String, String>emptyMap());
   }
 
-  private <T> Optional<T> post(String uri, String type, Optional<?> body, Optional<Class<T>> clazz, Map<String, String> queryParams) {
+  private <T> Optional<T> post(
+    String uri,
+    String type,
+    Optional<?> body,
+    Optional<Class<T>> clazz,
+    Map<String, String> queryParams
+  ) {
     try {
       HttpResponse response = post(uri, type, body, queryParams);
 
@@ -223,7 +288,12 @@ public class BaragonServiceClient {
     return Optional.absent();
   }
 
-  private HttpResponse post(String uri, String type, Optional<?> body, Map<String, String> params) {
+  private HttpResponse post(
+    String uri,
+    String type,
+    Optional<?> body,
+    Map<String, String> params
+  ) {
     LOG.debug("Posting {} to {}", type, uri);
     final long start = System.currentTimeMillis();
     HttpRequest.Builder request = buildRequest(uri, params).setMethod(Method.POST);
@@ -238,7 +308,12 @@ public class BaragonServiceClient {
     return response;
   }
 
-  private <T> Optional<T> put(String uri, String type, Optional<Class<T>> clazz, Map<String, String> queryParams) {
+  private <T> Optional<T> put(
+    String uri,
+    String type,
+    Optional<Class<T>> clazz,
+    Map<String, String> queryParams
+  ) {
     try {
       HttpResponse response = put(uri, type, queryParams);
 
@@ -273,7 +348,6 @@ public class BaragonServiceClient {
     return getBaragonServiceStatus(getBaseUrl());
   }
 
-
   // BaragonService service states
 
   public Collection<BaragonServiceState> getGlobalState() {
@@ -288,14 +362,24 @@ public class BaragonServiceClient {
 
   public Optional<BaragonResponse> deleteService(String serviceId) {
     final String uri = String.format(STATE_SERVICE_ID_FORMAT, getBaseUrl(), serviceId);
-    return delete(uri, "service state", serviceId, Collections.emptyMap(), Optional.of(BaragonResponse.class));
+    return delete(
+      uri,
+      "service state",
+      serviceId,
+      Collections.emptyMap(),
+      Optional.of(BaragonResponse.class)
+    );
   }
 
-  public Optional<BaragonResponse> reloadServiceConfigs(String serviceId){
+  public Optional<BaragonResponse> reloadServiceConfigs(String serviceId) {
     final String uri = String.format(STATE_RELOAD_FORMAT, getBaseUrl(), serviceId);
-    return post(uri, "service reload",Optional.absent(), Optional.of(BaragonResponse.class));
+    return post(
+      uri,
+      "service reload",
+      Optional.absent(),
+      Optional.of(BaragonResponse.class)
+    );
   }
-
 
   // BaragonService Workers
 
@@ -303,7 +387,6 @@ public class BaragonServiceClient {
     final String requestUri = String.format(WORKERS_FORMAT, getBaseUrl());
     return getCollection(requestUri, "baragon service workers", STRING_COLLECTION);
   }
-
 
   // BaragonService load balancer group actions
 
@@ -313,57 +396,141 @@ public class BaragonServiceClient {
   }
 
   public Collection<BaragonGroup> getAllLoadBalancerGroups() {
-    final String requestUri = String.format(ALL_LOAD_BALANCER_GROUPS_FORMAT, getBaseUrl());
+    final String requestUri = String.format(
+      ALL_LOAD_BALANCER_GROUPS_FORMAT,
+      getBaseUrl()
+    );
     return getCollection(requestUri, "load balancer groups", BARAGON_GROUP_COLLECTION);
   }
 
-  public Collection<BaragonAgentMetadata> getLoadBalancerGroupAgentMetadata(String loadBalancerGroupName) {
-    final String requestUri = String.format(LOAD_BALANCER_AGENTS_FORMAT, getBaseUrl(), loadBalancerGroupName);
-    return getCollection(requestUri, "load balancer agent metadata", BARAGON_AGENTS_COLLECTION);
+  public Collection<BaragonAgentMetadata> getLoadBalancerGroupAgentMetadata(
+    String loadBalancerGroupName
+  ) {
+    final String requestUri = String.format(
+      LOAD_BALANCER_AGENTS_FORMAT,
+      getBaseUrl(),
+      loadBalancerGroupName
+    );
+    return getCollection(
+      requestUri,
+      "load balancer agent metadata",
+      BARAGON_AGENTS_COLLECTION
+    );
   }
 
-  public Collection<BaragonAgentMetadata> getLoadBalancerGroupKnownAgentMetadata(String loadBalancerGroupName) {
-    final String requestUri = String.format(LOAD_BALANCER_KNOWN_AGENTS_FORMAT, getBaseUrl(), loadBalancerGroupName);
-    return getCollection(requestUri, "load balancer known agent metadata", BARAGON_AGENTS_COLLECTION);
+  public Collection<BaragonAgentMetadata> getLoadBalancerGroupKnownAgentMetadata(
+    String loadBalancerGroupName
+  ) {
+    final String requestUri = String.format(
+      LOAD_BALANCER_KNOWN_AGENTS_FORMAT,
+      getBaseUrl(),
+      loadBalancerGroupName
+    );
+    return getCollection(
+      requestUri,
+      "load balancer known agent metadata",
+      BARAGON_AGENTS_COLLECTION
+    );
   }
 
-  public void deleteLoadBalancerGroupKnownAgent(String loadBalancerGroupName, String agentId) {
-    final String requestUri = String.format(LOAD_BALANCER_DELETE_KNOWN_AGENT_FORMAT, getBaseUrl(), loadBalancerGroupName, agentId);
+  public void deleteLoadBalancerGroupKnownAgent(
+    String loadBalancerGroupName,
+    String agentId
+  ) {
+    final String requestUri = String.format(
+      LOAD_BALANCER_DELETE_KNOWN_AGENT_FORMAT,
+      getBaseUrl(),
+      loadBalancerGroupName,
+      agentId
+    );
     delete(requestUri, "known agent", agentId, Collections.<String, String>emptyMap());
   }
 
   public BaragonGroup addTrafficSource(String loadBalancerGroupName, String source) {
-    final String requestUri = String.format(LOAD_BALANCER_TRAFFIC_SOURCE_FORMAT, getBaseUrl(), loadBalancerGroupName);
-    return post(requestUri, "add source", Optional.absent(), Optional.of(BaragonGroup.class), ImmutableMap.of("source", source)).get();
+    final String requestUri = String.format(
+      LOAD_BALANCER_TRAFFIC_SOURCE_FORMAT,
+      getBaseUrl(),
+      loadBalancerGroupName
+    );
+    return post(
+        requestUri,
+        "add source",
+        Optional.absent(),
+        Optional.of(BaragonGroup.class),
+        ImmutableMap.of("source", source)
+      )
+      .get();
   }
 
-  public Optional<BaragonGroup> removeTrafficSource(String loadBalancerGroupName, String source) {
-    final String requestUri = String.format(LOAD_BALANCER_TRAFFIC_SOURCE_FORMAT, getBaseUrl(), loadBalancerGroupName);
-    return delete(requestUri, "remove source", source, ImmutableMap.of("source", source), Optional.of(BaragonGroup.class));
+  public Optional<BaragonGroup> removeTrafficSource(
+    String loadBalancerGroupName,
+    String source
+  ) {
+    final String requestUri = String.format(
+      LOAD_BALANCER_TRAFFIC_SOURCE_FORMAT,
+      getBaseUrl(),
+      loadBalancerGroupName
+    );
+    return delete(
+      requestUri,
+      "remove source",
+      source,
+      ImmutableMap.of("source", source),
+      Optional.of(BaragonGroup.class)
+    );
   }
 
   public Optional<BaragonGroup> getGroupDetail(String loadBalancerGroupName) {
-    final String requestUri = String.format(LOAD_BALANCER_GROUP_FORMAT, getBaseUrl(), loadBalancerGroupName);
-    return getSingle(requestUri, "group detail", loadBalancerGroupName, BaragonGroup.class);
+    final String requestUri = String.format(
+      LOAD_BALANCER_GROUP_FORMAT,
+      getBaseUrl(),
+      loadBalancerGroupName
+    );
+    return getSingle(
+      requestUri,
+      "group detail",
+      loadBalancerGroupName,
+      BaragonGroup.class
+    );
   }
 
   // BaragonService base path actions
 
   public Collection<String> getOccupiedBasePaths(String loadBalancerGroupName) {
-    final String requestUri = String.format(LOAD_BALANCER_ALL_BASE_PATHS_FORMAT, getBaseUrl(), loadBalancerGroupName);
+    final String requestUri = String.format(
+      LOAD_BALANCER_ALL_BASE_PATHS_FORMAT,
+      getBaseUrl(),
+      loadBalancerGroupName
+    );
     return getCollection(requestUri, "occupied base paths", STRING_COLLECTION);
   }
 
-  public Optional<BaragonService> getServiceForBasePath(String loadBalancerGroupName, String basePath) {
-    final String requestUri = String.format(LOAD_BALANCER_BASE_PATH_FORMAT, getBaseUrl(), loadBalancerGroupName);
-    return getSingle(requestUri, "service for base path", "", BaragonService.class, ImmutableMap.of("basePath", basePath));
+  public Optional<BaragonService> getServiceForBasePath(
+    String loadBalancerGroupName,
+    String basePath
+  ) {
+    final String requestUri = String.format(
+      LOAD_BALANCER_BASE_PATH_FORMAT,
+      getBaseUrl(),
+      loadBalancerGroupName
+    );
+    return getSingle(
+      requestUri,
+      "service for base path",
+      "",
+      BaragonService.class,
+      ImmutableMap.of("basePath", basePath)
+    );
   }
 
   public void clearBasePath(String loadBalancerGroupName, String basePath) {
-    final String requestUri = String.format(LOAD_BALANCER_BASE_PATH_FORMAT, getBaseUrl(), loadBalancerGroupName);
+    final String requestUri = String.format(
+      LOAD_BALANCER_BASE_PATH_FORMAT,
+      getBaseUrl(),
+      loadBalancerGroupName
+    );
     delete(requestUri, "base path", "", ImmutableMap.of("basePath", basePath));
   }
-
 
   // BaragonService request actions
 
@@ -379,22 +546,53 @@ public class BaragonServiceClient {
 
   public Optional<BaragonResponse> cancelRequest(String requestId) {
     final String uri = String.format(REQUEST_ID_FORMAT, getBaseUrl(), requestId);
-    return delete(uri, "request", requestId, Collections.<String, String>emptyMap(), Optional.of(BaragonResponse.class));
+    return delete(
+      uri,
+      "request",
+      requestId,
+      Collections.<String, String>emptyMap(),
+      Optional.of(BaragonResponse.class)
+    );
   }
 
-  public Optional<BaragonResponse> addUpstream(String serviceId, UpstreamInfo upstreamInfo) {
+  public Optional<BaragonResponse> addUpstream(
+    String serviceId,
+    UpstreamInfo upstreamInfo
+  ) {
     final String uri = String.format(UPSTREAM_REQUEST_FORMAT, getBaseUrl(), serviceId);
-    return put(uri, "upstream-add", Optional.of(BaragonResponse.class), ImmutableMap.of("upstream", upstreamInfo.toPath()));
+    return put(
+      uri,
+      "upstream-add",
+      Optional.of(BaragonResponse.class),
+      ImmutableMap.of("upstream", upstreamInfo.toPath())
+    );
   }
 
-  public Optional<BaragonResponse> setUpstreams(String serviceId, List<UpstreamInfo> upstreamInfo) {
+  public Optional<BaragonResponse> setUpstreams(
+    String serviceId,
+    List<UpstreamInfo> upstreamInfo
+  ) {
     final String uri = String.format(UPSTREAM_REQUEST_FORMAT, getBaseUrl(), serviceId);
-    return post(uri, "upstream-add", Optional.of(upstreamInfo), Optional.of(BaragonResponse.class));
+    return post(
+      uri,
+      "upstream-add",
+      Optional.of(upstreamInfo),
+      Optional.of(BaragonResponse.class)
+    );
   }
 
-  public Optional<BaragonResponse> removeUpstream(String serviceId, UpstreamInfo upstreamInfo) {
+  public Optional<BaragonResponse> removeUpstream(
+    String serviceId,
+    UpstreamInfo upstreamInfo
+  ) {
     final String uri = String.format(UPSTREAM_REQUEST_FORMAT, getBaseUrl(), serviceId);
-    return delete(uri, "upstream-remove", serviceId, ImmutableMap.of("upstream", upstreamInfo.toPath()), Optional.of(BaragonResponse.class));
+    return delete(
+      uri,
+      "upstream-remove",
+      serviceId,
+      ImmutableMap.of("upstream", upstreamInfo.toPath()),
+      Optional.of(BaragonResponse.class)
+    );
   }
 
   // BaragonService queued request actions

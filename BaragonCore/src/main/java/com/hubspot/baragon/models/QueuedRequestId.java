@@ -6,7 +6,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.MoreObjects;
 
-@JsonIgnoreProperties( ignoreUnknown = true )
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class QueuedRequestId {
   private final String serviceId;
   private final String requestId;
@@ -19,9 +19,11 @@ public class QueuedRequestId {
   }
 
   @JsonCreator
-  public QueuedRequestId(@JsonProperty("serviceId") String serviceId,
-                         @JsonProperty("requestId") String requestId,
-                         @JsonProperty("index") int index) {
+  public QueuedRequestId(
+    @JsonProperty("serviceId") String serviceId,
+    @JsonProperty("requestId") String requestId,
+    @JsonProperty("index") int index
+  ) {
     this.serviceId = serviceId;
     this.requestId = requestId;
     this.index = index;
@@ -62,7 +64,6 @@ public class QueuedRequestId {
       return false;
     }
     return requestId != null ? requestId.equals(that.requestId) : that.requestId == null;
-
   }
 
   @Override
@@ -75,10 +76,11 @@ public class QueuedRequestId {
 
   @Override
   public String toString() {
-    return MoreObjects.toStringHelper(this)
-        .add("serviceId", serviceId)
-        .add("requestId", requestId)
-        .add("index", index)
-        .toString();
+    return MoreObjects
+      .toStringHelper(this)
+      .add("serviceId", serviceId)
+      .add("requestId", requestId)
+      .add("index", index)
+      .toString();
   }
 }

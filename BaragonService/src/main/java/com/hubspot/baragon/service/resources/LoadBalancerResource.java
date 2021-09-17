@@ -1,21 +1,5 @@
 package com.hubspot.baragon.service.resources;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
-
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.MediaType;
-
 import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
@@ -32,6 +16,20 @@ import com.hubspot.baragon.models.RegisterBy;
 import com.hubspot.baragon.models.TrafficSource;
 import com.hubspot.baragon.models.TrafficSourceType;
 import com.hubspot.baragon.service.config.BaragonConfiguration;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.MediaType;
 
 @Path("/load-balancer")
 @Produces(MediaType.APPLICATION_JSON)
@@ -44,11 +42,13 @@ public class LoadBalancerResource {
   private final BaragonAliasDatastore aliasDatastore;
 
   @Inject
-  public LoadBalancerResource(BaragonLoadBalancerDatastore loadBalancerDatastore,
-                              BaragonKnownAgentsDatastore knownAgentsDatastore,
-                              BaragonStateDatastore stateDatastore,
-                              BaragonConfiguration configuration,
-                              BaragonAliasDatastore aliasDatastore) {
+  public LoadBalancerResource(
+    BaragonLoadBalancerDatastore loadBalancerDatastore,
+    BaragonKnownAgentsDatastore knownAgentsDatastore,
+    BaragonStateDatastore stateDatastore,
+    BaragonConfiguration configuration,
+    BaragonAliasDatastore aliasDatastore
+  ) {
     this.loadBalancerDatastore = loadBalancerDatastore;
     this.knownAgentsDatastore = knownAgentsDatastore;
     this.stateDatastore = stateDatastore;
@@ -75,42 +75,64 @@ public class LoadBalancerResource {
   @GET
   @NoAuth
   @Path("/{clusterName}")
-  public Optional<BaragonGroup> getGroupDetail(@PathParam("clusterName") String clusterName) {
+  public Optional<BaragonGroup> getGroupDetail(
+    @PathParam("clusterName") String clusterName
+  ) {
     return loadBalancerDatastore.getLoadBalancerGroup(clusterName);
   }
 
   @POST
   @Path("/{clusterName}/sources")
   @Deprecated
-  public BaragonGroup addSource(@PathParam("clusterName") String clusterName, @QueryParam("source") String source) {
-    TrafficSource trafficSource = new TrafficSource(source, TrafficSourceType.CLASSIC, RegisterBy.INSTANCE_ID);
+  public BaragonGroup addSource(
+    @PathParam("clusterName") String clusterName,
+    @QueryParam("source") String source
+  ) {
+    TrafficSource trafficSource = new TrafficSource(
+      source,
+      TrafficSourceType.CLASSIC,
+      RegisterBy.INSTANCE_ID
+    );
     return loadBalancerDatastore.addSourceToGroup(clusterName, trafficSource);
   }
 
   @DELETE
   @Path("/{clusterName}/sources")
   @Deprecated
-  public Optional<BaragonGroup> removeSource(@PathParam("clusterName") String clusterName, @QueryParam("source") String source) {
-    return loadBalancerDatastore.removeSourceFromGroup(clusterName, new TrafficSource(source, TrafficSourceType.CLASSIC, RegisterBy.INSTANCE_ID));
+  public Optional<BaragonGroup> removeSource(
+    @PathParam("clusterName") String clusterName,
+    @QueryParam("source") String source
+  ) {
+    return loadBalancerDatastore.removeSourceFromGroup(
+      clusterName,
+      new TrafficSource(source, TrafficSourceType.CLASSIC, RegisterBy.INSTANCE_ID)
+    );
   }
 
   @POST
   @Path("/{clusterName}/traffic-source")
-  public BaragonGroup addTrafficSource(@PathParam("clusterName") String clusterName,
-                                       @NotNull @Valid TrafficSource trafficSource) {
+  public BaragonGroup addTrafficSource(
+    @PathParam("clusterName") String clusterName,
+    @NotNull @Valid TrafficSource trafficSource
+  ) {
     return loadBalancerDatastore.addSourceToGroup(clusterName, trafficSource);
   }
 
   @DELETE
   @Path("/{clusterName}/traffic-source")
-  public Optional<BaragonGroup> removeTrafficSource(@PathParam("clusterName") String clusterName,
-                                                    @NotNull @Valid TrafficSource trafficSource) {
+  public Optional<BaragonGroup> removeTrafficSource(
+    @PathParam("clusterName") String clusterName,
+    @NotNull @Valid TrafficSource trafficSource
+  ) {
     return loadBalancerDatastore.removeSourceFromGroup(clusterName, trafficSource);
   }
 
   @POST
   @Path("/{clusterName}/count")
-  public Integer setTargetCount(@PathParam("clusterName") String clusterName, @QueryParam("count") int count) {
+  public Integer setTargetCount(
+    @PathParam("clusterName") String clusterName,
+    @QueryParam("count") int count
+  ) {
     return loadBalancerDatastore.setTargetCount(clusterName, count);
   }
 
@@ -118,7 +140,9 @@ public class LoadBalancerResource {
   @NoAuth
   @Path("/{clusterName}/count")
   public Integer getTargetCount(@PathParam("clusterName") String clusterName) {
-    return loadBalancerDatastore.getTargetCount(clusterName).or(configuration.getDefaultTargetAgentCount());
+    return loadBalancerDatastore
+      .getTargetCount(clusterName)
+      .or(configuration.getDefaultTargetAgentCount());
   }
 
   @GET
@@ -126,8 +150,12 @@ public class LoadBalancerResource {
   @Path("/{clusterName}/hosts")
   @Deprecated
   public Collection<String> getHosts(@PathParam("clusterName") String clusterName) {
-    final Collection<BaragonAgentMetadata> agentMetadatas = loadBalancerDatastore.getAgentMetadata(clusterName);
-    final Collection<String> baseUris = Lists.newArrayListWithCapacity(agentMetadatas.size());
+    final Collection<BaragonAgentMetadata> agentMetadatas = loadBalancerDatastore.getAgentMetadata(
+      clusterName
+    );
+    final Collection<String> baseUris = Lists.newArrayListWithCapacity(
+      agentMetadatas.size()
+    );
 
     for (BaragonAgentMetadata agentMetadata : agentMetadatas) {
       baseUris.add(agentMetadata.getBaseAgentUri());
@@ -139,20 +167,27 @@ public class LoadBalancerResource {
   @GET
   @NoAuth
   @Path("/{clusterName}/agents")
-  public Collection<BaragonAgentMetadata> getAgentMetadata(@PathParam("clusterName") String clusterName) {
+  public Collection<BaragonAgentMetadata> getAgentMetadata(
+    @PathParam("clusterName") String clusterName
+  ) {
     return loadBalancerDatastore.getAgentMetadata(clusterName);
   }
 
   @GET
   @NoAuth
   @Path("/{clusterName}/known-agents")
-  public Collection<BaragonKnownAgentMetadata> getKnownAgentsMetadata(@PathParam("clusterName") String clusterName) {
+  public Collection<BaragonKnownAgentMetadata> getKnownAgentsMetadata(
+    @PathParam("clusterName") String clusterName
+  ) {
     return knownAgentsDatastore.getKnownAgentsMetadata(clusterName);
   }
 
   @DELETE
   @Path("/{clusterName}/known-agents/{agentId}")
-  public void deleteKnownAgent(@PathParam("clusterName") String clusterName, @PathParam("agentId") String agentId) {
+  public void deleteKnownAgent(
+    @PathParam("clusterName") String clusterName,
+    @PathParam("agentId") String agentId
+  ) {
     knownAgentsDatastore.removeKnownAgent(clusterName, agentId);
   }
 
@@ -166,8 +201,14 @@ public class LoadBalancerResource {
   @GET
   @NoAuth
   @Path("/{clusterName}/base-path")
-  public Optional<BaragonService> getBasePathServiceId(@PathParam("clusterName") String clusterName, @QueryParam("basePath") String basePath) {
-    final Optional<String> maybeServiceId = loadBalancerDatastore.getBasePathServiceId(clusterName, basePath);
+  public Optional<BaragonService> getBasePathServiceId(
+    @PathParam("clusterName") String clusterName,
+    @QueryParam("basePath") String basePath
+  ) {
+    final Optional<String> maybeServiceId = loadBalancerDatastore.getBasePathServiceId(
+      clusterName,
+      basePath
+    );
 
     if (!maybeServiceId.isPresent()) {
       return Optional.absent();
@@ -178,7 +219,10 @@ public class LoadBalancerResource {
 
   @DELETE
   @Path("/{clusterName}/base-path")
-  public void clearBasePath(@PathParam("clusterName") String clusterName, @QueryParam("basePath") String basePath) {
+  public void clearBasePath(
+    @PathParam("clusterName") String clusterName,
+    @QueryParam("basePath") String basePath
+  ) {
     loadBalancerDatastore.clearBasePath(clusterName, basePath);
   }
 }

@@ -1,11 +1,9 @@
 package com.hubspot.baragon.service.edgecache.cloudflare.client.models;
 
-
-import java.util.List;
-
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.google.common.base.Objects;
+import java.util.List;
 
 @JsonInclude(Include.NON_EMPTY)
 public class CloudflarePurgeRequest {
@@ -36,8 +34,10 @@ public class CloudflarePurgeRequest {
     }
 
     CloudflarePurgeRequest that = (CloudflarePurgeRequest) o;
-    return java.util.Objects.equals(files, that.files) &&
-        java.util.Objects.equals(tags, that.tags);
+    return (
+      java.util.Objects.equals(files, that.files) &&
+      java.util.Objects.equals(tags, that.tags)
+    );
   }
 
   @Override
@@ -47,9 +47,6 @@ public class CloudflarePurgeRequest {
 
   @Override
   public String toString() {
-    return "CloudflarePurgeRequest{" +
-        "files=" + files +
-        ", tags=" + tags +
-        '}';
+    return "CloudflarePurgeRequest{" + "files=" + files + ", tags=" + tags + '}';
   }
 }

@@ -1,32 +1,6 @@
 package com.hubspot.baragon.agent.managed;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.locks.ReentrantLock;
-
-import org.apache.commons.lang3.tuple.Pair;
-import org.apache.curator.framework.recipes.leader.LeaderLatch;
-import org.eclipse.jetty.server.Server;
-import org.slf4j.ILoggerFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import ch.qos.logback.classic.LoggerContext;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.github.rholder.retry.Retryer;
 import com.github.rholder.retry.RetryerBuilder;
@@ -60,9 +34,32 @@ import com.hubspot.horizon.HttpRequest;
 import com.hubspot.horizon.HttpRequest.Method;
 import com.hubspot.horizon.HttpResponse;
 import com.hubspot.horizon.ning.NingHttpClient;
-
-import ch.qos.logback.classic.LoggerContext;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.ReentrantLock;
+import org.apache.commons.lang3.tuple.Pair;
+import org.apache.curator.framework.recipes.leader.LeaderLatch;
+import org.eclipse.jetty.server.Server;
+import org.slf4j.ILoggerFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class LifecycleHelper {
   private static final Logger LOG = LoggerFactory.getLogger(LifecycleHelper.class);
@@ -87,20 +84,26 @@ public class LifecycleHelper {
   private final AtomicInteger bootstrapStateNodeVersion = new AtomicInteger(0);
 
   @Inject
-  public LifecycleHelper(BaragonWorkerDatastore workerDatastore,
-                         BaragonAuthDatastore authDatastore,
-                         BaragonAgentConfiguration configuration,
-                         BaragonAgentMetadata baragonAgentMetadata,
-                         FilesystemConfigHelper configHelper,
-                         BaragonStateDatastore stateDatastore,
-                         ServerProvider serverProvider,
-                         AtomicReference<BaragonAgentState> agentState,
-                         @Named(BaragonAgentServiceModule.BARAGON_AGENT_HTTP_CLIENT) NingHttpClient httpClient,
-                         @Named(BaragonAgentServiceModule.AGENT_SCHEDULED_EXECUTOR) ScheduledExecutorService executorService,
-                         @Named(BaragonAgentServiceModule.AGENT_LEADER_LATCH) LeaderLatch leaderLatch,
-                         @Named(BaragonAgentServiceModule.AGENT_LOCK) ReentrantLock agentLock,
-                         @Named(BaragonAgentServiceModule.AGENT_LOCK_TIMEOUT_MS) long agentLockTimeoutMs,
-                         @Named(BaragonAgentServiceModule.INTERNAL_STATE_CACHE) Map<String, BasicServiceContext> internalStateCache) {
+  public LifecycleHelper(
+    BaragonWorkerDatastore workerDatastore,
+    BaragonAuthDatastore authDatastore,
+    BaragonAgentConfiguration configuration,
+    BaragonAgentMetadata baragonAgentMetadata,
+    FilesystemConfigHelper configHelper,
+    BaragonStateDatastore stateDatastore,
+    ServerProvider serverProvider,
+    AtomicReference<BaragonAgentState> agentState,
+    @Named(BaragonAgentServiceModule.BARAGON_AGENT_HTTP_CLIENT) NingHttpClient httpClient,
+    @Named(
+      BaragonAgentServiceModule.AGENT_SCHEDULED_EXECUTOR
+    ) ScheduledExecutorService executorService,
+    @Named(BaragonAgentServiceModule.AGENT_LEADER_LATCH) LeaderLatch leaderLatch,
+    @Named(BaragonAgentServiceModule.AGENT_LOCK) ReentrantLock agentLock,
+    @Named(BaragonAgentServiceModule.AGENT_LOCK_TIMEOUT_MS) long agentLockTimeoutMs,
+    @Named(
+      BaragonAgentServiceModule.INTERNAL_STATE_CACHE
+    ) Map<String, BasicServiceContext> internalStateCache
+  ) {
     this.workerDatastore = workerDatastore;
     this.authDatastore = authDatastore;
     this.configuration = configuration;
@@ -119,15 +122,24 @@ public class LifecycleHelper {
 
   public void notifyService(String action) throws Exception {
     long start = System.currentTimeMillis();
-    Retryer<AgentCheckInResponse> retryer = RetryerBuilder.<AgentCheckInResponse>newBuilder()
-        .retryIfException()
-        .withStopStrategy(StopStrategies.stopAfterAttempt(configuration.getMaxNotifyServiceAttempts()))
-        .withWaitStrategy(WaitStrategies.exponentialWait(1, TimeUnit.SECONDS))
-        .build();
+    Retryer<AgentCheckInResponse> retryer = RetryerBuilder
+      .<AgentCheckInResponse>newBuilder()
+      .retryIfException()
+      .withStopStrategy(
+        StopStrategies.stopAfterAttempt(configuration.getMaxNotifyServiceAttempts())
+      )
+      .withWaitStrategy(WaitStrategies.exponentialWait(1, TimeUnit.SECONDS))
+      .build();
 
-    AgentCheckInResponse agentCheckInResponse = retryer.call(checkInCallable(action, false));
-    while ((agentCheckInResponse.getState() != TrafficSourceState.DONE
-        && System.currentTimeMillis() - start < configuration.getAgentCheckInTimeoutMs())) {
+    AgentCheckInResponse agentCheckInResponse = retryer.call(
+      checkInCallable(action, false)
+    );
+    while (
+      (
+        agentCheckInResponse.getState() != TrafficSourceState.DONE &&
+        System.currentTimeMillis() - start < configuration.getAgentCheckInTimeoutMs()
+      )
+    ) {
       try {
         Thread.sleep(agentCheckInResponse.getWaitTime());
       } catch (InterruptedException ie) {
@@ -139,19 +151,36 @@ public class LifecycleHelper {
     LOG.info("Finished agent check in");
   }
 
-  private Callable<AgentCheckInResponse> checkInCallable(String action, boolean addStatusParam) {
+  private Callable<AgentCheckInResponse> checkInCallable(
+    String action,
+    boolean addStatusParam
+  ) {
     return () -> {
-      HttpResponse response = httpClient.execute(buildNotifyServiceRequest(action, addStatusParam));
+      HttpResponse response = httpClient.execute(
+        buildNotifyServiceRequest(action, addStatusParam)
+      );
       try {
         if (response.isError()) {
-          throw new AgentServiceNotifyException(String.format("Bad response received from BaragonService %s", response.getAsString()));
+          throw new AgentServiceNotifyException(
+            String.format(
+              "Bad response received from BaragonService %s",
+              response.getAsString()
+            )
+          );
         }
         AgentCheckInResponse checkInResponse = response.getAs(AgentCheckInResponse.class);
-        LOG.info("Got {} response from BaragonService: {}", response.getStatusCode(), checkInResponse);
+        LOG.info(
+          "Got {} response from BaragonService: {}",
+          response.getStatusCode(),
+          checkInResponse
+        );
         return checkInResponse;
       } catch (Exception e) {
         if (response.isSuccess()) {
-          LOG.warn("Unable to parse response ({}) from successful shutdown call", response.getAsString());
+          LOG.warn(
+            "Unable to parse response ({}) from successful shutdown call",
+            response.getAsString()
+          );
           return null;
         } else {
           throw e;
@@ -160,13 +189,22 @@ public class LifecycleHelper {
     };
   }
 
-  private HttpRequest buildNotifyServiceRequest(String action, boolean addStatusParam) throws AgentServiceNotifyException {
+  private HttpRequest buildNotifyServiceRequest(String action, boolean addStatusParam)
+    throws AgentServiceNotifyException {
     Collection<String> baseUris = workerDatastore.getBaseUris();
     if (!baseUris.isEmpty()) {
-      HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
-          .setUrl(String.format(SERVICE_CHECKIN_URL_FORMAT, baseUris.iterator().next(), configuration.getLoadBalancerConfiguration().getName(), action))
-          .setMethod(HttpRequest.Method.POST)
-          .setBody(baragonAgentMetadata);
+      HttpRequest.Builder requestBuilder = HttpRequest
+        .newBuilder()
+        .setUrl(
+          String.format(
+            SERVICE_CHECKIN_URL_FORMAT,
+            baseUris.iterator().next(),
+            configuration.getLoadBalancerConfiguration().getName(),
+            action
+          )
+        )
+        .setMethod(HttpRequest.Method.POST)
+        .setBody(baragonAgentMetadata);
 
       if (addStatusParam) {
         requestBuilder.setQueryParam("status").to(true);
@@ -174,7 +212,9 @@ public class LifecycleHelper {
 
       Map<String, BaragonAuthKey> authKeys = authDatastore.getAuthKeyMap();
       if (!authKeys.isEmpty()) {
-        requestBuilder.setQueryParam("authkey").to(authKeys.entrySet().iterator().next().getValue().getValue());
+        requestBuilder
+          .setQueryParam("authkey")
+          .to(authKeys.entrySet().iterator().next().getValue().getValue());
       }
 
       return requestBuilder.build();
@@ -186,7 +226,12 @@ public class LifecycleHelper {
   public void writeStateFileIfConfigured() throws IOException {
     if (configuration.getStateFile().isPresent()) {
       LOG.info("Writing state file...");
-      Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(configuration.getStateFile().get()), "UTF-8"));
+      Writer writer = new BufferedWriter(
+        new OutputStreamWriter(
+          new FileOutputStream(configuration.getStateFile().get()),
+          "UTF-8"
+        )
+      );
       try {
         writer.write("RUNNING");
       } finally {
@@ -209,7 +254,9 @@ public class LifecycleHelper {
     final Collection<String> services = stateDatastore.getServices();
     if (services.size() > 0) {
       ExecutorService executorService = Executors.newFixedThreadPool(services.size());
-      List<Callable<Optional<Pair<ServiceContext, Collection<BaragonConfigFile>>>>> todo = new ArrayList<>(services.size());
+      List<Callable<Optional<Pair<ServiceContext, Collection<BaragonConfigFile>>>>> todo = new ArrayList<>(
+        services.size()
+      );
 
       Optional<Integer> maybeVersion = stateDatastore.getStateVersion();
       if (maybeVersion.isPresent()) {
@@ -217,7 +264,15 @@ public class LifecycleHelper {
       }
 
       for (BaragonServiceState serviceState : getGlobalStateWithRetry()) {
-        if ((serviceState.getService().getLoadBalancerGroups() != null) && (serviceState.getService().getLoadBalancerGroups().contains(configuration.getLoadBalancerConfiguration().getName()))) {
+        if (
+          (serviceState.getService().getLoadBalancerGroups() != null) &&
+          (
+            serviceState
+              .getService()
+              .getLoadBalancerGroups()
+              .contains(configuration.getLoadBalancerConfiguration().getName())
+          )
+        ) {
           todo.add(new BootstrapFileChecker(configHelper, serviceState, now));
         }
       }
@@ -226,7 +281,9 @@ public class LifecycleHelper {
 
       try {
         List<Pair<ServiceContext, Collection<BaragonConfigFile>>> toApply = new ArrayList<>();
-        List<Future<Optional<Pair<ServiceContext, Collection<BaragonConfigFile>>>>> applied = executorService.invokeAll(todo);
+        List<Future<Optional<Pair<ServiceContext, Collection<BaragonConfigFile>>>>> applied = executorService.invokeAll(
+          todo
+        );
         for (Future<Optional<Pair<ServiceContext, Collection<BaragonConfigFile>>>> serviceFuture : applied) {
           Optional<Pair<ServiceContext, Collection<BaragonConfigFile>>> maybeToApply = serviceFuture.get();
           if (maybeToApply.isPresent()) {
@@ -234,13 +291,19 @@ public class LifecycleHelper {
           }
         }
 
-        toApply.forEach(item -> {
-          try {
-            configHelper.bootstrapApplyWrite(item.getKey(), item.getValue());
-          } catch (Exception e) {
-            LOG.error("Caught exception while applying write {} during bootstrap", item.getKey().getService().getServiceId(), e);
+        toApply.forEach(
+          item -> {
+            try {
+              configHelper.bootstrapApplyWrite(item.getKey(), item.getValue());
+            } catch (Exception e) {
+              LOG.error(
+                "Caught exception while applying write {} during bootstrap",
+                item.getKey().getService().getServiceId(),
+                e
+              );
+            }
           }
-        });
+        );
 
         try {
           configHelper.bootstrapApplyCheck(toApply);
@@ -251,9 +314,15 @@ public class LifecycleHelper {
         }
 
         configHelper.reloadConfigs();
-        toApply.forEach((item) -> internalStateCache.put(
-            item.getKey().getService().getServiceId(),
-            new BasicServiceContext(item.getKey().getService(), item.getKey().getUpstreams()))
+        toApply.forEach(
+          item ->
+            internalStateCache.put(
+              item.getKey().getService().getServiceId(),
+              new BasicServiceContext(
+                item.getKey().getService(),
+                item.getKey().getUpstreams()
+              )
+            )
         );
       } catch (Exception e) {
         LOG.error("Caught exception while applying and parsing configs", e);
@@ -262,18 +331,25 @@ public class LifecycleHelper {
         }
       }
 
-      LOG.info("Applied {} services in {}ms", todo.size(), stopwatch.elapsed(TimeUnit.MILLISECONDS));
+      LOG.info(
+        "Applied {} services in {}ms",
+        todo.size(),
+        stopwatch.elapsed(TimeUnit.MILLISECONDS)
+      );
     } else {
       LOG.info("No services were found to apply");
     }
   }
 
   private Collection<BaragonServiceState> getGlobalStateWithRetry() {
-    Retryer<Collection<BaragonServiceState>> retryer = RetryerBuilder.<Collection<BaragonServiceState>>newBuilder()
-        .retryIfException()
-        .withStopStrategy(StopStrategies.stopAfterAttempt(configuration.getMaxGetGloablStateAttempts()))
-        .withWaitStrategy(WaitStrategies.exponentialWait(1, TimeUnit.SECONDS))
-        .build();
+    Retryer<Collection<BaragonServiceState>> retryer = RetryerBuilder
+      .<Collection<BaragonServiceState>>newBuilder()
+      .retryIfException()
+      .withStopStrategy(
+        StopStrategies.stopAfterAttempt(configuration.getMaxGetGloablStateAttempts())
+      )
+      .withWaitStrategy(WaitStrategies.exponentialWait(1, TimeUnit.SECONDS))
+      .build();
 
     try {
       return retryer.call(this::getGlobalState);
@@ -283,22 +359,33 @@ public class LifecycleHelper {
     }
   }
 
-  private Collection<BaragonServiceState> getGlobalState() throws AgentServiceNotifyException {
+  private Collection<BaragonServiceState> getGlobalState()
+    throws AgentServiceNotifyException {
     Collection<String> baseUris = workerDatastore.getBaseUris();
-    HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
-        .setUrl(String.format(GLOBAL_STATE_FORMAT, baseUris.iterator().next()))
-        .setMethod(Method.GET);
+    HttpRequest.Builder requestBuilder = HttpRequest
+      .newBuilder()
+      .setUrl(String.format(GLOBAL_STATE_FORMAT, baseUris.iterator().next()))
+      .setMethod(Method.GET);
 
     Map<String, BaragonAuthKey> authKeys = authDatastore.getAuthKeyMap();
     if (!authKeys.isEmpty()) {
-      requestBuilder.setQueryParam("authkey").to(authKeys.entrySet().iterator().next().getValue().getValue());
+      requestBuilder
+        .setQueryParam("authkey")
+        .to(authKeys.entrySet().iterator().next().getValue().getValue());
     }
 
     HttpRequest request = requestBuilder.build();
     HttpResponse response = httpClient.execute(request);
-    LOG.info(String.format("Got %s response from BaragonService", response.getStatusCode()));
+    LOG.info(
+      String.format("Got %s response from BaragonService", response.getStatusCode())
+    );
     if (response.isError()) {
-      throw new AgentServiceNotifyException(String.format("Bad response received from BaragonService %s", response.getAsString()));
+      throw new AgentServiceNotifyException(
+        String.format(
+          "Bad response received from BaragonService %s",
+          response.getAsString()
+        )
+      );
     }
     return response.getAs(new TypeReference<Collection<BaragonServiceState>>() {});
   }
@@ -326,7 +413,10 @@ public class LifecycleHelper {
       if (maybeStateVersion.isPresent()) {
         if (!agentLock.tryLock(agentLockTimeoutMs, TimeUnit.MILLISECONDS)) {
           LOG.warn("Failed to acquire lock to apply current configs");
-          throw new LockTimeoutException("Could not acquire lock to reapply configs", agentLock);
+          throw new LockTimeoutException(
+            "Could not acquire lock to reapply configs",
+            agentLock
+          );
         }
         try {
           applyCurrentConfigs();

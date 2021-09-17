@@ -1,15 +1,13 @@
 package com.hubspot.baragon.service.listeners;
 
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
-
-import javax.inject.Named;
-
 import com.google.inject.Inject;
 import com.hubspot.baragon.service.BaragonServiceModule;
 import com.hubspot.baragon.service.config.BaragonConfiguration;
 import com.hubspot.baragon.service.worker.RequestPurgingWorker;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+import javax.inject.Named;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,9 +21,13 @@ public class RequestPurgingListener extends AbstractLatchListener {
   private ScheduledFuture<?> requestPurgerWorkerFuture = null;
 
   @Inject
-  public RequestPurgingListener(@Named(BaragonServiceModule.BARAGON_SERVICE_SCHEDULED_EXECUTOR) ScheduledExecutorService executorService,
-                                BaragonConfiguration configuration,
-                                RequestPurgingWorker requestPurgingWorker) {
+  public RequestPurgingListener(
+    @Named(
+      BaragonServiceModule.BARAGON_SERVICE_SCHEDULED_EXECUTOR
+    ) ScheduledExecutorService executorService,
+    BaragonConfiguration configuration,
+    RequestPurgingWorker requestPurgingWorker
+  ) {
     this.executorService = executorService;
     this.configuration = configuration;
     this.requestPurgingWorker = requestPurgingWorker;
@@ -39,12 +41,13 @@ public class RequestPurgingListener extends AbstractLatchListener {
       requestPurgerWorkerFuture.cancel(false);
     }
 
-    requestPurgerWorkerFuture = executorService.scheduleAtFixedRate(
-      requestPurgingWorker,
-      configuration.getHistoryConfiguration().getWorkerInitialDelayHours(),
-      configuration.getHistoryConfiguration().getPurgeEveryHours(),
-      TimeUnit.HOURS
-    );
+    requestPurgerWorkerFuture =
+      executorService.scheduleAtFixedRate(
+        requestPurgingWorker,
+        configuration.getHistoryConfiguration().getWorkerInitialDelayHours(),
+        configuration.getHistoryConfiguration().getPurgeEveryHours(),
+        TimeUnit.HOURS
+      );
   }
 
   @Override

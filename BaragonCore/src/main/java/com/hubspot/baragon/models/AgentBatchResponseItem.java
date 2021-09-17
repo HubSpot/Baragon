@@ -13,10 +13,12 @@ public class AgentBatchResponseItem {
   private final AgentRequestType requestType;
 
   @JsonCreator
-  public AgentBatchResponseItem(@JsonProperty("requestId") String requestId,
-                                @JsonProperty("statusCode") int statusCode,
-                                @JsonProperty("message") Optional<String> message,
-                                @JsonProperty("requestType") AgentRequestType requestType) {
+  public AgentBatchResponseItem(
+    @JsonProperty("requestId") String requestId,
+    @JsonProperty("statusCode") int statusCode,
+    @JsonProperty("message") Optional<String> message,
+    @JsonProperty("requestType") AgentRequestType requestType
+  ) {
     this.requestId = requestId;
     this.statusCode = statusCode;
     this.message = message;
@@ -48,10 +50,12 @@ public class AgentBatchResponseItem {
       return false;
     }
     AgentBatchResponseItem that = (AgentBatchResponseItem) o;
-    return statusCode == that.statusCode &&
+    return (
+      statusCode == that.statusCode &&
       Objects.equal(requestId, that.requestId) &&
       Objects.equal(message, that.message) &&
-      requestType == that.requestType;
+      requestType == that.requestType
+    );
   }
 
   @Override
@@ -61,7 +65,8 @@ public class AgentBatchResponseItem {
 
   @Override
   public String toString() {
-    return MoreObjects.toStringHelper(this)
+    return MoreObjects
+      .toStringHelper(this)
       .add("requestId", requestId)
       .add("statusCode", statusCode)
       .add("message", message)

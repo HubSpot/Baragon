@@ -16,7 +16,6 @@ import com.hubspot.baragon.service.config.BaragonConfiguration;
 import com.hubspot.baragon.service.config.MergingConfigProvider;
 import com.hubspot.baragon.service.resources.BaragonResourcesModule;
 import com.hubspot.dropwizard.guicier.GuiceBundle;
-
 import io.dropwizard.Application;
 import io.dropwizard.assets.AssetsBundle;
 import io.dropwizard.setup.Bootstrap;
@@ -24,28 +23,34 @@ import io.dropwizard.setup.Environment;
 import io.dropwizard.views.ViewBundle;
 
 public class BaragonService<T extends BaragonConfiguration> extends Application<T> {
-  private static final String BARAGON_DEFAULT_CONFIG_LOCATION = "baragonDefaultConfiguration";
+  private static final String BARAGON_DEFAULT_CONFIG_LOCATION =
+    "baragonDefaultConfiguration";
 
   @Override
   public void initialize(Bootstrap<T> bootstrap) {
     if (!Strings.isNullOrEmpty(System.getProperty(BARAGON_DEFAULT_CONFIG_LOCATION))) {
       bootstrap.setConfigurationSourceProvider(
-          new MergingConfigProvider(
-              bootstrap.getConfigurationSourceProvider(),
-              System.getProperty(BARAGON_DEFAULT_CONFIG_LOCATION),
-              bootstrap.getObjectMapper(),
-              new YAMLFactory()));
+        new MergingConfigProvider(
+          bootstrap.getConfigurationSourceProvider(),
+          System.getProperty(BARAGON_DEFAULT_CONFIG_LOCATION),
+          bootstrap.getObjectMapper(),
+          new YAMLFactory()
+        )
+      );
     }
-    final Iterable<? extends Module> additionalModules = checkNotNull(getGuiceModules(bootstrap), "getGuiceModules() returned null");
+    final Iterable<? extends Module> additionalModules = checkNotNull(
+      getGuiceModules(bootstrap),
+      "getGuiceModules() returned null"
+    );
 
     GuiceBundle.Builder<BaragonConfiguration> guiceBundleBuilder = GuiceBundle
-        .defaultBuilder(BaragonConfiguration.class)
-        .modules(new BaragonServiceModule())
-        .modules(new BaragonResourcesModule())
-        .modules(getObjectMapperModule())
-        .modules(additionalModules)
-        .enableGuiceEnforcer(false)
-        .stage(getGuiceStage());
+      .defaultBuilder(BaragonConfiguration.class)
+      .modules(new BaragonServiceModule())
+      .modules(new BaragonResourcesModule())
+      .modules(getObjectMapperModule())
+      .modules(additionalModules)
+      .enableGuiceEnforcer(false)
+      .stage(getGuiceStage());
     modifyGuiceBundle(guiceBundleBuilder);
     GuiceBundle<BaragonConfiguration> guiceBundle = guiceBundleBuilder.build();
 
@@ -69,7 +74,7 @@ public class BaragonService<T extends BaragonConfiguration> extends Application<
   }
 
   public Module getObjectMapperModule() {
-    return (binder) -> {
+    return binder -> {
       final ObjectMapper objectMapper = new ObjectMapper();
 
       objectMapper.registerModule(new GuavaModule());
@@ -80,10 +85,11 @@ public class BaragonService<T extends BaragonConfiguration> extends Application<
   }
 
   @Override
-  public void run(T configuration, Environment environment) throws Exception {
-  }
+  public void run(T configuration, Environment environment) throws Exception {}
 
-  public void modifyGuiceBundle(GuiceBundle.Builder<BaragonConfiguration> guiceBundleBuilder) {}
+  public void modifyGuiceBundle(
+    GuiceBundle.Builder<BaragonConfiguration> guiceBundleBuilder
+  ) {}
 
   public static void main(String[] args) throws Exception {
     new BaragonService<BaragonConfiguration>().run(args);

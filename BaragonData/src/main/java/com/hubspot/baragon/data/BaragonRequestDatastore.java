@@ -1,18 +1,5 @@
 package com.hubspot.baragon.data;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-
-import org.apache.curator.framework.CuratorFramework;
-import org.apache.curator.framework.api.transaction.CuratorTransactionResult;
-import org.apache.curator.utils.ZKPaths;
-import org.apache.zookeeper.CreateMode;
-import org.apache.zookeeper.KeeperException.NodeExistsException;
-import org.apache.zookeeper.data.Stat;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.codahale.metrics.annotation.Timed;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Optional;
@@ -24,10 +11,23 @@ import com.hubspot.baragon.config.ZooKeeperConfiguration;
 import com.hubspot.baragon.models.BaragonRequest;
 import com.hubspot.baragon.models.InternalRequestStates;
 import com.hubspot.baragon.models.QueuedRequestId;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import org.apache.curator.framework.CuratorFramework;
+import org.apache.curator.framework.api.transaction.CuratorTransactionResult;
+import org.apache.curator.utils.ZKPaths;
+import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.KeeperException.NodeExistsException;
+import org.apache.zookeeper.data.Stat;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Singleton
 public class BaragonRequestDatastore extends AbstractDataStore {
-  private static final Logger LOG = LoggerFactory.getLogger(BaragonRequestDatastore.class);
+  private static final Logger LOG = LoggerFactory.getLogger(
+    BaragonRequestDatastore.class
+  );
 
   public static final String REQUESTS_FORMAT = "/request";
   public static final String REQUEST_FORMAT = REQUESTS_FORMAT + "/%s";
@@ -39,7 +39,11 @@ public class BaragonRequestDatastore extends AbstractDataStore {
   public static final String REQUEST_QUEUE_ITEM_FORMAT = REQUEST_QUEUE_FORMAT + "/%s";
 
   @Inject
-  public BaragonRequestDatastore(CuratorFramework curatorFramework, ObjectMapper objectMapper, ZooKeeperConfiguration zooKeeperConfiguration) {
+  public BaragonRequestDatastore(
+    CuratorFramework curatorFramework,
+    ObjectMapper objectMapper,
+    ZooKeeperConfiguration zooKeeperConfiguration
+  ) {
     super(curatorFramework, objectMapper, zooKeeperConfiguration);
   }
 
@@ -64,13 +68,18 @@ public class BaragonRequestDatastore extends AbstractDataStore {
 
   @Timed
   public BaragonRequest updateRequest(BaragonRequest request) throws Exception {
-    final Optional<BaragonRequest> maybeRequest = getRequest(request.getLoadBalancerRequestId());
+    final Optional<BaragonRequest> maybeRequest = getRequest(
+      request.getLoadBalancerRequestId()
+    );
 
     if (!maybeRequest.isPresent()) {
       throw new IllegalStateException("No such request exists!");
     }
 
-    final String requestPath = String.format(REQUEST_FORMAT, request.getLoadBalancerRequestId());
+    final String requestPath = String.format(
+      REQUEST_FORMAT,
+      request.getLoadBalancerRequestId()
+    );
 
     writeToZk(requestPath, request);
 
@@ -96,7 +105,10 @@ public class BaragonRequestDatastore extends AbstractDataStore {
 
   @Timed
   public Optional<InternalRequestStates> getRequestState(String requestId) {
-    return readFromZk(String.format(REQUEST_STATE_FORMAT, requestId), InternalRequestStates.class);
+    return readFromZk(
+      String.format(REQUEST_STATE_FORMAT, requestId),
+      InternalRequestStates.class
+    );
   }
 
   @Timed
@@ -119,12 +131,26 @@ public class BaragonRequestDatastore extends AbstractDataStore {
   // REQUEST QUEUING
   //
   @Timed
-  public QueuedRequestId enqueueRequest(BaragonRequest request, InternalRequestStates state) throws NodeExistsException {
+  public QueuedRequestId enqueueRequest(
+    BaragonRequest request,
+    InternalRequestStates state
+  )
+    throws NodeExistsException {
     final long start = System.currentTimeMillis();
 
-    final String queuedRequestPath = String.format(REQUEST_ENQUEUE_FORMAT, request.getLoadBalancerService().getServiceId(), request.getLoadBalancerRequestId());
-    final String requestPath = String.format(REQUEST_FORMAT, request.getLoadBalancerRequestId());
-    final String requestStatePath = String.format(REQUEST_STATE_FORMAT, request.getLoadBalancerRequestId());
+    final String queuedRequestPath = String.format(
+      REQUEST_ENQUEUE_FORMAT,
+      request.getLoadBalancerService().getServiceId(),
+      request.getLoadBalancerRequestId()
+    );
+    final String requestPath = String.format(
+      REQUEST_FORMAT,
+      request.getLoadBalancerRequestId()
+    );
+    final String requestStatePath = String.format(
+      REQUEST_STATE_FORMAT,
+      request.getLoadBalancerRequestId()
+    );
 
     try {
       if (!nodeExists(REQUESTS_FORMAT)) {
@@ -137,16 +163,46 @@ public class BaragonRequestDatastore extends AbstractDataStore {
       byte[] requestBytes = objectMapper.writeValueAsBytes(request);
       byte[] stateBytes = objectMapper.writeValueAsBytes(state);
 
-      Collection<CuratorTransactionResult> results = curatorFramework.inTransaction()
-          .create().forPath(requestPath, requestBytes).and()
-          .create().forPath(requestStatePath, stateBytes).and()
-          .create().withMode(CreateMode.PERSISTENT_SEQUENTIAL).forPath(queuedRequestPath)
-          .and().commit();
+      Collection<CuratorTransactionResult> results = curatorFramework
+        .inTransaction()
+        .create()
+        .forPath(requestPath, requestBytes)
+        .and()
+        .create()
+        .forPath(requestStatePath, stateBytes)
+        .and()
+        .create()
+        .withMode(CreateMode.PERSISTENT_SEQUENTIAL)
+        .forPath(queuedRequestPath)
+        .and()
+        .commit();
 
-      log(OperationType.WRITE, Optional.of(3), Optional.of(requestBytes.length + stateBytes.length), start, String.format("Transaction Paths [%s + %s + %s]", requestPath, requestStatePath, queuedRequestPath));
+      log(
+        OperationType.WRITE,
+        Optional.of(3),
+        Optional.of(requestBytes.length + stateBytes.length),
+        start,
+        String.format(
+          "Transaction Paths [%s + %s + %s]",
+          requestPath,
+          requestStatePath,
+          queuedRequestPath
+        )
+      );
 
-      return QueuedRequestId.fromString(ZKPaths.getNodeFromPath(Iterables.find(results, CuratorTransactionResult.ofTypeAndPath(org.apache.curator.framework.api.transaction.OperationType.CREATE, queuedRequestPath))
-          .getResultPath()));
+      return QueuedRequestId.fromString(
+        ZKPaths.getNodeFromPath(
+          Iterables
+            .find(
+              results,
+              CuratorTransactionResult.ofTypeAndPath(
+                org.apache.curator.framework.api.transaction.OperationType.CREATE,
+                queuedRequestPath
+              )
+            )
+            .getResultPath()
+        )
+      );
     } catch (NodeExistsException nee) {
       throw nee;
     } catch (Exception e) {
@@ -160,7 +216,9 @@ public class BaragonRequestDatastore extends AbstractDataStore {
 
     Collections.sort(nodes, SEQUENCE_NODE_COMPARATOR_LOW_TO_HIGH);
 
-    final List<QueuedRequestId> queuedRequestIds = Lists.newArrayListWithCapacity(nodes.size());
+    final List<QueuedRequestId> queuedRequestIds = Lists.newArrayListWithCapacity(
+      nodes.size()
+    );
 
     for (String node : nodes) {
       queuedRequestIds.add(QueuedRequestId.fromString(node));
@@ -170,11 +228,13 @@ public class BaragonRequestDatastore extends AbstractDataStore {
   }
 
   public long getOldestQueuedRequestAge() {
-    long now = System.currentTimeMillis();;
+    long now = System.currentTimeMillis();
     long oldest = now;
     for (String child : getChildren(REQUEST_QUEUE_FORMAT)) {
       try {
-        Stat stat = curatorFramework.checkExists().forPath(ZKPaths.makePath(REQUEST_QUEUE_FORMAT, child));
+        Stat stat = curatorFramework
+          .checkExists()
+          .forPath(ZKPaths.makePath(REQUEST_QUEUE_FORMAT, child));
         if (stat != null && stat.getMtime() < oldest) {
           oldest = stat.getMtime();
         }

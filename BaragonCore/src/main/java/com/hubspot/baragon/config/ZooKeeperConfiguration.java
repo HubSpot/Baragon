@@ -3,19 +3,24 @@ package com.hubspot.baragon.config;
 import javax.validation.constraints.NotNull;
 
 public class ZooKeeperConfiguration {
-
   @NotNull
   private String quorum;
+
   @NotNull
   private Integer sessionTimeoutMillis;
+
   @NotNull
   private Integer connectTimeoutMillis;
+
   @NotNull
   private Integer retryBaseSleepTimeMilliseconds;
+
   @NotNull
   private Integer retryMaxTries;
+
   @NotNull
   private String zkNamespace;
+
   private long debugCuratorCallOverBytes = 25000;
   private long debugCuratorCallOverMillis = 250;
 

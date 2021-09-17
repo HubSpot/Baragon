@@ -11,7 +11,12 @@ public class AgentResponseId {
   public static AgentResponseId fromString(String value) {
     final String[] splits = value.split("\\-", 3);
 
-    return new AgentResponseId(value, Integer.parseInt(splits[0]), Boolean.parseBoolean(splits[1]), Integer.parseInt(splits[2]));
+    return new AgentResponseId(
+      value,
+      Integer.parseInt(splits[0]),
+      Boolean.parseBoolean(splits[1]),
+      Integer.parseInt(splits[2])
+    );
   }
 
   private AgentResponseId(String id, int statusCode, boolean exception, int attempt) {
@@ -79,10 +84,11 @@ public class AgentResponseId {
 
   @Override
   public String toString() {
-    return MoreObjects.toStringHelper(this)
-        .add("statusCode", statusCode)
-        .add("exception", exception)
-        .add("attempt", attempt)
-        .toString();
+    return MoreObjects
+      .toStringHelper(this)
+      .add("statusCode", statusCode)
+      .add("exception", exception)
+      .add("attempt", attempt)
+      .toString();
   }
 }

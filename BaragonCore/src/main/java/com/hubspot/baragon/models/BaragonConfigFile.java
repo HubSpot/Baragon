@@ -4,13 +4,15 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.MoreObjects;
 
-@JsonIgnoreProperties( ignoreUnknown = true )
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class BaragonConfigFile {
   private final String fullPath;
   private final String content;
 
-  public BaragonConfigFile(@JsonProperty("fullPath") String fullPath,
-                           @JsonProperty("content") String content) {
+  public BaragonConfigFile(
+    @JsonProperty("fullPath") String fullPath,
+    @JsonProperty("content") String content
+  ) {
     this.fullPath = fullPath;
     this.content = content;
   }
@@ -25,10 +27,11 @@ public class BaragonConfigFile {
 
   @Override
   public String toString() {
-    return MoreObjects.toStringHelper(BaragonConfigFile.class)
-        .add("fullPath", fullPath)
-        .add("content", content)
-        .toString();
+    return MoreObjects
+      .toStringHelper(BaragonConfigFile.class)
+      .add("fullPath", fullPath)
+      .add("content", content)
+      .toString();
   }
 
   @Override

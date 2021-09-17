@@ -1,13 +1,11 @@
 package com.hubspot.baragon.service.config;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.validation.constraints.NotNull;
-
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.hubspot.baragon.models.BaragonService;
+import java.util.ArrayList;
+import java.util.List;
+import javax.validation.constraints.NotNull;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class PurgeCacheConfiguration {
@@ -34,6 +32,4 @@ public class PurgeCacheConfiguration {
   public void setExcludedServiceIds(List<String> excludedServiceIds) {
     this.excludedServiceIds = excludedServiceIds;
   }
-
-
 }

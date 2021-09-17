@@ -17,7 +17,12 @@ public class BaragonWebException extends WebApplicationException {
    * @param message the String that is the entity of the 404 response.
    */
   public BaragonWebException(String message) {
-    super(Response.status(Response.Status.INTERNAL_SERVER_ERROR).
-      entity(message).type("text/plain").build());
+    super(
+      Response
+        .status(Response.Status.INTERNAL_SERVER_ERROR)
+        .entity(message)
+        .type("text/plain")
+        .build()
+    );
   }
 }

@@ -1,11 +1,10 @@
 package com.hubspot.baragon.agent.handlebars;
 
-import java.io.IOException;
-
 import com.github.jknack.handlebars.Helper;
 import com.github.jknack.handlebars.Options;
 import com.google.common.base.Optional;
 import com.google.common.base.Strings;
+import java.io.IOException;
 
 public class FirstOfHelper implements Helper<Object> {
   public static final String NAME = "firstOf";
@@ -37,7 +36,9 @@ public class FirstOfHelper implements Helper<Object> {
     if (context instanceof String) {
       final String contextString = (String) context;
 
-      return !Strings.isNullOrEmpty(contextString) ? contextString : options.param(0, fallback).toString();
+      return !Strings.isNullOrEmpty(contextString)
+        ? contextString
+        : options.param(0, fallback).toString();
     }
 
     // otherwise just return context
