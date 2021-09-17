@@ -91,17 +91,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfiguration> {
-
   private static final Logger LOG = LoggerFactory.getLogger(BaragonServiceModule.class);
 
-
-  public static final String BARAGON_SERVICE_SCHEDULED_EXECUTOR = "baragon.service.scheduledExecutor";
+  public static final String BARAGON_SERVICE_SCHEDULED_EXECUTOR =
+    "baragon.service.scheduledExecutor";
 
   public static final String BARAGON_SERVICE_DW_CONFIG = "baragon.service.port";
   public static final String BARAGON_SERVICE_HOSTNAME = "baragon.service.hostname";
-  public static final String BARAGON_SERVICE_LOCAL_HOSTNAME = "baragon.service.local.hostname";
-  public static final String BARAGON_SERVICE_HTTP_CLIENT = "baragon.service.async.http.client";
-  public static final String BARAGON_SERVICE_SYNC_HTTP_CLIENT = "baragon.service.sync.http.client";
+  public static final String BARAGON_SERVICE_LOCAL_HOSTNAME =
+    "baragon.service.local.hostname";
+  public static final String BARAGON_SERVICE_HTTP_CLIENT =
+    "baragon.service.async.http.client";
+  public static final String BARAGON_SERVICE_SYNC_HTTP_CLIENT =
+    "baragon.service.sync.http.client";
 
   public static final String BARAGON_MASTER_AUTH_KEY = "baragon.master.auth.key";
 
@@ -110,14 +112,13 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
   public static final String BARAGON_AWS_ELB_CLIENT_V1 = "baragon.aws.elb.client.v1";
   public static final String BARAGON_AWS_ELB_CLIENT_V2 = "baragon.aws.elb.client.v2";
 
-  public static final String GOOGLE_CLOUD_COMPUTE_SERVICE = "baragon.google.cloud.compute.service";
+  public static final String GOOGLE_CLOUD_COMPUTE_SERVICE =
+    "baragon.google.cloud.compute.service";
 
-  private static final RetryCondition RETRY_CONDITION =
-      (amazonWebServiceRequest, e, i) -> {
-        LOG.debug("e={}, isRetryable={}, i={}", e.getMessage(), e.isRetryable(), i);
-        return e.isRetryable();
-      };
-
+  private static final RetryCondition RETRY_CONDITION = (amazonWebServiceRequest, e, i) -> {
+    LOG.debug("e={}, isRetryable={}, i={}", e.getMessage(), e.isRetryable(), i);
+    return e.isRetryable();
+  };
 
   @Override
   public void configure(Binder binder) {
@@ -147,7 +148,11 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
     // Edge Cache
     binder.bind(CloudflareEdgeCache.class);
     binder.bind(CloudflareClient.class);
-    binder.bind(EdgeCache.class).to(getConfiguration().getEdgeCacheConfiguration().getEdgeCache().getEdgeCacheClass());
+    binder
+      .bind(EdgeCache.class)
+      .to(
+        getConfiguration().getEdgeCacheConfiguration().getEdgeCache().getEdgeCacheClass()
+      );
 
     // Workers
     binder.bind(BaragonElbSyncWorker.class).in(Scopes.SINGLETON);
@@ -157,19 +162,26 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
     binder.bind(ClassicLoadBalancer.class);
     binder.bind(ApplicationLoadBalancer.class);
 
-    Multibinder<AbstractLatchListener> latchBinder = Multibinder.newSetBinder(binder, AbstractLatchListener.class);
+    Multibinder<AbstractLatchListener> latchBinder = Multibinder.newSetBinder(
+      binder,
+      AbstractLatchListener.class
+    );
     latchBinder.addBinding().to(RequestWorkerListener.class).in(Scopes.SINGLETON);
     latchBinder.addBinding().to(ElbSyncWorkerListener.class).in(Scopes.SINGLETON);
     latchBinder.addBinding().to(RequestPurgingListener.class).in(Scopes.SINGLETON);
   }
 
   @Provides
-  public ZooKeeperConfiguration provideZooKeeperConfiguration(BaragonConfiguration configuration) {
+  public ZooKeeperConfiguration provideZooKeeperConfiguration(
+    BaragonConfiguration configuration
+  ) {
     return configuration.getZooKeeperConfiguration();
   }
 
   @Provides
-  public HttpClientConfiguration provideHttpClientConfiguration(BaragonConfiguration configuration) {
+  public HttpClientConfiguration provideHttpClientConfiguration(
+    BaragonConfiguration configuration
+  ) {
     return configuration.getHttpClientConfiguration();
   }
 
@@ -203,12 +215,16 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
   }
 
   @Provides
-  public Optional<ElbConfiguration> providesElbConfiguration(BaragonConfiguration configuration) {
+  public Optional<ElbConfiguration> providesElbConfiguration(
+    BaragonConfiguration configuration
+  ) {
     return configuration.getElbConfiguration();
   }
 
   @Provides
-  public EdgeCacheConfiguration providesEdgeCacheConfiguration(BaragonConfiguration configuration) {
+  public EdgeCacheConfiguration providesEdgeCacheConfiguration(
+    BaragonConfiguration configuration
+  ) {
     return configuration.getEdgeCacheConfiguration();
   }
 
@@ -250,7 +266,10 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
       contextPath = defaultServerFactory.getApplicationContextPath();
       for (ConnectorFactory connectorFactory : defaultServerFactory.getApplicationConnectors()) {
         // Only looking for http connectors for now
-        if (connectorFactory instanceof HttpConnectorFactory && !(connectorFactory instanceof HttpsConnectorFactory)) {
+        if (
+          connectorFactory instanceof HttpConnectorFactory &&
+          !(connectorFactory instanceof HttpsConnectorFactory)
+        ) {
           HttpConnectorFactory httpFactory = (HttpConnectorFactory) connectorFactory;
           port = httpFactory.getPort();
         }
@@ -265,7 +284,9 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
   @Provides
   @Named(BARAGON_SERVICE_HOSTNAME)
   public String providesHostnameProperty(BaragonConfiguration config) throws Exception {
-    return Strings.isNullOrEmpty(config.getHostname()) ? JavaUtils.getHostAddress() : config.getHostname();
+    return Strings.isNullOrEmpty(config.getHostname())
+      ? JavaUtils.getHostAddress()
+      : config.getHostname();
   }
 
   @Provides
@@ -281,18 +302,27 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
       return addr.getHostName();
     } catch (UnknownHostException e) {
       throw new RuntimeException(
-          "No local hostname found, unable to start without functioning local networking (or configured hostname)", e);
+        "No local hostname found, unable to start without functioning local networking (or configured hostname)",
+        e
+      );
     }
   }
 
   @Provides
   @Singleton
   @Named(BaragonDataModule.BARAGON_SERVICE_LEADER_LATCH)
-  public LeaderLatch providesServiceLeaderLatch(BaragonConfiguration config,
-      BaragonWorkerDatastore datastore,
-      @Named(BARAGON_SERVICE_DW_CONFIG) BaragonServiceDWSettings dwConfig,
-      @Named(BARAGON_SERVICE_HOSTNAME) String hostname) {
-    final String baseUri = String.format("http://%s:%s%s", hostname, dwConfig.getPort(), dwConfig.getContextPath());
+  public LeaderLatch providesServiceLeaderLatch(
+    BaragonConfiguration config,
+    BaragonWorkerDatastore datastore,
+    @Named(BARAGON_SERVICE_DW_CONFIG) BaragonServiceDWSettings dwConfig,
+    @Named(BARAGON_SERVICE_HOSTNAME) String hostname
+  ) {
+    final String baseUri = String.format(
+      "http://%s:%s%s",
+      hostname,
+      dwConfig.getPort(),
+      dwConfig.getContextPath()
+    );
 
     return datastore.createLeaderLatch(baseUri);
   }
@@ -305,11 +335,17 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
 
   @Provides
   @Named(BARAGON_URI_BASE)
-  String getBaragonUriBase(final BaragonConfiguration configuration,
-      @Named(BARAGON_SERVICE_DW_CONFIG) BaragonServiceDWSettings dwSettings) {
-    final String baragonUiPrefix = configuration.getUiConfiguration().getBaseUrl().or(dwSettings.getContextPath());
-    return (baragonUiPrefix.endsWith("/")) ? baragonUiPrefix.substring(0, baragonUiPrefix.length() - 1)
-        : baragonUiPrefix;
+  String getBaragonUriBase(
+    final BaragonConfiguration configuration,
+    @Named(BARAGON_SERVICE_DW_CONFIG) BaragonServiceDWSettings dwSettings
+  ) {
+    final String baragonUiPrefix = configuration
+      .getUiConfiguration()
+      .getBaseUrl()
+      .or(dwSettings.getContextPath());
+    return (baragonUiPrefix.endsWith("/"))
+      ? baragonUiPrefix.substring(0, baragonUiPrefix.length() - 1)
+      : baragonUiPrefix;
   }
 
   @Provides
@@ -330,42 +366,67 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
   @Provides
   @Singleton
   @Named(BARAGON_SERVICE_SYNC_HTTP_CLIENT)
-  public NingHttpClient providesApacheHttpClient(HttpClientConfiguration config, ObjectMapper objectMapper) {
-    HttpConfig.Builder configBuilder = HttpConfig.newBuilder()
-        .setRequestTimeoutSeconds(config.getRequestTimeoutInMs() / 1000)
-        .setUserAgent(config.getUserAgent())
-        .setConnectTimeoutSeconds(config.getConnectionTimeoutInMs() / 1000)
-        .setFollowRedirects(true)
-        .setMaxRetries(config.getMaxRequestRetry())
-        .setObjectMapper(objectMapper);
+  public NingHttpClient providesApacheHttpClient(
+    HttpClientConfiguration config,
+    ObjectMapper objectMapper
+  ) {
+    HttpConfig.Builder configBuilder = HttpConfig
+      .newBuilder()
+      .setRequestTimeoutSeconds(config.getRequestTimeoutInMs() / 1000)
+      .setUserAgent(config.getUserAgent())
+      .setConnectTimeoutSeconds(config.getConnectionTimeoutInMs() / 1000)
+      .setFollowRedirects(true)
+      .setMaxRetries(config.getMaxRequestRetry())
+      .setObjectMapper(objectMapper);
 
     return new NingHttpClient(configBuilder.build());
   }
 
-
   @Provides
   @Singleton
   @Named(BARAGON_AWS_ELB_CLIENT_V1)
-  public AmazonElasticLoadBalancing providesAwsElbClientV1(Optional<ElbConfiguration> configuration) {
+  public AmazonElasticLoadBalancing providesAwsElbClientV1(
+    Optional<ElbConfiguration> configuration
+  ) {
     AmazonElasticLoadBalancing elbClient;
-    if (configuration.isPresent() && configuration.get().getAwsAccessKeyId() != null
-        && configuration.get().getAwsAccessKeySecret() != null
-        && configuration.get().getAwsRegion().isPresent()) {
-      elbClient = AmazonElasticLoadBalancingClientBuilder.standard().withCredentials(
-          new AWSStaticCredentialsProvider(
-              new BasicAWSCredentials(configuration.get().getAwsAccessKeyId(),
-                  configuration.get().getAwsAccessKeySecret())
+    if (
+      configuration.isPresent() &&
+      configuration.get().getAwsAccessKeyId() != null &&
+      configuration.get().getAwsAccessKeySecret() != null &&
+      configuration.get().getAwsRegion().isPresent()
+    ) {
+      elbClient =
+        AmazonElasticLoadBalancingClientBuilder
+          .standard()
+          .withCredentials(
+            new AWSStaticCredentialsProvider(
+              new BasicAWSCredentials(
+                configuration.get().getAwsAccessKeyId(),
+                configuration.get().getAwsAccessKeySecret()
+              )
+            )
           )
-      ).withClientConfiguration(
-          new ClientConfigurationFactory().getConfig().withRetryPolicy(new RetryPolicy(
-              RETRY_CONDITION,
-              new ExponentialBackoffStrategy(
-                  configuration.or(new ElbConfiguration()).getAwsElbClientBackoffBaseDelayMilliseconds(),
-                  configuration.or(new ElbConfiguration()).getAwsElbClientBackoffMaxBackoffMilliseconds()
-              ),
-              configuration.get().getAwsElbClientRetries(), false
-          ))
-      ).withRegion(Regions.fromName(configuration.get().getAwsRegion().get())).build();
+          .withClientConfiguration(
+            new ClientConfigurationFactory()
+              .getConfig()
+              .withRetryPolicy(
+                new RetryPolicy(
+                  RETRY_CONDITION,
+                  new ExponentialBackoffStrategy(
+                    configuration
+                      .or(new ElbConfiguration())
+                      .getAwsElbClientBackoffBaseDelayMilliseconds(),
+                    configuration
+                      .or(new ElbConfiguration())
+                      .getAwsElbClientBackoffMaxBackoffMilliseconds()
+                  ),
+                  configuration.get().getAwsElbClientRetries(),
+                  false
+                )
+              )
+          )
+          .withRegion(Regions.fromName(configuration.get().getAwsRegion().get()))
+          .build();
     } else {
       elbClient = new AmazonElasticLoadBalancingClient();
     }
@@ -380,7 +441,8 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
   @Provides
   @Singleton
   @Named(GOOGLE_CLOUD_COMPUTE_SERVICE)
-  public Optional<Compute> provideComputeService(BaragonConfiguration config) throws Exception {
+  public Optional<Compute> provideComputeService(BaragonConfiguration config)
+    throws Exception {
     if (!config.getGoogleCloudConfiguration().isEnabled()) {
       return Optional.absent();
     }
@@ -390,56 +452,85 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
     GoogleCredential credential = null;
 
     if (config.getGoogleCloudConfiguration().getGoogleCredentialsFile() != null) {
-      File credentialsFile = new File(config.getGoogleCloudConfiguration().getGoogleCredentialsFile());
-      credential = GoogleCredential.fromStream(
-          new FileInputStream(credentialsFile)
+      File credentialsFile = new File(
+        config.getGoogleCloudConfiguration().getGoogleCredentialsFile()
       );
+      credential = GoogleCredential.fromStream(new FileInputStream(credentialsFile));
     } else if (config.getGoogleCloudConfiguration().getGoogleCredentials() != null) {
-      credential = GoogleCredential.fromStream(
-          new ByteArrayInputStream(config.getGoogleCloudConfiguration().getGoogleCredentials().getBytes("UTF-8"))
-      );
+      credential =
+        GoogleCredential.fromStream(
+          new ByteArrayInputStream(
+            config.getGoogleCloudConfiguration().getGoogleCredentials().getBytes("UTF-8")
+          )
+        );
     } else {
       throw new RuntimeException(
-          "Must specify googleCloudCredentials or googleCloudCredentialsFile when using google cloud api");
+        "Must specify googleCloudCredentials or googleCloudCredentialsFile when using google cloud api"
+      );
     }
 
     if (credential.createScopedRequired()) {
       credential =
-          credential.createScoped(Collections.singletonList("https://www.googleapis.com/auth/cloud-platform"));
+        credential.createScoped(
+          Collections.singletonList("https://www.googleapis.com/auth/cloud-platform")
+        );
     }
 
-    return Optional.of(new Compute.Builder(httpTransport, jsonFactory, credential)
+    return Optional.of(
+      new Compute.Builder(httpTransport, jsonFactory, credential)
         .setApplicationName("BaragonService")
-        .build());
+        .build()
+    );
   }
 
   @Provides
   @Singleton
   @Named(BARAGON_AWS_ELB_CLIENT_V2)
   public com.amazonaws.services.elasticloadbalancingv2.AmazonElasticLoadBalancing providesAwsElbClientV2(
-      Optional<ElbConfiguration> configuration) {
+    Optional<ElbConfiguration> configuration
+  ) {
     com.amazonaws.services.elasticloadbalancingv2.AmazonElasticLoadBalancing elbClient;
-    if (configuration.isPresent() && configuration.get().getAwsAccessKeyId() != null
-        && configuration.get().getAwsAccessKeySecret() != null
-        && configuration.get().getAwsRegion().isPresent()) {
-      elbClient = com.amazonaws.services.elasticloadbalancingv2.AmazonElasticLoadBalancingClientBuilder.standard()
+    if (
+      configuration.isPresent() &&
+      configuration.get().getAwsAccessKeyId() != null &&
+      configuration.get().getAwsAccessKeySecret() != null &&
+      configuration.get().getAwsRegion().isPresent()
+    ) {
+      elbClient =
+        com
+          .amazonaws.services.elasticloadbalancingv2.AmazonElasticLoadBalancingClientBuilder.standard()
           .withCredentials(
-              new AWSStaticCredentialsProvider(
-                  new BasicAWSCredentials(configuration.get().getAwsAccessKeyId(),
-                      configuration.get().getAwsAccessKeySecret())
+            new AWSStaticCredentialsProvider(
+              new BasicAWSCredentials(
+                configuration.get().getAwsAccessKeyId(),
+                configuration.get().getAwsAccessKeySecret()
               )
-          ).withClientConfiguration(
-              new ClientConfigurationFactory().getConfig().withRetryPolicy(new RetryPolicy(
+            )
+          )
+          .withClientConfiguration(
+            new ClientConfigurationFactory()
+              .getConfig()
+              .withRetryPolicy(
+                new RetryPolicy(
                   RETRY_CONDITION,
                   new ExponentialBackoffStrategy(
-                      configuration.or(new ElbConfiguration()).getAwsElbClientBackoffBaseDelayMilliseconds(),
-                      configuration.or(new ElbConfiguration()).getAwsElbClientBackoffMaxBackoffMilliseconds()
+                    configuration
+                      .or(new ElbConfiguration())
+                      .getAwsElbClientBackoffBaseDelayMilliseconds(),
+                    configuration
+                      .or(new ElbConfiguration())
+                      .getAwsElbClientBackoffMaxBackoffMilliseconds()
                   ),
-                  configuration.get().getAwsElbClientRetries(), false
-              ))
-          ).withRegion(Regions.fromName(configuration.get().getAwsRegion().get())).build();
+                  configuration.get().getAwsElbClientRetries(),
+                  false
+                )
+              )
+          )
+          .withRegion(Regions.fromName(configuration.get().getAwsRegion().get()))
+          .build();
     } else {
-      elbClient = new com.amazonaws.services.elasticloadbalancingv2.AmazonElasticLoadBalancingClient();
+      elbClient =
+        new com.amazonaws.services.elasticloadbalancingv2.AmazonElasticLoadBalancingClient();
     }
 
     if (configuration.isPresent() && configuration.get().getAwsEndpoint().isPresent()) {
@@ -451,15 +542,23 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
 
   @Singleton
   @Provides
-  public CuratorFramework provideCurator(ZooKeeperConfiguration config,
-      BaragonConnectionStateListener connectionStateListener) {
-    CuratorFramework client = CuratorFrameworkFactory.builder()
-        .connectString(config.getQuorum())
-        .sessionTimeoutMs(config.getSessionTimeoutMillis())
-        .connectionTimeoutMs(config.getConnectTimeoutMillis())
-        .retryPolicy(new ExponentialBackoffRetry(config.getRetryBaseSleepTimeMilliseconds(), config.getRetryMaxTries()))
-        .defaultData(new byte[0])
-        .build();
+  public CuratorFramework provideCurator(
+    ZooKeeperConfiguration config,
+    BaragonConnectionStateListener connectionStateListener
+  ) {
+    CuratorFramework client = CuratorFrameworkFactory
+      .builder()
+      .connectString(config.getQuorum())
+      .sessionTimeoutMs(config.getSessionTimeoutMillis())
+      .connectionTimeoutMs(config.getConnectTimeoutMillis())
+      .retryPolicy(
+        new ExponentialBackoffRetry(
+          config.getRetryBaseSleepTimeMilliseconds(),
+          config.getRetryMaxTries()
+        )
+      )
+      .defaultData(new byte[0])
+      .build();
 
     client.getConnectionStateListenable().addListener(connectionStateListener);
 
@@ -470,13 +569,18 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
 
   @Provides
   @Singleton
-  public Optional<SentryConfiguration> sentryConfiguration(final BaragonConfiguration config) {
+  public Optional<SentryConfiguration> sentryConfiguration(
+    final BaragonConfiguration config
+  ) {
     return config.getSentryConfiguration();
   }
 
   @Provides
   @Singleton
   public UpstreamResolver provideUpstreamResolver(BaragonConfiguration config) {
-    return new UpstreamResolver(config.getMaxResolveCacheSize(), config.getExpireResolveCacheAfterDays());
+    return new UpstreamResolver(
+      config.getMaxResolveCacheSize(),
+      config.getExpireResolveCacheAfterDays()
+    );
   }
 }

@@ -1,9 +1,8 @@
 package com.hubspot.baragon.models;
 
-import java.util.Objects;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Optional;
+import java.util.Objects;
 
 public class BaragonAgentGcloudMetadata {
   private final String resourceGroup;
@@ -12,11 +11,13 @@ public class BaragonAgentGcloudMetadata {
   private final String backendService;
   private final String instanceName;
 
-  public BaragonAgentGcloudMetadata(@JsonProperty("resourceGroup") String resourceGroup,
-                                    @JsonProperty("project") String project,
-                                    @JsonProperty("region") Optional<String> region,
-                                    @JsonProperty("backendService") String backendService,
-                                    @JsonProperty("instanceName") String instanceName) {
+  public BaragonAgentGcloudMetadata(
+    @JsonProperty("resourceGroup") String resourceGroup,
+    @JsonProperty("project") String project,
+    @JsonProperty("region") Optional<String> region,
+    @JsonProperty("backendService") String backendService,
+    @JsonProperty("instanceName") String instanceName
+  ) {
     this.resourceGroup = resourceGroup;
     this.project = project;
     this.region = region;
@@ -51,11 +52,13 @@ public class BaragonAgentGcloudMetadata {
     }
     if (obj instanceof BaragonAgentGcloudMetadata) {
       final BaragonAgentGcloudMetadata that = (BaragonAgentGcloudMetadata) obj;
-      return Objects.equals(this.resourceGroup, that.resourceGroup) &&
-          Objects.equals(this.project, that.project) &&
-          Objects.equals(this.region, that.region) &&
-          Objects.equals(this.backendService, that.backendService) &&
-          Objects.equals(this.instanceName, that.instanceName);
+      return (
+        Objects.equals(this.resourceGroup, that.resourceGroup) &&
+        Objects.equals(this.project, that.project) &&
+        Objects.equals(this.region, that.region) &&
+        Objects.equals(this.backendService, that.backendService) &&
+        Objects.equals(this.instanceName, that.instanceName)
+      );
     }
     return false;
   }
@@ -67,12 +70,24 @@ public class BaragonAgentGcloudMetadata {
 
   @Override
   public String toString() {
-    return "BaragonAgentGcloudMetadata{" +
-        "resourceGroup='" + resourceGroup + '\'' +
-        ", project='" + project + '\'' +
-        ", region='" + region + '\'' +
-        ", backendService='" + backendService + '\'' +
-        ", instanceName='" + instanceName + '\'' +
-        '}';
+    return (
+      "BaragonAgentGcloudMetadata{" +
+      "resourceGroup='" +
+      resourceGroup +
+      '\'' +
+      ", project='" +
+      project +
+      '\'' +
+      ", region='" +
+      region +
+      '\'' +
+      ", backendService='" +
+      backendService +
+      '\'' +
+      ", instanceName='" +
+      instanceName +
+      '\'' +
+      '}'
+    );
   }
 }

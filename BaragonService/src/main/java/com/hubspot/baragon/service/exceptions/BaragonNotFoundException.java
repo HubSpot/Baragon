@@ -17,7 +17,12 @@ public class BaragonNotFoundException extends WebApplicationException {
    * @param message the String that is the entity of the 404 response.
    */
   public BaragonNotFoundException(String message) {
-    super(Response.status(Response.Status.NOT_FOUND).
-      entity(message).type("text/plain").build());
+    super(
+      Response
+        .status(Response.Status.NOT_FOUND)
+        .entity(message)
+        .type("text/plain")
+        .build()
+    );
   }
 }

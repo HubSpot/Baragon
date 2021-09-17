@@ -1,13 +1,5 @@
 package com.hubspot.baragon.service.managers;
 
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
-
-import org.apache.curator.framework.recipes.leader.LeaderLatch;
-import org.apache.curator.framework.state.ConnectionState;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -18,6 +10,12 @@ import com.hubspot.baragon.models.BaragonServiceStatus;
 import com.hubspot.baragon.service.BaragonServiceModule;
 import com.ning.http.client.AsyncHttpClient;
 import com.ning.http.client.Response;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
+import org.apache.curator.framework.recipes.leader.LeaderLatch;
+import org.apache.curator.framework.state.ConnectionState;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Singleton
 public class StatusManager {
@@ -32,13 +30,19 @@ public class StatusManager {
   private final ObjectMapper objectMapper;
 
   @Inject
-  public StatusManager(BaragonRequestDatastore requestDatastore,
-                       ObjectMapper objectMapper,
-                       @Named(BaragonDataModule.BARAGON_SERVICE_LEADER_LATCH) LeaderLatch leaderLatch,
-                       @Named(BaragonDataModule.BARAGON_SERVICE_WORKER_LAST_START) AtomicLong workerLastStart,
-                       @Named(BaragonDataModule.BARAGON_ELB_WORKER_LAST_START) AtomicLong elbWorkerLastStart,
-                       @Named(BaragonDataModule.BARAGON_ZK_CONNECTION_STATE) AtomicReference<ConnectionState> connectionState,
-                       @Named(BaragonServiceModule.BARAGON_SERVICE_HTTP_CLIENT)AsyncHttpClient httpClient) {
+  public StatusManager(
+    BaragonRequestDatastore requestDatastore,
+    ObjectMapper objectMapper,
+    @Named(BaragonDataModule.BARAGON_SERVICE_LEADER_LATCH) LeaderLatch leaderLatch,
+    @Named(
+      BaragonDataModule.BARAGON_SERVICE_WORKER_LAST_START
+    ) AtomicLong workerLastStart,
+    @Named(BaragonDataModule.BARAGON_ELB_WORKER_LAST_START) AtomicLong elbWorkerLastStart,
+    @Named(
+      BaragonDataModule.BARAGON_ZK_CONNECTION_STATE
+    ) AtomicReference<ConnectionState> connectionState,
+    @Named(BaragonServiceModule.BARAGON_SERVICE_HTTP_CLIENT) AsyncHttpClient httpClient
+  ) {
     this.requestDatastore = requestDatastore;
     this.leaderLatch = leaderLatch;
     this.workerLastStart = workerLastStart;
@@ -50,13 +54,32 @@ public class StatusManager {
 
   public BaragonServiceStatus getServiceStatus() {
     final ConnectionState currentConnectionState = connectionState.get();
-    final String connectionStateString = currentConnectionState == null ? "UNKNOWN" : currentConnectionState.name();
+    final String connectionStateString = currentConnectionState == null
+      ? "UNKNOWN"
+      : currentConnectionState.name();
     final long workerLagMs = System.currentTimeMillis() - workerLastStart.get();
     final long elbWorkerLagMs = System.currentTimeMillis() - elbWorkerLastStart.get();
-    if (connectionStateString.equals("CONNECTED") || connectionStateString.equals("RECONNECTED")) {
-      return new BaragonServiceStatus(leaderLatch.hasLeadership(), requestDatastore.getQueuedRequestCount(), workerLagMs, elbWorkerLagMs,connectionStateString, requestDatastore.getOldestQueuedRequestAge());
+    if (
+      connectionStateString.equals("CONNECTED") ||
+      connectionStateString.equals("RECONNECTED")
+    ) {
+      return new BaragonServiceStatus(
+        leaderLatch.hasLeadership(),
+        requestDatastore.getQueuedRequestCount(),
+        workerLagMs,
+        elbWorkerLagMs,
+        connectionStateString,
+        requestDatastore.getOldestQueuedRequestAge()
+      );
     } else {
-      return new BaragonServiceStatus(leaderLatch.hasLeadership(), 0, workerLagMs, elbWorkerLagMs, connectionStateString, 0L);
+      return new BaragonServiceStatus(
+        leaderLatch.hasLeadership(),
+        0,
+        workerLagMs,
+        elbWorkerLagMs,
+        connectionStateString,
+        0L
+      );
     }
   }
 
@@ -66,8 +89,14 @@ public class StatusManager {
     } else {
       try {
         String leaderUri = leaderLatch.getLeader().getId();
-        Response response = httpClient.prepareGet(String.format("%s/status", leaderUri)).execute().get();
-        return objectMapper.readValue(response.getResponseBody(), BaragonServiceStatus.class);
+        Response response = httpClient
+          .prepareGet(String.format("%s/status", leaderUri))
+          .execute()
+          .get();
+        return objectMapper.readValue(
+          response.getResponseBody(),
+          BaragonServiceStatus.class
+        );
       } catch (Exception e) {
         LOG.error("Error fetching status from leader", e);
         return getServiceStatus();

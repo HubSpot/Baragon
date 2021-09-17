@@ -4,12 +4,15 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Objects;
 
-@JsonIgnoreProperties( ignoreUnknown = true )
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class CloudflareDnsRecord {
   private final Boolean proxied;
   private final String name;
 
-  public CloudflareDnsRecord(@JsonProperty("proxied") Boolean proxied, @JsonProperty("name") String name) {
+  public CloudflareDnsRecord(
+    @JsonProperty("proxied") Boolean proxied,
+    @JsonProperty("name") String name
+  ) {
     this.proxied = proxied;
     this.name = name;
   }
@@ -31,8 +34,7 @@ public class CloudflareDnsRecord {
       return false;
     }
     CloudflareDnsRecord that = (CloudflareDnsRecord) o;
-    return Objects.equal(proxied, that.proxied) &&
-        Objects.equal(name, that.name);
+    return Objects.equal(proxied, that.proxied) && Objects.equal(name, that.name);
   }
 
   @Override
@@ -42,9 +44,6 @@ public class CloudflareDnsRecord {
 
   @Override
   public String toString() {
-    return "CloudflareDnsRecord{" +
-        "proxied=" + proxied +
-        ", name='" + name + '\'' +
-        '}';
+    return "CloudflareDnsRecord{" + "proxied=" + proxied + ", name='" + name + '\'' + '}';
   }
 }

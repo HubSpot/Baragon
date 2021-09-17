@@ -1,14 +1,11 @@
 package com.hubspot.baragon.config;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.ArrayList;
 import java.util.List;
-
 import javax.validation.constraints.NotNull;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 public class GraphiteConfiguration {
-
   @JsonProperty
   private boolean enabled = false;
 

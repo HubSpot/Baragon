@@ -1,22 +1,23 @@
 package com.hubspot.baragon.utils;
 
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.util.concurrent.TimeUnit;
-
 import com.google.common.base.Optional;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.net.HostAndPort;
 import com.google.common.net.InetAddresses;
 import com.google.inject.Singleton;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.concurrent.TimeUnit;
 
 @Singleton
 public class UpstreamResolver {
   private final Cache<String, String> resolveCache;
 
   public UpstreamResolver(long maxSize, long expireAfterDays) {
-    this.resolveCache = CacheBuilder.newBuilder()
+    this.resolveCache =
+      CacheBuilder
+        .newBuilder()
         .maximumSize(maxSize)
         .expireAfterAccess(expireAfterDays, TimeUnit.DAYS)
         .build();

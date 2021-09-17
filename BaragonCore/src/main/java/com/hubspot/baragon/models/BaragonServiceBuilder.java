@@ -1,12 +1,11 @@
 package com.hubspot.baragon.models;
 
+import com.google.common.base.Optional;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import com.google.common.base.Optional;
 
 public class BaragonServiceBuilder {
   private String serviceId;
@@ -77,6 +76,18 @@ public class BaragonServiceBuilder {
   }
 
   public BaragonService build() {
-    return new BaragonService(serviceId, owners, serviceBasePath, additionalPaths, loadBalancerGroups, options, templateName, domains, edgeCacheDNS, edgeCacheDomains, preResolveUpstreamDNS);
+    return new BaragonService(
+      serviceId,
+      owners,
+      serviceBasePath,
+      additionalPaths,
+      loadBalancerGroups,
+      options,
+      templateName,
+      domains,
+      edgeCacheDNS,
+      edgeCacheDomains,
+      preResolveUpstreamDNS
+    );
   }
 }

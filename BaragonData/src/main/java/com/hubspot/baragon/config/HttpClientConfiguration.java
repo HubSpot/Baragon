@@ -7,7 +7,8 @@ public class HttpClientConfiguration {
   public static final int MAX_REQUEST_RETRY_DEFAULT = 5;
   public static final int REQUEST_TIMEOUT_IN_MS_DEFAULT = 10000;
   public static final int CONNECTION_TIMEOUT_IN_MS_DEFAULT = 5000;
-  public static final String USER_AGENT_DEFAULT = "Baragon/0.1 (+https://github.com/HubSpot/Baragon)";
+  public static final String USER_AGENT_DEFAULT =
+    "Baragon/0.1 (+https://github.com/HubSpot/Baragon)";
 
   @JsonProperty("maxRequestRetry")
   private int maxRequestRetry = MAX_REQUEST_RETRY_DEFAULT;

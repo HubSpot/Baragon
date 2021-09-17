@@ -1,16 +1,14 @@
 package com.hubspot.baragon.service.listeners;
 
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
-
-import javax.inject.Named;
-
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import com.hubspot.baragon.service.BaragonServiceModule;
 import com.hubspot.baragon.service.config.ElbConfiguration;
 import com.hubspot.baragon.service.worker.BaragonElbSyncWorker;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+import javax.inject.Named;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,9 +22,13 @@ public class ElbSyncWorkerListener extends AbstractLatchListener {
   private ScheduledFuture<?> elbWorkerFuture = null;
 
   @Inject
-  public ElbSyncWorkerListener(@Named(BaragonServiceModule.BARAGON_SERVICE_SCHEDULED_EXECUTOR) ScheduledExecutorService executorService,
-                               Optional<ElbConfiguration> config,
-                               BaragonElbSyncWorker elbWorker) {
+  public ElbSyncWorkerListener(
+    @Named(
+      BaragonServiceModule.BARAGON_SERVICE_SCHEDULED_EXECUTOR
+    ) ScheduledExecutorService executorService,
+    Optional<ElbConfiguration> config,
+    BaragonElbSyncWorker elbWorker
+  ) {
     this.executorService = executorService;
     this.config = config;
     this.elbWorker = elbWorker;
@@ -40,7 +42,13 @@ public class ElbSyncWorkerListener extends AbstractLatchListener {
       elbWorkerFuture.cancel(false);
     }
 
-    elbWorkerFuture = executorService.scheduleAtFixedRate(elbWorker, config.get().getInitialDelaySeconds(), config.get().getIntervalSeconds(), TimeUnit.SECONDS);
+    elbWorkerFuture =
+      executorService.scheduleAtFixedRate(
+        elbWorker,
+        config.get().getInitialDelaySeconds(),
+        config.get().getIntervalSeconds(),
+        TimeUnit.SECONDS
+      );
   }
 
   @Override

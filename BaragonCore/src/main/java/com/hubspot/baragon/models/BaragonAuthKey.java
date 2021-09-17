@@ -6,7 +6,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Optional;
 
-@JsonIgnoreProperties( ignoreUnknown = true )
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class BaragonAuthKey {
   private final String value;
   private final String owner;
@@ -14,14 +14,21 @@ public class BaragonAuthKey {
   private final Optional<Long> expiredAt;
 
   public static BaragonAuthKey expire(BaragonAuthKey authKey) {
-    return new BaragonAuthKey(authKey.getValue(), authKey.getOwner(), authKey.getCreatedAt(), Optional.of(System.currentTimeMillis()));
+    return new BaragonAuthKey(
+      authKey.getValue(),
+      authKey.getOwner(),
+      authKey.getCreatedAt(),
+      Optional.of(System.currentTimeMillis())
+    );
   }
 
   @JsonCreator
-  public BaragonAuthKey(@JsonProperty("value") String value,
-                        @JsonProperty("owner") String owner,
-                        @JsonProperty("createdAt") long createdAt,
-                        @JsonProperty("expiredAt") Optional<Long> expiredAt) {
+  public BaragonAuthKey(
+    @JsonProperty("value") String value,
+    @JsonProperty("owner") String owner,
+    @JsonProperty("createdAt") long createdAt,
+    @JsonProperty("expiredAt") Optional<Long> expiredAt
+  ) {
     this.value = value;
     this.owner = owner;
     this.createdAt = createdAt;
@@ -82,11 +89,12 @@ public class BaragonAuthKey {
 
   @Override
   public String toString() {
-    return MoreObjects.toStringHelper(this)
-        .add("value", value)
-        .add("owner", owner)
-        .add("createdAt", createdAt)
-        .add("expiredAt", expiredAt)
-        .toString();
+    return MoreObjects
+      .toStringHelper(this)
+      .add("value", value)
+      .add("owner", owner)
+      .add("createdAt", createdAt)
+      .add("expiredAt", expiredAt)
+      .toString();
   }
 }

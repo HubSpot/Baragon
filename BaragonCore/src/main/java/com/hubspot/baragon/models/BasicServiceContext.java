@@ -1,12 +1,11 @@
 package com.hubspot.baragon.models;
 
-import java.util.Collection;
-import java.util.Collections;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.MoreObjects;
+import java.util.Collection;
+import java.util.Collections;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class BasicServiceContext {
@@ -15,16 +14,20 @@ public class BasicServiceContext {
   private final Long timestamp;
 
   @JsonCreator
-  public BasicServiceContext(@JsonProperty("service") BaragonService service,
-                             @JsonProperty("upstreams") Collection<UpstreamInfo> upstreams,
-                             @JsonProperty("timestamp") Long timestamp) {
+  public BasicServiceContext(
+    @JsonProperty("service") BaragonService service,
+    @JsonProperty("upstreams") Collection<UpstreamInfo> upstreams,
+    @JsonProperty("timestamp") Long timestamp
+  ) {
     this.service = service;
     this.upstreams = MoreObjects.firstNonNull(upstreams, Collections.emptyList());
     this.timestamp = timestamp;
   }
 
-  public BasicServiceContext(@JsonProperty("service") BaragonService service,
-                             @JsonProperty("upstreams") Collection<UpstreamInfo> upstreams) {
+  public BasicServiceContext(
+    @JsonProperty("service") BaragonService service,
+    @JsonProperty("upstreams") Collection<UpstreamInfo> upstreams
+  ) {
     this(service, upstreams, System.currentTimeMillis());
   }
 
@@ -83,10 +86,15 @@ public class BasicServiceContext {
 
   @Override
   public String toString() {
-    return "BasicServiceContext{" +
-        "service=" + service +
-        ", upstreams=" + upstreams +
-        ", timestamp=" + timestamp +
-        '}';
+    return (
+      "BasicServiceContext{" +
+      "service=" +
+      service +
+      ", upstreams=" +
+      upstreams +
+      ", timestamp=" +
+      timestamp +
+      '}'
+    );
   }
 }

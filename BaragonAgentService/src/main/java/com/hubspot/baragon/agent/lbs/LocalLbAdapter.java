@@ -1,5 +1,16 @@
 package com.hubspot.baragon.agent.lbs;
 
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.annotation.Timed;
+import com.google.common.base.Charsets;
+import com.google.common.base.Optional;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
+import com.hubspot.baragon.agent.config.LoadBalancerConfiguration;
+import com.hubspot.baragon.exceptions.InvalidConfigException;
+import com.hubspot.baragon.exceptions.LbAdapterExecuteException;
+import com.hubspot.baragon.exceptions.WorkerLimitReachedException;
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -11,8 +22,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-
-import com.codahale.metrics.MetricRegistry;
 import org.apache.commons.exec.CommandLine;
 import org.apache.commons.exec.DefaultExecuteResultHandler;
 import org.apache.commons.exec.DefaultExecutor;
@@ -20,17 +29,6 @@ import org.apache.commons.exec.ExecuteException;
 import org.apache.commons.exec.PumpStreamHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.codahale.metrics.annotation.Timed;
-import com.google.common.base.Charsets;
-import com.google.common.base.Optional;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
-import com.hubspot.baragon.agent.config.LoadBalancerConfiguration;
-import com.hubspot.baragon.exceptions.InvalidConfigException;
-import com.hubspot.baragon.exceptions.LbAdapterExecuteException;
-import com.hubspot.baragon.exceptions.WorkerLimitReachedException;
 
 @Singleton
 public class LocalLbAdapter {
@@ -43,13 +41,20 @@ public class LocalLbAdapter {
   private final ExecutorService destroyProcessExecutor;
 
   @Inject
-  public LocalLbAdapter(LoadBalancerConfiguration loadBalancerConfiguration, MetricRegistry metricRegistry) {
+  public LocalLbAdapter(
+    LoadBalancerConfiguration loadBalancerConfiguration,
+    MetricRegistry metricRegistry
+  ) {
     this.loadBalancerConfiguration = loadBalancerConfiguration;
     this.metricRegistry = metricRegistry;
-    this.destroyProcessExecutor = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("lb-shell-process-kill-%d").build());
+    this.destroyProcessExecutor =
+      Executors.newCachedThreadPool(
+        new ThreadFactoryBuilder().setNameFormat("lb-shell-process-kill-%d").build()
+      );
   }
 
-  private int executeWithTimeout(CommandLine command, int timeout) throws LbAdapterExecuteException, IOException {
+  private int executeWithTimeout(CommandLine command, int timeout)
+    throws LbAdapterExecuteException, IOException {
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     DefaultExecutor executor = new DefaultExecutor();
     executor.setStreamHandler(new PumpStreamHandler(baos));
@@ -68,11 +73,21 @@ public class LocalLbAdapter {
         }
         return resultHandler.getExitValue();
       } else {
-        CompletableFuture.runAsync(() -> executor.getWatchdog().destroyProcess(), destroyProcessExecutor);
-        throw new LbAdapterExecuteException(baos.toString(Charsets.UTF_8.name()), command.toString());
+        CompletableFuture.runAsync(
+          () -> executor.getWatchdog().destroyProcess(),
+          destroyProcessExecutor
+        );
+        throw new LbAdapterExecuteException(
+          baos.toString(Charsets.UTF_8.name()),
+          command.toString()
+        );
       }
-    } catch (ExecuteException|InterruptedException e) {
-      throw new LbAdapterExecuteException(baos.toString(Charsets.UTF_8.name()), e, command.toString());
+    } catch (ExecuteException | InterruptedException e) {
+      throw new LbAdapterExecuteException(
+        baos.toString(Charsets.UTF_8.name()),
+        e,
+        command.toString()
+      );
     }
   }
 
@@ -81,7 +96,11 @@ public class LocalLbAdapter {
       ProcessBuilder processBuilder = new ProcessBuilder(command);
       Process process = processBuilder.start();
 
-      try (BufferedReader br = new BufferedReader(new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8));) {
+      try (
+        BufferedReader br = new BufferedReader(
+          new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8)
+        );
+      ) {
         List<String> output = new ArrayList<>();
         String line = br.readLine();
         while (line != null) {
@@ -101,7 +120,10 @@ public class LocalLbAdapter {
 
   public void triggerLogrotate() {
     try {
-      int exitCode = executeWithTimeout(CommandLine.parse(loadBalancerConfiguration.getLogRotateCommand().get()), LOGROTATE_TIMEOUT);
+      int exitCode = executeWithTimeout(
+        CommandLine.parse(loadBalancerConfiguration.getLogRotateCommand().get()),
+        LOGROTATE_TIMEOUT
+      );
       LOG.info("Logrotate finished with exit code {}", exitCode);
     } catch (Exception e) {
       LOG.error("Could not run log rotation", e);
@@ -112,8 +134,16 @@ public class LocalLbAdapter {
   public void checkConfigs() throws InvalidConfigException {
     try {
       final long start = System.currentTimeMillis();
-      final int exitCode = executeWithTimeout(CommandLine.parse(loadBalancerConfiguration.getCheckConfigCommand()), loadBalancerConfiguration.getCommandTimeoutMs());
-      LOG.info("Checked configs via '{}' in {}ms (exit code = {})", loadBalancerConfiguration.getCheckConfigCommand(), System.currentTimeMillis() - start, exitCode);
+      final int exitCode = executeWithTimeout(
+        CommandLine.parse(loadBalancerConfiguration.getCheckConfigCommand()),
+        loadBalancerConfiguration.getCommandTimeoutMs()
+      );
+      LOG.info(
+        "Checked configs via '{}' in {}ms (exit code = {})",
+        loadBalancerConfiguration.getCheckConfigCommand(),
+        System.currentTimeMillis() - start,
+        exitCode
+      );
     } catch (LbAdapterExecuteException e) {
       throw new InvalidConfigException(e.getOutput());
     } catch (IOException e) {
@@ -122,7 +152,8 @@ public class LocalLbAdapter {
   }
 
   @Timed
-  public void reloadConfigs() throws LbAdapterExecuteException, IOException, WorkerLimitReachedException {
+  public void reloadConfigs()
+    throws LbAdapterExecuteException, IOException, WorkerLimitReachedException {
     if (loadBalancerConfiguration.isLimitWorkerCount()) {
       if (loadBalancerConfiguration.getWorkerCountCommand().isPresent()) {
         checkWorkerCount();
@@ -131,18 +162,37 @@ public class LocalLbAdapter {
       }
     }
     final long start = System.currentTimeMillis();
-    final int exitCode = executeWithTimeout(CommandLine.parse(loadBalancerConfiguration.getReloadConfigCommand()), loadBalancerConfiguration.getCommandTimeoutMs());
+    final int exitCode = executeWithTimeout(
+      CommandLine.parse(loadBalancerConfiguration.getReloadConfigCommand()),
+      loadBalancerConfiguration.getCommandTimeoutMs()
+    );
 
-    metricRegistry.timer(LocalLbAdapter.class.getName() + ".reloadConfigs")
-            .update(System.currentTimeMillis() - start, TimeUnit.MILLISECONDS);
-    LOG.info("Reloaded configs via '{}' in {}ms (exit code = {})", loadBalancerConfiguration.getReloadConfigCommand(), System.currentTimeMillis() - start, exitCode);
+    metricRegistry
+      .timer(LocalLbAdapter.class.getName() + ".reloadConfigs")
+      .update(System.currentTimeMillis() - start, TimeUnit.MILLISECONDS);
+    LOG.info(
+      "Reloaded configs via '{}' in {}ms (exit code = {})",
+      loadBalancerConfiguration.getReloadConfigCommand(),
+      System.currentTimeMillis() - start,
+      exitCode
+    );
   }
 
   private void checkWorkerCount() throws WorkerLimitReachedException {
-    Optional<Integer> workerCount = getOutputAsInt(loadBalancerConfiguration.getWorkerCountCommand().get());
+    Optional<Integer> workerCount = getOutputAsInt(
+      loadBalancerConfiguration.getWorkerCountCommand().get()
+    );
     LOG.debug("Current worker count: {}", workerCount);
-    if (!workerCount.isPresent() || workerCount.get() > loadBalancerConfiguration.getMaxLbWorkerCount()) {
-      throw new WorkerLimitReachedException(String.format("%s LB workers currently running, wait for old workers to exit before attempting to reload configs", workerCount.get()));
+    if (
+      !workerCount.isPresent() ||
+      workerCount.get() > loadBalancerConfiguration.getMaxLbWorkerCount()
+    ) {
+      throw new WorkerLimitReachedException(
+        String.format(
+          "%s LB workers currently running, wait for old workers to exit before attempting to reload configs",
+          workerCount.get()
+        )
+      );
     }
   }
 }

@@ -1,18 +1,16 @@
 package com.hubspot.baragon.utils;
 
+import com.google.common.base.Joiner;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.util.Enumeration;
-
 import org.apache.commons.lang3.time.DurationFormatUtils;
-
-import com.google.common.base.Joiner;
 
 public class JavaUtils {
   public static final Joiner COMMA_JOINER = Joiner.on(", ").skipNulls();
 
-  private JavaUtils() { }
+  private JavaUtils() {}
 
   public static String getHostAddress() throws Exception {
     final Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
@@ -45,6 +43,9 @@ public class JavaUtils {
   private static final String DURATION_FORMAT = "mm:ss.S";
 
   public static String duration(final long start) {
-    return DurationFormatUtils.formatDuration(System.currentTimeMillis() - start, DURATION_FORMAT);
+    return DurationFormatUtils.formatDuration(
+      System.currentTimeMillis() - start,
+      DURATION_FORMAT
+    );
   }
 }

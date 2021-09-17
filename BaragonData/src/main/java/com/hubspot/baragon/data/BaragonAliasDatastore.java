@@ -1,24 +1,23 @@
 package com.hubspot.baragon.data;
 
-import java.util.List;
-
-import org.apache.curator.framework.CuratorFramework;
-import org.apache.curator.utils.ZKPaths;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import com.hubspot.baragon.config.ZooKeeperConfiguration;
 import com.hubspot.baragon.models.BaragonGroupAlias;
+import java.util.List;
+import org.apache.curator.framework.CuratorFramework;
+import org.apache.curator.utils.ZKPaths;
 
 public class BaragonAliasDatastore extends AbstractDataStore {
-
   public static final String ALIASES_ROOT = "/aliases";
 
   @Inject
-  public BaragonAliasDatastore(CuratorFramework curatorFramework,
-                               ObjectMapper objectMapper,
-                               ZooKeeperConfiguration zooKeeperConfiguration) {
+  public BaragonAliasDatastore(
+    CuratorFramework curatorFramework,
+    ObjectMapper objectMapper,
+    ZooKeeperConfiguration zooKeeperConfiguration
+  ) {
     super(curatorFramework, objectMapper, zooKeeperConfiguration);
   }
 

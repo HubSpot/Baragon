@@ -1,12 +1,5 @@
 package com.hubspot.baragon.data;
 
-import java.util.Collection;
-import java.util.Collections;
-
-import org.apache.curator.framework.CuratorFramework;
-import org.apache.curator.framework.recipes.leader.LeaderLatch;
-import org.apache.zookeeper.KeeperException;
-
 import com.codahale.metrics.annotation.Timed;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Charsets;
@@ -16,6 +9,11 @@ import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.hubspot.baragon.config.ZooKeeperConfiguration;
+import java.util.Collection;
+import java.util.Collections;
+import org.apache.curator.framework.CuratorFramework;
+import org.apache.curator.framework.recipes.leader.LeaderLatch;
+import org.apache.zookeeper.KeeperException;
 
 @Singleton
 public class BaragonWorkerDatastore extends AbstractDataStore {
@@ -23,7 +21,11 @@ public class BaragonWorkerDatastore extends AbstractDataStore {
   public static final String WORKER_FORMAT = WORKERS_FORMAT + "/%s";
 
   @Inject
-  public BaragonWorkerDatastore(CuratorFramework curatorFramework, ObjectMapper objectMapper, ZooKeeperConfiguration zooKeeperConfiguration) {
+  public BaragonWorkerDatastore(
+    CuratorFramework curatorFramework,
+    ObjectMapper objectMapper,
+    ZooKeeperConfiguration zooKeeperConfiguration
+  ) {
     super(curatorFramework, objectMapper, zooKeeperConfiguration);
   }
 
@@ -34,7 +36,12 @@ public class BaragonWorkerDatastore extends AbstractDataStore {
   @Timed
   public Optional<String> getBaseUri(String id) {
     try {
-      return Optional.of(new String(curatorFramework.getData().forPath(String.format(WORKER_FORMAT, id)), Charsets.UTF_8));
+      return Optional.of(
+        new String(
+          curatorFramework.getData().forPath(String.format(WORKER_FORMAT, id)),
+          Charsets.UTF_8
+        )
+      );
     } catch (Exception e) {
       return Optional.absent();
     }
@@ -52,7 +59,12 @@ public class BaragonWorkerDatastore extends AbstractDataStore {
 
     for (String node : nodes) {
       try {
-        baseUrls.add(new String(curatorFramework.getData().forPath(String.format(WORKER_FORMAT, node)), Charsets.UTF_8));
+        baseUrls.add(
+          new String(
+            curatorFramework.getData().forPath(String.format(WORKER_FORMAT, node)),
+            Charsets.UTF_8
+          )
+        );
       } catch (KeeperException.NoNodeException nne) {
         // uhh, didnt see that...
       } catch (Exception e) {

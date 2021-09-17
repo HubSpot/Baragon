@@ -4,7 +4,9 @@ public class InvalidAgentMetadataStringException extends IllegalArgumentExceptio
   private final String agentMetadataString;
 
   public InvalidAgentMetadataStringException(String agentMetadataString) {
-    super(String.format("'%s' is not a valid agent metadata string", agentMetadataString));
+    super(
+      String.format("'%s' is not a valid agent metadata string", agentMetadataString)
+    );
     this.agentMetadataString = agentMetadataString;
   }
 

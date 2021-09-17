@@ -1,11 +1,9 @@
 package com.hubspot.baragon.agent.config;
 
-import java.util.Map;
-
-import javax.validation.constraints.NotNull;
-
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.Map;
+import javax.validation.constraints.NotNull;
 import org.hibernate.validator.constraints.NotEmpty;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -40,5 +38,4 @@ public class TemplateConfiguration {
   public Map<String, String> getNamedTemplates() {
     return extraTemplates;
   }
-
 }

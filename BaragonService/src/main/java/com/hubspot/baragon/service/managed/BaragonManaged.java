@@ -1,12 +1,5 @@
 package com.hubspot.baragon.service.managed;
 
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.atomic.AtomicReference;
-
-import javax.inject.Named;
-
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import com.hubspot.baragon.BaragonDataModule;
@@ -17,10 +10,14 @@ import com.hubspot.baragon.service.BaragonServiceModule;
 import com.hubspot.baragon.service.config.BaragonConfiguration;
 import com.hubspot.baragon.service.listeners.AbstractLatchListener;
 import io.dropwizard.lifecycle.Managed;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.atomic.AtomicReference;
+import javax.inject.Named;
 import org.apache.curator.framework.recipes.leader.LeaderLatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 
 public class BaragonManaged implements Managed {
   private static final Logger LOG = LoggerFactory.getLogger(BaragonManaged.class);
@@ -33,12 +30,18 @@ public class BaragonManaged implements Managed {
   private final AtomicReference<Map<String, BaragonAuthKey>> authKeys;
 
   @Inject
-  public BaragonManaged(Set<AbstractLatchListener> listeners,
-                        @Named(BaragonServiceModule.BARAGON_SERVICE_SCHEDULED_EXECUTOR) ScheduledExecutorService executorService,
-                        @Named(BaragonDataModule.BARAGON_SERVICE_LEADER_LATCH) LeaderLatch leaderLatch,
-                        @Named(BaragonDataModule.BARAGON_AUTH_KEY_MAP) AtomicReference<Map<String, BaragonAuthKey>> authKeys,
-                        BaragonConfiguration config,
-                        BaragonAuthDatastore authDatastore) {
+  public BaragonManaged(
+    Set<AbstractLatchListener> listeners,
+    @Named(
+      BaragonServiceModule.BARAGON_SERVICE_SCHEDULED_EXECUTOR
+    ) ScheduledExecutorService executorService,
+    @Named(BaragonDataModule.BARAGON_SERVICE_LEADER_LATCH) LeaderLatch leaderLatch,
+    @Named(
+      BaragonDataModule.BARAGON_AUTH_KEY_MAP
+    ) AtomicReference<Map<String, BaragonAuthKey>> authKeys,
+    BaragonConfiguration config,
+    BaragonAuthDatastore authDatastore
+  ) {
     this.listeners = listeners;
     this.executorService = executorService;
     this.leaderLatch = leaderLatch;
@@ -49,9 +52,23 @@ public class BaragonManaged implements Managed {
 
   @Override
   public void start() throws Exception {
-    if (config.getAuthConfiguration().getKey().isPresent() && config.getAuthConfiguration().isEnabled()) {
-      if (!authDatastore.getAuthKeyInfo(config.getAuthConfiguration().getKey().get()).isPresent()) {
-        authDatastore.addAuthKey(new BaragonAuthKey(config.getAuthConfiguration().getKey().get(), "baragon", System.currentTimeMillis(), Optional.<Long>absent()));
+    if (
+      config.getAuthConfiguration().getKey().isPresent() &&
+      config.getAuthConfiguration().isEnabled()
+    ) {
+      if (
+        !authDatastore
+          .getAuthKeyInfo(config.getAuthConfiguration().getKey().get())
+          .isPresent()
+      ) {
+        authDatastore.addAuthKey(
+          new BaragonAuthKey(
+            config.getAuthConfiguration().getKey().get(),
+            "baragon",
+            System.currentTimeMillis(),
+            Optional.<Long>absent()
+          )
+        );
       }
       authKeys.set(authDatastore.getAuthKeyMap());
     }

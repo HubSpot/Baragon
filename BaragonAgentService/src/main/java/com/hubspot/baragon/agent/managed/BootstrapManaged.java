@@ -1,15 +1,5 @@
 package com.hubspot.baragon.agent.managed;
 
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
-
-import org.apache.curator.framework.CuratorFramework;
-import org.apache.curator.framework.recipes.leader.LeaderLatch;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import com.hubspot.baragon.agent.BaragonAgentServiceModule;
@@ -25,8 +15,15 @@ import com.hubspot.baragon.data.BaragonLoadBalancerDatastore;
 import com.hubspot.baragon.models.BaragonAgentMetadata;
 import com.hubspot.baragon.models.BaragonAgentState;
 import com.hubspot.baragon.models.BaragonKnownAgentMetadata;
-
 import io.dropwizard.lifecycle.Managed;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
+import org.apache.curator.framework.CuratorFramework;
+import org.apache.curator.framework.recipes.leader.LeaderLatch;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class BootstrapManaged implements Managed {
   private static final Logger LOG = LoggerFactory.getLogger(BootstrapManaged.class);
@@ -52,21 +49,25 @@ public class BootstrapManaged implements Managed {
   private ScheduledFuture<?> stateCheckerFuture = null;
 
   @Inject
-  public BootstrapManaged(BaragonKnownAgentsDatastore knownAgentsDatastore,
-                          BaragonLoadBalancerDatastore loadBalancerDatastore,
-                          BaragonAgentConfiguration configuration,
-                          AgentHeartbeatWorker agentHeartbeatWorker,
-                          BaragonAgentMetadata baragonAgentMetadata,
-                          LifecycleHelper lifecycleHelper,
-                          CuratorFramework curatorFramework,
-                          ResyncListener resyncListener,
-                          ConfigChecker configChecker,
-                          AtomicReference<BaragonAgentState> agentState,
-                          InternalStateChecker internalStateChecker,
-                          DirectoryChangesListener directoryChangesListener,
-                          LocalLbAdapter lbAdapter,
-                          @Named(BaragonAgentServiceModule.AGENT_SCHEDULED_EXECUTOR) ScheduledExecutorService executorService,
-                          @Named(BaragonAgentServiceModule.AGENT_LEADER_LATCH) LeaderLatch leaderLatch) {
+  public BootstrapManaged(
+    BaragonKnownAgentsDatastore knownAgentsDatastore,
+    BaragonLoadBalancerDatastore loadBalancerDatastore,
+    BaragonAgentConfiguration configuration,
+    AgentHeartbeatWorker agentHeartbeatWorker,
+    BaragonAgentMetadata baragonAgentMetadata,
+    LifecycleHelper lifecycleHelper,
+    CuratorFramework curatorFramework,
+    ResyncListener resyncListener,
+    ConfigChecker configChecker,
+    AtomicReference<BaragonAgentState> agentState,
+    InternalStateChecker internalStateChecker,
+    DirectoryChangesListener directoryChangesListener,
+    LocalLbAdapter lbAdapter,
+    @Named(
+      BaragonAgentServiceModule.AGENT_SCHEDULED_EXECUTOR
+    ) ScheduledExecutorService executorService,
+    @Named(BaragonAgentServiceModule.AGENT_LEADER_LATCH) LeaderLatch leaderLatch
+  ) {
     this.configuration = configuration;
     this.leaderLatch = leaderLatch;
     this.curatorFramework = curatorFramework;
@@ -83,8 +84,6 @@ public class BootstrapManaged implements Managed {
     this.lbAdapter = lbAdapter;
     this.agentState = agentState;
   }
-
-
 
   @Override
   public void start() throws Exception {
@@ -104,30 +103,65 @@ public class BootstrapManaged implements Managed {
       }
 
       LOG.info("Updating BaragonGroup information...");
-      loadBalancerDatastore.updateGroupInfo(configuration.getLoadBalancerConfiguration().getName(), configuration.getLoadBalancerConfiguration().getDefaultDomain(), configuration.getLoadBalancerConfiguration().getDomains(), configuration.getLoadBalancerConfiguration().getDomainAliases(), configuration.getLoadBalancerConfiguration().getMinHealthyAgents());
+      loadBalancerDatastore.updateGroupInfo(
+        configuration.getLoadBalancerConfiguration().getName(),
+        configuration.getLoadBalancerConfiguration().getDefaultDomain(),
+        configuration.getLoadBalancerConfiguration().getDomains(),
+        configuration.getLoadBalancerConfiguration().getDomainAliases(),
+        configuration.getLoadBalancerConfiguration().getMinHealthyAgents()
+      );
 
       LOG.info("Adding to known-agents...");
-      knownAgentsDatastore.addKnownAgent(configuration.getLoadBalancerConfiguration().getName(), BaragonKnownAgentMetadata.fromAgentMetadata(baragonAgentMetadata, System.currentTimeMillis()));
+      knownAgentsDatastore.addKnownAgent(
+        configuration.getLoadBalancerConfiguration().getName(),
+        BaragonKnownAgentMetadata.fromAgentMetadata(
+          baragonAgentMetadata,
+          System.currentTimeMillis()
+        )
+      );
 
       LOG.info("Starting agent heartbeat...");
-      requestWorkerFuture = executorService.scheduleAtFixedRate(agentHeartbeatWorker, 0, configuration.getHeartbeatIntervalSeconds(), TimeUnit.SECONDS);
+      requestWorkerFuture =
+        executorService.scheduleAtFixedRate(
+          agentHeartbeatWorker,
+          0,
+          configuration.getHeartbeatIntervalSeconds(),
+          TimeUnit.SECONDS
+        );
 
       LOG.info("Adding resync listener");
       curatorFramework.getConnectionStateListenable().addListener(resyncListener);
     }
 
     LOG.info("Starting config checker");
-    configCheckerFuture = executorService.scheduleAtFixedRate(configChecker, 0, configuration.getConfigCheckIntervalSecs(), TimeUnit.SECONDS);
+    configCheckerFuture =
+      executorService.scheduleAtFixedRate(
+        configChecker,
+        0,
+        configuration.getConfigCheckIntervalSecs(),
+        TimeUnit.SECONDS
+      );
 
     if (configuration.isEnablePollingStateValidation()) {
       LOG.info("Starting state reconciliation checker");
-      stateCheckerFuture = executorService.scheduleAtFixedRate(internalStateChecker, configuration.getStateCheckIntervalSecs(), configuration.getStateCheckIntervalSecs(), TimeUnit.SECONDS);
+      stateCheckerFuture =
+        executorService.scheduleAtFixedRate(
+          internalStateChecker,
+          configuration.getStateCheckIntervalSecs(),
+          configuration.getStateCheckIntervalSecs(),
+          TimeUnit.SECONDS
+        );
     }
 
     lifecycleHelper.writeStateFileIfConfigured();
 
     if (configuration.getLoadBalancerConfiguration().getLogRotateCommand().isPresent()) {
-      executorService.scheduleAtFixedRate(lbAdapter::triggerLogrotate, configuration.getLoadBalancerConfiguration().getRotateIntervalMillis(), configuration.getLoadBalancerConfiguration().getRotateIntervalMillis(), TimeUnit.MILLISECONDS);
+      executorService.scheduleAtFixedRate(
+        lbAdapter::triggerLogrotate,
+        configuration.getLoadBalancerConfiguration().getRotateIntervalMillis(),
+        configuration.getLoadBalancerConfiguration().getRotateIntervalMillis(),
+        TimeUnit.MILLISECONDS
+      );
     }
 
     agentState.set(BaragonAgentState.ACCEPTING);

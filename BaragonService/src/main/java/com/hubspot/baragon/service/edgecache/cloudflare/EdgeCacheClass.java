@@ -14,5 +14,4 @@ public enum EdgeCacheClass {
   public Class<? extends EdgeCache> getEdgeCacheClass() {
     return edgeCacheClass;
   }
-
 }

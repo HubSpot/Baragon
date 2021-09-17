@@ -1,7 +1,6 @@
 package com.hubspot.baragon.cache;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;

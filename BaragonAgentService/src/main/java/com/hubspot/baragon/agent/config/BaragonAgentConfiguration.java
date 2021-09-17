@@ -1,16 +1,5 @@
 package com.hubspot.baragon.agent.config;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-
-import javax.validation.Valid;
-import javax.validation.constraints.Min;
-import javax.validation.constraints.NotNull;
-
-import org.hibernate.validator.constraints.NotEmpty;
-
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Optional;
@@ -20,8 +9,15 @@ import com.hubspot.baragon.config.GraphiteConfiguration;
 import com.hubspot.baragon.config.HttpClientConfiguration;
 import com.hubspot.baragon.config.ZooKeeperConfiguration;
 import com.hubspot.baragon.models.BaragonAgentGcloudMetadata;
-
 import io.dropwizard.Configuration;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import javax.validation.Valid;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotNull;
+import org.hibernate.validator.constraints.NotEmpty;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class BaragonAgentConfiguration extends Configuration {
@@ -153,7 +149,9 @@ public class BaragonAgentConfiguration extends Configuration {
     return httpClientConfiguration;
   }
 
-  public void setHttpClientConfiguration(HttpClientConfiguration httpClientConfiguration) {
+  public void setHttpClientConfiguration(
+    HttpClientConfiguration httpClientConfiguration
+  ) {
     this.httpClientConfiguration = httpClientConfiguration;
   }
 
@@ -181,7 +179,9 @@ public class BaragonAgentConfiguration extends Configuration {
     return loadBalancerConfiguration;
   }
 
-  public void setLoadBalancerConfiguration(LoadBalancerConfiguration loadBalancerConfiguration) {
+  public void setLoadBalancerConfiguration(
+    LoadBalancerConfiguration loadBalancerConfiguration
+  ) {
     this.loadBalancerConfiguration = loadBalancerConfiguration;
   }
 

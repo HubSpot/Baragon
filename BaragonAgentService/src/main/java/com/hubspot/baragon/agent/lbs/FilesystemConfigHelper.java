@@ -1,18 +1,5 @@
 package com.hubspot.baragon.agent.lbs;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.ReentrantLock;
-import java.util.stream.Collectors;
-
-import org.apache.commons.lang3.tuple.Pair;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Optional;
@@ -30,6 +17,17 @@ import com.hubspot.baragon.exceptions.MissingTemplateException;
 import com.hubspot.baragon.models.BaragonConfigFile;
 import com.hubspot.baragon.models.BaragonService;
 import com.hubspot.baragon.models.ServiceContext;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collectors;
+import org.apache.commons.lang3.tuple.Pair;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Singleton
 public class FilesystemConfigHelper {
@@ -45,11 +43,13 @@ public class FilesystemConfigHelper {
   private final BaragonAgentConfiguration configuration;
 
   @Inject
-  public FilesystemConfigHelper(LbConfigGenerator configGenerator,
-                                LocalLbAdapter adapter,
-                                BaragonAgentConfiguration configuration,
-                                @Named(BaragonAgentServiceModule.AGENT_LOCK) ReentrantLock agentLock,
-                                @Named(BaragonAgentServiceModule.AGENT_LOCK_TIMEOUT_MS) long agentLockTimeoutMs) {
+  public FilesystemConfigHelper(
+    LbConfigGenerator configGenerator,
+    LocalLbAdapter adapter,
+    BaragonAgentConfiguration configuration,
+    @Named(BaragonAgentServiceModule.AGENT_LOCK) ReentrantLock agentLock,
+    @Named(BaragonAgentServiceModule.AGENT_LOCK_TIMEOUT_MS) long agentLockTimeoutMs
+  ) {
     this.configGenerator = configGenerator;
     this.adapter = adapter;
     this.configuration = configuration;
@@ -57,7 +57,8 @@ public class FilesystemConfigHelper {
     this.agentLockTimeoutMs = agentLockTimeoutMs;
   }
 
-  public void remove(BaragonService service) throws LbAdapterExecuteException, IOException {
+  public void remove(BaragonService service)
+    throws LbAdapterExecuteException, IOException {
     for (String filename : configGenerator.getConfigPathsForProject(service)) {
       File file = new File(filename);
       if (!file.exists()) {
@@ -65,7 +66,9 @@ public class FilesystemConfigHelper {
       }
 
       if (!file.delete()) {
-        throw new RuntimeException(String.format("Failed to remove %s for %s", filename, service.getServiceId()));
+        throw new RuntimeException(
+          String.format("Failed to remove %s for %s", filename, service.getServiceId())
+        );
       }
     }
   }
@@ -73,13 +76,16 @@ public class FilesystemConfigHelper {
   public void reloadConfigs() throws Exception {
     if (!agentLock.tryLock(agentLockTimeoutMs, TimeUnit.MILLISECONDS)) {
       LOG.warn("Failed to acquire lock for reload");
-      throw new LockTimeoutException("Timed out waiting to acquire lock for reload", agentLock);
+      throw new LockTimeoutException(
+        "Timed out waiting to acquire lock for reload",
+        agentLock
+      );
     }
     LOG.debug("Acquired agent lock, reloading configs");
     try {
       LOG.debug("Reloading configs");
       adapter.reloadConfigs();
-    }  finally {
+    } finally {
       agentLock.unlock();
     }
   }
@@ -87,12 +93,15 @@ public class FilesystemConfigHelper {
   public void checkAndReload() throws Exception {
     if (!agentLock.tryLock(agentLockTimeoutMs, TimeUnit.MILLISECONDS)) {
       LOG.warn("Failed to acquire lock for reload");
-      throw new LockTimeoutException("Timed out waiting to acquire lock for reload", agentLock);
+      throw new LockTimeoutException(
+        "Timed out waiting to acquire lock for reload",
+        agentLock
+      );
     }
     LOG.debug("Acquired agent lock, reloading configs");
     try {
       checkAndReloadUnlocked();
-    }  finally {
+    } finally {
       agentLock.unlock();
     }
   }
@@ -104,10 +113,13 @@ public class FilesystemConfigHelper {
     adapter.reloadConfigs();
   }
 
-  public Optional<Collection<BaragonConfigFile>> configsToApply(ServiceContext context) throws MissingTemplateException {
+  public Optional<Collection<BaragonConfigFile>> configsToApply(ServiceContext context)
+    throws MissingTemplateException {
     final BaragonService service = context.getService();
     final boolean previousConfigsExist = configsExist(service);
-    Collection<BaragonConfigFile> newConfigs = configGenerator.generateConfigsForProject(context);
+    Collection<BaragonConfigFile> newConfigs = configGenerator.generateConfigsForProject(
+      context
+    );
     if (previousConfigsExist && configsMatch(newConfigs, readConfigs(service))) {
       return Optional.absent();
     } else {
@@ -115,20 +127,35 @@ public class FilesystemConfigHelper {
     }
   }
 
-  public boolean configsMatch(Collection<BaragonConfigFile> newConfigs, Collection<BaragonConfigFile> currentConfigs) {
+  public boolean configsMatch(
+    Collection<BaragonConfigFile> newConfigs,
+    Collection<BaragonConfigFile> currentConfigs
+  ) {
     return currentConfigs.containsAll(newConfigs);
   }
 
-  public void bootstrapApply(ServiceContext context, Collection<BaragonConfigFile> newConfigs) throws InvalidConfigException, LbAdapterExecuteException, IOException, MissingTemplateException {
+  public void bootstrapApply(
+    ServiceContext context,
+    Collection<BaragonConfigFile> newConfigs
+  )
+    throws InvalidConfigException, LbAdapterExecuteException, IOException, MissingTemplateException {
     final BaragonService service = context.getService();
     final boolean previousConfigsExist = configsExist(service);
-    LOG.info("Going to apply {}: {}", service.getServiceId(), Joiner.on(", ").join(context.getUpstreams()));
+    LOG.info(
+      "Going to apply {}: {}",
+      service.getServiceId(),
+      Joiner.on(", ").join(context.getUpstreams())
+    );
     backupConfigs(service);
     try {
       writeConfigs(newConfigs);
       adapter.checkConfigs();
     } catch (Exception e) {
-      LOG.error("Caught exception while writing configs for {}, reverting to backups!", service.getServiceId(), e);
+      LOG.error(
+        "Caught exception while writing configs for {}, reverting to backups!",
+        service.getServiceId(),
+        e
+      );
       saveAsFailed(service);
       if (previousConfigsExist) {
         restoreConfigs(service);
@@ -140,15 +167,27 @@ public class FilesystemConfigHelper {
     LOG.info("Apply finished for {}", service.getServiceId());
   }
 
-  public void bootstrapApplyWrite(ServiceContext context, Collection<BaragonConfigFile> newConfigs) throws InvalidConfigException, LbAdapterExecuteException, IOException, MissingTemplateException {
+  public void bootstrapApplyWrite(
+    ServiceContext context,
+    Collection<BaragonConfigFile> newConfigs
+  )
+    throws InvalidConfigException, LbAdapterExecuteException, IOException, MissingTemplateException {
     final BaragonService service = context.getService();
     final boolean previousConfigsExist = configsExist(service);
-    LOG.info("Going to write {}: {}", service.getServiceId(), Joiner.on(", ").join(context.getUpstreams()));
+    LOG.info(
+      "Going to write {}: {}",
+      service.getServiceId(),
+      Joiner.on(", ").join(context.getUpstreams())
+    );
     backupConfigs(service);
     try {
       writeConfigs(newConfigs);
     } catch (Exception e) {
-      LOG.error("Caught exception while writing configs for {}, reverting to backups!", service.getServiceId(), e);
+      LOG.error(
+        "Caught exception while writing configs for {}, reverting to backups!",
+        service.getServiceId(),
+        e
+      );
       saveAsFailed(service);
       if (previousConfigsExist) {
         restoreConfigs(service);
@@ -160,38 +199,62 @@ public class FilesystemConfigHelper {
     LOG.info("Writing finished for {}", service.getServiceId());
   }
 
-  public void bootstrapApplyCheck(List<Pair<ServiceContext, Collection<BaragonConfigFile>>> applied) {
+  public void bootstrapApplyCheck(
+    List<Pair<ServiceContext, Collection<BaragonConfigFile>>> applied
+  ) {
     LOG.info("Going to check the configs");
     try {
       adapter.checkConfigs();
     } catch (Exception e) {
       LOG.error("Caught exception while checking configs", e);
-      applied.forEach(item -> {
-        final ServiceContext context = item.getKey();
-        final BaragonService service = context.getService();
-        saveAsFailed(service);
-        LOG.info("Marked {}: as failed", service.getServiceId());
-      });
+      applied.forEach(
+        item -> {
+          final ServiceContext context = item.getKey();
+          final BaragonService service = context.getService();
+          saveAsFailed(service);
+          LOG.info("Marked {}: as failed", service.getServiceId());
+        }
+      );
       throw Throwables.propagate(e);
     }
     LOG.info("Completed checking the configs");
   }
 
-
-  public void apply(ServiceContext context, Optional<BaragonService> maybeOldService, boolean revertOnFailure, boolean noReload, boolean noValidate, boolean delayReload, Optional<Integer> batchItemNumber) throws InvalidConfigException, LbAdapterExecuteException, IOException, MissingTemplateException, InterruptedException, LockTimeoutException {
+  public void apply(
+    ServiceContext context,
+    Optional<BaragonService> maybeOldService,
+    boolean revertOnFailure,
+    boolean noReload,
+    boolean noValidate,
+    boolean delayReload,
+    Optional<Integer> batchItemNumber
+  )
+    throws InvalidConfigException, LbAdapterExecuteException, IOException, MissingTemplateException, InterruptedException, LockTimeoutException {
     final BaragonService service = context.getService();
     final BaragonService oldService = maybeOldService.or(service);
 
-    LOG.info("Going to apply {}: {}", service.getServiceId(), Joiner.on(", ").join(context.getUpstreams()));
+    LOG.info(
+      "Going to apply {}: {}",
+      service.getServiceId(),
+      Joiner.on(", ").join(context.getUpstreams())
+    );
     final boolean oldServiceExists = configsExist(oldService);
     final boolean previousConfigsExist = configsExist(service);
 
-    Collection<BaragonConfigFile> newConfigs = configGenerator.generateConfigsForProject(context);
-
+    Collection<BaragonConfigFile> newConfigs = configGenerator.generateConfigsForProject(
+      context
+    );
 
     if (!agentLock.tryLock(agentLockTimeoutMs, TimeUnit.MILLISECONDS)) {
-      LockTimeoutException lte = new LockTimeoutException("Timed out waiting to acquire lock", agentLock);
-      LOG.warn("Failed to acquire lock for service config apply ({})", service.getServiceId(), lte);
+      LockTimeoutException lte = new LockTimeoutException(
+        "Timed out waiting to acquire lock",
+        agentLock
+      );
+      LOG.warn(
+        "Failed to acquire lock for service config apply ({})",
+        service.getServiceId(),
+        lte
+      );
       throw lte;
     }
 
@@ -200,8 +263,16 @@ public class FilesystemConfigHelper {
     try {
       if (configsMatch(newConfigs, readConfigs(oldService))) {
         LOG.info("({}) Configs are unchanged, skipping apply", service.getServiceId());
-        if (!noReload && !delayReload && batchItemNumber.isPresent() && batchItemNumber.get() > 1) {
-          LOG.debug("({}) Item is the last in a batch, reloading configs", service.getServiceId());
+        if (
+          !noReload &&
+          !delayReload &&
+          batchItemNumber.isPresent() &&
+          batchItemNumber.get() > 1
+        ) {
+          LOG.debug(
+            "({}) Item is the last in a batch, reloading configs",
+            service.getServiceId()
+          );
           adapter.reloadConfigs();
         }
         return;
@@ -221,8 +292,13 @@ public class FilesystemConfigHelper {
         LOG.debug("({}) Writing new configs", service.getServiceId());
         writeConfigs(newConfigs);
         //If the new service id for this base path is different, remove the configs for the old service id
-        if (oldServiceExists && !oldService.getServiceId().equals(service.getServiceId())) {
-          LOG.debug("({}) Removing old configs from renamed service", service.getServiceId());
+        if (
+          oldServiceExists && !oldService.getServiceId().equals(service.getServiceId())
+        ) {
+          LOG.debug(
+            "({}) Removing old configs from renamed service",
+            service.getServiceId()
+          );
           remove(oldService);
         }
       } else {
@@ -234,16 +310,29 @@ public class FilesystemConfigHelper {
         LOG.debug("({}) Checking configs", service.getServiceId());
         adapter.checkConfigs();
       } else {
-        LOG.debug("({}) Not validating configs due to 'noValidate' specified in request", service.getServiceId());
+        LOG.debug(
+          "({}) Not validating configs due to 'noValidate' specified in request",
+          service.getServiceId()
+        );
       }
       if (!noReload && !delayReload) {
         LOG.debug("({}) Reloading configs", service.getServiceId());
         adapter.reloadConfigs();
       } else {
-        LOG.debug("({}) Not reloading configs: {}", service.getServiceId(), noReload ? "'noReload' specified in request" : "Will reload at end of request batch");
+        LOG.debug(
+          "({}) Not reloading configs: {}",
+          service.getServiceId(),
+          noReload
+            ? "'noReload' specified in request"
+            : "Will reload at end of request batch"
+        );
       }
     } catch (Exception e) {
-      LOG.error("Caught exception while writing configs for {}, reverting to backups!", service.getServiceId(), e);
+      LOG.error(
+        "Caught exception while writing configs for {}, reverting to backups!",
+        service.getServiceId(),
+        e
+      );
       saveAsFailed(service);
       // Restore configs
       if (revertOnFailure) {
@@ -266,13 +355,27 @@ public class FilesystemConfigHelper {
     LOG.info(String.format("Apply finished for %s", service.getServiceId()));
   }
 
-  public void delete(BaragonService service, Optional<BaragonService> maybeOldService, boolean noReload, boolean noValidate, boolean delayReload) throws InvalidConfigException, LbAdapterExecuteException, IOException, MissingTemplateException, InterruptedException, LockTimeoutException {
-    final boolean oldServiceExists = (maybeOldService.isPresent() && configsExist(maybeOldService.get()));
+  public void delete(
+    BaragonService service,
+    Optional<BaragonService> maybeOldService,
+    boolean noReload,
+    boolean noValidate,
+    boolean delayReload
+  )
+    throws InvalidConfigException, LbAdapterExecuteException, IOException, MissingTemplateException, InterruptedException, LockTimeoutException {
+    final boolean oldServiceExists =
+      (maybeOldService.isPresent() && configsExist(maybeOldService.get()));
     final boolean previousConfigsExist = configsExist(service);
 
     if (!agentLock.tryLock(agentLockTimeoutMs, TimeUnit.MILLISECONDS)) {
-      LOG.warn("Failed to acquire lock for service config delete ({})", service.getServiceId());
-      throw new LockTimeoutException("Timed out waiting to acquire lock for delete", agentLock);
+      LOG.warn(
+        "Failed to acquire lock for service config delete ({})",
+        service.getServiceId()
+      );
+      throw new LockTimeoutException(
+        "Timed out waiting to acquire lock for delete",
+        agentLock
+      );
     }
 
     LOG.debug("Acquired agent lock, deleting configs");
@@ -294,10 +397,21 @@ public class FilesystemConfigHelper {
       if (!noReload && !delayReload) {
         adapter.reloadConfigs();
       } else {
-        LOG.debug("Not reloading configs: {}", noReload ? "'noReload' specified in request" : "Will reload at end of request batch");
+        LOG.debug(
+          "Not reloading configs: {}",
+          noReload
+            ? "'noReload' specified in request"
+            : "Will reload at end of request batch"
+        );
       }
     } catch (Exception e) {
-      LOG.error(String.format("Caught exception while deleting configs for %s, reverting to backups!", service.getServiceId()), e);
+      LOG.error(
+        String.format(
+          "Caught exception while deleting configs for %s, reverting to backups!",
+          service.getServiceId()
+        ),
+        e
+      );
       saveAsFailed(service);
       if (oldServiceExists && !maybeOldService.get().equals(service)) {
         restoreConfigs(maybeOldService.get());
@@ -317,22 +431,34 @@ public class FilesystemConfigHelper {
   private void writeConfigs(Collection<BaragonConfigFile> files) {
     for (BaragonConfigFile file : files) {
       try {
-        File  configFile = new File(file.getFullPath());
+        File configFile = new File(file.getFullPath());
         if (configFile.getParentFile() != null) {
-          if (!configFile.getParentFile().exists() && !configFile.getParentFile().mkdirs()) {
-            throw new IOException(String.format("Could not create parent directories for file path %s", file.getFullPath()));
+          if (
+            !configFile.getParentFile().exists() && !configFile.getParentFile().mkdirs()
+          ) {
+            throw new IOException(
+              String.format(
+                "Could not create parent directories for file path %s",
+                file.getFullPath()
+              )
+            );
           }
         }
-        Files.write(file.getContent().getBytes(Charsets.UTF_8), new File(file.getFullPath()));
+        Files.write(
+          file.getContent().getBytes(Charsets.UTF_8),
+          new File(file.getFullPath())
+        );
       } catch (IOException e) {
         LOG.error("Failed writing {}", file.getFullPath(), e);
-        throw new RuntimeException(String.format("Failed writing %s", file.getFullPath()), e);
+        throw new RuntimeException(
+          String.format("Failed writing %s", file.getFullPath()),
+          e
+        );
       }
     }
   }
 
   public Collection<BaragonConfigFile> readConfigs(BaragonService service) {
-
     final Collection<BaragonConfigFile> configs = new ArrayList<>();
 
     for (String filename : configGenerator.getConfigPathsForProject(service)) {
@@ -342,7 +468,9 @@ public class FilesystemConfigHelper {
       }
 
       try {
-        configs.add(new BaragonConfigFile(filename, Files.asCharSource(file, Charsets.UTF_8).read()));
+        configs.add(
+          new BaragonConfigFile(filename, Files.asCharSource(file, Charsets.UTF_8).read())
+        );
       } catch (IOException e) {
         throw Throwables.propagate(e);
       }

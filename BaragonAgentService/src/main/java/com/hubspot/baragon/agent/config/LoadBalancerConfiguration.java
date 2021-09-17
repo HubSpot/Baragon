@@ -1,15 +1,13 @@
 package com.hubspot.baragon.agent.config;
 
+import com.google.common.base.Optional;
+import com.google.common.base.Strings;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
-
-import com.google.common.base.Optional;
-import com.google.common.base.Strings;
 
 public class LoadBalancerConfiguration {
   public static final int DEFAULT_COMMAND_TIMEOUT_MS = 10000;
@@ -103,7 +101,9 @@ public class LoadBalancerConfiguration {
   }
 
   public Optional<String> getDefaultDomain() {
-    return Optional.fromNullable(Strings.emptyToNull(defaultDomain)).or(Optional.fromNullable(Strings.emptyToNull(domain)));
+    return Optional
+      .fromNullable(Strings.emptyToNull(defaultDomain))
+      .or(Optional.fromNullable(Strings.emptyToNull(domain)));
   }
 
   public void setDefaultDomain(String defaultDomain) {
@@ -179,7 +179,9 @@ public class LoadBalancerConfiguration {
     return turnOffPurgeableCacheInTemplates;
   }
 
-  public void setTurnOffPurgeableCacheInTemplates(boolean turnOffPurgeableCacheInTemplates) {
+  public void setTurnOffPurgeableCacheInTemplates(
+    boolean turnOffPurgeableCacheInTemplates
+  ) {
     this.turnOffPurgeableCacheInTemplates = turnOffPurgeableCacheInTemplates;
   }
 
@@ -187,7 +189,9 @@ public class LoadBalancerConfiguration {
     return servicesToBlockFromPurgeableCache;
   }
 
-  public void setServicesToBlockFromPurgeableCache(Set<String> servicesToBlockFromPurgeableCache) {
+  public void setServicesToBlockFromPurgeableCache(
+    Set<String> servicesToBlockFromPurgeableCache
+  ) {
     this.servicesToBlockFromPurgeableCache = servicesToBlockFromPurgeableCache;
   }
 

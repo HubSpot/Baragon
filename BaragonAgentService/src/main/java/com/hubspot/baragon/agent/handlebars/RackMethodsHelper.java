@@ -1,13 +1,12 @@
 package com.hubspot.baragon.agent.handlebars;
 
+import com.hubspot.baragon.models.UpstreamInfo;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-
-import com.hubspot.baragon.models.UpstreamInfo;
 
 public class RackMethodsHelper {
 
@@ -30,12 +29,14 @@ public class RackMethodsHelper {
    */
   public BigDecimal calculateCapacity(List<String> allRacks) {
     /* capacity is the proportion of unique upstreams to all the upstreams - this gives the amount of load that each upstreams should carry*/
-    return new BigDecimal((new HashSet<>(allRacks)).size()).divide(new BigDecimal(allRacks.size()), 10, BigDecimal.ROUND_HALF_UP);
+    return new BigDecimal((new HashSet<>(allRacks)).size())
+    .divide(new BigDecimal(allRacks.size()), 10, BigDecimal.ROUND_HALF_UP);
   }
 
   public BigDecimal calculateMultiplier(List<String> allRacks) {
     /* multiplier is the factor by which fractional weights should be scaled to get an integer value*/
-    return new BigDecimal((new HashSet<>(allRacks)).size()).multiply(new BigDecimal(allRacks.size()));
+    return new BigDecimal((new HashSet<>(allRacks)).size())
+    .multiply(new BigDecimal(allRacks.size()));
   }
 
   /**
@@ -46,7 +47,9 @@ public class RackMethodsHelper {
     final BigDecimal capacity = calculateCapacity(allRacks);
     BigDecimal pendingLoad = BigDecimal.ZERO;
     for (String rack : allRacks) {
-      final BigDecimal myLoad = getReciprocal(new BigDecimal(Collections.frequency(allRacks, rack)));
+      final BigDecimal myLoad = getReciprocal(
+        new BigDecimal(Collections.frequency(allRacks, rack))
+      );
       final BigDecimal myPendingLoad = capacity.subtract(myLoad);
       if (myPendingLoad.compareTo(BigDecimal.ZERO) == 1) { // pending load is greater than 0
         pendingLoad = pendingLoad.add(myPendingLoad);

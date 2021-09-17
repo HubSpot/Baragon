@@ -5,7 +5,11 @@ public class LbAdapterExecuteException extends Exception {
   private final Exception executeException;
   private final String command;
 
-  public LbAdapterExecuteException(String output, Exception executeException, String command) {
+  public LbAdapterExecuteException(
+    String output,
+    Exception executeException,
+    String command
+  ) {
     super(String.format("%s : %s", command, executeException.getMessage()));
     this.output = output;
     this.executeException = executeException;

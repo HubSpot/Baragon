@@ -25,13 +25,19 @@ public class BaragonWatcherModule extends AbstractModule {
   @Baragon
   @Provides
   public CuratorFramework provideCurator(ZooKeeperConfiguration config) {
-    CuratorFramework client = CuratorFrameworkFactory.builder()
-        .connectString(config.getQuorum())
-        .sessionTimeoutMs(config.getSessionTimeoutMillis())
-        .connectionTimeoutMs(config.getConnectTimeoutMillis())
-        .retryPolicy(new ExponentialBackoffRetry(config.getRetryBaseSleepTimeMilliseconds(), config.getRetryMaxTries()))
-        .namespace(config.getZkNamespace())
-        .build();
+    CuratorFramework client = CuratorFrameworkFactory
+      .builder()
+      .connectString(config.getQuorum())
+      .sessionTimeoutMs(config.getSessionTimeoutMillis())
+      .connectionTimeoutMs(config.getConnectTimeoutMillis())
+      .retryPolicy(
+        new ExponentialBackoffRetry(
+          config.getRetryBaseSleepTimeMilliseconds(),
+          config.getRetryMaxTries()
+        )
+      )
+      .namespace(config.getZkNamespace())
+      .build();
 
     client.start();
 
@@ -41,13 +47,18 @@ public class BaragonWatcherModule extends AbstractModule {
   @Baragon
   @Provides
   @Singleton
-  public PersistentWatcher provideWatcher(@Baragon final Provider<CuratorFramework> curatorProvider) {
-    return new WatcherFactory(new Supplier<CuratorFramework>() {
+  public PersistentWatcher provideWatcher(
+    @Baragon final Provider<CuratorFramework> curatorProvider
+  ) {
+    return new WatcherFactory(
+      new Supplier<CuratorFramework>() {
 
-      @Override
-      public CuratorFramework get() {
-        return curatorProvider.get();
+        @Override
+        public CuratorFramework get() {
+          return curatorProvider.get();
+        }
       }
-    }).dataWatcher("/state-last-updated");
+    )
+    .dataWatcher("/state-last-updated");
   }
 }

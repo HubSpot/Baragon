@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-@JsonIgnoreProperties( ignoreUnknown = true )
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class CloudflarePurgeCacheResult {
   private final String id;
 
@@ -38,8 +38,6 @@ public class CloudflarePurgeCacheResult {
 
   @Override
   public String toString() {
-    return "CloudflarePurgeCacheResult{" +
-        "id='" + id + '\'' +
-        '}';
+    return "CloudflarePurgeCacheResult{" + "id='" + id + '\'' + '}';
   }
 }

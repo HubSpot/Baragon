@@ -1,13 +1,5 @@
 package com.hubspot.baragon;
 
-import java.util.Map;
-import java.util.Random;
-import java.util.concurrent.atomic.AtomicReference;
-
-import org.apache.curator.framework.CuratorFramework;
-import org.apache.curator.framework.recipes.cache.PathChildrenCache;
-import org.apache.curator.framework.state.ConnectionState;
-
 import com.codahale.metrics.MetricRegistry;
 import com.google.common.base.Optional;
 import com.google.inject.AbstractModule;
@@ -38,18 +30,27 @@ import com.hubspot.baragon.migrations.ZkDataMigration;
 import com.hubspot.baragon.migrations.ZkDataMigrationRunner;
 import com.hubspot.baragon.models.BaragonAuthKey;
 import com.hubspot.baragon.utils.ZkParallelFetcher;
-
 import io.dropwizard.setup.Environment;
-
+import java.util.Map;
+import java.util.Random;
+import java.util.concurrent.atomic.AtomicReference;
+import org.apache.curator.framework.CuratorFramework;
+import org.apache.curator.framework.recipes.cache.PathChildrenCache;
+import org.apache.curator.framework.state.ConnectionState;
 
 public class BaragonDataModule extends AbstractModule {
-  public static final String BARAGON_AGENT_REQUEST_URI_FORMAT = "baragon.agent.request.uri.format";
-  public static final String BARAGON_AGENT_BATCH_REQUEST_URI_FORMAT = "baragon.agent.batch.request.uri.format";
+  public static final String BARAGON_AGENT_REQUEST_URI_FORMAT =
+    "baragon.agent.request.uri.format";
+  public static final String BARAGON_AGENT_BATCH_REQUEST_URI_FORMAT =
+    "baragon.agent.batch.request.uri.format";
   public static final String BARAGON_AGENT_MAX_ATTEMPTS = "baragon.agent.maxAttempts";
-  public static final String BARAGON_AGENT_REQUEST_TIMEOUT_MS = "baragon.agent.requestTimeoutMs";
+  public static final String BARAGON_AGENT_REQUEST_TIMEOUT_MS =
+    "baragon.agent.requestTimeoutMs";
 
-  public static final String BARAGON_SERVICE_WORKER_LAST_START = "baragon.service.worker.lastStartedAt";
-  public static final String BARAGON_ELB_WORKER_LAST_START = "baragon.service.elb.lastStartedAt";
+  public static final String BARAGON_SERVICE_WORKER_LAST_START =
+    "baragon.service.worker.lastStartedAt";
+  public static final String BARAGON_ELB_WORKER_LAST_START =
+    "baragon.service.elb.lastStartedAt";
 
   public static final String BARAGON_AUTH_KEY_MAP = "baragon.auth.keyMap";
 
@@ -59,8 +60,6 @@ public class BaragonDataModule extends AbstractModule {
   public static final String BARAGON_ZK_CONNECTION_STATE = "baragon.zk.connectionState";
 
   public static final String BARAGON_SERVICE_LEADER_LATCH = "baragon.service.leaderLatch";
-
-
 
   @Override
   protected void configure() {
@@ -87,7 +86,10 @@ public class BaragonDataModule extends AbstractModule {
     bind(BaragonAuthFilter.class).in(Scopes.SINGLETON);
     bind(BaragonAuthManager.class).in(Scopes.SINGLETON);
 
-    Multibinder<ZkDataMigration> zkMigrationBinder = Multibinder.newSetBinder(binder(), ZkDataMigration.class);
+    Multibinder<ZkDataMigration> zkMigrationBinder = Multibinder.newSetBinder(
+      binder(),
+      ZkDataMigration.class
+    );
     zkMigrationBinder.addBinding().to(UpstreamsMigration.class);
     zkMigrationBinder.addBinding().to(ServiceDomainsMigration.class);
   }
@@ -108,15 +110,23 @@ public class BaragonDataModule extends AbstractModule {
   @Provides
   @Singleton
   @Named(BARAGON_AUTH_KEY_MAP)
-  public AtomicReference<Map<String, BaragonAuthKey>> providesBaragonAuthKeyMap(BaragonAuthDatastore datastore) {
+  public AtomicReference<Map<String, BaragonAuthKey>> providesBaragonAuthKeyMap(
+    BaragonAuthDatastore datastore
+  ) {
     return new AtomicReference<>(datastore.getAuthKeyMap());
   }
 
   @Provides
   @Singleton
   @Named(BARAGON_AUTH_PATH_CACHE)
-  public PathChildrenCache providesAuthPathChildrenCache(CuratorFramework curatorFramework) {
-    return new PathChildrenCache(curatorFramework, BaragonAuthDatastore.AUTH_KEYS_PATH, false);
+  public PathChildrenCache providesAuthPathChildrenCache(
+    CuratorFramework curatorFramework
+  ) {
+    return new PathChildrenCache(
+      curatorFramework,
+      BaragonAuthDatastore.AUTH_KEYS_PATH,
+      false
+    );
   }
 
   @Provides

@@ -1,17 +1,5 @@
 package com.hubspot.baragon.data;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
-import org.apache.curator.framework.CuratorFramework;
-import org.apache.curator.framework.recipes.leader.LeaderLatch;
-import org.apache.zookeeper.KeeperException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
@@ -30,29 +18,59 @@ import com.hubspot.baragon.models.BaragonGroup;
 import com.hubspot.baragon.models.BaragonRequest;
 import com.hubspot.baragon.models.BaragonService;
 import com.hubspot.baragon.models.TrafficSource;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import org.apache.curator.framework.CuratorFramework;
+import org.apache.curator.framework.recipes.leader.LeaderLatch;
+import org.apache.zookeeper.KeeperException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Singleton
 public class BaragonLoadBalancerDatastore extends AbstractDataStore {
-  private static final Logger LOG = LoggerFactory.getLogger(BaragonLoadBalancerDatastore.class);
+  private static final Logger LOG = LoggerFactory.getLogger(
+    BaragonLoadBalancerDatastore.class
+  );
 
   public static final String LOAD_BALANCER_GROUPS_FORMAT = "/load-balancer";
-  public static final String LOAD_BALANCER_GROUP_FORMAT = LOAD_BALANCER_GROUPS_FORMAT + "/%s";
-  public static final String LOAD_BALANCER_TARGET_COUNT_FORMAT = LOAD_BALANCER_GROUP_FORMAT + "/targetCount";
-  public static final String LOAD_BALANCER_GROUP_LAST_REQUEST_FORMAT = LOAD_BALANCER_GROUP_FORMAT + "/lastRequest";
-  public static final String LOAD_BALANCER_GROUP_HOSTS_FORMAT = LOAD_BALANCER_GROUP_FORMAT + "/hosts";
-  public static final String LOAD_BALANCER_GROUP_HOST_FORMAT = LOAD_BALANCER_GROUP_HOSTS_FORMAT + "/%s";
+  public static final String LOAD_BALANCER_GROUP_FORMAT =
+    LOAD_BALANCER_GROUPS_FORMAT + "/%s";
+  public static final String LOAD_BALANCER_TARGET_COUNT_FORMAT =
+    LOAD_BALANCER_GROUP_FORMAT + "/targetCount";
+  public static final String LOAD_BALANCER_GROUP_LAST_REQUEST_FORMAT =
+    LOAD_BALANCER_GROUP_FORMAT + "/lastRequest";
+  public static final String LOAD_BALANCER_GROUP_HOSTS_FORMAT =
+    LOAD_BALANCER_GROUP_FORMAT + "/hosts";
+  public static final String LOAD_BALANCER_GROUP_HOST_FORMAT =
+    LOAD_BALANCER_GROUP_HOSTS_FORMAT + "/%s";
 
-  public static final String LOAD_BALANCER_BASE_PATHS_FORMAT = LOAD_BALANCER_GROUPS_FORMAT + "/%s/base-uris";
-  public static final String LOAD_BALANCER_BASE_PATH_FORMAT = LOAD_BALANCER_BASE_PATHS_FORMAT + "/%s";
+  public static final String LOAD_BALANCER_BASE_PATHS_FORMAT =
+    LOAD_BALANCER_GROUPS_FORMAT + "/%s/base-uris";
+  public static final String LOAD_BALANCER_BASE_PATH_FORMAT =
+    LOAD_BALANCER_BASE_PATHS_FORMAT + "/%s";
 
   @Inject
-  public BaragonLoadBalancerDatastore(CuratorFramework curatorFramework, ObjectMapper objectMapper, ZooKeeperConfiguration zooKeeperConfiguration) {
+  public BaragonLoadBalancerDatastore(
+    CuratorFramework curatorFramework,
+    ObjectMapper objectMapper,
+    ZooKeeperConfiguration zooKeeperConfiguration
+  ) {
     super(curatorFramework, objectMapper, zooKeeperConfiguration);
   }
 
-  public LeaderLatch createLeaderLatch(String clusterName, BaragonAgentMetadata agentMetadata) {
+  public LeaderLatch createLeaderLatch(
+    String clusterName,
+    BaragonAgentMetadata agentMetadata
+  ) {
     try {
-      return new LeaderLatch(curatorFramework, String.format(LOAD_BALANCER_GROUP_HOSTS_FORMAT, clusterName), objectMapper.writeValueAsString(agentMetadata));
+      return new LeaderLatch(
+        curatorFramework,
+        String.format(LOAD_BALANCER_GROUP_HOSTS_FORMAT, clusterName),
+        objectMapper.writeValueAsString(agentMetadata)
+      );
     } catch (JsonProcessingException e) {
       throw Throwables.propagate(e);
     }
@@ -68,9 +86,14 @@ public class BaragonLoadBalancerDatastore extends AbstractDataStore {
 
     for (String node : nodes) {
       try {
-        groups.addAll(readFromZk(String.format(LOAD_BALANCER_GROUP_FORMAT, node), BaragonGroup.class).asSet());
+        groups.addAll(
+          readFromZk(String.format(LOAD_BALANCER_GROUP_FORMAT, node), BaragonGroup.class)
+            .asSet()
+        );
       } catch (Exception e) {
-        LOG.error(String.format("Could not fetch info for group %s due to error %s", node, e));
+        LOG.error(
+          String.format("Could not fetch info for group %s due to error %s", node, e)
+        );
       }
     }
 
@@ -79,7 +102,10 @@ public class BaragonLoadBalancerDatastore extends AbstractDataStore {
 
   public Optional<BaragonGroup> getLoadBalancerGroup(String name) {
     try {
-      return readFromZk(String.format(LOAD_BALANCER_GROUP_FORMAT, name), BaragonGroup.class);
+      return readFromZk(
+        String.format(LOAD_BALANCER_GROUP_FORMAT, name),
+        BaragonGroup.class
+      );
     } catch (RuntimeException e) {
       if (e.getMessage().contains("No content")) {
         return Optional.absent();
@@ -95,7 +121,17 @@ public class BaragonLoadBalancerDatastore extends AbstractDataStore {
       group = maybeGroup.get();
       group.addTrafficSource(source);
     } else {
-      group = new BaragonGroup(name, Optional.absent(), Sets.newHashSet(source), null, Optional.absent(), Collections.emptySet(), Collections.emptyMap(), 1);
+      group =
+        new BaragonGroup(
+          name,
+          Optional.absent(),
+          Sets.newHashSet(source),
+          null,
+          Optional.absent(),
+          Collections.emptySet(),
+          Collections.emptyMap(),
+          1
+        );
     }
     writeToZk(String.format(LOAD_BALANCER_GROUP_FORMAT, name), group);
     return group;
@@ -112,7 +148,13 @@ public class BaragonLoadBalancerDatastore extends AbstractDataStore {
     }
   }
 
-  public void updateGroupInfo(String name, Optional<String> defaultDomain, Set<String> domains, Map<String, Set<String>> domainAliases, Integer minHealthyAgents) {
+  public void updateGroupInfo(
+    String name,
+    Optional<String> defaultDomain,
+    Set<String> domains,
+    Map<String, Set<String>> domainAliases,
+    Integer minHealthyAgents
+  ) {
     Optional<BaragonGroup> maybeGroup = getLoadBalancerGroup(name);
     BaragonGroup group;
     if (maybeGroup.isPresent()) {
@@ -122,7 +164,17 @@ public class BaragonLoadBalancerDatastore extends AbstractDataStore {
       group.setDomainAliases(domainAliases);
       group.setMinHealthyAgents(minHealthyAgents);
     } else {
-      group = new BaragonGroup(name, defaultDomain, Collections.<TrafficSource>emptySet(), null, defaultDomain, domains, domainAliases, 1);
+      group =
+        new BaragonGroup(
+          name,
+          defaultDomain,
+          Collections.<TrafficSource>emptySet(),
+          null,
+          defaultDomain,
+          domains,
+          domainAliases,
+          1
+        );
     }
     writeToZk(String.format(LOAD_BALANCER_GROUP_FORMAT, name), group);
   }
@@ -148,17 +200,26 @@ public class BaragonLoadBalancerDatastore extends AbstractDataStore {
   }
 
   public Collection<BaragonAgentMetadata> getAgentMetadata(String clusterName) {
-    final Collection<String> nodes = getChildren(String.format(LOAD_BALANCER_GROUP_HOSTS_FORMAT, clusterName));
+    final Collection<String> nodes = getChildren(
+      String.format(LOAD_BALANCER_GROUP_HOSTS_FORMAT, clusterName)
+    );
 
     if (nodes.isEmpty()) {
       return Collections.emptyList();
     }
 
-    final Collection<BaragonAgentMetadata> metadata = Lists.newArrayListWithCapacity(nodes.size());
+    final Collection<BaragonAgentMetadata> metadata = Lists.newArrayListWithCapacity(
+      nodes.size()
+    );
 
     for (String node : nodes) {
       try {
-        final String value = new String(curatorFramework.getData().forPath(String.format(LOAD_BALANCER_GROUP_HOST_FORMAT, clusterName, node)), Charsets.UTF_8);
+        final String value = new String(
+          curatorFramework
+            .getData()
+            .forPath(String.format(LOAD_BALANCER_GROUP_HOST_FORMAT, clusterName, node)),
+          Charsets.UTF_8
+        );
         if (value.startsWith("http://")) {
           metadata.add(BaragonAgentMetadata.fromString(value));
         } else {
@@ -167,7 +228,13 @@ public class BaragonLoadBalancerDatastore extends AbstractDataStore {
       } catch (KeeperException.NoNodeException nne) {
         // uhh, didnt see that...
       } catch (JsonParseException | JsonMappingException je) {
-        LOG.warn(String.format("Exception deserializing %s", String.format(LOAD_BALANCER_GROUP_HOST_FORMAT, clusterName, node)), je);
+        LOG.warn(
+          String.format(
+            "Exception deserializing %s",
+            String.format(LOAD_BALANCER_GROUP_HOST_FORMAT, clusterName, node)
+          ),
+          je
+        );
       } catch (Exception e) {
         throw Throwables.propagate(e);
       }
@@ -176,7 +243,9 @@ public class BaragonLoadBalancerDatastore extends AbstractDataStore {
     return metadata;
   }
 
-  public Collection<BaragonAgentMetadata> getAgentMetadata(Collection<String> clusterNames) {
+  public Collection<BaragonAgentMetadata> getAgentMetadata(
+    Collection<String> clusterNames
+  ) {
     final Set<BaragonAgentMetadata> metadata = Sets.newHashSet();
 
     for (String clusterName : clusterNames) {
@@ -186,21 +255,52 @@ public class BaragonLoadBalancerDatastore extends AbstractDataStore {
     return metadata;
   }
 
-  public Optional<String> getBasePathServiceId(String loadBalancerGroup, String basePath) {
-    return readFromZk(String.format(LOAD_BALANCER_BASE_PATH_FORMAT, loadBalancerGroup, encodeUrl(basePath)), String.class);
+  public Optional<String> getBasePathServiceId(
+    String loadBalancerGroup,
+    String basePath
+  ) {
+    return readFromZk(
+      String.format(
+        LOAD_BALANCER_BASE_PATH_FORMAT,
+        loadBalancerGroup,
+        encodeUrl(basePath)
+      ),
+      String.class
+    );
   }
 
   public void clearBasePath(String loadBalancerGroup, String basePath) {
-    deleteNode(String.format(LOAD_BALANCER_BASE_PATH_FORMAT, loadBalancerGroup, encodeUrl(basePath)));
+    deleteNode(
+      String.format(
+        LOAD_BALANCER_BASE_PATH_FORMAT,
+        loadBalancerGroup,
+        encodeUrl(basePath)
+      )
+    );
   }
 
-  public void setBasePathServiceId(String loadBalancerGroup, String basePath, String serviceId) {
-    writeToZk(String.format(LOAD_BALANCER_BASE_PATH_FORMAT, loadBalancerGroup, encodeUrl(basePath)), serviceId);
+  public void setBasePathServiceId(
+    String loadBalancerGroup,
+    String basePath,
+    String serviceId
+  ) {
+    writeToZk(
+      String.format(
+        LOAD_BALANCER_BASE_PATH_FORMAT,
+        loadBalancerGroup,
+        encodeUrl(basePath)
+      ),
+      serviceId
+    );
   }
 
   public Collection<String> getBasePaths(String loadBalancerGroup) {
-    final Collection<String> encodedPaths = getChildren(String.format(LOAD_BALANCER_BASE_PATHS_FORMAT, loadBalancerGroup));
-    final Collection<String> decodedPaths = Lists.newArrayListWithCapacity(encodedPaths.size());
+    final Collection<String> encodedPaths = getChildren(
+      String.format(LOAD_BALANCER_BASE_PATHS_FORMAT, loadBalancerGroup)
+    );
+    final Collection<String> decodedPaths = Lists.newArrayListWithCapacity(
+      encodedPaths.size()
+    );
 
     for (String encodedPath : encodedPaths) {
       decodedPaths.add(decodeUrl(encodedPath));
@@ -210,11 +310,17 @@ public class BaragonLoadBalancerDatastore extends AbstractDataStore {
   }
 
   public Optional<String> getLastRequestForGroup(String loadBalancerGroup) {
-    return readFromZk(String.format(LOAD_BALANCER_GROUP_LAST_REQUEST_FORMAT, loadBalancerGroup), String.class);
+    return readFromZk(
+      String.format(LOAD_BALANCER_GROUP_LAST_REQUEST_FORMAT, loadBalancerGroup),
+      String.class
+    );
   }
 
   public void setLastRequestId(String loadBalancerGroup, String requestId) {
-    writeToZk(String.format(LOAD_BALANCER_GROUP_LAST_REQUEST_FORMAT, loadBalancerGroup), requestId);
+    writeToZk(
+      String.format(LOAD_BALANCER_GROUP_LAST_REQUEST_FORMAT, loadBalancerGroup),
+      requestId
+    );
   }
 
   public int setTargetCount(String group, Integer count) {
@@ -223,11 +329,16 @@ public class BaragonLoadBalancerDatastore extends AbstractDataStore {
   }
 
   public Optional<Integer> getTargetCount(String group) {
-    return readFromZk(String.format(LOAD_BALANCER_TARGET_COUNT_FORMAT, group), Integer.class);
+    return readFromZk(
+      String.format(LOAD_BALANCER_TARGET_COUNT_FORMAT, group),
+      Integer.class
+    );
   }
 
   public BaragonRequest updateForDefaultDomains(BaragonRequest request) {
-    return request.withUpdatedDomains(getDomainsWithDefaults(request.getLoadBalancerService()));
+    return request.withUpdatedDomains(
+      getDomainsWithDefaults(request.getLoadBalancerService())
+    );
   }
 
   public Set<String> getDomainsWithDefaults(BaragonService service) {
@@ -235,7 +346,10 @@ public class BaragonLoadBalancerDatastore extends AbstractDataStore {
     for (String group : service.getLoadBalancerGroups()) {
       Optional<BaragonGroup> maybeGroup = getLoadBalancerGroup(group);
       if (maybeGroup.isPresent()) {
-        if (maybeGroup.get().getDefaultDomain().isPresent() && maybeGroup.get().getDomains().stream().noneMatch(updatedDomains::contains)) {
+        if (
+          maybeGroup.get().getDefaultDomain().isPresent() &&
+          maybeGroup.get().getDomains().stream().noneMatch(updatedDomains::contains)
+        ) {
           updatedDomains.add(maybeGroup.get().getDefaultDomain().get());
         }
       }

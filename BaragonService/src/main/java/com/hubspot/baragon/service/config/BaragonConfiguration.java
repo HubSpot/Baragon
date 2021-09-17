@@ -1,11 +1,5 @@
 package com.hubspot.baragon.service.config;
 
-import javax.validation.Valid;
-import javax.validation.constraints.Min;
-import javax.validation.constraints.NotNull;
-
-import org.hibernate.validator.constraints.NotEmpty;
-
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Optional;
@@ -13,14 +7,18 @@ import com.hubspot.baragon.config.AuthConfiguration;
 import com.hubspot.baragon.config.GraphiteConfiguration;
 import com.hubspot.baragon.config.HttpClientConfiguration;
 import com.hubspot.baragon.config.ZooKeeperConfiguration;
-
 import io.dropwizard.Configuration;
+import javax.validation.Valid;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotNull;
+import org.hibernate.validator.constraints.NotEmpty;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class BaragonConfiguration extends Configuration {
   public static final String DEFAULT_AGENT_REQUEST_URI_FORMAT = "%s/request/%s";
   public static final String DEFAULT_AGENT_BATCH_REQUEST_URI_FORMAT = "%s/batch";
-  public static final String DEFAULT_AGENT_PURGE_CACHE_REQUEST_URI_FORMAT = "%s/purgeCache/%s";
+  public static final String DEFAULT_AGENT_PURGE_CACHE_REQUEST_URI_FORMAT =
+    "%s/purgeCache/%s";
 
   @JsonProperty("zookeeper")
   @NotNull
@@ -109,7 +107,8 @@ public class BaragonConfiguration extends Configuration {
   private long expireResolveCacheAfterDays = 30;
 
   @JsonProperty("agentPurgeCacheRequestUriFormat")
-  private String agentPurgeCacheRequestUriFormat = DEFAULT_AGENT_PURGE_CACHE_REQUEST_URI_FORMAT;
+  private String agentPurgeCacheRequestUriFormat =
+    DEFAULT_AGENT_PURGE_CACHE_REQUEST_URI_FORMAT;
 
   private int maxConcurrentRequestsPerAgent = 3;
 
@@ -121,7 +120,9 @@ public class BaragonConfiguration extends Configuration {
     return httpClientConfiguration;
   }
 
-  public void setHttpClientConfiguration(HttpClientConfiguration httpClientConfiguration) {
+  public void setHttpClientConfiguration(
+    HttpClientConfiguration httpClientConfiguration
+  ) {
     this.httpClientConfiguration = httpClientConfiguration;
   }
 
@@ -185,7 +186,9 @@ public class BaragonConfiguration extends Configuration {
     return purgeCacheConfiguration;
   }
 
-  public void setPurgeCacheConfiguration(PurgeCacheConfiguration purgeCacheConfiguration) {
+  public void setPurgeCacheConfiguration(
+    PurgeCacheConfiguration purgeCacheConfiguration
+  ) {
     this.purgeCacheConfiguration = purgeCacheConfiguration;
   }
 
@@ -277,7 +280,9 @@ public class BaragonConfiguration extends Configuration {
     return googleCloudConfiguration;
   }
 
-  public void setGoogleCloudConfiguration(GoogleCloudConfiguration googleCloudConfiguration) {
+  public void setGoogleCloudConfiguration(
+    GoogleCloudConfiguration googleCloudConfiguration
+  ) {
     this.googleCloudConfiguration = googleCloudConfiguration;
   }
 

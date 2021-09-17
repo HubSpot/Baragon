@@ -5,13 +5,16 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Objects;
 
-@JsonIgnoreProperties( ignoreUnknown = true )
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class CloudflareZone {
   private final String id;
   private final String name;
 
   @JsonCreator
-  public CloudflareZone(@JsonProperty("id") String id, @JsonProperty("name") String name) {
+  public CloudflareZone(
+    @JsonProperty("id") String id,
+    @JsonProperty("name") String name
+  ) {
     this.id = id;
     this.name = name;
   }
@@ -33,8 +36,7 @@ public class CloudflareZone {
       return false;
     }
     CloudflareZone that = (CloudflareZone) o;
-    return Objects.equal(id, that.id) &&
-        Objects.equal(name, that.name);
+    return Objects.equal(id, that.id) && Objects.equal(name, that.name);
   }
 
   @Override
@@ -44,9 +46,6 @@ public class CloudflareZone {
 
   @Override
   public String toString() {
-    return "CloudflareZone{" +
-        "id='" + id + '\'' +
-        ", name='" + name + '\'' +
-        '}';
+    return "CloudflareZone{" + "id='" + id + '\'' + ", name='" + name + '\'' + '}';
   }
 }

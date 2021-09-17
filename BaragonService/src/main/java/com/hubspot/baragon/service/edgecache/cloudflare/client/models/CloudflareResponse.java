@@ -1,10 +1,8 @@
 package com.hubspot.baragon.service.edgecache.cloudflare.client.models;
 
-import java.util.List;
-
-import javax.annotation.Nullable;
-
 import com.google.common.base.Objects;
+import java.util.List;
+import javax.annotation.Nullable;
 
 public abstract class CloudflareResponse<T> {
   private final Boolean success;
@@ -13,11 +11,13 @@ public abstract class CloudflareResponse<T> {
   private final CloudflareResultInfo resultInfo;
   private final T result;
 
-  public CloudflareResponse(Boolean success,
-                            List<CloudflareError> errors,
-                            List<String> messages,
-                            CloudflareResultInfo resultInfo,
-                            T result) {
+  public CloudflareResponse(
+    Boolean success,
+    List<CloudflareError> errors,
+    List<String> messages,
+    CloudflareResultInfo resultInfo,
+    T result
+  ) {
     this.success = success;
     this.errors = errors;
     this.messages = messages;
@@ -55,11 +55,13 @@ public abstract class CloudflareResponse<T> {
       return false;
     }
     CloudflareResponse<?> that = (CloudflareResponse<?>) o;
-    return Objects.equal(success, that.success) &&
-        Objects.equal(errors, that.errors) &&
-        Objects.equal(messages, that.messages) &&
-        Objects.equal(resultInfo, that.resultInfo) &&
-        Objects.equal(result, that.result);
+    return (
+      Objects.equal(success, that.success) &&
+      Objects.equal(errors, that.errors) &&
+      Objects.equal(messages, that.messages) &&
+      Objects.equal(resultInfo, that.resultInfo) &&
+      Objects.equal(result, that.result)
+    );
   }
 
   @Override
@@ -69,12 +71,19 @@ public abstract class CloudflareResponse<T> {
 
   @Override
   public String toString() {
-    return "CloudflareResponse{" +
-        "success=" + success +
-        ", errors=" + errors +
-        ", messages=" + messages +
-        ", resultInfo=" + resultInfo +
-        ", result=" + result +
-        '}';
+    return (
+      "CloudflareResponse{" +
+      "success=" +
+      success +
+      ", errors=" +
+      errors +
+      ", messages=" +
+      messages +
+      ", resultInfo=" +
+      resultInfo +
+      ", result=" +
+      result +
+      '}'
+    );
   }
 }

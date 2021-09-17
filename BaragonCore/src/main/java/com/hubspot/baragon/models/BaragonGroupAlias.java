@@ -1,11 +1,10 @@
 package com.hubspot.baragon.models;
 
-import java.util.Collections;
-import java.util.Set;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.Collections;
+import java.util.Set;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class BaragonGroupAlias {
@@ -14,13 +13,15 @@ public class BaragonGroupAlias {
   private final Set<String> edgeCacheDomains;
 
   @JsonCreator
-
-  public BaragonGroupAlias(@JsonProperty("groups") Set<String> groups,
-                           @JsonProperty("domains") Set<String> domains,
-                           @JsonProperty("edgeCacheDomains") Set<String> edgeCacheDomains) {
+  public BaragonGroupAlias(
+    @JsonProperty("groups") Set<String> groups,
+    @JsonProperty("domains") Set<String> domains,
+    @JsonProperty("edgeCacheDomains") Set<String> edgeCacheDomains
+  ) {
     this.groups = groups == null ? Collections.emptySet() : groups;
     this.domains = domains == null ? Collections.emptySet() : domains;
-    this.edgeCacheDomains = edgeCacheDomains == null ? Collections.emptySet() : edgeCacheDomains;
+    this.edgeCacheDomains =
+      edgeCacheDomains == null ? Collections.emptySet() : edgeCacheDomains;
   }
 
   public Set<String> getGroups() {
@@ -52,7 +53,9 @@ public class BaragonGroupAlias {
     if (domains != null ? !domains.equals(that.domains) : that.domains != null) {
       return false;
     }
-    return edgeCacheDomains != null ? edgeCacheDomains.equals(that.edgeCacheDomains) : that.edgeCacheDomains == null;
+    return edgeCacheDomains != null
+      ? edgeCacheDomains.equals(that.edgeCacheDomains)
+      : that.edgeCacheDomains == null;
   }
 
   @Override
@@ -65,10 +68,16 @@ public class BaragonGroupAlias {
 
   @Override
   public String toString() {
-    return "BaragonGroupAlias{" +
-        "groups='" + groups + '\'' +
-        ", domains=" + domains +
-        ", edgeCacheDomains=" + edgeCacheDomains +
-        '}';
+    return (
+      "BaragonGroupAlias{" +
+      "groups='" +
+      groups +
+      '\'' +
+      ", domains=" +
+      domains +
+      ", edgeCacheDomains=" +
+      edgeCacheDomains +
+      '}'
+    );
   }
 }

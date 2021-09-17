@@ -1,27 +1,24 @@
 package com.hubspot.baragon.agent.bundles;
 
-import java.util.Collections;
-import java.util.EnumSet;
-import java.util.Enumeration;
-
-import javax.servlet.DispatcherType;
-import javax.servlet.Filter;
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletContext;
-
 import com.google.common.base.Throwables;
 import com.google.common.collect.Iterators;
 import com.hubspot.baragon.agent.config.BaragonAgentConfiguration;
 import io.dropwizard.ConfiguredBundle;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.Enumeration;
+import javax.servlet.DispatcherType;
+import javax.servlet.Filter;
+import javax.servlet.FilterConfig;
+import javax.servlet.ServletContext;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
 
 /**
  * Adds a CORS filter.
  */
 public class CorsBundle implements ConfiguredBundle<BaragonAgentConfiguration> {
-
   private static final String FILTER_NAME = "Cross Origin Request Filter";
 
   @Override
@@ -63,6 +60,9 @@ public class CorsBundle implements ConfiguredBundle<BaragonAgentConfiguration> {
       throw Throwables.propagate(e);
     }
 
-    environment.servlets().addFilter(FILTER_NAME, corsFilter).addMappingForUrlPatterns(EnumSet.of(DispatcherType.REQUEST), false, "/*");
+    environment
+      .servlets()
+      .addFilter(FILTER_NAME, corsFilter)
+      .addMappingForUrlPatterns(EnumSet.of(DispatcherType.REQUEST), false, "/*");
   }
 }

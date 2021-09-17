@@ -1,19 +1,20 @@
 package com.hubspot.baragon.models;
 
-import java.util.Collection;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.Collection;
 
-@JsonIgnoreProperties( ignoreUnknown = true )
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class BaragonServiceState {
   private final BaragonService service;
   private final Collection<UpstreamInfo> upstreams;
 
   @JsonCreator
-  public BaragonServiceState(@JsonProperty("service") BaragonService service,
-                             @JsonProperty("upstreams") Collection<UpstreamInfo> upstreams) {
+  public BaragonServiceState(
+    @JsonProperty("service") BaragonService service,
+    @JsonProperty("upstreams") Collection<UpstreamInfo> upstreams
+  ) {
     this.service = service;
     this.upstreams = upstreams;
   }
@@ -56,9 +57,8 @@ public class BaragonServiceState {
 
   @Override
   public String toString() {
-    return "BaragonServiceState [" +
-        "service=" + service +
-        ", upstreams=" + upstreams +
-        ']';
+    return (
+      "BaragonServiceState [" + "service=" + service + ", upstreams=" + upstreams + ']'
+    );
   }
 }

@@ -1,17 +1,14 @@
 package com.hubspot.baragon.service.config;
 
-import java.util.HashMap;
-import java.util.Map;
-
-import javax.validation.constraints.NotNull;
-
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.hubspot.baragon.service.edgecache.cloudflare.EdgeCacheClass;
+import java.util.HashMap;
+import java.util.Map;
+import javax.validation.constraints.NotNull;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class EdgeCacheConfiguration {
-
   @JsonProperty
   @NotNull
   private boolean enabled = false;
@@ -46,9 +43,10 @@ public class EdgeCacheConfiguration {
     return integrationSettings;
   }
 
-  public EdgeCacheConfiguration setIntegrationSettings(Map<String, String> integrationSettings) {
+  public EdgeCacheConfiguration setIntegrationSettings(
+    Map<String, String> integrationSettings
+  ) {
     this.integrationSettings = integrationSettings;
     return this;
   }
-
 }

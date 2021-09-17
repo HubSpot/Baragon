@@ -1,26 +1,24 @@
 package com.hubspot.baragon.service.exceptions;
 
-import java.util.Map;
-
-import javax.inject.Singleton;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.google.common.base.Optional;
 import com.google.common.base.Strings;
 import com.google.inject.Inject;
 import com.hubspot.baragon.service.config.SentryConfiguration;
-
+import java.util.Map;
+import javax.inject.Singleton;
 import net.kencochrane.raven.Raven;
 import net.kencochrane.raven.RavenFactory;
 import net.kencochrane.raven.event.Event;
 import net.kencochrane.raven.event.EventBuilder;
 import net.kencochrane.raven.event.interfaces.ExceptionInterface;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Singleton
 public class BaragonExceptionNotifier {
-  private static final Logger LOG = LoggerFactory.getLogger(BaragonExceptionNotifier.class);
+  private static final Logger LOG = LoggerFactory.getLogger(
+    BaragonExceptionNotifier.class
+  );
 
   private final Optional<Raven> raven;
   private final Optional<SentryConfiguration> sentryConfiguration;
@@ -29,14 +27,18 @@ public class BaragonExceptionNotifier {
   public BaragonExceptionNotifier(Optional<SentryConfiguration> sentryConfiguration) {
     this.sentryConfiguration = sentryConfiguration;
     if (sentryConfiguration.isPresent()) {
-      this.raven = Optional.of(RavenFactory.ravenInstance(sentryConfiguration.get().getDsn()));
+      this.raven =
+        Optional.of(RavenFactory.ravenInstance(sentryConfiguration.get().getDsn()));
     } else {
       this.raven = Optional.absent();
     }
   }
 
   private String getPrefix() {
-    if (!sentryConfiguration.isPresent() || Strings.isNullOrEmpty(sentryConfiguration.get().getPrefix())) {
+    if (
+      !sentryConfiguration.isPresent() ||
+      Strings.isNullOrEmpty(sentryConfiguration.get().getPrefix())
+    ) {
       return "";
     }
 
@@ -62,14 +64,16 @@ public class BaragonExceptionNotifier {
       return;
     }
 
-    final StackTraceElement[] currentThreadStackTrace = Thread.currentThread().getStackTrace();
+    final StackTraceElement[] currentThreadStackTrace = Thread
+      .currentThread()
+      .getStackTrace();
 
     final EventBuilder eventBuilder = new EventBuilder()
-        .withCulprit(getPrefix() + t.getMessage())
-        .withMessage(Strings.nullToEmpty(t.getMessage()))
-        .withLevel(Event.Level.ERROR)
-        .withLogger(getCallingClassName(currentThreadStackTrace))
-        .withSentryInterface(new ExceptionInterface(t));
+      .withCulprit(getPrefix() + t.getMessage())
+      .withMessage(Strings.nullToEmpty(t.getMessage()))
+      .withLevel(Event.Level.ERROR)
+      .withLogger(getCallingClassName(currentThreadStackTrace))
+      .withSentryInterface(new ExceptionInterface(t));
 
     if (extraData != null && !extraData.isEmpty()) {
       for (Map.Entry<String, String> entry : extraData.entrySet()) {
@@ -85,12 +89,14 @@ public class BaragonExceptionNotifier {
       return;
     }
 
-    final StackTraceElement[] currentThreadStackTrace = Thread.currentThread().getStackTrace();
+    final StackTraceElement[] currentThreadStackTrace = Thread
+      .currentThread()
+      .getStackTrace();
 
     final EventBuilder eventBuilder = new EventBuilder()
-        .withMessage(getPrefix() + subject)
-        .withLevel(Event.Level.ERROR)
-        .withLogger(getCallingClassName(currentThreadStackTrace));
+      .withMessage(getPrefix() + subject)
+      .withLevel(Event.Level.ERROR)
+      .withLogger(getCallingClassName(currentThreadStackTrace));
 
     if (extraData != null && !extraData.isEmpty()) {
       for (Map.Entry<String, String> entry : extraData.entrySet()) {

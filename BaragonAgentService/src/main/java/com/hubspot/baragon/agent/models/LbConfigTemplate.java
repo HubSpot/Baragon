@@ -9,11 +9,14 @@ public class LbConfigTemplate {
   private final Template template;
   private final FilePathFormatType formatType;
 
-  public LbConfigTemplate(String filename, Template template, FilePathFormatType formatType) {
+  public LbConfigTemplate(
+    String filename,
+    Template template,
+    FilePathFormatType formatType
+  ) {
     this.filename = filename;
     this.template = template;
     this.formatType = formatType;
-
   }
 
   public String getFilename() {
@@ -30,11 +33,12 @@ public class LbConfigTemplate {
 
   @Override
   public String toString() {
-    return MoreObjects.toStringHelper(LbConfigTemplate.class)
-        .add("filename", filename)
-        .add("template", template)
-        .add("formatType", formatType)
-        .toString();
+    return MoreObjects
+      .toStringHelper(LbConfigTemplate.class)
+      .add("filename", filename)
+      .add("template", template)
+      .add("formatType", formatType)
+      .toString();
   }
 
   @Override
