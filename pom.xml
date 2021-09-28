@@ -34,7 +34,7 @@
     <dep.curator.version>4.2.0</dep.curator.version>
     <dep.dropwizard-metrics.version>4.0.5</dep.dropwizard-metrics.version>
     <dep.findbugs.jsr.version>3.0.2</dep.findbugs.jsr.version>
-    <dep.google.clients.version>1.25.0</dep.google.clients.version>
+    <dep.google.clients.version>1.32.1</dep.google.clients.version>
     <dep.guava.version>25.0-jre</dep.guava.version>
     <dep.hibernate-validator.version>5.4.3.Final</dep.hibernate-validator.version>
     <dep.hk2.version>2.5.0-b63</dep.hk2.version>
