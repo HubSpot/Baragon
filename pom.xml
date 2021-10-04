@@ -47,8 +47,7 @@
     <dep.jersey2.version>2.25.1</dep.jersey2.version>
     <dep.jetty.version>9.4.18.v20190429</dep.jetty.version>
     <dep.joda.version>2.10.1</dep.joda.version>
-    <dep.junit.jupiter.version>5.5.0</dep.junit.jupiter.version>
-    <dep.junit.platform.version>1.5.0</dep.junit.platform.version>
+    <dep.junit-jupiter.version>5.5.0</dep.junit-jupiter.version>
     <dep.logback.version>1.2.3</dep.logback.version>
     <dep.netty.version>4.1.27.Final</dep.netty.version>
     <dep.netty3.version>3.10.6.Final</dep.netty3.version>
@@ -59,6 +58,7 @@
     <horizon.version>0.1.2</horizon.version>
     <ning.async.version>1.9.38</ning.async.version>
     <ringleader.version>0.1.5</ringleader.version>
+    <dep.plugin.surefire.version>3.0.0-M5</dep.plugin.surefire.version>
   </properties>
 
   <dependencyManagement>
@@ -440,26 +440,12 @@
       </dependency>
 
       <dependency>
-        <groupId>org.junit.jupiter</groupId>
-        <artifactId>junit-jupiter-api</artifactId>
-        <version>${dep.junit.jupiter.version}</version>
-        <scope>test</scope>
+        <groupId>org.junit</groupId>
+        <artifactId>junit-bom</artifactId>
+        <version>${dep.junit-jupiter.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
       </dependency>
-
-      <dependency>
-        <groupId>org.junit.jupiter</groupId>
-        <artifactId>junit-jupiter-engine</artifactId>
-        <version>${dep.junit.jupiter.version}</version>
-        <scope>test</scope>
-      </dependency>
-
-      <dependency>
-        <groupId>org.junit.platform</groupId>
-        <artifactId>junit-platform-runner</artifactId>
-        <version>${dep.junit.platform.version}</version>
-        <scope>test</scope>
-      </dependency>
-
     </dependencies>
   </dependencyManagement>
 
