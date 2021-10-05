@@ -19,6 +19,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 public class BaragonRequestWorkerTest extends BaragonServiceTestBase {
@@ -29,6 +30,14 @@ public class BaragonRequestWorkerTest extends BaragonServiceTestBase {
 
   @Inject
   BaragonRequestWorker requestWorker;
+
+  @BeforeEach
+  public void beforeEach() {
+    // need to clean up requestManager so that the requests to don't persist
+    // between test runs
+    requestManager.deleteRequest("request1");
+    requestManager.deleteRequest("request2");
+  }
 
   @Test
   public void testQueuedRequestsAreBatchedForAgent() throws Exception {
