@@ -45,6 +45,7 @@ import com.hubspot.baragon.service.exceptions.BaragonExceptionNotifier;
 import com.hubspot.baragon.service.gcloud.GoogleCloudManager;
 import com.hubspot.baragon.service.healthcheck.ZooKeeperHealthcheck;
 import com.hubspot.baragon.service.listeners.AbstractLatchListener;
+import com.hubspot.baragon.service.listeners.AgentCleanupListener;
 import com.hubspot.baragon.service.listeners.ElbSyncWorkerListener;
 import com.hubspot.baragon.service.listeners.RequestPurgingListener;
 import com.hubspot.baragon.service.listeners.RequestWorkerListener;
@@ -169,6 +170,7 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
     latchBinder.addBinding().to(RequestWorkerListener.class).in(Scopes.SINGLETON);
     latchBinder.addBinding().to(ElbSyncWorkerListener.class).in(Scopes.SINGLETON);
     latchBinder.addBinding().to(RequestPurgingListener.class).in(Scopes.SINGLETON);
+    latchBinder.addBinding().to(AgentCleanupListener.class).in(Scopes.SINGLETON);
   }
 
   @Provides
@@ -232,7 +234,7 @@ public class BaragonServiceModule extends DropwizardAwareModule<BaragonConfigura
   @Singleton
   @Named(BARAGON_SERVICE_SCHEDULED_EXECUTOR)
   public ScheduledExecutorService providesScheduledExecutor() {
-    return Executors.newScheduledThreadPool(4);
+    return Executors.newScheduledThreadPool(5);
   }
 
   @Provides
