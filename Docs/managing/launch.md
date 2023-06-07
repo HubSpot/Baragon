@@ -6,7 +6,7 @@ Three key components are needed for a working Baragon cluster:
 - A `BaragonAgentService` instance running on the same host as you load balancer program (nginx/haproxy/etc)
 
 #### Building JARs
-To get started, build the needed `BaragonService` and `BaragonAgentService` JARs by running 
+To get started, build the needed `BaragonService` and `BaragonAgentService` JARs by running
 ```bash
 mvn clean package
 ```
@@ -30,11 +30,11 @@ Alternatively you can provision your Baragon instances via chef using the cookbo
     - ex. set an auth key `-Ddw.auth.key=my-auth-key`
 
 ####Configuration Specifics
-An `auth` section and `masterAuthKey` must be provided in the configuration for Baragon Service to either disable auth for that instance, or enable auth and specify a key. 
+An `auth` section and `masterAuthKey` must be provided in the configuration for Baragon Service to either disable auth for that instance, or enable auth and specify a key.
 - If auth is enabled, then all requests to Baragon Service (Except to the `/ui` path) will need to container an `authkey` parameter with the valid key.
 - Requests to the `/auth` and related endpoints must use the `masterAuthKey` as the `authkey` param in the request
 
-The `worker` configuration section of the configuration does not need to be provided, but can be used ot tune the request worker or shut it off, creating a read-only instance. By default the request worker will be running. 
+The `worker` configuration section of the configuration does not need to be provided, but can be used ot tune the request worker or shut it off, creating a read-only instance. By default the request worker will be running.
 ***Note: if no request worker is running, the instance will be able to enqueue but not process requests
 
 The `ui` section of the configuration is also optional. By default the ui will be available at `/[contextPath]/ui` and will prompt you for an auth key in case one is needed to communicate with Baragon Service's API. By default the ui, will be in a read-only mode.
@@ -153,19 +153,121 @@ The resulting configuration will cause the added upstream's running applications
 
 <a id="haproxy"></a>
 #### Setting up Baragon Agent with Haproxy
+Baragon can be used to manage Haproxy configuration as well. While Haproxy does not currently support an `include` type statement, you can pass multiple `-f` options for configuration files to parse on startup, they all be stored in memory as one large configuration.
 
-Baragon can be used to manage Haproxy configuration as well. While Haproxy does not currently support an `include` type statement, you can pass multiple `-f` options for configuration files to parse on startup. These will then all be stored in memory as one larger configuration.
+One possible strategy for implementing with Haproxy is having a line in a modified `/etc/init.d/haproxy` similar to the following (alpine openrc solution):
+```
+#!/sbin/openrc-run
+# Copyright 1999-2011 Gentoo Foundation
+# Distributed under the terms of the GNU General Public License v2
+# $Header: /var/cvsroot/gentoo-x86/net-proxy/haproxy/files/haproxy.initd-r1,v 1.2 2011/12/04 10:32:32 swegener Exp $
 
-One possible strategy for implementing with Haproxy is have a line in a modified `/etc/init.d/haproxy` similar to the following:
+extra_commands="checkconfig"
+extra_started_commands="reload"
+command=/usr/sbin/haproxy
+BASENAME="haproxy"
+CONF=${HAPROXY_CONF:-/etc/haproxy/${SVCNAME}.cfg}
+PIDFILE=/var/run/${SVCNAME}.pid
+
+# Load additional configuration snippets from /etc/haproxy.d/*.cfg
+OPTIONS=""
+for file in /etc/haproxy/conf.d/*.cfg ; do test -f $file && OPTIONS="$OPTIONS -f $file" ; done
+
+depend() {
+	need net
+	after firewall
+	use dns logger
+}
+
+checkconfig() {
+  	if [ ! -f "${CONF}" ] && [ ! -d "${CONF}" ]; then
+  		eerror "${CONF} does not exist!"
+  		return 1
+  	fi
+
+  	ebegin "Checking ${CONF} and included configs"
+  	$command -q -c -f "${CONF}"
+  	if [ "$(ls /etc/haproxy/conf.d/)" ]; then
+  	 for file in $(ls /etc/haproxy/conf.d/*.cfg); do haproxy -q -c -f $file; done
+  	fi
+  	eend $?
+}
+
+start() {
+    if [ $? -ne 0 ]; then
+      echo "Errors found in configuration file, check it with '$BASENAME check'."
+      return 1
+    fi
+
+    echo -n "Starting $BASENAME: "
+    start-stop-daemon --pidfile "${PIDFILE}" --exec $command \
+  	--start -- -D -p "${PIDFILE}" -f "${CONF}" $OPTIONS
+    RETVAL=$?
+    echo
+    [ $RETVAL -eq 0 ] && touch /var/lock/subsys/$BASENAME
+    return $RETVAL
+}
+
+stop() {
+  	ebegin "Stopping ${SVCNAME}"
+
+  	if [ "${RC_CMD}" = "restart" ]; then
+  		checkconfig || return 1
+  	fi
+
+  	start-stop-daemon  -v --stop --name "${BASENAME}"
+  	eend $?
+  }
+
+  reload() {
+  	ebegin "Reloading ${SVCNAME}"
+  	checkconfig || { eerror "Reloading failed, please fix your ${CONF} first"; return 1; }
+  	$command -D -p "${PIDFILE}" -f "${CONF}" ${OPTIONS} -sf $(cat "${PIDFILE}")
+  	eend $?
+}
 
 ```
-for FILE in \`find /etc/haproxy/conf.d -type l | sort -n\`; do
-  CONFIGS="$CONFIGS -f $FILE"
-done
+This will include all configs in the conf.d folder when starting haproxy.
 
-# Pass $CONFIGS as an argument when starting haproxy
+Baragon configuration for haproxy
 ```
-This will include all configs in the conf.d folder when restarting haproxy.
+loadBalancerConfig:
+  name: ${BARAGON_AGENT_GROUP}  # load balancer group name
+  rootPath: /etc/haproxy # base path for writing load balancer configs goes here
+  checkConfigCommand: "service haproxy checkconfig" # command for checking configs goes here
+  reloadConfigCommand: "service haproxy restart" # command for reloading configs goes here
+
+#options.haproxy_port must be set as
+# loadBalancerOptions:  
+$    haproxy_port: someport
+
+templates:
+  - filename: "conf.d/%s.cfg"
+    template: |
+      # This configuration is automatically generated by Baragon, local changes may be lost!
+      #
+      # Service ID: {{{service.serviceId}}}
+      # Service base path: {{{service.serviceBasePath}}}
+      #
+      # Service owner(s):
+      {{#each service.owners}}#   - {{{.}}}
+      {{else}}#   (no owners defined)
+      {{/each}}#
+      {{#if upstreams}}
+      listen {{{service.serviceId}}}
+        bind 0.0.0.0:{{service.options.haproxy_port}} alpn h2  
+        {{#if service.options.haproxy_mode}}
+        mode service.options.haproxy_mode
+        {{/if}}
+        {{#each upstreams}}  server server{{@index}}  {{upstream}} alpn h2 check # {{requestId}}
+        {{/each}}
+      {{else}}
+      #
+      # Service is disabled due to undefined upstreams!
+      # It's safe to delete this file if not needed.
+      #
+      {{/if}}  
+```
 
 <a id="singularity"></a>
 ### Integration with Singularity
